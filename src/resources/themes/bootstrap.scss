@@ -1,0 +1,15 @@
+@import '~bootstrap/scss/bootstrap';
+
+// Bootstrap style fixes and additions
+
+a {
+    text-decoration: none;
+}
+
+.table > :not(:last-child) > :last-child > * {
+    border-bottom-color: #ccc;
+}
+
+.hidden {
+    display: none !important;
+}

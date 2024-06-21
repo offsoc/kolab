@@ -1,0 +1,12 @@
+
+server_host = LDAP_HOST
+server_port = 389
+version = 3
+search_base = ou=Domains,dc=mgmt,dc=com
+scope = sub
+
+bind_dn = uid=kolab-service,ou=Special Users,dc=mgmt,dc=com
+bind_pw = LDAP_SERVICE_BIND_PW
+
+query_filter = (&(associatedDomain=%s)(inetdomainstatus:1.2.840.113556.1.4.803:=18)(!(inetdomainstatus:1.2.840.113556.1.4.803:=4)))
+result_attribute = associateddomain

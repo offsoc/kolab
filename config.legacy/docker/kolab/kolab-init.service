@@ -1,0 +1,13 @@
+[Unit]
+Description=Kolab Setup Service
+Requires=kolab-setenv.service
+After=kolab-setenv.service ldapdata.mount imapdata.mount
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/openshift-environment
+ExecStart=/usr/local/sbin/kolab-init.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

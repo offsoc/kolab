@@ -10,24 +10,38 @@
          stopOnFailure="false">
     <testsuites>
         <testsuite name="Unit">
-            <directory suffix="Test.php">./tests/Unit</directory>
+            <directory suffix="Test.php">tests/Unit</directory>
+        </testsuite>
+
+        <testsuite name="Functional">
+            <directory suffix="Test.php">tests/Functional</directory>
         </testsuite>
 
         <testsuite name="Feature">
-            <directory suffix="Test.php">./tests/Feature</directory>
+            <directory suffix="Test.php">tests/Feature</directory>
+        </testsuite>
+
+        <testsuite name="Browser">
+            <directory suffix="Test.php">tests/Browser</directory>
+            <exclude>tests/Browser/PaymentStripeTest.php</exclude>
         </testsuite>
     </testsuites>
-    <filter>
-        <whitelist processUncoveredFilesFromWhitelist="true">
+    <coverage processUncoveredFiles="true">
+        <include>
             <directory suffix=".php">./app</directory>
-        </whitelist>
-    </filter>
+        </include>
+    </coverage>
+    <logging>
+        <testdoxHtml outputFile="./tests/report/testdox.html" />
+    </logging>
     <php>
         <server name="APP_ENV" value="testing"/>
+        <server name="APP_DEBUG" value="true"/>
         <server name="BCRYPT_ROUNDS" value="4"/>
-        <server name="CACHE_DRIVER" value="array"/>
-        <server name="MAIL_DRIVER" value="array"/>
+        <server name="MAIL_MAILER" value="array"/>
         <server name="QUEUE_CONNECTION" value="sync"/>
         <server name="SESSION_DRIVER" value="array"/>
+        <server name="SWOOLE_HTTP_ACCESS_LOG" value="false"/>
+        <server name="PGP_LENGTH" value="1024"/>
     </php>
 </phpunit>

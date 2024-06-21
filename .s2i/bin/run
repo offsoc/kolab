@@ -1,0 +1,88 @@
+#!/bin/bash
+
+shopt -s dotglob
+
+pushd /opt/app-root/src
+
+echo "----> Remove bootstrap cache"
+find bootstrap/cache/ -type f ! -name ".gitignore" -delete
+
+if [ -z ${APP_KEY} ]; then
+    echo "----> Run artisan key:generate"
+    ./artisan key:generate
+    unset APP_KEY
+fi
+
+echo "----> Run artisan clear-compiled"
+./artisan clear-compiled
+
+if [ "${LARAVEL_ENV}" != "production" -a "${LARAVEL_ENV}" != "prod" ]; then
+    echo "----> Run artisan cache:clear"
+    ./artisan ${ARTISAN_VERBOSITY} cache:clear || true
+fi
+
+# rpm -qv chromium
+# if [ ! -z "$(rpm -qv chromium 2>/dev/null)" ]; then
+#     echo "---- Run artisan dusk:chrome-driver"
+#     chver=$(rpmquery --queryformat="%{VERSION}" chromium | awk -F'.' '{print $1}')
+#     ./artisan dusk:chrome-driver ${chver}
+# fi
+
+if [ ! -f 'resources/countries.php' ]; then
+    echo "----> Run artisan data:countries"
+    ./artisan data:countries
+fi
+
+
+echo "----> Waiting for the database to become available"
+./artisan db:ping --wait || exit 1
+
+if [ ! -z "${OPENEXCHANGERATES_API_KEY}" ]; then
+    echo "----> Importing exchange rates"
+    ./artisan data:import:open-exchange-rates
+fi
+
+if [ -z "${KOLAB_ROLE}" -a ! -z "${HKCCP_APP}" ]; then
+    echo "WARNING: Use env KOLAB_ROLE, not HKCCP_APP"
+    KOLAB_ROLE=$HKCCP_APP
+fi
+
+case ${KOLAB_ROLE} in
+    apache|APACHE|httpd|HTTPD)
+        echo "----> Starting httpd"
+        /usr/libexec/s2i/run 2>&1
+    ;;
+
+    horizon|HORIZON)
+        ./artisan migrate --force || :
+        echo "----> Starting horizon"
+        ./artisan horizon
+    ;;
+
+    octane|OCTANE)
+        echo "----> Running octane"
+        exec ./artisan octane:start --host=0.0.0.0
+    ;;
+
+    server|SERVER)
+        echo "----> Running server"
+        exec ./artisan serve
+    ;;
+
+    swoole|SWOOLE )
+        echo "----> WARNING: Role is swoole but must become octane"
+        echo "----> Running octane"
+        exec ./artisan octane:start --host=0.0.0.0
+    ;;
+
+    worker|WORKER )
+        ./artisan migrate --force || :
+        echo "----> Running worker"
+        exec ./artisan queue:work
+    ;;
+
+    * )
+        echo "----> Sleeping"
+        exec sleep 10000
+    ;;
+esac

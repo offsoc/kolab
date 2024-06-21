@@ -1,0 +1,15 @@
+#!/bin/bash
+
+cwd=$(dirname $0)
+
+pushd ${cwd}/../src/
+
+php \
+    -dmemory_limit=-1 \
+    -dzend_extension=xdebug.so \
+    vendor/bin/phpunit \
+    --stop-on-defect \
+    --stop-on-error \
+    --stop-on-failure $*
+
+popd

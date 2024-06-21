@@ -1,0 +1,4 @@
+{
+    "phabricator.uri": "https://git.kolab.org",
+    "load": [".arc/arc-phpstan"]
+}

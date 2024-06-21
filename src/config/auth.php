@@ -31,7 +31,7 @@ return [
     | users are actually retrieved out of your database or other storage
     | mechanisms used by this application to persist your user's data.
     |
-    | Supported: "session", "token"
+    | Supported: "session"
     |
     */
 
@@ -42,7 +42,7 @@ return [
         ],
 
         'api' => [
-            'driver' => 'jwt',
+            'driver' => 'passport',
             'provider' => 'users',
         ],
     ],
@@ -85,9 +85,13 @@ return [
     | than one user table or model in the application and you want to have
     | separate password reset settings based on the specific user types.
     |
-    | The expire time is the number of minutes that the reset token should be
+    | The expire time is the number of minutes that each reset token will be
     | considered valid. This security feature keeps tokens short-lived so
     | they have less time to be guessed. You may change this as needed.
+    |
+    | The throttle setting is the number of seconds a user must wait before
+    | generating more password reset tokens. This prevents the user from
+    | quickly generating a very large amount of password reset tokens.
     |
     */
 
@@ -96,7 +100,41 @@ return [
             'provider' => 'users',
             'table' => 'password_resets',
             'expire' => 60,
+            'throttle' => 60,
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Password Confirmation Timeout
+    |--------------------------------------------------------------------------
+    |
+    | Here you may define the amount of seconds before a password confirmation
+    | times out and the user is prompted to re-enter their password via the
+    | confirmation screen. By default, the timeout lasts for three hours.
+    */
+
+    'password_timeout' => 10800,
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | OAuth Proxy Authentication
+    |--------------------------------------------------------------------------
+    |
+    | If you are planning to use your application to self-authenticate as a
+    | proxy, you can define the client and grant type to use here. This is
+    | sometimes the case when a trusted Single Page Application doesn't
+    | use a backend to send the authentication request, but instead
+    | relies on the API to handle proxying the request to itself.
+    |
+     */
+
+    'proxy' => [
+        'client_id' => env('PASSPORT_PROXY_OAUTH_CLIENT_ID'),
+        'client_secret' => env('PASSPORT_PROXY_OAUTH_CLIENT_SECRET'),
+    ],
+
+    'token_expiry_minutes' => env('OAUTH_TOKEN_EXPIRY', 60),
+    'refresh_token_expiry_minutes' => env('OAUTH_REFRESH_TOKEN_EXPIRY', 30 * 24 * 60),
 ];

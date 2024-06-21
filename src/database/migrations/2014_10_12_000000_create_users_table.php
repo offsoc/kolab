@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
+// phpcs:ignore
 class CreateUsersTable extends Migration
 {
     /**
@@ -16,14 +17,15 @@ class CreateUsersTable extends Migration
         Schema::create(
             'users',
             function (Blueprint $table) {
-                $table->bigIncrements('id');
-                $table->string('name')->nullable();
+                $table->bigInteger('id');
                 $table->string('email')->unique();
-                $table->timestamp('email_verified_at')->nullable();
                 $table->string('password')->nullable();
                 $table->string('password_ldap')->nullable();
-                $table->rememberToken();
-                $table->timestamps();
+                $table->smallinteger('status');
+                $table->timestamp('created_at')->useCurrent();
+                $table->timestamp('updated_at')->useCurrent();
+
+                $table->primary('id');
             }
         );
     }

@@ -2,7 +2,6 @@
 
 namespace Tests\Browser\Pages;
 
-use Laravel\Dusk\Browser;
 use Laravel\Dusk\Page;
 
 class Home extends Page
@@ -14,18 +13,21 @@ class Home extends Page
      */
     public function url()
     {
-        return '/';
+        return '/login';
     }
 
     /**
      * Assert that the browser is on the page.
      *
-     * @param  \Laravel\Dusk\Browser  $browser
+     * @param \Laravel\Dusk\Browser $browser The browser object
+     *
      * @return void
      */
-    public function assert(Browser $browser)
+    public function assert($browser)
     {
-        $browser->assertVisible('form.form-signin');
+        $browser->waitForLocation($this->url())
+            ->waitUntilMissing('.app-loader')
+            ->assertVisible('form.form-signin');
     }
 
     /**
@@ -37,25 +39,47 @@ class Home extends Page
     {
         return [
             '@app' => '#app',
+            '@email-input' => '#inputEmail',
+            '@password-input' => '#inputPassword',
+            '@second-factor-input' => '#secondfactor',
+            '@logon-button' => '#logon-form button.btn-primary'
         ];
     }
 
     /**
      * Submit logon form.
      *
-     * @param Browser $browser
-     * @param string  $username
-     * @param string  $password
-     * @param bool    $wait_for_dashboard
+     * @param \Tests\Browser $browser  The browser object
+     * @param string         $username User name
+     * @param string         $password User password
+     * @param bool           $wait_for_dashboard
+     * @param array          $config   Client-site config
      *
      * @return void
      */
-    public function submitLogon(Browser $browser, $username, $password, $wait_for_dashboard = false)
-    {
-        $browser
-            ->type('#inputEmail', $username)
-            ->type('#inputPassword', $password)
-            ->press('form button');
+    public function submitLogon(
+        $browser,
+        $username,
+        $password,
+        $wait_for_dashboard = false,
+        $config = []
+    ) {
+        $browser->clearToasts()
+            ->type('@email-input', $username)
+            ->type('@password-input', $password);
+
+        if ($username == 'ned@kolab.org') {
+            $code = \App\Auth\SecondFactor::code('ned@kolab.org');
+            $browser->type('@second-factor-input', $code);
+        }
+
+        if (!empty($config)) {
+            $browser->script(
+                sprintf('Object.assign(window.config, %s)', \json_encode($config))
+            );
+        }
+
+        $browser->press('form button');
 
         if ($wait_for_dashboard) {
             $browser->waitForLocation('/dashboard');

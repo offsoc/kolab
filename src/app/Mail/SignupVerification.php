@@ -3,15 +3,12 @@
 namespace App\Mail;
 
 use App\SignupCode;
-
-use Illuminate\Bus\Queueable;
-use Illuminate\Mail\Mailable;
-use Illuminate\Queue\SerializesModels;
+use App\Tenant;
+use App\Utils;
+use Illuminate\Support\Str;
 
 class SignupVerification extends Mailable
 {
-    use Queueable, SerializesModels;
-
     /** @var SignupCode A signup verification code object */
     protected $code;
 
@@ -35,15 +32,55 @@ class SignupVerification extends Mailable
      */
     public function build()
     {
-        $this->view('emails.signup_code')
-            ->subject(__('mail.signupcode-subject', ['site' => config('app.name')]))
+        $appName = Tenant::getConfig($this->code->tenant_id, 'app.name');
+        $href = Utils::serviceUrl(
+            sprintf('/signup/%s-%s', $this->code->short_code, $this->code->code),
+            $this->code->tenant_id
+        );
+
+        $username = $this->code->first_name ?? '';
+        if (!empty($this->code->last_name)) {
+            $username .= ' ' . $this->code->last_name;
+        }
+        $username = trim($username);
+
+        $vars = [
+            'site' => $appName,
+            'name' => $username ?: 'User',
+        ];
+
+        $this->view('emails.html.signup_verification')
+            ->text('emails.plain.signup_verification')
+            ->subject(\trans('mail.signupverification-subject', $vars))
             ->with([
-                    'username' => $this->code->data['name'],
+                    'vars' => $vars,
+                    'href' => $href,
                     'code' => $this->code->code,
                     'short_code' => $this->code->short_code,
-                    'url_code' => $this->code->short_code . '-' . $this->code->code,
             ]);
 
         return $this;
+    }
+
+    /**
+     * Render the mail template with fake data
+     *
+     * @param string $type Output format ('html' or 'text')
+     *
+     * @return string HTML or Plain Text output
+     */
+    public static function fakeRender(string $type = 'html'): string
+    {
+        $code = new SignupCode([
+                'code' => Str::random(SignupCode::CODE_LENGTH),
+                'short_code' => SignupCode::generateShortCode(),
+                'email' => 'test@' . \config('app.domain'),
+                'first_name' => 'Firstname',
+                'last_name' => 'Lastname',
+        ]);
+
+        $mail = new self($code);
+
+        return Helper::render($mail, $type);
     }
 }

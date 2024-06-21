@@ -1,0 +1,12 @@
+[Unit]
+Description=Kolab Horizon
+
+[Service]
+User=kolab
+Group=kolab
+Restart=on-failure
+ExecStart=/usr/bin/php /home/kolab/kolab/src/artisan horizon
+ExecStop=/usr/bin/php /home/kolab/kolab/src/artisan horizon:terminate
+
+[Install]
+WantedBy=multi-user.target

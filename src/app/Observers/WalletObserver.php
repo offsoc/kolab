@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\User;
 use App\Wallet;
 
 /**
@@ -18,7 +19,7 @@ class WalletObserver
      */
     public function creating(Wallet $wallet)
     {
-        $wallet->{$wallet->getKeyName()} = \App\Utils::uuidStr();
+        $wallet->currency = \config('app.currency');
     }
 
     /**
@@ -32,9 +33,9 @@ class WalletObserver
      *
      * @param Wallet $wallet The wallet being deleted.
      *
-     * @return boolean|null
+     * @return bool
      */
-    public function deleting(Wallet $wallet)
+    public function deleting(Wallet $wallet): bool
     {
         // can't delete a wallet that has any balance on it (positive and negative).
         if ($wallet->balance != 0.00) {
@@ -53,6 +54,64 @@ class WalletObserver
         // can't remove a wallet that has billable entitlements attached.
         if ($wallet->entitlements()->count() > 0) {
             return false;
+        }
+/*
+        // can't remove a wallet that has payments attached.
+        if ($wallet->payments()->count() > 0) {
+            return false;
+        }
+*/
+
+        return true;
+    }
+
+    /**
+     * Handle the wallet "updated" event.
+     *
+     * @param \App\Wallet $wallet The wallet.
+     *
+     * @return void
+     */
+    public function updated(Wallet $wallet)
+    {
+        $negative_since = $wallet->getSetting('balance_negative_since');
+
+        if ($wallet->balance < 0) {
+            if (!$negative_since) {
+                $now = \Carbon\Carbon::now()->toDateTimeString();
+                $wallet->setSetting('balance_negative_since', $now);
+            }
+        } elseif ($negative_since) {
+            $wallet->setSettings([
+                    'balance_negative_since' => null,
+                    'balance_warning_initial' => null,
+                    'balance_warning_reminder' => null,
+                    'balance_warning_suspended' => null,
+                    'balance_warning_before_delete' => null,
+            ]);
+
+            // FIXME: Since we use account degradation, should we leave suspended state untouched?
+
+            // Un-suspend and un-degrade the account owner
+            if ($wallet->owner) {
+                $wallet->owner->unsuspend();
+                $wallet->owner->undegrade();
+            }
+
+            // Un-suspend domains/users
+            foreach ($wallet->entitlements as $entitlement) {
+                if (
+                    method_exists($entitlement->entitleable_type, 'unsuspend')
+                    && !empty($entitlement->entitleable)
+                ) {
+                    $entitlement->entitleable->unsuspend();
+                }
+            }
+        }
+
+        // Remove RESTRICTED flag from the wallet owner and all users in the wallet
+        if ($wallet->balance > $wallet->getOriginal('balance') && $wallet->owner && $wallet->owner->isRestricted()) {
+            $wallet->owner->unrestrict(true);
         }
     }
 }

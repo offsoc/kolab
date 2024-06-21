@@ -1,0 +1,60 @@
+#!/bin/bash
+
+set -x
+set -e
+
+function composer_install () {
+    echo "--->> Detected composer.json, running install"
+    php -dmemory_limit=${COMPOSER_MEMORY_LIMIT:--1} /usr/bin/composer install ${COMPOSER_ARGS}
+    rm -rf ~/.cache/composer/
+}
+
+shopt -s dotglob
+echo "--->> $(rm -vrf vendor/ composer.lock)"
+
+pushd /tmp/src/
+
+echo "---> Configuring config.${LARAVEL_ENV:-prod}..."
+if [ -d "config.${LARAVEL_ENV:-prod}/src/" ]; then
+    find -L "config.${LARAVEL_ENV:-prod}/src/" -type f | while read file; do
+        dir=$(dirname $file | sed -r -e "s|config.${LARAVEL_ENV:-prod}/src|src|g")
+
+        if [ ! -d "${dir}" ]; then
+            mkdir -p ${dir}
+        fi
+
+        cp -av ${file} ${dir}/.
+    done
+else
+    echo "---> Configuring directory config.${LARAVEL_ENV:-prod} is missing."
+fi
+
+popd
+
+echo "---> Installing application source..."
+rm -fR /tmp/src/src/.git
+mv /tmp/src/src/* ./
+
+pushd /opt/app-root/src/
+
+rm -rf /tmp/src/
+rm -rf .env
+
+fix-permissions ./
+
+if [ -f "composer.json" ]; then
+    echo "--->> Detected composer.json, running install"
+    composer_install
+fi
+
+./artisan horizon:install
+
+if [ ! -z "${OPENEXCHANGERATES_API_KEY}" ]; then
+    ./artisan data:import:open-exchange-rates
+fi
+
+echo "---->> Run npm run prod"
+npm install
+npm run ${LARAVEL_ENV:=prod} && rm -rf ~/.npm/
+
+fix-permissions ./

@@ -1,0 +1,253 @@
+.list-input {
+    & > div {
+        &:not(:last-child) {
+            margin-bottom: -1px;
+
+            input,
+            a.btn {
+                border-bottom-right-radius: 0;
+                border-bottom-left-radius: 0;
+            }
+        }
+
+        &:not(:first-child) {
+            input,
+            a.btn {
+                border-top-right-radius: 0;
+                border-top-left-radius: 0;
+            }
+        }
+    }
+
+    input.is-invalid {
+        z-index: 2;
+    }
+
+    .btn svg {
+        vertical-align: middle;
+    }
+}
+
+.acl-input {
+    select.acl,
+    select.mod-user {
+        max-width: fit-content;
+    }
+}
+
+.password-input {
+    ul {
+        svg {
+            width: 0.75em !important;
+        }
+
+        span {
+            padding: 0 0.05em;
+        }
+    }
+}
+
+.range-input {
+    display: flex;
+
+    label {
+        margin-right: 0.5em;
+        min-width: 4em;
+        text-align: right;
+        line-height: 1.7;
+    }
+}
+
+.input-group-activable {
+    &.active {
+        :not(.activable) {
+            display: none;
+        }
+    }
+
+    &:not(.active) {
+        .activable {
+            display: none;
+        }
+    }
+
+    // Label is always visible
+    .label {
+        color: $body-color;
+        display: initial !important;
+    }
+
+    .input-group-text {
+        border-color: transparent;
+        background: transparent;
+        padding-left: 0;
+
+        &:not(.label) {
+            flex: 1;
+        }
+    }
+}
+
+// An input group with a select and input, where input is displayed
+// only for some select values
+.input-group-select {
+    &:not(.selected) {
+        input {
+            display: none;
+        }
+
+        select {
+            border-bottom-right-radius: .25rem !important;
+            border-top-right-radius: .25rem !important;
+        }
+    }
+
+    input {
+        border-bottom-right-radius: .25rem !important;
+        border-top-right-radius: .25rem !important;
+    }
+}
+
+.form-control-plaintext .btn-sm {
+    margin-top: -0.25rem;
+}
+
+.buttons {
+    & > button + button {
+        margin-left: .5em;
+    }
+}
+
+// Various improvements for mobile
+@include media-breakpoint-down(sm) {
+    .row.mb-3 {
+        margin-bottom: 0.5rem !important;
+    }
+
+    .nav-tabs {
+        .nav-link {
+            white-space: nowrap;
+            padding: 0.5rem 0.75rem;
+        }
+    }
+
+    .tab-content {
+        margin-top: 0.5rem;
+    }
+
+    .col-form-label {
+        color: #666;
+        font-size: 95%;
+    }
+
+    .row.plaintext .col-form-label {
+        padding-bottom: 0;
+    }
+
+    form.read-only.short label {
+        width: 35%;
+
+        & + * {
+            width: 65%;
+        }
+    }
+
+    .row.checkbox {
+        position: relative;
+
+        & > div {
+            padding-top: 0 !important;
+
+            input {
+                position: absolute;
+                top: 0.5rem;
+                right: 1rem;
+            }
+        }
+
+        label {
+            padding-right: 2.5rem;
+        }
+    }
+}
+
+.file-drop-area {
+    color: grey;
+    font-size: 0.9rem;
+    font-weight: normal;
+    line-height: 2;
+    border: 1px dashed #bbb;
+    border-radius: 0.5em;
+    padding: 0.5em;
+    cursor: pointer;
+    position: relative;
+    margin-top: -0.5rem;
+
+    input {
+        position: absolute;
+        height: 10px;
+    }
+
+    &.dragactive {
+        border: 1px dashed #aaa;
+    }
+
+    &.dragover {
+        background-color: rgba($main-color, 0.25);
+        border: 1px dashed $main-color;
+        color: $main-color;
+    }
+}
+
+.world-map {
+    height: 100%;
+    width: 100%;
+    text-align: center;
+    overflow: auto;
+
+    svg {
+        height: 100%;
+
+        .bg {
+            fill: $gray-600;
+        }
+
+        [cc] {
+            fill: white;
+            stroke: $gray-600;
+            stroke-width: 0.25px;
+            cursor: pointer;
+        }
+
+        [cc][aria-selected="true"] {
+            fill: $main-color;
+            stroke: #fff;
+        }
+
+        [cc][data-location] {
+            fill: $success;
+            stroke: #fff;
+        }
+
+        [cc]:focus, [cc]:hover {
+            fill: lighten($main-color, 20%) !important;
+            stroke: $main-color !important;
+        }
+    }
+
+    & + .tools {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(211, 211, 211, 90%);
+    }
+
+    & + .tools + .location {
+        position: absolute;
+        top: 0;
+        background-color: rgba(211, 211, 211, 90%);
+        max-width: calc(100% - 1em);
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}

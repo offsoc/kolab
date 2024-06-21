@@ -1,0 +1,17 @@
+includes:
+    - ./vendor/larastan/larastan/extension.neon
+parameters:
+    ignoreErrors:
+        - '#Access to an undefined property [a-zA-Z\\]+::\$pivot#'
+        - '#Call to an undefined method Tests\\Browser::#'
+    level: 5
+    parallel:
+        processTimeout: 300.0
+    paths:
+        - app/
+        - config/
+        - database/
+        - resources/
+        - routes/
+        - tests/
+        - resources/

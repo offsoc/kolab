@@ -1,0 +1,121 @@
+dn: associateddomain=kolab3.com,ou=Domains,dc=hosted,dc=com
+objectClass: top
+objectClass: domainrelatedobject
+objectClass: inetdomain
+inetDomainBaseDN: ou=kolab3.com,dc=hosted,dc=com
+associatedDomain: kolab3.com
+associatedDomain: kolab3-alias.com
+
+dn: uid=owner@kolab3.com,ou=People,ou=kolab3.com,dc=hosted,dc=com
+cn: Aleksander Machniak
+displayName: Machniak, Aleksander
+givenName: Aleksander
+sn: Machniak
+o: Organization AG
+l:: U2llbWlhbm93aWNlIMWabMSFc2tpZQ==
+mobile: 123456789
+c: PL
+objectClass: top
+objectClass: inetorgperson
+objectClass: kolabinetorgperson
+objectClass: organizationalperson
+objectClass: mailrecipient
+objectClass: country
+objectClass: person
+mail: owner@kolab3.com
+alias: alias@kolab3.com
+alias: alias@kolab3-alias.com
+mailAlternateAddress: external@gmail.com
+mailHost: imap.hosted.com
+mailQuota: 8388608
+uid: owner@kolab3.com
+userPassword:: e1NTSEE1MTJ9Zzc0K1NFQ1RMc00xeDBhWWtTclRHOXNPRnpFcDh3akNmbGhzaHIyRGpFN21pMUczaU5iNENsSDNsam9yUFJsVGdaMTA1UHNRR0VwTnROcitYUmppZ2c9PQ==
+nsUniqueID: 229dc10c-1b6a11f7-b7c1edc1-0e0f46c4
+createtimestamp: 20170407081419Z
+modifytimestamp: 20200915082359Z
+
+dn: uid=user@kolab3.com,ou=People,ou=kolab3.com,dc=hosted,dc=com
+cn: Jane Doe
+displayName: Doe, Jane
+givenName: Jane
+sn: Doe
+o: Org AG
+telephoneNumber: 1234567890
+objectClass: top
+objectClass: inetorgperson
+objectClass: kolabinetorgperson
+objectClass: organizationalperson
+objectClass: mailrecipient
+objectClass: country
+objectClass: person
+mail: user@kolab3.com
+alias: alias2@kolab3.com
+mailAlternateAddress: ext@gmail.com
+mailHost: imap.hosted.com
+mailQuota: 2097152
+uid: user@kolab3.com
+userPassword:: e1NTSEE1MTJ9Zzc0K1NFQ1RMc00xeDBhWWtTclRHOXNPRnpFcDh3akNmbGhzaHIyRGpFN21pMUczaU5iNENsSDNsam9yUFJsVGdaMTA1UHNRR0VwTnROcitYUmppZ2c9PQ==
+nsUniqueID: 229dc20c-1b6a11f7-b7c1edc1-0e0f46c4
+
+dn: cn=Group,ou=Groups,ou=kolab3.com,dc=hosted,dc=com
+cn: Group
+mail: group@kolab3.com
+objectClass: top
+objectClass: groupofuniquenames
+objectClass: kolabgroupofuniquenames
+uniqueMember: uid=user@kolab3.com,ou=People,ou=kolab3.com,dc=hosted,dc=com
+uniqueMember: uid=owner@kolab3.com,ou=People,ou=kolab3.com,dc=hosted,dc=com
+kolabAllowSMTPRecipient: recipient@kolab.org
+kolabAllowSMTPSender: sender@gmail.com
+
+dn: cn=Error,ou=Groups,ou=kolab3.com,dc=hosted,dc=com
+cn: Error
+uniqueMember: uid=user@kolab3.com,ou=People,ou=kolab3.com,dc=hosted,dc=com
+
+dn: cn=UnknownDomain,ou=Groups,ou=kolab3.org,dc=hosted,dc=com
+cn: UnknownDomain
+mail: unknowndomain@kolab3.org
+objectClass: top
+objectClass: groupofuniquenames
+objectClass: kolabgroupofuniquenames
+uniqueMember: uid=user@kolab3.com,ou=People,ou=kolab3.com,dc=hosted,dc=com
+uniqueMember: uid=owner@kolab3.com,ou=People,ou=kolab3.com,dc=hosted,dc=com
+
+dn: cn=Resource,ou=Resources,ou=kolab3.com,dc=hosted,dc=com
+cn: Resource
+mail: resource-car-resource@kolab3.com
+objectClass: top
+objectClass: kolabsharedfolder
+objectClass: kolabresource
+objectClass: mailrecipient
+owner: uid=user@kolab3.com,ou=People,ou=kolab3.com,dc=hosted,dc=com
+kolabAllowSMTPRecipient: recipient@kolab.org
+kolabAllowSMTPSender: sender@gmail.com
+kolabInvitationPolicy: ACT_MANUAL
+kolabTargetFolder: shared/Resource@kolab3.com
+
+dn: cn=Error,ou=Resources,ou=kolab3.com,dc=hosted,dc=com
+cn: Error
+
+dn: cn=Folder1,ou=Shared Folders,ou=kolab3.com,dc=hosted,dc=com
+cn: Folder1
+objectClass: kolabsharedfolder
+objectClass: mailrecipient
+objectClass: top
+kolabFolderType: mail
+kolabTargetFolder: shared/Folder1@kolab3.com
+mail: folder1@kolab3.com
+alias: folder-alias1@kolab3.com
+alias: folder-alias2@kolab3.com
+acl: anyone, read-write
+acl: owner@kolab3.com, full
+
+dn: cn=Folder2,ou=Shared Folders,ou=kolab3.com,dc=hosted,dc=com
+cn: Folder2
+objectClass: kolabsharedfolder
+objectClass: mailrecipient
+objectClass: top
+kolabFolderType: event
+kolabTargetFolder: shared/Folder2@kolab3.com
+mail: folder2@kolab3.com
+acl: anyone, read-only

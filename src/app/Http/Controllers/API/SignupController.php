@@ -4,12 +4,22 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\SignupVerificationEmail;
-use App\Jobs\SignupVerificationSMS;
+use App\Discount;
+use App\Domain;
+use App\Plan;
+use App\Providers\PaymentProvider;
+use App\Rules\SignupExternalEmail;
+use App\Rules\SignupToken as SignupTokenRule;
+use App\Rules\Password;
+use App\Rules\UserEmailDomain;
+use App\Rules\UserEmailLocal;
 use App\SignupCode;
+use App\SignupInvitation;
 use App\User;
-
+use App\Utils;
+use App\VatRate;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
@@ -18,9 +28,51 @@ use Illuminate\Support\Str;
  */
 class SignupController extends Controller
 {
-    /** @var SignupCode A verification code object */
-    protected $code;
+    /**
+     * Returns plans definitions for signup.
+     *
+     * @param \Illuminate\Http\Request $request HTTP request
+     *
+     * @return \Illuminate\Http\JsonResponse JSON response
+     */
+    public function plans(Request $request)
+    {
+        // Use reverse order just to have individual on left, group on right ;)
+        // But prefer monthly on left, yearly on right
+        $plans = Plan::withEnvTenantContext()->where('hidden', false)
+            ->orderBy('months')->orderByDesc('title')
+            ->get()
+            ->map(function ($plan) {
+                $button = self::trans("app.planbutton-{$plan->title}");
+                if (strpos($button, 'app.planbutton') !== false) {
+                    $button = self::trans('app.planbutton', ['plan' => $plan->name]);
+                }
 
+                return [
+                    'title' => $plan->title,
+                    'name' => $plan->name,
+                    'button' => $button,
+                    'description' => $plan->description,
+                    'mode' => $plan->mode ?: Plan::MODE_EMAIL,
+                    'isDomain' => $plan->hasDomain(),
+                ];
+            })
+            ->all();
+
+        return response()->json(['status' => 'success', 'plans' => $plans]);
+    }
+
+    /**
+     * Returns list of public domains for signup.
+     *
+     * @param \Illuminate\Http\Request $request HTTP request
+     *
+     * @return \Illuminate\Http\JsonResponse JSON response
+     */
+    public function domains(Request $request)
+    {
+        return response()->json(['status' => 'success', 'domains' => Domain::getPublicDomains()]);
+    }
 
     /**
      * Starts signup process.
@@ -28,57 +80,99 @@ class SignupController extends Controller
      * Verifies user name and email/phone, sends verification email/sms message.
      * Returns the verification code.
      *
-     * @param Illuminate\Http\Request HTTP request
+     * @param \Illuminate\Http\Request $request HTTP request
      *
      * @return \Illuminate\Http\JsonResponse JSON response
      */
     public function init(Request $request)
     {
-        // Check required fields
-        $v = Validator::make(
-            $request->all(),
-            [
-                'email' => 'required',
-                'name' => 'required',
-            ]
-        );
+        $rules = [
+            'first_name' => 'max:128',
+            'last_name' => 'max:128',
+            'voucher' => 'max:32',
+        ];
 
-        if ($v->fails()) {
-            return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
+        $plan = $this->getPlan();
+
+        if ($plan->mode == Plan::MODE_TOKEN) {
+            $rules['token'] = ['required', 'string', new SignupTokenRule($plan)];
+        } else {
+            $rules['email'] = ['required', 'string', new SignupExternalEmail()];
         }
 
-        // Validate user email (or phone)
-        if ($error = $this->validatePhoneOrEmail($request->email, $is_phone)) {
-            return response()->json(['status' => 'error', 'errors' => ['email' => $error]], 422);
+        // Check required fields, validate input
+        $v = Validator::make($request->all(), $rules);
+
+        if ($v->fails()) {
+            return response()->json(['status' => 'error', 'errors' => $v->errors()->toArray()], 422);
         }
 
         // Generate the verification code
         $code = SignupCode::create([
-                'data' => [
-                    'email' => $request->email,
-                    'name' => $request->name,
-                ]
+                'email' => $plan->mode == Plan::MODE_TOKEN ? $request->token : $request->email,
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+                'plan' => $plan->title,
+                'voucher' => $request->voucher,
         ]);
 
-        // Send email/sms message
-        if ($is_phone) {
-            SignupVerificationSMS::dispatch($code);
-        }
-        else {
+        $response = [
+            'status' => 'success',
+            'code' => $code->code,
+            'mode' => $plan->mode ?: 'email',
+        ];
+
+        if ($plan->mode == Plan::MODE_TOKEN) {
+            // Token verification, jump to the last step
+            $has_domain = $plan->hasDomain();
+
+            $response['short_code'] = $code->short_code;
+            $response['is_domain'] = $has_domain;
+            $response['domains'] = $has_domain ? [] : Domain::getPublicDomains();
+        } else {
+            // External email verification, send an email message
             SignupVerificationEmail::dispatch($code);
         }
 
-        return response()->json(['status' => 'success', 'code' => $code->code]);
+        return response()->json($response);
     }
+
+    /**
+     * Returns signup invitation information.
+     *
+     * @param string $id Signup invitation identifier
+     *
+     * @return \Illuminate\Http\JsonResponse|void
+     */
+    public function invitation($id)
+    {
+        $invitation = SignupInvitation::withEnvTenantContext()->find($id);
+
+        if (empty($invitation) || $invitation->isCompleted()) {
+            return $this->errorResponse(404);
+        }
+
+        $has_domain = $this->getPlan()->hasDomain();
+
+        $result = [
+            'id' => $id,
+            'is_domain' => $has_domain,
+            'domains' => $has_domain ? [] : Domain::getPublicDomains(),
+        ];
+
+        return response()->json($result);
+    }
+
 
     /**
      * Validation of the verification code.
      *
-     * @param Illuminate\Http\Request HTTP request
+     * @param \Illuminate\Http\Request $request HTTP request
+     * @param bool                     $update  Update the signup code record
      *
      * @return \Illuminate\Http\JsonResponse JSON response
      */
-    public function verify(Request $request)
+    public function verify(Request $request, $update = true)
     {
         // Validate the request args
         $v = Validator::make(
@@ -94,9 +188,10 @@ class SignupController extends Controller
         }
 
         // Validate the verification code
-        $code = SignupCode::find($request->code);
+        $code = SignupCode::withEnvTenantContext()->find($request->code);
 
-        if (empty($code)
+        if (
+            empty($code)
             || $code->isExpired()
             || Str::upper($request->short_code) !== Str::upper($code->short_code)
         ) {
@@ -105,143 +200,433 @@ class SignupController extends Controller
         }
 
         // For signup last-step mode remember the code object, so we can delete it
-        // with single SQL query (->delete()) instead of two (::destroy())
-        $this->code = $code;
+        // with single SQL query (->delete()) instead of two
+        $request->code = $code;
 
-        // Return user name and email/phone from the codes database on success
+        if ($update) {
+            $code->verify_ip_address = $request->ip();
+            $code->save();
+        }
+
+        $has_domain = $this->getPlan()->hasDomain();
+
+        // Return user name and email/phone/voucher from the codes database,
+        // domains list for selection and "plan type" flag
         return response()->json([
-            'status' => 'success',
-            'email' => $code->data['email'],
-            'name' => $code->data['name'],
+                'status' => 'success',
+                'email' => $code->email,
+                'first_name' => $code->first_name,
+                'last_name' => $code->last_name,
+                'voucher' => $code->voucher,
+                'is_domain' => $has_domain,
+                'domains' => $has_domain ? [] : Domain::getPublicDomains(),
         ]);
     }
 
     /**
-     * Finishes the signup process by creating the user account.
+     * Validates the input to the final signup request.
      *
-     * @param Illuminate\Http\Request HTTP request
+     * @param \Illuminate\Http\Request $request HTTP request
      *
      * @return \Illuminate\Http\JsonResponse JSON response
      */
-    public function signup(Request $request)
+    public function signupValidate(Request $request)
     {
+        $rules = [
+            'login' => 'required|min:2',
+            'password' => ['required', 'confirmed', new Password()],
+            'domain' => 'required',
+            'voucher' => 'max:32',
+        ];
+
+        // Direct signup by token
+        if ($request->token) {
+            // This will validate the token and the plan mode
+            $plan = $request->plan ? Plan::withEnvTenantContext()->where('title', $request->plan)->first() : null;
+            $rules['token'] = ['required', 'string', new SignupTokenRule($plan)];
+        }
+
         // Validate input
-        $v = Validator::make(
-            $request->all(),
-            [
-                'domain' => 'required|min:3',
-                'login' => 'required|min:2',
-                'password' => 'required|min:3|confirmed',
-            ]
-        );
+        $v = Validator::make($request->all(), $rules);
 
         if ($v->fails()) {
             return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
         }
 
-        $login = $request->login . '@' . $request->domain;
+        $settings = [];
 
-        // Validate login (email)
-        if ($error = $this->validateEmail($login, true)) {
-            return response()->json(['status' => 'error', 'errors' => ['login' => $error]], 422);
+        if (!empty($request->token)) {
+            $settings = ['signup_token' => strtoupper($request->token)];
+        } elseif (!empty($request->plan) && empty($request->code) && empty($request->invitation)) {
+            // Plan parameter is required/allowed in mandate mode
+            $plan = Plan::withEnvTenantContext()->where('title', $request->plan)->first();
+
+            if (!$plan || $plan->mode != Plan::MODE_MANDATE) {
+                $msg = self::trans('validation.exists', ['attribute' => 'plan']);
+                return response()->json(['status' => 'error', 'errors' => ['plan' => $msg]], 422);
+            }
+        } elseif ($request->invitation) {
+            // Signup via invitation
+            $invitation = SignupInvitation::withEnvTenantContext()->find($request->invitation);
+
+            if (empty($invitation) || $invitation->isCompleted()) {
+                return $this->errorResponse(404);
+            }
+
+            // Check required fields
+            $v = Validator::make(
+                $request->all(),
+                [
+                    'first_name' => 'max:128',
+                    'last_name' => 'max:128',
+                ]
+            );
+
+            $errors = $v->fails() ? $v->errors()->toArray() : [];
+
+            if (!empty($errors)) {
+                return response()->json(['status' => 'error', 'errors' => $errors], 422);
+            }
+
+            $settings = [
+                'external_email' => $invitation->email,
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+            ];
+        } else {
+            // Validate verification codes (again)
+            $v = $this->verify($request, false);
+            if ($v->status() !== 200) {
+                return $v;
+            }
+
+            $plan = $this->getPlan();
+
+            // Get user name/email from the verification code database
+            $code_data = $v->getData();
+
+            $settings = [
+                'first_name' => $code_data->first_name,
+                'last_name' => $code_data->last_name,
+            ];
+
+            if ($plan->mode == Plan::MODE_TOKEN) {
+                $settings['signup_token'] = strtoupper($code_data->email);
+            } else {
+                $settings['external_email'] = $code_data->email;
+            }
         }
 
-        // Validate verification codes (again)
-        $v = $this->verify($request);
+        // Find the voucher discount
+        if ($request->voucher) {
+            $discount = Discount::where('code', \strtoupper($request->voucher))
+                ->where('active', true)->first();
+
+            if (!$discount) {
+                $errors = ['voucher' => self::trans('validation.voucherinvalid')];
+                return response()->json(['status' => 'error', 'errors' => $errors], 422);
+            }
+        }
+
+        if (empty($plan)) {
+            $plan = $this->getPlan();
+        }
+
+        $is_domain = $plan->hasDomain();
+
+        // Validate login
+        if ($errors = self::validateLogin($request->login, $request->domain, $is_domain)) {
+            return response()->json(['status' => 'error', 'errors' => $errors], 422);
+        }
+
+        // Set some properties for signup() method
+        $request->settings = $settings;
+        $request->plan = $plan;
+        $request->discount = $discount ?? null;
+        $request->invitation = $invitation ?? null;
+
+        $result = [];
+
+        if ($plan->mode == Plan::MODE_MANDATE) {
+            $result = $this->mandateForPlan($plan, $request->discount);
+        }
+
+        return response()->json($result + ['status' => 'success']);
+    }
+
+    /**
+     * Finishes the signup process by creating the user account.
+     *
+     * @param \Illuminate\Http\Request $request HTTP request
+     *
+     * @return \Illuminate\Http\JsonResponse JSON response
+     */
+    public function signup(Request $request)
+    {
+        $v = $this->signupValidate($request);
         if ($v->status() !== 200) {
             return $v;
         }
 
-        $code_data  = $v->getData();
-        $user_name  = $code_data->name;
-        $user_email = $code_data->email;
+        $is_domain = $request->plan->hasDomain();
 
         // We allow only ASCII, so we can safely lower-case the email address
-        $login = Str::lower($login);
+        $login = Str::lower($request->login);
+        $domain_name = Str::lower($request->domain);
+        $domain = null;
+        $user_status = User::STATUS_RESTRICTED;
 
-        $user = User::create(
-            [
-                // TODO: Save the external email (or phone)
-                'name' => $user_name,
-                'email' => $login,
+        if (
+            $request->discount && $request->discount->discount == 100
+            && $request->plan->mode == Plan::MODE_MANDATE
+        ) {
+            $user_status = User::STATUS_ACTIVE;
+        }
+
+        DB::beginTransaction();
+
+        // Create domain record
+        if ($is_domain) {
+            $domain = Domain::create([
+                    'namespace' => $domain_name,
+                    'type' => Domain::TYPE_EXTERNAL,
+            ]);
+        }
+
+        // Create user record
+        $user = User::create([
+                'email' => $login . '@' . $domain_name,
                 'password' => $request->password,
-            ]
+                'status' => $user_status,
+        ]);
+
+        if ($request->discount) {
+            $wallet = $user->wallets()->first();
+            $wallet->discount()->associate($request->discount);
+            $wallet->save();
+        }
+
+        $user->assignPlan($request->plan, $domain);
+
+        // Save the external email and plan in user settings
+        $user->setSettings($request->settings);
+
+        // Update the invitation
+        if ($request->invitation) {
+            $request->invitation->status = SignupInvitation::STATUS_COMPLETED;
+            $request->invitation->user_id = $user->id;
+            $request->invitation->save();
+        }
+
+        // Soft-delete the verification code, and store some more info with it
+        if ($request->code) {
+            $request->code->user_id = $user->id;
+            $request->code->submit_ip_address = $request->ip();
+            $request->code->deleted_at = \now();
+            $request->code->timestamps = false;
+            $request->code->save();
+        }
+
+        // Bump up counter on the signup token
+        if (!empty($request->settings['signup_token'])) {
+            \App\SignupToken::where('id', $request->settings['signup_token'])->increment('counter');
+        }
+
+        DB::commit();
+
+        $response = AuthController::logonResponse($user, $request->password);
+
+        if ($request->plan->mode == Plan::MODE_MANDATE) {
+            $data = $response->getData(true);
+            $data['checkout'] = $this->mandateForPlan($request->plan, $request->discount, $user);
+            $response->setData($data);
+        }
+
+        return $response;
+    }
+
+    /**
+     * Collects some content to display to the user before redirect to a checkout page.
+     * Optionally creates a recurrent payment mandate for specified user/plan.
+     */
+    protected function mandateForPlan(Plan $plan, Discount $discount = null, User $user = null): array
+    {
+        $result = [];
+
+        $min = \App\Payment::MIN_AMOUNT;
+        $planCost = $cost = $plan->cost();
+        $disc = 0;
+
+        if ($discount) {
+            // Free accounts don't need the auto-payment mandate
+            // Note: This means the voucher code is the only point of user verification
+            if ($discount->discount == 100) {
+                return [
+                    'content' => self::trans('app.signup-account-free'),
+                    'cost' => 0,
+                ];
+            }
+
+            $planCost = (int) ($planCost * (100 - $discount->discount) / 100);
+            $disc = $cost - $planCost;
+        }
+
+        if ($planCost > $min) {
+            $min = $planCost;
+        }
+
+        if ($user) {
+            $wallet = $user->wallets()->first();
+            $wallet->setSettings([
+                'mandate_amount' => sprintf('%.2F', round($min / 100, 2)),
+                'mandate_balance' => 0,
+            ]);
+
+            $mandate = [
+                'currency' => $wallet->currency,
+
+                'description' => \App\Tenant::getConfig($user->tenant_id, 'app.name')
+                    . ' ' . self::trans('app.mandate-description-suffix'),
+
+                'methodId' => PaymentProvider::METHOD_CREDITCARD,
+                'redirectUrl' => Utils::serviceUrl('/payment/status', $user->tenant_id),
+            ];
+
+            $provider = PaymentProvider::factory($wallet);
+
+            $result = $provider->createMandate($wallet, $mandate);
+        }
+
+        $country = Utils::countryForRequest();
+        $period = $plan->months == 12 ? 'yearly' : 'monthly';
+        $currency = \config('app.currency');
+        $rate = VatRate::where('country', $country)
+            ->where('start', '<=', now()->format('Y-m-d h:i:s'))
+            ->orderByDesc('start')
+            ->limit(1)
+            ->first();
+
+        $summary = '<tr class="subscription">'
+                . '<td>' . self::trans("app.signup-subscription-{$period}") . '</td>'
+                . '<td class="money">' . Utils::money($cost, $currency) . '</td>'
+            . '</tr>';
+
+        if ($discount) {
+            $summary .= '<tr class="discount">'
+                . '<td>' . self::trans('app.discount-code', ['code' => $discount->code]) . '</td>'
+                . '<td class="money">' . Utils::money(-$disc, $currency) . '</td>'
+            . '</tr>';
+        }
+
+        $summary .= '<tr class="sep"><td colspan="2"></td></tr>'
+            . '<tr class="total">'
+                . '<td>' . self::trans('app.total') . '</td>'
+                . '<td class="money">' . Utils::money($planCost, $currency) . '</td>'
+            . '</tr>';
+
+        if ($rate && $rate->rate > 0) {
+            // TODO: app.vat.mode
+            $vat = (int) round($planCost * $rate->rate / 100);
+            $content = self::trans('app.vat-incl', [
+                    'rate' => Utils::percent($rate->rate),
+                    'cost' => Utils::money($planCost - $vat, $currency),
+                    'vat' => Utils::money($vat, $currency),
+            ]);
+
+            $summary .= '<tr class="vat-summary"><td colspan="2">*' . $content . '</td></tr>';
+        }
+
+        $trialEnd = $plan->free_months ? now()->copy()->addMonthsWithoutOverflow($plan->free_months) : now();
+        $params = [
+            'cost' => Utils::money($planCost, $currency),
+            'date' => $trialEnd->toDateString(),
+        ];
+
+        $result['title'] = self::trans("app.signup-plan-{$period}");
+        $result['content'] = self::trans('app.signup-account-mandate', $params);
+        $result['summary'] = '<table>' . $summary . '</table>';
+        $result['cost'] = $planCost;
+
+        return $result;
+    }
+
+    /**
+     * Returns plan for the signup process
+     *
+     * @returns \App\Plan Plan object selected for current signup process
+     */
+    protected function getPlan()
+    {
+        $request = request();
+
+        if (!$request->plan || !$request->plan instanceof Plan) {
+            // Get the plan if specified and exists...
+            if (($request->code instanceof SignupCode) && $request->code->plan) {
+                $plan = Plan::withEnvTenantContext()->where('title', $request->code->plan)->first();
+            } elseif ($request->plan) {
+                $plan = Plan::withEnvTenantContext()->where('title', $request->plan)->first();
+            }
+
+            // ...otherwise use the default plan
+            if (empty($plan)) {
+                // TODO: Get default plan title from config
+                $plan = Plan::withEnvTenantContext()->where('title', 'individual')->first();
+            }
+
+            $request->plan = $plan;
+        }
+
+        return $request->plan;
+    }
+
+    /**
+     * Login (kolab identity) validation
+     *
+     * @param string $login    Login (local part of an email address)
+     * @param string $domain   Domain name
+     * @param bool   $external Enables additional checks for domain part
+     *
+     * @return array Error messages on validation error
+     */
+    protected static function validateLogin($login, $domain, $external = false): ?array
+    {
+        // Validate login part alone
+        $v = Validator::make(
+            ['login' => $login],
+            ['login' => ['required', 'string', new UserEmailLocal($external)]]
         );
 
-        // Remove the verification code
-        $this->code->delete();
-
-        $token = auth()->login($user);
-
-        return response()->json([
-                'access_token' => $token,
-                'token_type' => 'bearer',
-                'expires_in' => Auth::guard()->factory()->getTTL() * 60,
-        ]);
-    }
-
-    /**
-     * Checks if the input string is a valid email address or a phone number
-     *
-     * @param string $email     Email address or phone number
-     * @param bool   &$is_phone Will be set to True if the string is valid phone number
-     *
-     * @return string Error message on validation error
-     */
-    protected function validatePhoneOrEmail($input, &$is_phone = false)
-    {
-        $is_phone = false;
-
-        if (strpos($input, '@')) {
-            return $this->validateEmail($input);
+        if ($v->fails()) {
+            return ['login' => $v->errors()->toArray()['login'][0]];
         }
 
-        $input = str_replace(array('-', ' '), '', $input);
+        $domains = $external ? null : Domain::getPublicDomains();
 
-        if (!preg_match('/^\+?[0-9]{9,12}$/', $input)) {
-            return __('validation.noemailorphone');
-        }
-
-        $is_phone = true;
-    }
-
-    /**
-     * Email address validation
-     *
-     * @param string $email  Email address
-     * @param bool   $signup Enables additional checks for signup mode
-     *
-     * @return string Error message on validation error
-     */
-    protected function validateEmail($email, $signup = false)
-    {
-        $v = Validator::make(['email' => $email], ['email' => 'required|email']);
+        // Validate the domain
+        $v = Validator::make(
+            ['domain' => $domain],
+            ['domain' => ['required', 'string', new UserEmailDomain($domains)]]
+        );
 
         if ($v->fails()) {
-            return __('validation.emailinvalid');
+            return ['domain' => $v->errors()->toArray()['domain'][0]];
         }
 
-        // Extended checks for an address that is supposed to become a login to Kolab
-        if ($signup) {
-            list($local, $domain) = explode('@', $email);
+        $domain = Str::lower($domain);
 
-            // Local part validation
-            if (!preg_match('/^[A-Za-z0-9_.-]+$/', $local)) {
-                return __('validation.emailinvalid');
+        // Check if domain is already registered with us
+        if ($external) {
+            if (Domain::withTrashed()->where('namespace', $domain)->exists()) {
+                return ['domain' => self::trans('validation.domainexists')];
             }
-
-            // Check if the local part is not one of exceptions
-            $exceptions = '/^(admin|administrator|sales|root)$/i';
-            if (preg_match($exceptions, $local)) {
-                return __('validation.emailexists');
-            }
-
-            // Check if user with specified login already exists
-            if (User::where('email', $email)->first()) {
-                return __('validation.emailexists');
-            }
-
-            // TODO: check if specified domain is ours
         }
+
+        // Check if user with specified login already exists
+        $email = $login . '@' . $domain;
+        if (User::emailExists($email) || User::aliasExists($email) || \App\Group::emailExists($email)) {
+            return ['login' => self::trans('validation.loginexists')];
+        }
+
+        return null;
     }
 }

@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
+// phpcs:ignore
 class CreateUserSettingsTable extends Migration
 {
     /**
@@ -18,16 +19,15 @@ class CreateUserSettingsTable extends Migration
             function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->bigInteger('user_id');
-
-                $table->foreign('user_id')
-                    ->references('id')
-                    ->on('users')
-                    ->onDelete('cascade')
-                    ->onUpdate('cascade');
-
                 $table->string('key');
                 $table->string('value');
-                $table->timestamps();
+                $table->timestamp('created_at')->useCurrent();
+                $table->timestamp('updated_at')->useCurrent();
+
+                $table->foreign('user_id')->references('id')->on('users')
+                    ->onDelete('cascade')->onUpdate('cascade');
+
+                $table->unique(['user_id', 'key']);
             }
         );
     }

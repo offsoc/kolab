@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
+// phpcs:ignore
 class CreateWalletTable extends Migration
 {
     /**
@@ -19,22 +20,12 @@ class CreateWalletTable extends Migration
                 $table->string('id', 36);
                 $table->string('description', 128)->nullable();
                 $table->string('currency', 4);
-                $table->decimal('balance', 8, 2);
+                $table->integer('balance');
                 $table->bigInteger('user_id');
-            }
-        );
 
-        Schema::table(
-            'wallets',
-            function (Blueprint $table) {
                 $table->primary('id');
                 $table->index('user_id');
-            }
-        );
 
-        Schema::table(
-            'wallets',
-            function (Blueprint $table) {
                 $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             }
         );

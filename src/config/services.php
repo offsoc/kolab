@@ -34,4 +34,41 @@ return [
         'secret' => env('SPARKPOST_SECRET'),
     ],
 
+    'payment_provider' => env('PAYMENT_PROVIDER', 'mollie'),
+
+    'mollie' => [
+        'key' => env('MOLLIE_KEY'),
+    ],
+
+    'stripe' => [
+        'key' => env('STRIPE_KEY'),
+        'public_key' => env('STRIPE_PUBLIC_KEY'),
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+    ],
+
+    'coinbase' => [
+        'key' => env('COINBASE_KEY'),
+        'webhook_secret' => env('COINBASE_WEBHOOK_SECRET'),
+        'api_verify_tls' => env('COINBASE_VERIFY_TLS', true),
+    ],
+
+    'openexchangerates' => [
+        'api_key' => env('OPENEXCHANGERATES_API_KEY', null),
+    ],
+
+    'dav' => [
+        'uri' => env('DAV_URI', 'https://proxy/'),
+    ],
+
+    'activesync' => [
+        'uri' => env('ACTIVESYNC_URI', 'https://proxy/Microsoft-Server-ActiveSync'),
+    ],
+
+    'wopi' => [
+        'uri' => env('WOPI_URI', 'http://roundcube/chwala/'),
+    ],
+
+    'webmail' => [
+        'uri' => env('WEBMAIL_URI', 'http://roundcube/roundcubemail/'),
+    ]
 ];

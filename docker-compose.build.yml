@@ -1,0 +1,37 @@
+version: '3'
+services:
+  swoole:
+    build:
+      context: ./docker/swoole/
+    image: apheleia/swoole
+  almalinux8:
+    build:
+      context: ./docker/base/
+      dockerfile: almalinux8
+    image: apheleia/almalinux8
+  almalinux9:
+    build:
+      context: ./docker/base/
+      dockerfile: almalinux9
+    image: apheleia/almalinux9
+  tests:
+    build:
+      context: ./docker/tests/
+    container_name: kolab-tests
+    image: kolab-tests
+  fluentbit:
+    build:
+      context: ./docker/fluentbit/
+    container_name: fluentbit
+    image: fluentbit
+  utils:
+    build:
+      context: ./docker/utils/
+    container_name: kolab-utils
+    image: kolab-utils
+    dns: 172.18.0.11
+    extra_hosts:
+      - "${APP_DOMAIN}:172.18.0.7"
+    networks:
+      kolab:
+        ipv4_address: 172.18.0.27

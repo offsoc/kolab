@@ -1,0 +1,17 @@
+FROM almalinux:9
+
+LABEL maintainer="contact@apheleia-it.ch"
+
+ENV LANG=C.utf8
+ENV LC_ALL=C.utf8
+
+# Add EPEL.
+RUN dnf -y install 'dnf-command(config-manager)' && \
+    dnf config-manager --set-enabled crb && \
+    dnf -y install epel-release && \
+    dnf -y install iputils vim-enhanced bind-utils procps-ng tcpdump telnet mc && \
+    dnf clean all && \
+    rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-9
+
+RUN sed -i -r -e 's/^SELINUX=.*$/SELINUX=permissive/g' /etc/selinux/config 2>/dev/null || :
+

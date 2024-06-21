@@ -1,0 +1,6 @@
+version: '3'
+services:
+  roundcube:
+    networks:
+      kolab:
+        ipv4_address: 172.18.0.31

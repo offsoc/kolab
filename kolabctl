@@ -1,0 +1,101 @@
+#!/bin/bash
+
+set -e
+
+CONFIG=${CONFIG:-"config.prod"}
+HOST=${HOST:-"kolab.local"}
+BRANCH=${BRANCH:-"master"}
+
+kolab__deploy() {
+    echo "Please enter your new admin password for the admin@$HOST user:"
+    read -r ADMIN_PASSWORD
+    echo "Deploying $CONFIG from branch $BRANCH on $HOST"
+    command env KOLAB_GIT_REF=$BRANCH HOST=$HOST ADMIN_PASSWORD="$ADMIN_PASSWORD" bin/configure.sh "$CONFIG"
+    command env ADMIN_PASSWORD="$ADMIN_PASSWORD" bin/deploy.sh
+}
+
+kolab__start() {
+    command bin/start.sh
+}
+
+kolab__stop() {
+    command bin/stop.sh
+}
+
+kolab__update() {
+    command bin/update.sh
+}
+
+kolab__backup() {
+    command bin/backup.sh
+}
+
+kolab__restore() {
+    command bin/restore.sh
+}
+
+kolab__selfcheck() {
+    command bin/selfcheck.sh
+}
+
+kolab__ps() {
+    command docker compose ps
+}
+
+kolab__exec() {
+    command docker compose exec -ti $@
+}
+
+kolab__run() {
+    command docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.build.yml run --rm -ti $@
+}
+
+kolab__build() {
+    command docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.build.yml build $@
+}
+
+kolab__cyradm() {
+    # command docker compose exec -ti imap cyradm --auth PLAIN -u admin@kolab.local -w simple123  --port 11143 localhost
+    if [[ "$@" ]]; then
+        command docker compose exec -ti imap echo "$@" | cyradm --auth PLAIN -u $(grep IMAP_ADMIN_LOGIN .env | cut -d '=' -f 2 ) -w $(grep IMAP_ADMIN_PASSWORD .env | cut -d '=' -f 2 )  --port 11143 localhost
+    else
+        command docker compose exec -ti imap cyradm --auth PLAIN -u $(grep IMAP_ADMIN_LOGIN .env | cut -d '=' -f 2 ) -w $(grep IMAP_ADMIN_PASSWORD .env | cut -d '=' -f 2 )  --port 11143 localhost
+    fi
+}
+
+kolab__shell() {
+    command docker compose exec -ti $1 /bin/bash
+}
+
+kolab__logs() {
+    command docker compose logs -f $1
+}
+
+
+kolab__help() {
+    cat <<EOF
+  This is the kolab commandline utility.
+
+  The following commands are available:
+    deploy: Deploy kolab
+    start: Start all containers
+    stop: Stop all containers
+    update: This will update all containers.
+    backup: Create a backup in backup/
+    restore: Restore a backup from backup/
+    selfcheck: Run a selfcheck to ensure kolab is functional
+EOF
+}
+
+cmdname=$1
+shift
+
+# make sure we actually *did* get passed a valid function name
+if declare -f "kolab__$cmdname" >/dev/null 2>&1; then
+    "kolab__$cmdname" "${@:1}"
+else
+    echo "Function $cmdname not recognized" >&2
+    kolab__help
+    exit 1
+fi
+

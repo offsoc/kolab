@@ -1,0 +1,19 @@
+{
+    "menu": [
+        {
+            "label": "support",
+            "location": "/support",
+            "page": "support",
+            "admin": true,
+            "reseller": true
+        }
+    ],
+    "faq": {
+        "signup": [
+            {
+                "href": "/support",
+                "label": "support"
+            }
+        ]
+    }
+}

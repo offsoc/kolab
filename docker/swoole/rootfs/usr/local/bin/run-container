@@ -1,0 +1,38 @@
+#!/bin/bash
+
+set -x
+
+set -e
+
+if [ -z "$@" ]; then
+    cd $(basename ${GIT_URI} .git)
+
+    if [ ! -z "${APP_SRC}" ]; then
+        cd ${APP_SRC}
+    fi
+
+    if [ ! -f ".env" -a -f ".env.example" ]; then
+        mv .env.example .env
+    fi
+
+    if [ -z "${APP_KEY}" ]; then
+        ./artisan key:generate
+        unset APP_KEY
+    fi
+
+    ./artisan clear-compiled
+
+    # This should not occur in production
+    #./artisan cache:clear
+
+    # A standalone environment doesn't have anything to ping
+    #timeout 10m ./artisan db:ping --wait
+
+    ./artisan migrate
+
+    env
+
+    exec ./artisan octane:start
+else
+    exec $@
+fi

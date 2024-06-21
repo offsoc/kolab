@@ -1,0 +1,492 @@
+#!/bin/bash
+
+base_dir="$(dirname $(realpath "$0"))"
+pushd "${base_dir}"
+pushd ..
+
+set -e
+set -x
+
+PASSPORT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----
+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
+bakhie7hJBP7BoOup+dD5NQPlXBQ434=
+-----END PRIVATE KEY-----"
+PASSPORT_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----
+MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEApmHkae115z3vMF9IjiUa
+XrJH1Ljifxqs+XbDCFhQenz2iOf/bZDBMqfrwhBe3hVywa13kIuhf1TZlcJ/nRhE
+IZIbg6BF6/GeHN998Cx/IjhBeFkG7f1hdxEXY5ibd7yq8vAfzizZpnCu4+LM/NvI
+ei9mU+hj3GxrDbpMQTHCDDqX5aNEix8uFU4XaOm9UOJw9ivz19cqcnxWqJ49znxw
+XUlS5k4Hewbwf2s2BWFhz+CDWPHMpWViLQ17qj5QRklNn39sUymP1kXKP3Y76zvW
+zNVniPvFt+hHixxEa7tUEaTdtk4FgkNnWy0bFa7DIPC8ukjHvHHg10LeQiygDduI
+xbdVJwYK/qitU68ZAbbufldlj2FoVLwSyP9qpxUIdRoljCop1kDu6xQiAq0VHEAV
+LtgMpZhtD/6D4z644QJ8atx4Ljp/HEtTngaTh+/vLc9AnhHclX0/JmlbP1VkWWxG
+9FIxS0TVPolRBs8948kLioTif9lrltJicxd6T0OuA5fny8l6hdSlzaD3pnr5pkYw
+mVn5FgBAFnd/skX6DsRs+eb2lNahkvNZZ15z9UeU2Rl6J9uBx0vbkcB7eiSCPhRM
+IKq/CtkyEgz8ce4kG18fJHDFDASRvGjaBu91lV5h7NLmhFLFzMvb7XoHrv/yD6TV
+E5W47J/DrfrevJkzS1GV++MCAwEAAQ==
+-----END PUBLIC KEY-----"
+KOLAB_GIT_REF=dev/mollekopf
+KOLAB_GIT_REMOTE=https://git.kolab.org/source/kolab
+GIT_REF_ROUNDCUBEMAIL=dev/kolab-1.5
+GIT_REMOTE_ROUNDCUBEMAIL=https://git.kolab.org/source/roundcubemail.git
+GIT_REF_ROUNDCUBEMAIL_PLUGINS=master
+GIT_REMOTE_ROUNDCUBEMAIL_PLUGINS=https://git.kolab.org/diffusion/RPK/roundcubemail-plugins-kolab.git
+GIT_REF_CHWALA=dev/mollekopf
+GIT_REMOTE_CHWALA=https://git.kolab.org/diffusion/C/chwala.git
+GIT_REF_SYNCROTON=master
+GIT_REMOTE_SYNCROTON=https://git.kolab.org/diffusion/S/syncroton.git
+GIT_REF_AUTOCONF=master
+GIT_REMOTE_AUTOCONF=https://git.kolab.org/diffusion/AC/autoconf.git
+GIT_REF_IRONY=master
+GIT_REMOTE_IRONY=https://git.kolab.org/source/iRony.git
+GIT_REF_FREEBUSY=master
+GIT_REMOTE_FREEBUSY=https://git.kolab.org/diffusion/F/freebusy.git
+IMAP_GIT_REF=dev/mollekopf
+IMAP_GIT_REMOTE=https://git.kolab.org/source/cyrus-imapd
+
+PODMAN="podman"
+
+# Teardown the currently running environment
+kolab__teardown() {
+    $PODMAN pod rm --force tests
+    $PODMAN pod rm --force dev
+}
+
+# Build all containers required for testing
+kolab__build() {
+    $PODMAN build docker/base/ -f almalinux9 -t apheleia/almalinux9
+    $PODMAN build docker/swoole/ -t apheleia/swoole
+
+    $PODMAN build --ulimit nofile=65535:65535 docker/webapp -t kolab-webapp \
+        ${KOLAB_GIT_REMOTE:+"--build-arg=GIT_REMOTE=$KOLAB_GIT_REMOTE"} \
+        ${KOLAB_GIT_REF:+"--build-arg=GIT_REF=$KOLAB_GIT_REF"}
+    $PODMAN build --ulimit nofile=65535:65535 docker/meet -t kolab-meet \
+        ${KOLAB_GIT_REMOTE:+"--build-arg=GIT_REMOTE=$KOLAB_GIT_REMOTE"} \
+        ${KOLAB_GIT_REF:+"--build-arg=GIT_REF=$KOLAB_GIT_REF"}
+    $PODMAN build docker/imap -t kolab-imap
+    $PODMAN build docker/mariadb -t mariadb
+    $PODMAN build docker/redis -t redis
+    $PODMAN build docker/proxy -t kolab-proxy
+
+    $PODMAN build --ulimit nofile=65535:65535 docker/tests -t kolab-tests
+    $PODMAN build --ulimit nofile=65535:65535 docker/roundcube -t roundcube
+
+    env CERT_DIR=ci/certs APP_DOMAIN=kolab.local bin/regen-certs
+}
+
+# Setup the test environment
+kolab__setup() {
+    kolab__teardown
+    echo "Build"
+    kolab__build
+    echo "Setup"
+
+    POD=tests
+
+    # Create the pod first
+    $PODMAN pod create --name $POD
+
+    podman__run_mariadb
+    podman__run_redis
+
+    podman__healthcheck mariadb redis
+
+    podman__run_webapp config.demo
+    podman__healthcheck webapp
+
+    podman__run_imap
+    podman__healthcheck imap
+
+    # Ensure all commands are processed
+    echo "Flushing work queue"
+    $PODMAN exec -ti webapp ./artisan queue:work --stop-when-empty
+
+    podman__run_minio
+    podman__healthcheck minio
+
+    # Validate the test environment 
+    kolab__validate
+}
+
+
+# "testsuite"
+# "quicktest"
+# "tests/Feature/Jobs/WalletCheckTest.php"
+kolab__test() {
+    $PODMAN run -ti --pod tests --name kolab-tests --replace \
+        --env-file=ci/env \
+        -v ./src:/src/kolabsrc.orig:ro \
+        -e APP_SERVICES_DOMAINS="localhost" \
+        -e PASSPORT_PRIVATE_KEY="$PASSPORT_PRIVATE_KEY" \
+        -e PASSPORT_PUBLIC_KEY="$PASSPORT_PUBLIC_KEY" \
+        kolab-tests:latest /init.sh $@
+}
+
+kolab__proxytest() {
+    $PODMAN run -ti --pod tests --name proxy-tests --replace \
+        -v ./ci/certs/:/etc/certs/:ro \
+        --env-file=ci/env \
+        -e SSL_CERTIFICATE=/etc/certs/imap.hosted.com.cert \
+        -e SSL_CERTIFICATE_KEY=/etc/certs/imap.hosted.com.key \
+        kolab-proxy:latest /init.sh validate
+}
+
+kolab__lint() {
+    kolab__test lint
+}
+
+# Setup the test environment and run a complete testsuite
+kolab__testrun() {
+    echo "Setup"
+    kolab__setup
+    echo "Test"
+    kolab__test testsuite
+}
+
+# Setup the test environment and run all testsuites
+kolab__testrun_complete() {
+    echo "Setup"
+    kolab__setup
+    echo "Test"
+    kolab__test lint
+    kolab__test testsuite
+    kolab__rctest syncroton lint
+    kolab__rctest syncroton testsuite
+    kolab__rctest irony lint
+    # kolab__rctest irony testsuite
+    kolab__rctest roundcubemail-plugins-kolab lint
+    # kolab__rctest roundcubemail-plugins-kolab testsuite
+}
+
+
+# Get a shell inside the test container to run/debug tests
+kolab__shell() {
+    kolab__test shell
+}
+
+# Run the roundcube testsuite
+kolab__rctest() {
+    $PODMAN run -t --pod tests --name roundcube --replace \
+        -v ./ext:/src.orig:ro \
+        -e APP_DOMAIN=kolab.local \
+        -e DES_KEY=kBxUM/53N9p9abusAoT0ZEAxwI2pxFz/ \
+        -e DB_HOST=127.0.0.1 \
+        -e DB_RC_DATABASE=roundcube \
+        -e DB_RC_USERNAME=roundcube \
+        -e DB_RC_PASSWORD=simple123 \
+        -e IMAP_HOST=localhost \
+        -e IMAP_PORT=11143 \
+        -e IMAP_ADMIN_LOGIN=cyrus-admin \
+        -e IMAP_ADMIN_PASSWORD=simple123 \
+        -e IMAP_DEBUG=false \
+        -e SQL_DEBUG=false \
+        -e ACTIVESYNC_DEBUG=false \
+        -e RUN_MIGRATIONS=true \
+        -e MAIL_HOST=localhost \
+        -e MAIL_PORT=10587 \
+        -e FILEAPI_WOPI_OFFICE=https://kolab.local \
+        -e CALENDAR_CALDAV_SERVER=http://imap:11080/dav \
+        -e KOLAB_ADDRESSBOOK_CARDDAV_SERVER=http://imap:11080/dav \
+        roundcube:latest ./init.sh $@
+}
+
+# Get a shell inside the roundcube test container to run/debug tests
+kolab__rcshell() {
+    $PODMAN run -ti --pod tests --name roundcube --replace \
+        -v ./ext:/src.orig:ro \
+        -e APP_DOMAIN=kolab.local \
+        -e DES_KEY=kBxUM/53N9p9abusAoT0ZEAxwI2pxFz/ \
+        -e DB_HOST=127.0.0.1 \
+        -e DB_RC_DATABASE=roundcube \
+        -e DB_RC_USERNAME=roundcube \
+        -e DB_RC_PASSWORD=simple123 \
+        -e IMAP_HOST=localhost \
+        -e IMAP_PORT=11143 \
+        -e IMAP_ADMIN_LOGIN=cyrus-admin \
+        -e IMAP_ADMIN_PASSWORD=simple123 \
+        -e MAIL_HOST=localhost \
+        -e MAIL_PORT=10587 \
+        -e FILEAPI_WOPI_OFFICE=https://kolab.local \
+        -e CALENDAR_CALDAV_SERVER=http://localhost:11080/dav \
+        -e KOLAB_ADDRESSBOOK_CARDDAV_SERVER=http://localhost:11080/dav \
+        roundcube:latest ./init.sh shell
+}
+
+kolab__validate() {
+    $PODMAN exec imap testsaslauthd -u cyrus-admin -p simple123
+    $PODMAN exec imap testsaslauthd -u "john@kolab.org" -p simple123
+    # Ensure the inbox is created
+    FOUND=false
+    for i in {1..60}; do
+        if $PODMAN exec imap bash -c 'echo "lm" | cyradm --auth PLAIN -u cyrus-admin -w simple123 --port 11143 localhost | grep "user/john@kolab.org"'; then
+            echo "Found mailbox";
+            FOUND=true
+            break
+        else
+            echo "Waiting for mailbox";
+            sleep 1;
+        fi
+    done
+    if ! $FOUND; then
+        echo "Failed to find the inbox for john@kolab.org"
+        exit 1
+    fi
+}
+
+podman__healthcheck() {
+    for CONTAINER in $@; do
+        echo "Waiting for ${CONTAINER} become healthy "
+        while [ $(podman healthcheck run ${CONTAINER}) ]; do
+            echo -n "."; sleep 5;
+        done
+    done
+}
+
+podman__run_proxy() {
+    $PODMAN run -dt --pod $POD --name proxy --replace \
+        -v ./ci/certs:/etc/certs:ro \
+        -e APP_WEBSITE_DOMAIN="kolab.local" \
+        -e SSL_CERTIFICATE="/etc/certs/imap.hosted.com.cert" \
+        -e SSL_CERTIFICATE_KEY="/etc/certs/imap.hosted.com.key" \
+        -e WEBAPP_BACKEND="http://localhost:8000" \
+        -e MEET_BACKEND="https://localhost:12443" \
+        -e ROUNDCUBE_BACKEND="http://localhost:8080" \
+        -e DAV_BACKEND="http://localhost:11080/dav" \
+        -e COLLABORA_BACKEND="http://localhost:9980" \
+        kolab-proxy:latest
+}
+
+podman__run_roundcube() {
+    $PODMAN run -dt --pod $POD --name roundcube --replace \
+        -v ./ext:/src.orig:ro \
+        -e APP_DOMAIN=kolab.local \
+        -e DES_KEY=kBxUM/53N9p9abusAoT0ZEAxwI2pxFz/ \
+        -e DB_HOST=127.0.0.1 \
+        -e DB_RC_DATABASE=roundcube \
+        -e DB_RC_USERNAME=roundcube \
+        -e DB_RC_PASSWORD=simple123 \
+        -e IMAP_HOST=localhost \
+        -e IMAP_PORT=11143 \
+        -e IMAP_ADMIN_LOGIN=cyrus-admin \
+        -e IMAP_ADMIN_PASSWORD=simple123 \
+        -e MAIL_HOST=localhost \
+        -e MAIL_PORT=10587 \
+        -e IMAP_DEBUG=true \
+        -e FILEAPI_WOPI_OFFICE=https://kolab.local \
+        -e CALENDAR_CALDAV_SERVER=http://imap:11080/dav \
+        -e KOLAB_ADDRESSBOOK_CARDDAV_SERVER=http://imap:11080/dav \
+        roundcube:latest
+}
+
+podman__run_mariadb() {
+    $PODMAN run -dt --pod $POD --name mariadb --replace \
+        --mount=type=tmpfs,tmpfs-size=512M,destination=/var/lib/mysql,U=true \
+        -e MYSQL_ROOT_PASSWORD=simple123 \
+        -e TZ="+02:00" \
+        -e DB_HKCCP_DATABASE=kolabdev \
+        -e DB_HKCCP_USERNAME=kolabdev \
+        -e DB_HKCCP_PASSWORD=simple123 \
+        -e DB_KOLAB_DATABASE=kolab \
+        -e DB_KOLAB_USERNAME=kolab \
+        -e DB_KOLAB_PASSWORD=simple123 \
+        -e DB_RC_DATABASE=roundcube \
+        -e DB_RC_USERNAME=roundcube \
+        -e DB_RC_PASSWORD=simple123 \
+        --health-cmd "mysqladmin -u root ping && test -e /tmp/initialized" \
+        mariadb:latest
+}
+
+podman__run_redis() {
+    $PODMAN run -dt --pod $POD --name redis --replace \
+        --mount=type=tmpfs,tmpfs-size=128M,destination=/var/lib/redis,U=true \
+        --health-cmd "redis-cli ping || exit 1" \
+        redis:latest
+}
+
+podman__run_minio() {
+    $PODMAN run -dt --pod $POD --name minio --replace \
+        --mount=type=tmpfs,tmpfs-size=128M,destination=/data,U=true \
+        -e MINIO_ROOT_USER=minio \
+        -e MINIO_ROOT_PASSWORD=simple123 \
+        --health-cmd "mc ready local || exit 1" \
+        --entrypoint sh \
+        quay.io/minio/minio:latest -c 'mkdir -p /data/kolab && minio server /data --console-address ":9001"'
+}
+
+podman__run_webapp() {
+    # We run with a fixed config.demo overlay and override the environment with ci/env
+    $PODMAN run -dt --pod $POD --name webapp --replace \
+        --env-file=ci/env \
+        -v ./src:/src/kolabsrc.orig:ro \
+        -v ./$1/src:/src/overlay:ro \
+        -e NOENVFILE=true \
+        -e APP_SERVICES_ALLOWED_DOMAINS="webapp,localhost,services.kolab.local" \
+        -e KOLAB_ROLE=combined \
+        -e PASSPORT_PRIVATE_KEY="$PASSPORT_PRIVATE_KEY" \
+        -e PASSPORT_PUBLIC_KEY="$PASSPORT_PUBLIC_KEY" \
+        --health-cmd "./artisan octane:status || exit 1" \
+        kolab-webapp:latest
+}
+
+podman__run_imap() {
+    $PODMAN run -dt --pod $POD --name imap --replace \
+        --mount=type=tmpfs,tmpfs-size=128M,tmpfs-mode=777,destination=/var/spool/imap,U=true,notmpcopyup \
+        --mount=type=tmpfs,tmpfs-size=128M,tmpfs-mode=777,destination=/var/lib/imap,U=true,notmpcopyup \
+        -e APP_SERVICES_DOMAIN="localhost" \
+        -e SERVICES_PORT=8000 \
+        -e IMAP_ADMIN_LOGIN=cyrus-admin \
+        -e IMAP_ADMIN_PASSWORD=simple123 \
+        --health-cmd "test -e /run/saslauthd/mux && kill -0 \$(cat /var/run/master.pid)" \
+        kolab-imap:latest
+}
+
+podman__run_meet() {
+    $PODMAN run -dt --pod $POD --name meet --replace \
+        -v ./meet/server:/src/meet:ro \
+        -v ./ci/certs/meet.kolab.local.cert:/etc/pki/tls/certs/meet.kolab.local.cert \
+        -v ./ci/certs/meet.kolab.local.key:/etc/pki/tls/private/meet.kolab.local.key \
+        -e WEBRTC_LISTEN_IP=127.0.0.1 \
+        -e WEBRTC_ANNOUNCED_ADDRESS=127.0.0.1 \
+        -e PUBLIC_DOMAIN=kolab.local \
+        -e LISTENING_HOST=127.0.0.1 \
+        -e LISTENING_PORT=12443 \
+        -e DEBUG="*" \
+        -e TURN_SERVER=none \
+        -e AUTH_TOKEN=simple123 \
+        -e WEBHOOK_TOKEN=simple123 \
+        -e WEBHOOK_URL=kolab.local/api/webhooks/meet \
+        -e SSL_CERT=/etc/pki/tls/certs/meet.kolab.local.cert \
+        -e SSL_KEY=/etc/pki/tls/private/meet.kolab.local.key \
+        kolab-meet:latest
+}
+
+kolab__deploy() {
+    POD=dev
+    # Create the pod first
+    $PODMAN pod create \
+        --replace \
+        --add-host=kolab.local:127.0.0.1 \
+        --publish "443:6443" \
+        --publish "465:6465" \
+        --publish "587:6587" \
+        --publish "143:6143" \
+        --publish "993:6993" \
+        --publish "44444:44444/udp" \
+        --publish "44444:44444/tcp" \
+        --name $POD
+
+    podman__run_mariadb
+    podman__run_redis
+
+    podman__healthcheck mariadb redis
+
+    podman__run_webapp config.prod
+    podman__healthcheck webapp
+
+    podman__run_imap
+    podman__healthcheck imap
+
+    # Ensure all commands are processed
+    echo "Flushing work queue"
+    $PODMAN exec -ti webapp ./artisan queue:work --stop-when-empty
+
+    $PODMAN exec webapp ./artisan user:password "admin@kolab.local" "simple123"
+
+    podman__run_minio
+    podman__healthcheck minio
+
+    podman__run_meet
+
+    podman__run_roundcube
+    podman__run_proxy
+}
+
+kolab__generate_mail() {
+    $PODMAN run --pod=dev -t --rm kolab-utils:latest ./generatemail.py --maxAttachmentSize=3 --type=mail --count 100 --username admin@kolab.local --password simple123 --host localhost --port 11143 INBOX
+}
+
+kolab__syncroton_sync() {
+    $PODMAN run -t --network=host --add-host=kolab.local:127.0.0.1 --rm kolab-utils:latest ./activesynccli.py --host kolab.local --user admin@kolab.local --password simple123 sync 38b950ebd62cd9a66929c89615d0fc04
+}
+
+kolab__db() {
+    $PODMAN exec -ti mariadb /bin/bash -c "mysql -h 127.0.0.1 -u kolabdev --password=simple123 kolabdev"
+}
+
+kolab__help() {
+    cat <<EOF
+  This is the kolab test execution utility.
+  This script manages building the containers, setting up a test environment, and executing the tests in that environment, using podman.
+
+  To run the kolab 4 testsuite:
+    testctl testrun
+
+  The following commands are available:
+    setup: Build containers and setup the test pod
+    test: Run tests (pass testsuite/quicktest or a path to a test starting with tests/ as argument)
+    rctest: Run tests roundcube testsuite (WIP)
+    shell: Get a shell in the test container
+    testrun: Setup & test in one command, suitable as one shot command to run the main tests.
+    deploy: Setup a test environment
+EOF
+}
+
+cmdname=$1
+shift
+# make sure we actually *did* get passed a valid function name
+if declare -f "kolab__$cmdname" >/dev/null 2>&1; then
+    "kolab__$cmdname" "${@:1}"
+else
+    echo "Function $cmdname not recognized" >&2
+    kolab__help
+    exit 1
+fi
+

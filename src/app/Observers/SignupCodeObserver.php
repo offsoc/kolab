@@ -4,55 +4,74 @@ namespace App\Observers;
 
 use App\SignupCode;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 class SignupCodeObserver
 {
     /**
      * Handle the "creating" event.
      *
-     * Ensure that the code entry is created with a random, large integer.
+     * Ensure that the code entry is created with a random code/short_code.
      *
-     * @param \App\User $user The user being created.
+     * @param \App\SignupCode $code The code being created.
      *
      * @return void
      */
-    public function creating(SignupCode $code)
+    public function creating(SignupCode $code): void
     {
-        $code_length = env('SIGNUP_CODE_LENGTH', SignupCode::CODE_LENGTH);
+        $code_length = SignupCode::CODE_LENGTH;
         $exp_hours   = env('SIGNUP_CODE_EXPIRY', SignupCode::CODE_EXP_HOURS);
 
         if (empty($code->code)) {
-            $code->short_code = $this->generateShortCode();
+            $code->short_code = SignupCode::generateShortCode();
 
             // FIXME: Replace this with something race-condition free
             while (true) {
-                $code->code = str_random($code_length);
+                $code->code = Str::random($code_length);
                 if (!SignupCode::find($code->code)) {
                     break;
                 }
             }
         }
 
+        $code->headers = collect(request()->headers->all())
+            ->filter(function ($value, $key) {
+                // remove some headers we don't care about
+                return !in_array($key, ['cookie', 'referer', 'origin']);
+            })
+            ->map(function ($value) {
+                return is_array($value) && count($value) == 1 ? $value[0] : $value;
+            })
+            ->all();
+
         $code->expires_at = Carbon::now()->addHours($exp_hours);
+        $code->ip_address = request()->ip();
+
+        if ($code->email && strpos($code->email, '@')) {
+            $parts = explode('@', $code->email);
+
+            $code->local_part = $parts[0];
+            $code->domain_part = $parts[1];
+        }
     }
 
     /**
-     * Generate a short code (for human).
+     * Handle the "updating" event.
      *
-     * @return string
+     * @param SignupCode $code The code being updated.
+     *
+     * @return void
      */
-    private function generateShortCode()
+    public function updating(SignupCode $code)
     {
-        $code_length = env('SIGNUP_CODE_LENGTH', SignupCode::SHORTCODE_LENGTH);
-        $code_chars  = env('SIGNUP_CODE_CHARS', SignupCode::SHORTCODE_CHARS);
-        $random      = [];
+        if ($code->email && strpos($code->email, '@')) {
+            $parts = explode('@', $code->email);
 
-        for ($i = 1; $i <= $code_length; $i++) {
-            $random[] = $code_chars[rand(0, strlen($code_chars) - 1)];
+            $code->local_part = $parts[0];
+            $code->domain_part = $parts[1];
+        } else {
+            $code->local_part = null;
+            $code->domain_part = null;
         }
-
-        shuffle($random);
-
-        return implode('', $random);
     }
 }

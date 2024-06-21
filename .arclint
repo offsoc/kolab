@@ -1,0 +1,21 @@
+{
+  "linters": {
+    "php": {
+      "type": "php"
+    },
+    "phpcs": {
+      "type": "phpcs",
+      "bin": "src/vendor/bin/phpcs",
+      "include": "(\\.php$)",
+      "exclude": "(^.arc/)"
+    },
+    "phpstan": {
+      "type": "phpstan",
+      "include": "(\\.php$)",
+      "exclude": "(^.arc/)",
+      "config": "src/phpstan.neon",
+      "bin": "src/vendor/bin/phpstan",
+      "level": "4"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+
+server_host = LDAP_HOST
+server_port = 389
+version = 3
+search_base = dc=hosted,dc=com
+scope = sub
+
+domain = ldap:/etc/postfix/ldap/mydestination.cf
+
+bind_dn = uid=kolab-service,ou=Special Users,dc=mgmt,dc=com
+bind_pw = LDAP_SERVICE_BIND_PW
+
+# This finds the mail enabled dynamic distribution group LDAP entry
+query_filter = (&(|(mail=%s)(alias=%s))(objectClass=kolabgroupofuniquenames)(objectClass=groupOfURLs))
+# From this type of group, get all memberURL searches/references
+special_result_attribute = memberURL
+# Only from those DNs, get the mail
+result_attribute =
+leaf_result_attribute = mail

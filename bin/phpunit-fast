@@ -1,0 +1,13 @@
+#!/bin/bash
+
+cwd=$(dirname $0)
+
+pushd ${cwd}/../src/
+
+php vendor/bin/phpunit \
+    --no-coverage \
+    --stop-on-defect \
+    --stop-on-error \
+    --stop-on-failure $*
+
+popd

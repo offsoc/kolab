@@ -1,5 +1,8 @@
 <?php
 
+use Illuminate\Support\Facades\Facade;
+use Illuminate\Support\ServiceProvider;
+
 return [
 
     /*
@@ -39,7 +42,7 @@ return [
     |
     */
 
-    'debug' => env('APP_DEBUG', false),
+    'debug' => (bool) env('APP_DEBUG', false),
 
     /*
     |--------------------------------------------------------------------------
@@ -49,12 +52,50 @@ return [
     | This URL is used by the console to properly generate URLs when using
     | the Artisan command line tool. You should set this to the root of
     | your application so that it is used when running Artisan tasks.
-    |
     */
 
     'url' => env('APP_URL', 'http://localhost'),
 
-    'asset_url' => env('ASSET_URL', null),
+    'passphrase' => env('APP_PASSPHRASE', null),
+
+    'public_url' => env('APP_PUBLIC_URL', env('APP_URL', 'http://localhost')),
+
+    'asset_url' => env('ASSET_URL'),
+
+    'support_url' => env('SUPPORT_URL', null),
+
+    'support_email' => env('SUPPORT_EMAIL', null),
+
+    'webmail_url' => env('WEBMAIL_URL', null),
+
+    'theme' => env('APP_THEME', 'default'),
+
+    'tenant_id' => env('APP_TENANT_ID', null),
+
+    'currency' => \strtoupper(env('APP_CURRENCY', 'CHF')),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Application Domain
+    |--------------------------------------------------------------------------
+    |
+    | System domain used for user signup (kolab identity)
+    */
+    'domain' => env('APP_DOMAIN', 'domain.tld'),
+
+    'website_domain' => env('APP_WEBSITE_DOMAIN', env('APP_DOMAIN', 'domain.tld')),
+
+    // Restrict over which domains the services paths can be accessed.
+    'services_allowed_domains' => explode(',', env(
+        'APP_SERVICES_ALLOWED_DOMAINS',
+        "webapp,kolab," . env(
+            'APP_SERVICES_DOMAIN',
+            "services." . env(
+                'APP_WEBSITE_DOMAIN',
+                env('APP_DOMAIN', 'domain.tld')
+            )
+        )
+    )),
 
     /*
     |--------------------------------------------------------------------------
@@ -80,7 +121,7 @@ return [
     |
     */
 
-    'locale' => 'en',
+    'locale' => env('APP_LOCALE', 'en'),
 
     /*
     |--------------------------------------------------------------------------
@@ -134,38 +175,7 @@ return [
     |
     */
 
-    'providers' => [
-
-        /*
-         * Laravel Framework Service Providers...
-         */
-        Illuminate\Auth\AuthServiceProvider::class,
-        Illuminate\Broadcasting\BroadcastServiceProvider::class,
-        Illuminate\Bus\BusServiceProvider::class,
-        Illuminate\Cache\CacheServiceProvider::class,
-        Illuminate\Foundation\Providers\ConsoleSupportServiceProvider::class,
-        Illuminate\Cookie\CookieServiceProvider::class,
-        Illuminate\Database\DatabaseServiceProvider::class,
-        Illuminate\Encryption\EncryptionServiceProvider::class,
-        Illuminate\Filesystem\FilesystemServiceProvider::class,
-        Illuminate\Foundation\Providers\FoundationServiceProvider::class,
-        Illuminate\Hashing\HashServiceProvider::class,
-        Illuminate\Mail\MailServiceProvider::class,
-        Illuminate\Notifications\NotificationServiceProvider::class,
-        Illuminate\Pagination\PaginationServiceProvider::class,
-        Illuminate\Pipeline\PipelineServiceProvider::class,
-        Illuminate\Queue\QueueServiceProvider::class,
-        Illuminate\Redis\RedisServiceProvider::class,
-        Illuminate\Auth\Passwords\PasswordResetServiceProvider::class,
-        Illuminate\Session\SessionServiceProvider::class,
-        Illuminate\Translation\TranslationServiceProvider::class,
-        Illuminate\Validation\ValidationServiceProvider::class,
-        Illuminate\View\ViewServiceProvider::class,
-
-        /*
-         * Package Service Providers...
-         */
-
+    'providers' => ServiceProvider::defaultProviders()->merge([
         /*
          * Application Service Providers...
          */
@@ -173,9 +183,10 @@ return [
         App\Providers\AuthServiceProvider::class,
         // App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
+        App\Providers\HorizonServiceProvider::class,
+        App\Providers\PassportServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
-
-    ],
+    ])->toArray(),
 
     /*
     |--------------------------------------------------------------------------
@@ -188,44 +199,83 @@ return [
     |
     */
 
-    'aliases' => [
+    'aliases' => Facade::defaultAliases()->toArray(),
 
-        'App' => Illuminate\Support\Facades\App::class,
-        'Arr' => Illuminate\Support\Arr::class,
-        'Artisan' => Illuminate\Support\Facades\Artisan::class,
-        'Auth' => Illuminate\Support\Facades\Auth::class,
-        'Blade' => Illuminate\Support\Facades\Blade::class,
-        'Broadcast' => Illuminate\Support\Facades\Broadcast::class,
-        'Bus' => Illuminate\Support\Facades\Bus::class,
-        'Cache' => Illuminate\Support\Facades\Cache::class,
-        'Config' => Illuminate\Support\Facades\Config::class,
-        'Cookie' => Illuminate\Support\Facades\Cookie::class,
-        'Crypt' => Illuminate\Support\Facades\Crypt::class,
-        'DB' => Illuminate\Support\Facades\DB::class,
-        'Eloquent' => Illuminate\Database\Eloquent\Model::class,
-        'Event' => Illuminate\Support\Facades\Event::class,
-        'File' => Illuminate\Support\Facades\File::class,
-        'Gate' => Illuminate\Support\Facades\Gate::class,
-        'Hash' => Illuminate\Support\Facades\Hash::class,
-        'Lang' => Illuminate\Support\Facades\Lang::class,
-        'Log' => Illuminate\Support\Facades\Log::class,
-        'Mail' => Illuminate\Support\Facades\Mail::class,
-        'Notification' => Illuminate\Support\Facades\Notification::class,
-        'Password' => Illuminate\Support\Facades\Password::class,
-        'Queue' => Illuminate\Support\Facades\Queue::class,
-        'Redirect' => Illuminate\Support\Facades\Redirect::class,
-        'Redis' => Illuminate\Support\Facades\Redis::class,
-        'Request' => Illuminate\Support\Facades\Request::class,
-        'Response' => Illuminate\Support\Facades\Response::class,
-        'Route' => Illuminate\Support\Facades\Route::class,
-        'Schema' => Illuminate\Support\Facades\Schema::class,
-        'Session' => Illuminate\Support\Facades\Session::class,
-        'Storage' => Illuminate\Support\Facades\Storage::class,
-        'Str' => Illuminate\Support\Str::class,
-        'URL' => Illuminate\Support\Facades\URL::class,
-        'Validator' => Illuminate\Support\Facades\Validator::class,
-        'View' => Illuminate\Support\Facades\View::class,
-
+    'headers' => [
+        'csp' => env('APP_HEADER_CSP', ""),
+        'xfo' => env('APP_HEADER_XFO', ""),
     ],
 
+    // Locations of knowledge base articles
+    'kb' => [
+        // An article about suspended accounts
+        'account_suspended' => env('KB_ACCOUNT_SUSPENDED'),
+        // An article about a way to delete an owned account
+        'account_delete' => env('KB_ACCOUNT_DELETE'),
+        // An article about the payment system
+        'payment_system' => env('KB_PAYMENT_SYSTEM'),
+    ],
+
+    'company' => [
+        'name' => env('COMPANY_NAME'),
+        'address' => env('COMPANY_ADDRESS'),
+        'details' => env('COMPANY_DETAILS'),
+        'email' => env('COMPANY_EMAIL'),
+        'logo' => env('COMPANY_LOGO'),
+        'footer' => env('COMPANY_FOOTER', env('COMPANY_DETAILS')),
+        'copyright' => 'Apheleia IT AG',
+    ],
+
+    'storage' => [
+        'min_qty' => (int) env('STORAGE_MIN_QTY', 5), // in GB
+    ],
+
+    'vat' => [
+        'mode' => (int) env('VAT_MODE', 0),
+    ],
+
+    'password_policy' => env('PASSWORD_POLICY') ?: 'min:6,max:255',
+
+    'payment' => [
+        'methods_oneoff' => env('PAYMENT_METHODS_ONEOFF', 'creditcard,paypal,banktransfer,bitcoin'),
+        'methods_recurring' => env('PAYMENT_METHODS_RECURRING', 'creditcard'),
+    ],
+
+    'with_ldap' => (bool) env('APP_LDAP', true),
+    'with_imap' => (bool) env('APP_IMAP', false),
+
+    'with_admin' => (bool) env('APP_WITH_ADMIN', false),
+    'with_files' => (bool) env('APP_WITH_FILES', false),
+    'with_reseller' => (bool) env('APP_WITH_RESELLER', false),
+    'with_services' => (bool) env('APP_WITH_SERVICES', false),
+    'with_signup' => (bool) env('APP_WITH_SIGNUP', true),
+    'with_subscriptions' => (bool) env('APP_WITH_SUBSCRIPTIONS', true),
+    'with_wallet' => (bool) env('APP_WITH_WALLET', true),
+
+    'with_distlists' => (bool) env('APP_WITH_DISTLISTS', true),
+    'with_shared_folders' => (bool) env('APP_WITH_SHARED_FOLDERS', true),
+    'with_resources' => (bool) env('APP_WITH_RESOURCES', true),
+    'with_meet' => (bool) env('APP_WITH_MEET', true),
+    'with_companion_app' => (bool) env('APP_WITH_COMPANION_APP', true),
+    'with_user_search' => (bool) env('APP_WITH_USER_SEARCH', false),
+
+    'signup' => [
+        'email_limit' => (int) env('SIGNUP_LIMIT_EMAIL', 0),
+        'ip_limit' => (int) env('SIGNUP_LIMIT_IP', 0),
+    ],
+
+    'woat_ns1' => env('WOAT_NS1', 'ns01.' . env('APP_DOMAIN')),
+    'woat_ns2' => env('WOAT_NS2', 'ns02.' . env('APP_DOMAIN')),
+
+    'ratelimit_whitelist' => explode(',', env('RATELIMIT_WHITELIST', '')),
+    'companion_download_link' => env(
+        'COMPANION_DOWNLOAD_LINK',
+        "https://mirror.apheleia-it.ch/pub/companion-app-beta.apk"
+    ),
+
+    'vpn' => [
+        'token_signing_key' => env('VPN_TOKEN_SIGNING_KEY', 0),
+    ],
+
+    'mta_sts' => env('MTA_STS')
 ];

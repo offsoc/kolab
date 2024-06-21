@@ -2,7 +2,6 @@
 
 namespace Tests\Browser\Pages;
 
-use Laravel\Dusk\Browser;
 use Laravel\Dusk\Page;
 
 class Dashboard extends Page
@@ -20,14 +19,26 @@ class Dashboard extends Page
     /**
      * Assert that the browser is on the page.
      *
-     * @param  \Laravel\Dusk\Browser  $browser
+     * @param \Laravel\Dusk\Browser $browser The browser object
+     *
      * @return void
      */
-    public function assert(Browser $browser)
+    public function assert($browser)
     {
-        $browser
-            ->assertPathIs('/dashboard')
-            ->assertSee('Dashboard');
+        $browser->assertPathIs('/dashboard')
+            ->waitUntilMissing('@app .app-loader')
+            ->assertPresent('@links');
+    }
+
+    /**
+     * Assert logged-in user
+     *
+     * @param \Laravel\Dusk\Browser $browser The browser object
+     * @param string                $user    User email
+     */
+    public function assertUser($browser, $user)
+    {
+        $browser->assertVue('$root.authInfo.email', $user, '@dashboard-component');
     }
 
     /**
@@ -39,6 +50,9 @@ class Dashboard extends Page
     {
         return [
             '@app' => '#app',
+            '@links' => '#dashboard-nav',
+            '@status' => '#status-box',
+            '@search' => '#search-box',
         ];
     }
 }

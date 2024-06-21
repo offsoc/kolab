@@ -1,0 +1,178 @@
+version: '3'
+services:
+  kolab:
+    build:
+      context: ./docker/kolab/
+      args:
+        DB_KOLAB_DATABASE: kolab
+        DB_KOLAB_USERNAME: kolab
+        DB_KOLAB_PASSWORD: ${DB_PASSWORD:?"DB_PASSWORD is missing"}
+        LDAP_HOST: ldap
+        LDAP_ADMIN_BIND_DN: ${LDAP_ADMIN_BIND_DN}
+        LDAP_ADMIN_BIND_PW: ${LDAP_ADMIN_BIND_PW}
+        LDAP_SERVICE_BIND_PW: ${LDAP_SERVICE_BIND_PW}
+        IMAP_ADMIN_LOGIN: ${IMAP_ADMIN_LOGIN}
+        IMAP_ADMIN_PASSWORD: ${IMAP_ADMIN_PASSWORD}
+    container_name: kolab
+    privileged: true
+    restart: on-failure
+    tty: true
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      pdns:
+        condition: service_healthy
+      ldap:
+        condition: service_healthy
+    extra_hosts:
+      - "kolab.mgmt.com:127.0.0.1"
+      - "services.${APP_DOMAIN}:172.18.0.4"
+    environment:
+      - APP_DOMAIN=${APP_DOMAIN}
+      - LDAP_HOST=ldap
+      - LDAP_ADMIN_BIND_DN=${LDAP_ADMIN_BIND_DN}
+      - LDAP_ADMIN_BIND_PW=${LDAP_ADMIN_BIND_PW}
+      - LDAP_SERVICE_BIND_PW=${LDAP_SERVICE_BIND_PW}
+      - DB_HOST=mariadb
+      - DB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      - DB_HKCCP_DATABASE=${DB_DATABASE}
+      - DB_HKCCP_USERNAME=${DB_USERNAME}
+      - DB_HKCCP_PASSWORD=${DB_PASSWORD:?"DB_PASSWORD is missing"}
+      - DB_KOLAB_DATABASE=kolab
+      - DB_KOLAB_USERNAME=kolab
+      - DB_KOLAB_PASSWORD=${DB_PASSWORD:?"DB_PASSWORD is missing"}
+      - SSL_CERTIFICATE=${KOLAB_SSL_CERTIFICATE:?"KOLAB_SSL_CERTIFICATE is missing"}
+      - SSL_CERTIFICATE_FULLCHAIN=${KOLAB_SSL_CERTIFICATE_FULLCHAIN:?"KOLAB_SSL_CERTIFICATE_FULLCHAIN is missing"}
+      - SSL_CERTIFICATE_KEY=${KOLAB_SSL_CERTIFICATE_KEY:?"KOLAB_SSL_CERTIFICATE_KEY is missing"}
+      - IMAP_HOST=127.0.0.1
+      - IMAP_PORT=11993
+      - IMAP_ADMIN_LOGIN=${IMAP_ADMIN_LOGIN}
+      - IMAP_ADMIN_PASSWORD=${IMAP_ADMIN_PASSWORD}
+      - MAIL_HOST=127.0.0.1
+      - MAIL_PORT=10587
+    healthcheck:
+      interval: 10s
+      test: "systemctl is-active kolab-init || exit 1"
+      timeout: 5s
+      retries: 30
+      start_period: 5m
+    # This makes docker's dns, resolve via pdns for this container.
+    # Please note it does not affect /etc/resolv.conf
+    dns: 172.18.0.11
+    hostname: kolab.mgmt.com
+    image: kolab
+    networks:
+      kolab:
+        ipv4_address: 172.18.0.5
+    ports:
+      - "12143:12143"
+    tmpfs:
+      - /run
+      - /tmp
+      - /var/run
+      - /var/tmp
+    volumes:
+      - ./ext/:/src/:ro
+      - /etc/letsencrypt/:/etc/letsencrypt/:ro
+      - ./docker/certs/ca.cert:/etc/pki/tls/certs/ca.cert:ro
+      - ./docker/certs/ca.cert:/etc/pki/ca-trust/source/anchors/ca.cert:ro
+      - ./docker/certs/kolab.hosted.com.cert:${KOLAB_SSL_CERTIFICATE:?err}
+      - ./docker/certs/kolab.hosted.com.chain.pem:${KOLAB_SSL_CERTIFICATE_FULLCHAIN:?err}
+      - ./docker/certs/kolab.hosted.com.key:${KOLAB_SSL_CERTIFICATE_KEY:?err}
+      - ./docker/kolab/utils:/root/utils:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      - imap:/imapdata
+
+  ldap:
+    build:
+      context: ./docker/ldap/
+    container_name: kolab-ldap
+    restart: on-failure
+    tty: true
+    hostname: ldap
+    privileged: true
+    environment:
+      - APP_DOMAIN=${APP_DOMAIN}
+      - LDAP_ADMIN_ROOT_DN=${LDAP_ADMIN_ROOT_DN}
+      - LDAP_ADMIN_BIND_DN=${LDAP_ADMIN_BIND_DN}
+      - LDAP_ADMIN_BIND_PW=${LDAP_ADMIN_BIND_PW}
+      - LDAP_SERVICE_BIND_PW=${LDAP_SERVICE_BIND_PW}
+      - LDAP_HOSTED_BIND_PW=${LDAP_HOSTED_BIND_PW}
+      - IMAP_ADMIN_PASSWORD=${IMAP_ADMIN_PASSWORD}
+    healthcheck:
+      interval: 10s
+      test: "systemctl status dirsrv@kolab || exit 1"
+      timeout: 5s
+      retries: 30
+      start_period: 5m
+    image: kolab-ldap
+    networks:
+      kolab:
+        ipv4_address: 172.18.0.12
+    tmpfs:
+      - /run
+      - /tmp
+      - /var/run
+      - /var/tmp
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      - ldap:/ldapdata
+  roundcube:
+    build:
+      context: ./docker/roundcube/
+    container_name: kolab-roundcube
+    hostname: roundcube.hosted.com
+    restart: on-failure
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      pdns:
+        condition: service_healthy
+      kolab:
+        condition: service_healthy
+    environment:
+      - APP_DOMAIN=${APP_DOMAIN}
+      - LDAP_HOST=ldap
+      - LDAP_ADMIN_BIND_DN=${LDAP_ADMIN_BIND_DN}
+      - LDAP_ADMIN_BIND_PW=${LDAP_ADMIN_BIND_PW}
+      - LDAP_SERVICE_BIND_PW=${LDAP_SERVICE_BIND_PW}
+      - LDAP_HOSTED_BIND_PW=${LDAP_HOSTED_BIND_PW}
+      - DB_HOST=mariadb
+      - DB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      - DB_RC_DATABASE=roundcube
+      - DB_RC_USERNAME=roundcube
+      - DB_RC_PASSWORD=${DB_PASSWORD:?"DB_PASSWORD is missing"}
+      - IMAP_PROXY_PROTOCOL=2
+      - IMAP_HOST=tls://haproxy
+      - IMAP_PORT=11143
+      - IMAP_PROXY_PROTOCOL=2
+      - IMAP_ADMIN_LOGIN=${IMAP_ADMIN_LOGIN}
+      - IMAP_ADMIN_PASSWORD=${IMAP_ADMIN_PASSWORD}
+      - MAIL_HOST=tls://kolab
+      - MAIL_PORT=10587
+  haproxy:
+    build:
+      context: ./docker/haproxy/
+    healthcheck:
+      interval: 10s
+      test: "kill -0 $$(cat /var/run/haproxy.pid)"
+      timeout: 5s
+      retries: 30
+    container_name: kolab-haproxy
+    restart: on-failure
+    hostname: haproxy.hosted.com
+    image: kolab-haproxy
+    networks:
+      kolab:
+        ipv4_address: 172.18.0.6
+    tmpfs:
+      - /run
+      - /tmp
+      - /var/run
+      - /var/tmp
+    volumes:
+      - ./docker/certs/:/etc/certs/:ro
+      - /etc/letsencrypt/:/etc/letsencrypt/:ro
+volumes:
+  ldap:
+  imap:

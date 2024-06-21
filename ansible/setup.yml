@@ -1,0 +1,137 @@
+#!/usr/bin/ansible-playbook
+- name: Setup kolab deployment on fedora server
+  hosts: "{{ hostname }}"
+  remote_user: root
+  tasks:
+    - import_tasks: grub.yml
+
+    - name: Set hostname
+      ansible.builtin.hostname:
+        name: "{{ hostname }}"
+
+    - import_tasks: packages.yml
+
+    - name: Put SELinux in permissive mode for docker
+      selinux:
+        policy: targeted
+        state: permissive
+
+    - name: Setup user kolab
+      ansible.builtin.user:
+        name: kolab
+        shell: /bin/bash
+        groups: wheel, audio, docker
+        append: yes
+
+    - name: sudo without password
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers
+        state: present
+        regexp: '^%wheel\s'
+        line: '%wheel ALL=(ALL) NOPASSWD: ALL'
+
+    - name: Start service docker, if not started
+      ansible.builtin.service:
+        name: docker
+        state: started
+
+    - import_tasks: certbot.yml
+
+    - name: Delete kolab content & directory
+      ansible.builtin.file:
+        state: absent
+        path: /home/kolab/kolab/
+
+    - name: get kolab git repo
+      become: true
+      become_user: kolab
+      git:
+        repo: https://git.kolab.org/source/kolab.git
+        dest: /home/kolab/kolab
+        version: "{{ git_branch }}"
+        force: yes
+
+    - name: Run bin/configure
+      become: true
+      become_user: kolab
+      ansible.builtin.command: bin/configure.sh {{ config }}
+      args:
+        chdir: /home/kolab/kolab
+      environment:
+        HOST: "{{ hostname }}"
+        OPENEXCHANGERATES_API_KEY: "{{ openexchangerates_api_key }}"
+        FIREBASE_API_KEY: "{{ firebase_api_key }}"
+        PUBLIC_IP: "{{ public_ip }}"
+        ADMIN_PASSWORD: "{{ admin_password }}"
+        KOLAB_GIT_REF: "{{ git_branch }}"
+
+
+    - name: Permit receiving mail
+      firewalld:
+        port: 25/tcp
+        permanent: yes
+        state: enabled
+        zone: FedoraServer
+
+    - name: Permit http traffic
+      firewalld:
+        port: 80/tcp
+        permanent: yes
+        state: enabled
+        zone: FedoraServer
+
+    - name: Permit https traffic
+      firewalld:
+        port: 443/tcp
+        permanent: yes
+        state: enabled
+        zone: FedoraServer
+
+    - name: Permit TCP trafic for coturn
+      firewalld:
+        port: 3478/tcp
+        permanent: yes
+        state: enabled
+        zone: FedoraServer
+
+    - name: Permit TCP trafic for coturn
+      firewalld:
+        port: 5349/tcp
+        permanent: yes
+        state: enabled
+        zone: FedoraServer
+
+    - name: Permit UDP trafic for coturn
+      firewalld:
+        port: 3478/udp
+        permanent: yes
+        state: enabled
+        zone: FedoraServer
+
+    - name: Permit UDP trafic for coturn
+      firewalld:
+        port: 5349/udp
+        permanent: yes
+        state: enabled
+        zone: FedoraServer
+
+    - name: Always restart docker before deploy (because of potential network issues otherwise)
+      ansible.builtin.service:
+        name: docker
+        state: restarted
+
+    - name: Deploy
+      block:
+        - name: Run bin/deploy
+          become: true
+          become_user: kolab
+          ansible.builtin.command: bin/deploy.sh
+          args:
+            chdir: /home/kolab/kolab
+          environment:
+            ADMIN_PASSWORD: "{{ admin_password }}"
+          register: result
+      always:
+        - name: Print output from previous task with newlines
+          ansible.builtin.debug:
+            msg="{{result.stdout_lines}}"

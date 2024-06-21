@@ -1,0 +1,15 @@
+#!/bin/bash
+
+cwd=$(dirname $0)
+
+pushd ${cwd}/../src/
+
+rm -rf ../docs/build/main/ cache/store/
+
+php -dmemory_limit=-1 \
+    vendor/bin/doctum.php \
+    update \
+    doctum.config.php \
+    -v
+
+popd

@@ -2,71 +2,76 @@
 
 namespace App;
 
+use App\Traits\BelongsToTenantTrait;
+use App\Traits\BelongsToUserTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * The eloquent definition of a SignupCode.
+ *
+ * @property string         $code        The full code identifier
+ * @property \Carbon\Carbon $created_at  The creation timestamp
+ * @property \Carbon\Carbon $deleted_at  The deletion timestamp
+ * @property ?string        $domain_part Email domain
+ * @property ?string        $email       Email address
+ * @property \Carbon\Carbon $expires_at  The code expiration timestamp
+ * @property ?string        $first_name  Firstname
+ * @property string         $ip_address  IP address the request came from
+ * @property ?string        $last_name   Lastname
+ * @property ?string        $local_part  Email local part
+ * @property ?string        $plan        Plan title
+ * @property string         $short_code  Short validation code
+ * @property \Carbon\Carbon $updated_at  The update timestamp
+ * @property string         $submit_ip_address IP address the final signup submit request came from
+ * @property ?int           $tenant_id   Tenant identifier
+ * @property string         $verify_ip_address IP address the code verify request came from
+ * @property ?string        $voucher     Voucher discount code
  */
 class SignupCode extends Model
 {
-    // Note: Removed '0', 'O', '1', 'I' as problematic with some fonts
-    const SHORTCODE_CHARS   = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
-    const SHORTCODE_LENGTH  = 5;
-    const CODE_LENGTH       = 32;
+    use SoftDeletes;
+    use BelongsToTenantTrait;
+    use BelongsToUserTrait;
+
+    public const SHORTCODE_LENGTH  = 5;
+    public const CODE_LENGTH       = 32;
 
     // Code expires after so many hours
-    const CODE_EXP_HOURS    = 24;
+    public const CODE_EXP_HOURS    = 24;
 
 
-    /**
-     * The primary key associated with the table.
-     *
-     * @var string
-     */
+    /** @var string The primary key associated with the table */
     protected $primaryKey = 'code';
 
-    /**
-     * Indicates if the IDs are auto-incrementing.
-     *
-     * @var bool
-     */
+    /** @var bool Indicates if the IDs are auto-incrementing */
     public $incrementing = false;
 
-    /**
-     * The "type" of the auto-incrementing ID.
-     *
-     * @var string
-     */
+    /** @var string The "type" of the auto-incrementing ID */
     protected $keyType = 'string';
 
-    /**
-     * Indicates if the model should be timestamped.
-     *
-     * @var bool
-     */
-    public $timestamps = false;
+    /** @var array<int, string> The attributes that are mass assignable */
+    protected $fillable = [
+        'code',
+        'email',
+        'expires_at',
+        'first_name',
+        'last_name',
+        'plan',
+        'short_code',
+        'voucher'
+    ];
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
-    protected $fillable = ['code', 'short_code', 'data', 'expires_at'];
+    /** @var array<string, string> The attributes that should be cast */
+    protected $casts = [
+        'created_at' => 'datetime:Y-m-d H:i:s',
+        'deleted_at' => 'datetime:Y-m-d H:i:s',
+        'updated_at' => 'datetime:Y-m-d H:i:s',
+        'expires_at' => 'datetime:Y-m-d H:i:s',
+        'headers' => 'array'
+    ];
 
-    /**
-     * The attributes that should be cast to native types.
-     *
-     * @var array
-     */
-    protected $casts = ['data' => 'array'];
-
-    /**
-     * The attributes that should be mutated to dates.
-     *
-     * @var array
-     */
-    protected $dates = ['expires_at'];
 
     /**
      * Check if code is expired.
@@ -75,6 +80,19 @@ class SignupCode extends Model
      */
     public function isExpired()
     {
+        // @phpstan-ignore-next-line
         return $this->expires_at ? Carbon::now()->gte($this->expires_at) : false;
+    }
+
+    /**
+     * Generate a short code (for human).
+     *
+     * @return string
+     */
+    public static function generateShortCode(): string
+    {
+        $code_length = env('SIGNUP_CODE_LENGTH', self::SHORTCODE_LENGTH);
+
+        return \App\Utils::randStr($code_length);
     }
 }

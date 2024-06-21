@@ -2,50 +2,53 @@
 
 namespace App\Exceptions;
 
-use Exception;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Support\Facades\DB;
 
 class Handler extends ExceptionHandler
 {
-    /**
-     * A list of the exception types that are not reported.
-     *
-     * @var array
-     */
+    /** @var array<int, class-string<\Throwable>> A list of the exception types that are not reported */
     protected $dontReport = [
-        //
+        \Laravel\Passport\Exceptions\OAuthServerException::class,
+        \League\OAuth2\Server\Exception\OAuthServerException::class
     ];
 
-    /**
-     * A list of the inputs that are never flashed for validation exceptions.
-     *
-     * @var array
-     */
+    /** @var array<int, string> A list of the inputs that are never flashed for validation exceptions */
     protected $dontFlash = [
+        'current_password',
         'password',
         'password_confirmation',
     ];
 
+
     /**
-     * Report or log an exception.
-     *
-     * @param  \Exception  $exception
-     * @return void
+     * Register the exception handling callbacks for the application.
      */
-    public function report(Exception $exception)
+    public function register(): void
     {
-        parent::report($exception);
+        $this->reportable(function (\Throwable $e) {
+            // Rollback uncommitted transactions
+            while (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
+        });
     }
 
     /**
-     * Render an exception into an HTTP response.
+     * Convert an authentication exception into a response.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Exception  $exception
-     * @return \Illuminate\Http\Response
+     * @param \Illuminate\Http\Request                 $request
+     * @param \Illuminate\Auth\AuthenticationException $exception
+     *
+     * @return \Symfony\Component\HttpFoundation\Response
      */
-    public function render($request, Exception $exception)
+    protected function unauthenticated($request, AuthenticationException $exception)
     {
-        return parent::render($request, $exception);
+        if ($request->expectsJson()) {
+            return response()->json(['status' => 'error', 'message' => $exception->getMessage()], 401);
+        }
+
+        abort(401);
     }
 }
