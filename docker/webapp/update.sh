@@ -23,7 +23,9 @@ find bootstrap/cache/ -type f ! -name ".gitignore" -delete
 ./artisan clear-compiled
 ./artisan cache:clear
 
-php -dmemory_limit=-1 $(command -v composer) update
+if grep -e "composer.json" -e "app" /tmp/rsync.output; then
+    php -dmemory_limit=-1 $(command -v composer) update
+fi
 
 # Only run npm if something relevant was updated
 if grep -e "package.json" -e "resources" /tmp/rsync.output; then
