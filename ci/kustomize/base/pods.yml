@@ -1,0 +1,355 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: redis
+  labels:
+    component: redis
+spec:
+  containers:
+    - name: redis
+      image: "image-registry.openshift-image-registry.svc:5000/kolab4-ci/redis"
+      imagePullPolicy: Always
+      livenessProbe:
+        tcpSocket:
+          port: 6379
+      resources: {}
+      readinessProbe:
+        exec:
+          command: ['redis-cli', 'ping']
+      securityContext:
+        capabilities:
+          drop:
+            - MKNOD
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      volumeMounts:
+        - name: var-lib-redis-data
+          mountPath: /var/lib/redis/data
+          readOnly: False
+        - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+          name: kube-api-access
+          readOnly: true
+  dnsPolicy: ClusterFirst
+  enableServiceLinks: true
+  imagePullSecrets:
+    - name: pipeline-dockercfg-z2lsh
+  preemptionPolicy: PreemptLowerPriority
+  priority: 0
+  restartPolicy: Always
+  schedulerName: default-scheduler
+  securityContext: {}
+  serviceAccount: pipeline
+  serviceAccountName: pipeline
+  terminationGracePeriodSeconds: 30
+  volumes:
+    - name: kube-api-access
+      projected:
+        defaultMode: 420
+        sources:
+          - serviceAccountToken:
+              expirationSeconds: 3607
+              path: token
+          - configMap:
+              items:
+              - key: ca.crt
+                path: ca.crt
+              name: kube-root-ca.crt
+          - downwardAPI:
+              items:
+              - fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.namespace
+                path: namespace
+          - configMap:
+              items:
+              - key: service-ca.crt
+                path: service-ca.crt
+              name: openshift-service-ca.crt
+    - name: var-lib-redis-data
+      emptyDir: {}
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: roundcube
+  labels:
+    component: roundcube
+spec:
+  containers:
+    - name: roundcube
+      env:
+        - name: APP_DOMAIN
+          value: "kolab.test"
+        - name: DES_KEY
+          value: "kBxUM/53N9p9abusAoT0ZEAxwI2pxFz/"
+        - name: DB_HOST
+          value: "mariadb"
+        - name: DB_RC_DATABASE
+          value: "roundcube"
+        - name: DB_RC_USERNAME
+          value: "roundcube"
+        - name: DB_RC_PASSWORD
+          value: "simple123"
+        - name: DB_ROOT_PASSWORD
+          value: "simple123"
+        - name: IMAP_HOST
+          value: "imap"
+        - name: IMAP_PORT
+          value: "11143"
+          #  - name: IMAP_ADMIN_LOGIN
+          #    value: cyrus-admin
+          #  - name: IMAP_ADMIN_PASSWORD
+          #    value: simple123
+          #  - name: MAIL_HOST
+          #    value: localhost
+          #  - name: MAIL_PORT
+          #    value: 10587
+          #  - name: IMAP_DEBUG
+          #    value: true
+          #  - name: FILEAPI_WOPI_OFFICE
+          #    value: "https://kolab.local"
+          #  - name: CALENDAR_CALDAV_SERVER
+          #    value: "http://imap:11080/dav"
+          #  - name: KOLAB_ADDRESSBOOK_CARDDAV_SERVER
+          #    value: "http://imap:11080/dav"
+      image: "image-registry.openshift-image-registry.svc:5000/kolab4-ci/roundcube"
+      imagePullPolicy: Always
+      resources: {}
+      securityContext:
+        capabilities:
+          drop:
+          - MKNOD
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      volumeMounts:
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: kube-api-access
+        readOnly: true
+  dnsPolicy: ClusterFirst
+  enableServiceLinks: true
+  imagePullSecrets:
+    - name: pipeline-dockercfg-z2lsh
+  preemptionPolicy: PreemptLowerPriority
+  priority: 0
+  restartPolicy: Always
+  schedulerName: default-scheduler
+  securityContext: {}
+  serviceAccount: pipeline
+  serviceAccountName: pipeline
+  terminationGracePeriodSeconds: 30
+  tolerations:
+    - effect: NoExecute
+      key: node.kubernetes.io/not-ready
+      operator: Exists
+      tolerationSeconds: 300
+    - effect: NoExecute
+      key: node.kubernetes.io/unreachable
+      operator: Exists
+      tolerationSeconds: 300
+  volumes:
+    - name: kube-api-access
+      projected:
+        defaultMode: 420
+        sources:
+          - serviceAccountToken:
+              expirationSeconds: 3607
+              path: token
+          - configMap:
+              items:
+              - key: ca.crt
+                path: ca.crt
+              name: kube-root-ca.crt
+          - downwardAPI:
+              items:
+              - fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.namespace
+                path: namespace
+          - configMap:
+              items:
+              - key: service-ca.crt
+                path: service-ca.crt
+              name: openshift-service-ca.crt
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: minio
+  labels:
+    component: minio
+spec:
+  containers:
+    - name: minio
+      env:
+        - name: MINIO_ROOT_USER
+          value: "minio"
+        - name: MINIO_ROOT_PASSWORD
+          value: "simple123"
+      command: ['sh', '-c', 'mkdir -p /data/kolab && minio server /data --console-address ":9001"']
+      image: "quay.io/minio/minio:latest"
+      imagePullPolicy: Always
+      readinessProbe:
+        exec:
+          command: ['bash', '-c', 'mc ready local || exit 1']
+      resources: {}
+      securityContext:
+        capabilities:
+          drop:
+          - MKNOD
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      volumeMounts:
+        - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+          name: kube-api-access
+          readOnly: true
+        - name: minio-data
+          mountPath: /data
+  dnsPolicy: ClusterFirst
+  enableServiceLinks: true
+  imagePullSecrets:
+  - name: pipeline-dockercfg-z2lsh
+  preemptionPolicy: PreemptLowerPriority
+  priority: 0
+  restartPolicy: Always
+  schedulerName: default-scheduler
+  securityContext: {}
+  serviceAccount: pipeline
+  serviceAccountName: pipeline
+  terminationGracePeriodSeconds: 30
+  volumes:
+    - name: kube-api-access
+      projected:
+        defaultMode: 420
+        sources:
+          - serviceAccountToken:
+              expirationSeconds: 3607
+              path: token
+          - configMap:
+              items:
+              - key: ca.crt
+                path: ca.crt
+              name: kube-root-ca.crt
+          - downwardAPI:
+              items:
+              - fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.namespace
+                path: namespace
+          - configMap:
+              items:
+              - key: service-ca.crt
+                path: service-ca.crt
+              name: openshift-service-ca.crt
+    - name: minio-data
+      emptyDir: {}
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: meet
+  labels:
+    component: meet
+spec:
+  initContainers:
+    - name: kolab4-git-source
+      image: alpine/git
+      command: ['git', 'clone', 'https://git.kolab.org/source/kolab.git', '/kolab']
+      volumeMounts:
+        - name: kolab4-git-source-config
+          mountPath: /kolab
+          readOnly: False
+  containers:
+    - name: meet
+      env:
+        - name: WEBRTC_LISTEN_IP
+          value: "127.0.0.1"
+        - name: WEBRTC_ANNOUNCED_ADDRESS
+          value: "127.0.0.1"
+        - name: PUBLIC_DOMAIN
+          value: "kolab.local"
+        - name: LISTENING_HOST
+          value: "127.0.0.1"
+        - name: LISTENING_PORT
+          value: "12443"
+        - name: DEBUG
+          value: "*"
+        - name: TURN_SERVER
+          value: "none"
+        - name: AUTH_TOKEN
+          value: "simple123"
+        - name: WEBHOOK_TOKEN
+          value: "simple123"
+        - name: WEBHOOK_URL
+          value: "kolab.local/api/webhooks/meet"
+        - name: SSL_CERT
+          value: "/etc/pki/tls/certs/meet.kolab.local.cert"
+        - name: SSL_KEY
+          value: "/etc/pki/tls/private/meet.kolab.local.key"
+      image: "image-registry.openshift-image-registry.svc:5000/kolab4-ci/meet"
+      imagePullPolicy: Always
+      resources: {}
+      securityContext:
+        capabilities:
+          drop:
+          - MKNOD
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      volumeMounts:
+        - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+          name: kube-api-access
+          readOnly: True
+        - name: kolab4-git-source-config
+          subPath: meet/server
+          mountPath: /src/meet
+          readOnly: True
+        - name: kolab4-git-source-config
+          subPath: docker/certs/meet.kolab.local.cert
+          mountPath: /etc/pki/tls/certs/meet.kolab.local.cert
+          readOnly: True
+        - name: kolab4-git-source-config
+          subPath: docker/certs/meet.kolab.local.key
+          mountPath: /etc/pki/tls/certs/meet.kolab.local.key
+          readOnly: True
+
+  dnsPolicy: ClusterFirst
+  enableServiceLinks: true
+  imagePullSecrets:
+    - name: pipeline-dockercfg-z2lsh
+  preemptionPolicy: PreemptLowerPriority
+  priority: 0
+  restartPolicy: Always
+  schedulerName: default-scheduler
+  securityContext: {}
+  serviceAccount: pipeline
+  serviceAccountName: pipeline
+  terminationGracePeriodSeconds: 30
+  volumes:
+    - name: kube-api-access
+      projected:
+        defaultMode: 420
+        sources:
+          - serviceAccountToken:
+              expirationSeconds: 3607
+              path: token
+          - configMap:
+              items:
+              - key: ca.crt
+                path: ca.crt
+              name: kube-root-ca.crt
+          - downwardAPI:
+              items:
+              - fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.namespace
+                path: namespace
+          - configMap:
+              items:
+              - key: service-ca.crt
+                path: service-ca.crt
+              name: openshift-service-ca.crt
+    - name: kolab4-git-source-config
+      emptyDir: {}

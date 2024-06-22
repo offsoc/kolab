@@ -1,0 +1,9 @@
+bases:
+  - ../../base
+
+resources:
+  - webapp_pod.yml
+  - webapp_svc.yml
+
+commonLabels:
+  app: kolab4-test
