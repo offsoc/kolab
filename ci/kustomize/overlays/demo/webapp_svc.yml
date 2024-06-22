@@ -1,0 +1,26 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: webapp
+spec:
+  clusterIP: None
+  clusterIPs:
+  - None
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+    - name: httpform
+      port: 8000
+      protocol: TCP
+      targetPort: 8000
+    - name: https
+      port: 443
+      protocol: TCP
+      targetPort: 443
+  selector:
+    component: webapp
+  sessionAffinity: None
+  type: ClusterIP

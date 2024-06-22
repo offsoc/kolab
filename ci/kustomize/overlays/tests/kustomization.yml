@@ -1,0 +1,5 @@
+resources:
+  - tests_job.yml
+
+commonLabels:
+  app: kolab4-test

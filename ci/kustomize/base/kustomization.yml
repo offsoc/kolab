@@ -1,0 +1,11 @@
+resources:
+  - pods.yml
+  - imap_pod.yml
+  - mariadb_pod.yml
+  - proxy_pod.yml
+  - secrets.yml
+  - services.yml
+  - configmaps.yml
+
+commonLabels:
+  app: kolab4-test
