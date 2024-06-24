@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Sku;
 
 use App\Console\ObjectListCommand;
 
-class SkusCommand extends ObjectListCommand
+class ListCommand extends ObjectListCommand
 {
     protected $objectClass = \App\Sku::class;
     protected $objectName = 'sku';

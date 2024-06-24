@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Tenant;
 
 use App\Console\ObjectListCommand;
 
-class TenantsCommand extends ObjectListCommand
+class ListCommand extends ObjectListCommand
 {
     protected $objectClass = \App\Tenant::class;
     protected $objectName = 'tenant';

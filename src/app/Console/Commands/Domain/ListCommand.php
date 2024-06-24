@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Domain;
 
 use App\Console\ObjectListCommand;
 
@@ -27,7 +27,7 @@ use App\Console\ObjectListCommand;
  * (...)
  * ```
  */
-class DomainsCommand extends ObjectListCommand
+class ListCommand extends ObjectListCommand
 {
     protected $objectClass = \App\Domain::class;
     protected $objectName = 'domain';

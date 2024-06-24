@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Plan;
 
 use App\Console\ObjectListCommand;
 
-class PlansCommand extends ObjectListCommand
+class ListCommand extends ObjectListCommand
 {
     protected $objectClass = \App\Plan::class;
     protected $objectName = 'plan';

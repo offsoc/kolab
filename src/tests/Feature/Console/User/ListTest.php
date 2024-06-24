@@ -1,10 +1,10 @@
 <?php
 
-namespace Tests\Feature\Console;
+namespace Tests\Feature\Console\User;
 
 use Tests\TestCase;
 
-class UsersTest extends TestCase
+class ListTest extends TestCase
 {
     /**
      * Test the command

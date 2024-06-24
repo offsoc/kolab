@@ -1,14 +1,14 @@
 <?php
 
-namespace Tests\Feature\Console;
+namespace Tests\Feature\Console\Discount;
 
 use Tests\TestCase;
 
-class PackageSkusTest extends TestCase
+class ListTest extends TestCase
 {
     public function testHandle(): void
     {
-        $this->artisan('package:skus')
+        $this->artisan('discounts')
              ->assertExitCode(0);
 
         $this->markTestIncomplete();

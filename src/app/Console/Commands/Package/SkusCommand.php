@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Package;
 
 use App\Console\Command;
 use App\Package;
 
-class PackageSkus extends Command
+class SkusCommand extends Command
 {
     /**
      * The name and signature of the console command.

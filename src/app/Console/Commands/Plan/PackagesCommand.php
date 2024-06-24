@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Plan;
 
 use App\Plan;
 use Illuminate\Console\Command;
 
-class PlanPackages extends Command
+class PackagesCommand extends Command
 {
     /**
      * The name and signature of the console command.

@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Wallet;
 
 use App\Console\ObjectListCommand;
 
-class WalletsCommand extends ObjectListCommand
+class ListCommand extends ObjectListCommand
 {
     protected $objectClass = \App\Wallet::class;
     protected $objectName = 'wallet';

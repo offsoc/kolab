@@ -4,7 +4,7 @@ namespace App\Console\Commands\Sku;
 
 use App\Console\Command;
 
-class ListUsers extends Command
+class ListUsersCommand extends Command
 {
     /**
      * The name and signature of the console command.
