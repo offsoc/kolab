@@ -5,7 +5,6 @@ namespace App\DataMigrator;
 use App\DataMigratorQueue;
 use App\Jobs\DataMigratorEWSFolder;
 use App\Jobs\DataMigratorEWSItem;
-
 use garethp\ews\API;
 use garethp\ews\API\Type;
 
@@ -14,7 +13,7 @@ use garethp\ews\API\Type;
  */
 class EWS
 {
-    /** @var garethp\ews\API EWS API object */
+    /** @var API EWS API object */
     public $api;
 
     /** @var array Supported folder types */
@@ -319,6 +318,7 @@ class EWS
         $response = $this->api->getClient()->FindItem($request);
         $count = 0;
 
+        // @phpstan-ignore-next-line
         foreach ($response as $item) {
             $count += (int) $this->syncItem($item, $folder);
         }
@@ -327,6 +327,7 @@ class EWS
 
         // Request other pages until we got all
         while (!$response->isIncludesLastItemInRange()) {
+            // @phpstan-ignore-next-line
             $response = $this->api->getNextPage($response);
             $count = 0;
 

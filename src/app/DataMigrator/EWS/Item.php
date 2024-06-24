@@ -70,7 +70,7 @@ abstract class Item
             mkdir($location, 0740, true);
         }
 
-        $location .= '/' . $uid . '.' . $this::FILE_EXT;
+        $location .= '/' . $uid . '.' . $this->fileExtension();
 
         file_put_contents($location, (string) $item->getMimeContent());
 
@@ -132,6 +132,14 @@ abstract class Item
         }
 
         return $this->uid;
+    }
+
+    /**
+     * Filename extension for cached file in-processing
+     */
+    protected function fileExtension(): string
+    {
+        return constant(static::class . '::FILE_EXT') ?: 'txt';
     }
 
     /**

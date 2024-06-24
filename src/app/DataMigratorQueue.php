@@ -12,13 +12,6 @@ use Illuminate\Support\Facades\DB;
 class DataMigratorQueue extends Model
 {
     /**
-     * The primary key associated with the table.
-     *
-     * @var string
-     */
-    protected $primaryKey = 'id';
-
-    /**
      * Indicates if the IDs are auto-incrementing.
      *
      * @var bool
@@ -42,7 +35,7 @@ class DataMigratorQueue extends Model
     /**
      * The attributes that should be cast to native types.
      *
-     * @var array
+     * @var array<string, string>
      */
     protected $casts = ['data' => 'array'];
 

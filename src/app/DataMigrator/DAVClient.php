@@ -11,7 +11,7 @@ class DAVClient
     const TYPE_EVENT = 'event';
     const TYPE_CONTACT = 'contact';
 
-    /** @var Sabre\DAV\Client Engine */
+    /** @var Client Engine */
     protected $client;
 
     /** @var array Settings */
@@ -41,14 +41,14 @@ class DAVClient
     /**
      * Check user credentials.
      *
-     * @throws Exception
+     * @throws \Exception
      */
     public function authenticate()
     {
         $result = $this->client->options();
 
         if (empty($result)) {
-            throw new Exception("Invalid DAV credentials or server.");
+            throw new \Exception("Invalid DAV credentials or server.");
         }
     }
 
@@ -56,9 +56,9 @@ class DAVClient
      * Create an object.
      *
      * @param string $filename File location
-     * @param array  $folder   Folder name
+     * @param string $folder   Folder name
      *
-     * @throws Exception
+     * @throws \Exception
      */
     public function createObjectFromFile(string $filename, string $folder)
     {
@@ -87,7 +87,7 @@ class DAVClient
      * @param string $folder Name of a folder with full path
      * @param string $type   Folder type
      *
-     * @throws Exception on error
+     * @throws \Exception on error
      */
     public function createFolder(string $folder, string $type)
     {
@@ -129,7 +129,7 @@ class DAVClient
             // Extra property needed for task folders
             $cset = $xml->createElementNS('urn:ietf:params:xml:ns:caldav', 'supported-calendar-component-set');
             $comp = $xml->createElementNS('urn:ietf:params:xml:ns:caldav', 'comp');
-            $comp->setAttribute('name', $type == self::TYPE_TASK ? 'VTODO' : 'VEVENT');
+            $comp->setAttribute('name', 'VTODO');
             $cset->appendChild($comp);
             $prop->appendChild($cset);
         }
@@ -176,7 +176,7 @@ class DAVClient
 
         // Get calendar and task folders
         $root = 'calendars/' . urlencode($this->settings['userName']);
-        $calendars = $this->client->propFind($root, $request, 'infinity');
+        $calendars = $this->client->propFind($root, $request, 'infinity'); // @phpstan-ignore-line
 
         $collections = array_merge($collections, $calendars);
         $this->folders = [];

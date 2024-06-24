@@ -70,7 +70,7 @@ class Task extends Item
                 'PRIVATE' => 'PRIVATE',
             ];
 
-            $data["CLASS"] = [$sensitivity_map[strtoupper($sensitivity)] ?: 'PUBLIC'];
+            $data["CLASS"] = [$sensitivity_map[strtoupper($sensitivity)] ?? 'PUBLIC'];
         }
 
         if ($importance = $item->getImportance()) {
@@ -80,7 +80,7 @@ class Task extends Item
                 'LOW' => '1',
             ];
 
-            $data["PRIORITY"] = [$importance_map[strtoupper($importance)] ?: '0'];
+            $data["PRIORITY"] = [$importance_map[strtoupper($importance)] ?? '0'];
         }
 
         $this->setTaskOrganizer($data, $item);
