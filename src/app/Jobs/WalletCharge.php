@@ -8,17 +8,12 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
 
 class WalletCharge implements ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
     use Queueable;
-    use SerializesModels;
-
-    /** @var \App\Wallet A wallet object */
-    protected $wallet;
 
     /** @var int The number of seconds to wait before retrying the job. */
     public $backoff = 10;
@@ -29,17 +24,19 @@ class WalletCharge implements ShouldQueue
     /** @var bool Delete the job if the wallet no longer exist. */
     public $deleteWhenMissingModels = true;
 
+    /** @var string A wallet identifier */
+    protected $walletId;
 
     /**
      * Create a new job instance.
      *
-     * @param \App\Wallet $wallet The wallet that has been charged.
+     * @param string $walletId The wallet that has been charged.
      *
      * @return void
      */
-    public function __construct(Wallet $wallet)
+    public function __construct(string $walletId)
     {
-        $this->wallet = $wallet;
+        $this->walletId = $walletId;
     }
 
     /**
@@ -49,6 +46,8 @@ class WalletCharge implements ShouldQueue
      */
     public function handle()
     {
-        PaymentsController::topUpWallet($this->wallet);
+        if ($wallet = Wallet::find($this->walletId)) {
+            PaymentsController::topUpWallet($wallet);
+        }
     }
 }

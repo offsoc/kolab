@@ -51,30 +51,7 @@ class ChargeCommand extends Command
         }
 
         foreach ($wallets as $wallet) {
-            // This is a long-running process. Because another process might have modified
-            // the wallet balance in meantime we have to refresh it.
-            // Note: This is needed despite the use of cursor() above.
-            $wallet->refresh();
-
-            // Sanity check after refresh (owner deleted in meantime)
-            if (!$wallet->owner) {
-                continue;
-            }
-
-            $charge = $wallet->chargeEntitlements();
-
-            if ($charge > 0) {
-                $this->info("Charged wallet {$wallet->id} for user {$wallet->owner->email} with {$charge}");
-
-                // Top-up the wallet if auto-payment enabled for the wallet
-                \App\Jobs\WalletCharge::dispatch($wallet);
-            }
-
-            if ($wallet->balance < 0) {
-                // Check the account balance, send notifications, (suspend, delete,) degrade
-                // Also sends reminders to the degraded account owners
-                \App\Jobs\WalletCheck::dispatch($wallet);
-            }
+            \App\Jobs\WalletCheck::dispatch($wallet->id);
         }
     }
 }

@@ -375,7 +375,7 @@ class Stripe extends \App\Providers\PaymentProvider
 
                     // Top-up the wallet if balance is below the threshold
                     if ($payment->wallet->balance < $threshold && $payment->status != Payment::STATUS_PAID) {
-                        \App\Jobs\WalletCharge::dispatch($payment->wallet);
+                        \App\Jobs\WalletCharge::dispatch($payment->wallet->id);
                     }
                 }
 
