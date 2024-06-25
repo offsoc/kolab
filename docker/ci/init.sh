@@ -1,5 +1,15 @@
 #!/bin/bash
 set -e
+
+
+cat <<EOF >> /etc/containers/registries.conf
+[[registry]]
+prefix = "$CACHE_REGISTRY"
+insecure = true
+location = "$CACHE_REGISTRY"
+EOF
+
+
 function checkout() {
     if [ ! -d "$1" ]; then
         git clone "$2" "$1"
