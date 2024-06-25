@@ -31,6 +31,7 @@ RUN dnf module reset php && \
         libsodium-devel \
         php-ldap \
         php-mysqlnd \
+        php-soap \
         php-opcache \
         php-pecl-apcu \
         re2c \
