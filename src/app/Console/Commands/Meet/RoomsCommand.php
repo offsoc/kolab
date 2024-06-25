@@ -4,7 +4,7 @@ namespace App\Console\Commands\Meet;
 
 use App\Console\Command;
 
-class Rooms extends Command
+class RoomsCommand extends Command
 {
     /**
      * The name and signature of the console command.

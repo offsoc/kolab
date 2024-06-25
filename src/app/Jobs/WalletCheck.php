@@ -9,14 +9,12 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
 
 class WalletCheck implements ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
     use Queueable;
-    use SerializesModels;
 
     public const THRESHOLD_DEGRADE = 'degrade';
     public const THRESHOLD_DEGRADE_REMINDER = 'degrade-reminder';
@@ -34,20 +32,23 @@ class WalletCheck implements ShouldQueue
     /** @var bool Delete the job if the wallet no longer exist. */
     public $deleteWhenMissingModels = true;
 
-    /** @var \App\Wallet A wallet object */
+    /** @var ?Wallet A wallet object */
     protected $wallet;
+
+    /** @var string A wallet identifier */
+    protected $walletId;
 
 
     /**
      * Create a new job instance.
      *
-     * @param \App\Wallet $wallet The wallet that has been charged.
+     * @param string $walletId The wallet that has been charged.
      *
      * @return void
      */
-    public function __construct(Wallet $wallet)
+    public function __construct(string $walletId)
     {
-        $this->wallet = $wallet;
+        $this->walletId = $walletId;
     }
 
     /**
@@ -57,6 +58,25 @@ class WalletCheck implements ShouldQueue
      */
     public function handle()
     {
+        $this->wallet = Wallet::find($this->walletId);
+
+        // Sanity check (owner deleted in meantime)
+        if (!$this->wallet || !$this->wallet->owner) {
+            return null;
+        }
+
+        if ($this->wallet->chargeEntitlements() > 0) {
+            // We make a payment when there's a charge. If for some reason the 
+            // payment failed we can't just throw here, as another execution of this job
+            // will not re-try the payment. So, we attempt a payment in a separate job.
+            try {
+                $this->topUpWallet();
+            } catch (\Exception $e) {
+                \Log::error("Failed to top-up wallet {$this->walletId}: " . $e->getMessage());
+                WalletCharge::dispatch($this->wallet->id);
+            }
+        }
+
         if ($this->wallet->balance >= 0) {
             return null;
         }

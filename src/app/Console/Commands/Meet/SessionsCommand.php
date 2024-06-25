@@ -4,7 +4,7 @@ namespace App\Console\Commands\Meet;
 
 use App\Console\Command;
 
-class Sessions extends Command
+class SessionsCommand extends Command
 {
     /**
      * The name and signature of the console command.

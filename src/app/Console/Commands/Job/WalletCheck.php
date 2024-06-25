@@ -34,7 +34,7 @@ class WalletCheck extends Command
             return 1;
         }
 
-        $job = new \App\Jobs\WalletCheck($wallet);
+        $job = new \App\Jobs\WalletCheck($wallet->id);
         $job->handle();
     }
 }

@@ -12,7 +12,7 @@ class ListCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'authattempt:list';
+    protected $signature = 'authattempts';
 
     /**
      * The console command description.

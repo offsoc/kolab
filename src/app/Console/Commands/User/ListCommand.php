@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\User;
 
 use App\Console\ObjectListCommand;
 
-class UsersCommand extends ObjectListCommand
+class ListCommand extends ObjectListCommand
 {
     protected $objectClass = \App\User::class;
     protected $objectName = 'user';

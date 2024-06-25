@@ -280,8 +280,8 @@ class PaymentsStripeTest extends TestCase
 
         Bus::assertDispatchedTimes(\App\Jobs\WalletCharge::class, 1);
         Bus::assertDispatched(\App\Jobs\WalletCharge::class, function ($job) use ($wallet) {
-            $job_wallet = $this->getObjectProperty($job, 'wallet');
-            return $job_wallet->id === $wallet->id;
+            $job_wallet_id = $this->getObjectProperty($job, 'walletId');
+            return $job_wallet_id === $wallet->id;
         });
 
         $this->unmockStripe();
@@ -513,8 +513,8 @@ class PaymentsStripeTest extends TestCase
         // Expect a WalletCharge job if the balance is negative
         Bus::assertDispatchedTimes(\App\Jobs\WalletCharge::class, 1);
         Bus::assertDispatched(\App\Jobs\WalletCharge::class, function ($job) use ($wallet) {
-            $job_wallet = TestCase::getObjectProperty($job, 'wallet');
-            return $job_wallet->id === $wallet->id;
+            $job_wallet_id = TestCase::getObjectProperty($job, 'walletId');
+            return $job_wallet_id === $wallet->id;
         });
 
         // TODO: test other setup_intent.* events

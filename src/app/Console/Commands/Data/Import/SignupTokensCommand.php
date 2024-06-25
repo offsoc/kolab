@@ -13,7 +13,7 @@ class SignupTokensCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'data:import:signup-tokens {plan} {file}';
+    protected $signature = 'data:import:signup-tokens {plan} {file} {--tenant}';
 
     /**
      * The console command description.
@@ -29,6 +29,18 @@ class SignupTokensCommand extends Command
      */
     public function handle()
     {
+        if ($tenantId = $this->option('tenant')) {
+            $tenant = $this->getObject(\App\Tenant::class, $tenantId, 'title');
+            if (!$tenant) {
+                $this->error("Tenant {$tenantId} not found");
+                return 1;
+            }
+
+            $this->tenantId = $tenant->id;
+        } else {
+            $this->tenantId = \config('app.tenant_id');
+        }
+
         $plan = $this->getObject(Plan::class, $this->argument('plan'), 'title', false);
 
         if (!$plan) {

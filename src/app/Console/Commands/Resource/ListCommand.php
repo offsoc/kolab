@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Resource;
 
 use App\Console\ObjectListCommand;
 
-class ResourcesCommand extends ObjectListCommand
+class ListCommand extends ObjectListCommand
 {
     protected $objectClass = \App\Resource::class;
     protected $objectName = 'resource';

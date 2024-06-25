@@ -115,21 +115,42 @@ class WalletsController extends ResourceController
             return $this->errorResponse(403);
         }
 
+        $pageSize = 10;
+        $page = intval(request()->input('page')) ?: 1;
+        $hasMore = false;
+
         $result = $wallet->payments()
-            ->selectRaw('distinct date_format(updated_at, "%Y-%m") as ident')
+            ->selectRaw('date_format(updated_at, "%Y-%m") as ident, sum(amount) as total')
             ->where('status', Payment::STATUS_PAID)
             ->where('amount', '<>', 0)
             ->orderBy('ident', 'desc')
+            ->groupBy('ident')
+            ->limit($pageSize + 1)
+            ->offset($pageSize * ($page - 1))
             ->get()
-            ->whereNotIn('ident', [date('Y-m')]) // exclude current month
-            ->pluck('ident');
+            ->whereNotIn('ident', [date('Y-m')]); // exclude current month
+
+
+        if (count($result) > $pageSize) {
+            $result->pop();
+            $hasMore = true;
+        }
+
+        $result = $result->map(function ($item) use ($wallet) {
+            $entry = [
+                'period' => $item->ident,
+                'amount' => $item->total,
+                'currency' => $wallet->currency
+            ];
+            return $entry;
+        });
 
         return response()->json([
                 'status' => 'success',
                 'list' => $result,
                 'count' => count($result),
-                'hasMore' => false,
-                'page' => 1,
+                'hasMore' => $hasMore,
+                'page' => $page,
         ]);
     }
 

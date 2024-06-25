@@ -256,8 +256,8 @@ class PaymentsMollieEuroTest extends TestCase
 
         Bus::assertDispatchedTimes(\App\Jobs\WalletCharge::class, 1);
         Bus::assertDispatched(\App\Jobs\WalletCharge::class, function ($job) use ($wallet) {
-            $job_wallet = $this->getObjectProperty($job, 'wallet');
-            return $job_wallet->id === $wallet->id;
+            $job_wallet_id = $this->getObjectProperty($job, 'walletId');
+            return $job_wallet_id === $wallet->id;
         });
 
         $this->unmockMollie();

@@ -34,7 +34,7 @@ class WalletCharge extends Command
             return 1;
         }
 
-        $job = new \App\Jobs\WalletCharge($wallet);
+        $job = new \App\Jobs\WalletCharge($wallet->id);
         $job->handle();
     }
 }

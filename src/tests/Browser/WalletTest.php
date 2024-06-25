@@ -112,9 +112,7 @@ class WalletTest extends TestCaseDusk
                 ->assertSeeIn('@nav #tab-receipts', 'Receipts')
                 ->with('@receipts-tab', function (Browser $browser) {
                     $browser->waitUntilMissing('.app-loader')
-                        ->assertSeeIn('p', 'There are no receipts for payments')
-                        ->assertDontSeeIn('p', 'Here you can download')
-                        ->assertMissing('select')
+                        ->assertSeeIn('td', 'There are no receipts for payments')
                         ->assertMissing('button');
                 });
         });
@@ -162,16 +160,14 @@ class WalletTest extends TestCaseDusk
                 ->assertSeeIn('@nav #tab-receipts', 'Receipts')
                 ->with('@receipts-tab', function (Browser $browser) use ($receipts) {
                     $browser->waitUntilMissing('.app-loader')
-                        ->assertDontSeeIn('p', 'There are no receipts for payments')
-                        ->assertSeeIn('p', 'Here you can download')
-                        ->assertSeeIn('button', 'Download')
-                        ->assertElementsCount('select > option', 2)
-                        ->assertSeeIn('select > option:nth-child(1)', $receipts[1])
-                        ->assertSeeIn('select > option:nth-child(2)', $receipts[0]);
+                        ->assertElementsCount('table tbody tr', 2)
+                        ->assertMissing('.more-loader button', 'Load more')
+                        ->assertSeeIn('table tbody tr:nth-child(1) td.datetime', $receipts[1])
+                        ->assertSeeIn('table tbody tr:nth-child(2) td.datetime', $receipts[0]);
 
                     // Download a receipt file
-                    $browser->select('select', $receipts[0])
-                        ->click('button')
+                    $browser->click('table tbody tr:nth-child(2) td.selection button')
+                        ->waitUntilMissing('.app-loader')
                         ->pause(2000);
 
                     $files = glob(__DIR__ . '/downloads/*.pdf');

@@ -1,10 +1,10 @@
 <?php
 
-namespace Tests\Feature\Console;
+namespace Tests\Feature\Console\Data\Import;
 
 use Tests\TestCase;
 
-class WalletsTest extends TestCase
+class CountriesTest extends TestCase
 {
     public function testHandle(): void
     {

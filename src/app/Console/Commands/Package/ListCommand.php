@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Package;
 
 use App\Console\ObjectListCommand;
 
-class PackagesCommand extends ObjectListCommand
+class ListCommand extends ObjectListCommand
 {
     protected $objectClass = \App\Package::class;
     protected $objectName = 'package';

@@ -28,11 +28,11 @@ if (!function_exists("getenvlist")) {
     $config['mail_domain'] = '';
 
     // IMAP Server Settings
-    $config['default_host'] = getenv('IMAP_HOST');
+    $config['default_host'] = (getenv('IMAP_TLS') == "true" ? "ssl://" : "") . getenv('IMAP_HOST');
     $config['default_port'] = getenv('IMAP_PORT');
     $config['imap_delimiter'] = '/';
     $config['imap_force_lsub'] = true;
-    if (str_contains(getenv('IMAP_HOST'), 'tls') || str_contains(getenv('IMAP_HOST'), 'ssl')) {
+    if (getenv('IMAP_TLS') == "true") {
         $config['imap_conn_options'] = [
             'ssl' => [
                     'verify_peer_name' => false,

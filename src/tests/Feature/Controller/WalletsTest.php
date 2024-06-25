@@ -193,7 +193,7 @@ class WalletsTest extends TestCase
 
         $this->assertCount(5, $json);
         $this->assertSame('success', $json['status']);
-        $this->assertSame([$date->format('Y-m')], $json['list']);
+        $this->assertSame(['period' => $date->format('Y-m'), 'amount' => '1111', 'currency' => 'CHF'], $json['list'][0]);
         $this->assertSame(1, $json['page']);
         $this->assertSame(1, $json['count']);
         $this->assertSame(false, $json['hasMore']);

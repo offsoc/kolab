@@ -1,10 +1,10 @@
 <?php
 
-namespace Tests\Feature\Console;
+namespace Tests\Feature\Console\Wallet;
 
 use Tests\TestCase;
 
-class DataCountriesTest extends TestCase
+class ListTest extends TestCase
 {
     public function testHandle(): void
     {

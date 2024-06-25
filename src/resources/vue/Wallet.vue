@@ -46,20 +46,7 @@
         <div class="tab-content">
             <div class="tab-pane active" id="receipts" role="tabpanel" aria-labelledby="tab-receipts">
                 <div class="card-body">
-                    <div class="card-text">
-                        <p v-if="receipts.length">
-                            {{ $t('wallet.receipts-hint') }}
-                        </p>
-                        <div v-if="receipts.length" class="input-group">
-                            <select id="receipt-id" class="form-control">
-                                <option v-for="(receipt, index) in receipts" :key="index" :value="receipt">{{ receipt }}</option>
-                            </select>
-                            <btn class="btn-secondary" @click="receiptDownload" icon="download">{{ $t('btn.download') }}</btn>
-                        </div>
-                        <p v-if="!receipts.length">
-                            {{ $t('wallet.receipts-none') }}
-                        </p>
-                    </div>
+                    <receipt-list v-if="walletId && loadReceipts" class="card-text" :wallet-id="walletId"></receipt-list>
                 </div>
             </div>
             <div class="tab-pane" id="history" role="tabpanel" aria-labelledby="tab-history">
@@ -154,7 +141,8 @@
     import ModalDialog from './Widgets/ModalDialog'
     import TransactionLog from './Widgets/TransactionLog'
     import PaymentLog from './Widgets/PaymentLog'
-    import { downloadFile, paymentCheckout } from '../js/utils'
+    import ReceiptList from './Widgets/ReceiptList'
+    import { paymentCheckout } from '../js/utils'
 
     import { library } from '@fortawesome/fontawesome-svg-core'
 
@@ -170,7 +158,8 @@
         components: {
             ModalDialog,
             TransactionLog,
-            PaymentLog
+            PaymentLog,
+            ReceiptList
         },
         data() {
             return {
@@ -182,6 +171,7 @@
                 receipts: [],
                 loadTransactions: false,
                 loadPayments: false,
+                loadReceipts: true,
                 showPendingPayments: false,
                 wallet: {},
                 walletId: null,
@@ -242,6 +232,7 @@
 
             this.$refs.tabs.clickHandler('history', () => { this.loadTransactions = true })
             this.$refs.tabs.clickHandler('payments', () => { this.loadPayments = true })
+            this.$refs.tabs.clickHandler('receipts', () => { this.loadReceipts = true })
         },
         methods: {
             loadMandate() {
@@ -375,10 +366,6 @@
 
                 this.$refs.paymentDialog.show()
             },
-            receiptDownload() {
-                const receipt = $('#receipt-id').val()
-                downloadFile('/api/v4/wallets/' + this.walletId + '/receipts/' + receipt)
-            }
         }
     }
 </script>

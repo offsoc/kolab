@@ -17,35 +17,7 @@ rsync -av \
 cd /opt/app-root/src/
 
 if [ "$1" == "--refresh" ]; then
-    rm -rf storage/framework
-    mkdir -p storage/framework/{sessions,views,cache}
-
-    find bootstrap/cache/ -type f ! -name ".gitignore" -delete
-    ./artisan clear-compiled
-    ./artisan cache:clear
-
-    # FIXME seems to be required for db seed to function
-    composer update
-
-    if rpm -qv chromium 2>/dev/null; then
-        chver=$(rpmquery --queryformat="%{VERSION}" chromium | awk -F'.' '{print $1}')
-        ./artisan dusk:chrome-driver ${chver}
-    fi
-
-    # Only run npm if something relevant was updated
-    if grep -e "package.json" -e "resources" /tmp/rsync.output; then
-        npm run dev
-    fi
-
-    ./artisan db:ping --wait
-
-
-    # Unconditionally get the database into shape
-    php -dmemory_limit=512M ./artisan migrate:refresh --seed
-
-    ./artisan data:import || :
-    ./artisan queue:work --stop-when-empty
-
+    /update.sh
     shift
 fi
 
@@ -75,15 +47,6 @@ elif [ "$1" == "suite-Feature" ]; then
         --verbose \
         --testsuite Feature
 elif [ "$1" == "suite-Browser" ]; then
-
-    # Can't do browser tests over https
-    echo "APP_URL=http://kolab.local" >> .env
-    echo "APP_PUBLIC_URL=http://kolab.local" >> .env
-    echo "ASSET_URL=http://kolab.local" >> .env
-    echo "MEET_SERVER_URLS=http://kolab.local/meetmedia/api/" >> .env
-    echo "APP_HEADER_CSP=" >> .env
-    echo "APP_HEADER_XFO=" >> .env
-
     ./artisan octane:start --port=80 >/dev/null 2>&1 &
     echo "127.0.0.1 kolab.local admin.kolab.local reseller.kolab.local" >> /etc/hosts
 
@@ -153,6 +116,13 @@ elif [ "$1" == "lint" ]; then
 
     npm run lint
 else
+
+    if [[ "$1" =~ "Browser" ]]; then
+        echo "Assuming a browsertest and starting octane"
+        ./artisan octane:start --port=80 >/dev/null 2>&1 &
+        echo "127.0.0.1 kolab.local admin.kolab.local reseller.kolab.local" >> /etc/hosts
+    fi
+
     php \
         -dmemory_limit=-1 \
         vendor/bin/phpunit \

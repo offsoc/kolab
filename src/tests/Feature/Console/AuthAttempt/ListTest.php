@@ -32,17 +32,17 @@ class ListTest extends TestCase
     {
         // Warning: We're not using artisan() here, as this will not
         // allow us to test "empty output" cases
-        $code = \Artisan::call('authattempt:list');
+        $code = \Artisan::call('authattempts');
         $output = trim(\Artisan::output());
         $this->assertSame(0, $code);
         $this->assertSame('', $output);
 
         $user = $this->getTestUser('john@kolab.org');
-        $authAttempt = AuthAttempt::recordAuthAttempt($user, "10.0.0.1");
+        $authAttempt = AuthAttempt::recordAuthAttempt($user, '10.0.0.1');
         //For up-to date timestamps and whatnot
         $authAttempt->refresh();
 
-        $code = \Artisan::call("authattempt:list");
+        $code = \Artisan::call('authattempts');
         $output = trim(\Artisan::output());
         $this->assertSame(0, $code);
 
