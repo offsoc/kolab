@@ -157,13 +157,13 @@ PASSPORT_PROXY_OAUTH_CLIENT_ID=5909ca4f-df7e-45fe-b355-e7c195aef117
 PASSPORT_PROXY_OAUTH_CLIENT_SECRET=3URb+3JGJM9wPuDnlUSTPOw2mqmHsoOV8NXanx9xwQM=
 DES_KEY=kBxUM/53N9p9abusAoT0ZEAxwI2pxFz/
 
-KOLAB_GIT_REF=dev/mollekopf
+KOLAB_GIT_REF=master
 KOLAB_GIT_REMOTE=https://git.kolab.org/source/kolab
 GIT_REF_ROUNDCUBEMAIL=dev/kolab-1.5
 GIT_REMOTE_ROUNDCUBEMAIL=https://git.kolab.org/source/roundcubemail.git
 GIT_REF_ROUNDCUBEMAIL_PLUGINS=master
 GIT_REMOTE_ROUNDCUBEMAIL_PLUGINS=https://git.kolab.org/diffusion/RPK/roundcubemail-plugins-kolab.git
-GIT_REF_CHWALA=dev/mollekopf
+GIT_REF_CHWALA=master
 GIT_REMOTE_CHWALA=https://git.kolab.org/diffusion/C/chwala.git
 GIT_REF_SYNCROTON=master
 GIT_REMOTE_SYNCROTON=https://git.kolab.org/diffusion/S/syncroton.git
@@ -173,5 +173,5 @@ GIT_REF_IRONY=master
 GIT_REMOTE_IRONY=https://git.kolab.org/source/iRony.git
 GIT_REF_FREEBUSY=master
 GIT_REMOTE_FREEBUSY=https://git.kolab.org/diffusion/F/freebusy.git
-IMAP_GIT_REF=dev/mollekopf
+IMAP_GIT_REF=dev/kolab-3.6
 IMAP_GIT_REMOTE=https://git.kolab.org/source/cyrus-imapd

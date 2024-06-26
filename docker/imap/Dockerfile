@@ -36,7 +36,7 @@ RUN dnf -y install \
         rsync && \
     dnf clean all
 
-ARG GIT_REF=dev/mollekopf
+ARG GIT_REF=dev/kolab-3.6
 ARG GIT_REMOTE=https://git.kolab.org/source/cyrus-imapd
 
 ADD build.sh /build.sh
