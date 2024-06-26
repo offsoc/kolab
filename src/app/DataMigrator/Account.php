@@ -16,11 +16,20 @@ class Account
     /** @var string User email address */
     public $email;
 
-    /** @var string Full account location URI */
+    /** @var string Hostname */
+    public $host;
+
+    /** @var string Connection scheme (service type) */
+    public $scheme;
+
+    /** @var string Full account location URI (w/o parameters) */
     public $uri;
 
     /** @var string Username for proxy auth */
     public $loginas;
+
+    /** @var array Additional parameters from the input */
+    public $params;
 
     /** @var string Full account definition */
     protected $input;
@@ -56,8 +65,17 @@ class Account
             $this->password = urldecode($url['pass']);
         }
 
+        if (isset($url['scheme'])) {
+            $this->scheme = strtolower($url['scheme']);
+        }
+
         if (isset($url['host'])) {
-            $this->uri = preg_replace('/\?.*$/', '', $input);
+            $this->host = $url['host'];
+            $this->uri = $this->scheme . '://' . $url['host'] . ($url['path'] ?? '');
+        }
+
+        if (!empty($url['query'])) {
+            parse_str($url['query'], $this->params);
         }
 
         if (strpos($this->loginas, '@')) {

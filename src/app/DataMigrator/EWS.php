@@ -7,6 +7,7 @@ use App\Jobs\DataMigratorEWSFolder;
 use App\Jobs\DataMigratorEWSItem;
 use garethp\ews\API;
 use garethp\ews\API\Type;
+use Illuminate\Support\Facades\Http;
 
 /**
  * Data migration from Exchange (EWS)
@@ -31,21 +32,23 @@ class EWS
 
     /** @var array Interal folders to skip */
     protected $folder_exceptions = [
-        'Sharing',
-        'Outbox',
-        'Calendar/United States holidays',
-        'ExternalContacts',
         'AllContacts',
         'AllPersonMetadata',
+        'AllTodoTasks',
         'Document Centric Conversations',
+        'ExternalContacts',
         'Favorites',
+        'Flagged Emails',
         'GraphFilesAndWorkingSetSearchFolder',
         'My Contacts',
         'MyContactsExtended',
+        'Orion Notes',
+        'Outbox',
         'PersonMetadata',
         'People I Know',
         'RelevantContacts',
         'SharedFilesSearchFolder',
+        'Sharing',
         'To-Do Search',
         'UserCuratedContacts',
         'XrmActivityStreamSearch',
@@ -53,7 +56,8 @@ class EWS
         'XrmDealSearch',
         'XrmSearch',
         'Folder Memberships',
-        'Orion Notes',
+        // TODO: These are different depending on a user locale
+        'Calendar/United States holidays',
     ];
 
     /** @var array Map of EWS folder types to Kolab types */
@@ -93,7 +97,7 @@ class EWS
         // TODO: When not in console mode we should
         // not write to stdout, but to log
         $output = new \Symfony\Component\Console\Output\ConsoleOutput;
-        $output->writeln($line);
+        $output->writeln("[EWS] $line");
     }
 
     /**
@@ -119,7 +123,6 @@ class EWS
     {
         // Create a unique identifier for the migration request
         $queue_id = md5(strval($source).strval($destination).$options['type']);
-
         // If queue exists, we'll display the progress only
         if ($queue = DataMigratorQueue::find($queue_id)) {
             // If queue contains no jobs, assume invalid
@@ -153,14 +156,14 @@ class EWS
             mkdir($this->location, 0740, true);
         }
 
-        // Autodiscover and authenticate the user
-        $this->authenticate($source->username, $source->password, $source->loginas);
+        // Initialize the source
+        $this->api = $this->authenticate($source);
 
-        // Also check user credentials for Kolab destination
+        // Initialize the destination
         $this->importer = new DAVClient($destination);
-        $this->importer->authenticate();
+        // $this->importer->authenticate();
 
-        $this->debug("Source/destination user credentials verified.");
+        // $this->debug("Source/destination user credentials verified.");
         $this->debug("Fetching folders hierarchy...");
 
         // Create a queue
@@ -186,34 +189,152 @@ class EWS
     }
 
     /**
-     * Autodiscover the server and authenticate the user
+     * Server autodiscovery
      */
-    protected function authenticate(string $user, string $password, string $loginas = null): void
+    public static function autodiscover(string $user, string $password): ?string
     {
         // You should never run the Autodiscover more than once.
         // It can make between 1 and 5 calls before giving up, or before finding your server,
         // depending on how many different attempts it needs to make.
 
-        // TODO: After 2020-10-13 EWS at Office365 will require OAuth
+        // TODO: Autodiscovery may fail with an exception thrown. Handle this nicely.
+        // TODO: Looks like this autodiscovery also does not work w/Basic Auth?
 
         $api = API\ExchangeAutodiscover::getAPI($user, $password);
 
         $server = $api->getClient()->getServer();
         $version = $api->getClient()->getVersion();
-        $options = ['version' => $version];
+
+        return sprintf('ews://%s:%s@%s', urlencode($user), urlencode($password), $server);
+    }
+
+    /**
+     * Authenticate to EWS
+     */
+    protected function authenticate(Account $source)
+    {
+        if (!empty($source->params['client_id'])) {
+            return $this->authenticateWithOAuth2(
+                $source->host,
+                $source->username,
+                $source->params['client_id'],
+                $source->params['client_secret'],
+                $source->params['tenant_id']
+            );
+        }
+
+        return $this->authenticateWithPassword(
+            $source->host,
+            $source->username,
+            $source->password,
+            $source->loginas
+        );
+    }
+
+    /**
+     * Autodiscover the server and authenticate the user
+     */
+    protected function authenticateWithPassword(string $server, string $user, string $password, string $loginas = null)
+    {
+        // Note: Since 2023-01-01 EWS at Office365 requires OAuth2, no way back to basic auth.
+
+        $this->debug("Using basic authentication on $server...");
+
+        $version = API\ExchangeWebServices::VERSION_2013;
+        $options = [
+            'version' => $version,
+            // 'httpClient' => $client ?? null, // If you want to inject your own GuzzleClient for the requests
+        ];
 
         if ($loginas) {
             $options['impersonation'] = $loginas;
         }
 
-        $this->debug("Connected to $server ($version). Authenticating...");
+        // In debug mode record all responses
+        /*
+        if (\config('app.debug')) {
+            $options['httpPlayback'] = [
+                'mode' => 'record',
+                'recordLocation' => \storage_path('ews'),
+            ];
+        }
+        */
 
         $this->ews = [
             'options' => $options,
             'server' => $server,
         ];
 
-        $this->api = API::withUsernameAndPassword($server, $user, $password, $options);
+        return API::withUsernameAndPassword($server, $user, $password, $options);
+    }
+
+    /**
+     * Authenticate with a token (Office365)
+     */
+    protected function authenticateWithToken(string $server, string $user, string $token, $expires_at = null)
+    {
+        $this->debug("Using token authentication on $server...");
+
+        $version = API\ExchangeWebServices::VERSION_2013;
+        $options = [
+            'version' => $version,
+            // 'httpClient' => $client, // If you want to inject your own GuzzleClient for the requests
+            'impersonation' => $user,
+        ];
+
+        // In debug mode record all responses
+        /*
+        if (\config('app.debug')) {
+            $options['httpPlayback'] = [
+                'mode' => 'record',
+                'recordLocation' => \storage_path('ews'),
+            ];
+        }
+        */
+
+        $this->ews = [
+            'options' => $options,
+            'server' => $server,
+            'token' => $token,
+            'expires_at' => $expires_at,
+        ];
+
+        return API::withCallbackToken($server, $token, $options);
+    }
+
+    /**
+     * Authenticate with OAuth2 (Office365) - get the token
+     */
+    protected function authenticateWithOAuth2(string $server, string $user, string $client_id,
+        string $client_secret, string $tenant_id)
+    {
+        // See https://github.com/Garethp/php-ews/blob/master/examples/basic/authenticatingWithOAuth.php
+        // See https://github.com/Garethp/php-ews/issues/236#issuecomment-1292521527
+        // To register OAuth2 app goto https://entra.microsoft.com > Applications > App registrations
+
+        $this->debug("Fetching OAuth2 token from $server...");
+
+        $scope = 'https://outlook.office365.com/.default';
+        $token_uri = "https://login.microsoftonline.com/{$tenant_id}/oauth2/v2.0/token";
+        // $authUri = "https://login.microsoftonline.com/{$tenant_id}/oauth2/authorize";
+
+        $response = Http::asForm()
+            ->timeout(5)
+            ->post($token_uri, [
+                'client_id' => $client_id,
+                'client_secret' => $client_secret,
+                'scope' => $scope,
+                'grant_type' => 'client_credentials',
+            ])
+            ->throwUnlessStatus(200);
+
+        $token = $response->json('access_token');
+
+        // Note: Office365 default token expiration time is ~1h,
+        $expires_in = $response->json('expires_in');
+        $expires_at = now()->addSeconds($expires_in)->toDateTimeString();
+
+        return $this->authenticateWithToken($server, $user, $token, $expires_at);
     }
 
     /**
@@ -241,6 +362,7 @@ class EWS
                 continue;
             }
 
+            // Note: Folder names are localized
             $name = $fullname = $folder->getDisplayName();
             $id = $folder->getFolderId()->getId();
             $parentId = $folder->getParentFolderId()->getId();
@@ -258,11 +380,13 @@ class EWS
                 continue;
             }
 
+            // FIXME: Should we just ignore empty folders?
+
             $result[$id] = [
                 'id' => $folder->getFolderId(),
                 'total' => $folder->getTotalCount(),
                 'class' => $class,
-                'type' => array_key_exists($class, $this->type_map) ? $this->type_map[$class] : null,
+                'type' => $this->type_map[$class] ?? null,
                 'name' => $name,
                 'fullname' => $fullname,
                 'location' => $this->location . '/' . $fullname,
@@ -407,15 +531,15 @@ class EWS
                     case 'task':
                         $result[] = EWS\Task::FOLDER_TYPE;
                         break;
-/*
+                    /*
                     case 'note':
                         $result[] = EWS\StickyNote::FOLDER_TYPE;
                         break;
-*/
+
                     case 'mail':
                         $result[] = EWS\Note::FOLDER_TYPE;
                         break;
-
+                    */
                     default:
                         throw new \Exception("Unsupported type: {$type}");
                 }
@@ -460,11 +584,22 @@ class EWS
         $this->destination = new Account($this->queue->data['destination']);
         $this->options = $this->queue->data['options'];
         $this->importer = new DAVClient($this->destination);
-        $this->api = API::withUsernameAndPassword(
-            $this->queue->data['ews']['server'],
-            $this->source->username,
-            $this->source->password,
-            $this->queue->data['ews']['options']
-        );
+        $this->ews = $this->queue->data['ews'];
+
+        if (!empty($this->ews['token'])) {
+            // TODO: Refresh the token if needed
+            $this->api = API::withCallbackToken(
+                $this->ews['server'],
+                $this->ews['token'],
+                $this->ews['options']
+            );
+        } else {
+            $this->api = API::withUsernameAndPassword(
+                $this->ews['server'],
+                $this->source->username,
+                $this->source->password,
+                $this->ews['options']
+            );
+        }
     }
 }

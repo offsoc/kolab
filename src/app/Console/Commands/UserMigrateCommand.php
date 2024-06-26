@@ -37,7 +37,11 @@ class UserMigrateCommand extends Command
     {
         $src = new DataMigrator\Account($this->argument('src'));
         $dst = new DataMigrator\Account($this->argument('dst'));
+        $options = [
+            'type' => $this->option('type'),
+            'force' => $this->option('force'),
+        ];
 
-        DataMigrator::migrate($src, $dst, $this->options());
+        DataMigrator::migrate($src, $dst, $options);
     }
 }

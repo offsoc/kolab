@@ -27,9 +27,11 @@ class DAVClient
     public function __construct(Account $account)
     {
         $username = $account->username . ($account->loginas ? "**{$account->loginas}" : '');
+        $baseUri = rtrim($account->uri, '/') . '/';
+        $baseUri = preg_replace('|^dav|', 'http', $baseUri);
 
         $this->settings = [
-            'baseUri'  => rtrim($account->uri, '/') . '/',
+            'baseUri'  => $baseUri,
             'userName' => $username,
             'password' => $account->password,
             'authType' => Client::AUTH_BASIC,
