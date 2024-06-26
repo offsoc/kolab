@@ -1,19 +1,19 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Data;
 
 use App\DataMigrator;
 
 use Illuminate\Console\Command;
 
-class UserMigrateCommand extends Command
+class MigrateCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'user:migrate
+    protected $signature = 'data:migrate
                                 {src : Source account}
                                 {dst : Destination account}
                                 {--type= : Object type(s)}
