@@ -138,8 +138,8 @@ class WalletsController extends ResourceController
 
         $result = $result->map(function ($item) use ($wallet) {
             $entry = [
-                'period' => $item->ident,
-                'amount' => $item->total,
+                'period' => $item->ident, // @phpstan-ignore-line
+                'amount' => $item->total, // @phpstan-ignore-line
                 'currency' => $wallet->currency
             ];
             return $entry;

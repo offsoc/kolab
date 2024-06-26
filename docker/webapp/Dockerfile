@@ -23,6 +23,7 @@ RUN /build.sh && \
 
 COPY init.sh /init.sh
 COPY update.sh /update.sh
+COPY update-source.sh /update-source.sh
 
 USER 1001
 
