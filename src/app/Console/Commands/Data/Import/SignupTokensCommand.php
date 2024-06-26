@@ -13,7 +13,7 @@ class SignupTokensCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'data:import:signup-tokens {plan} {file} {--tenant}';
+    protected $signature = 'data:import:signup-tokens {plan} {file} {--tenant=}';
 
     /**
      * The console command description.
