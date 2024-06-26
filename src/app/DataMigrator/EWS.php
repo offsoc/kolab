@@ -7,6 +7,7 @@ use App\Jobs\DataMigrator\EWSItemJob;
 use garethp\ews\API;
 use garethp\ews\API\Type;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 /**
  * Data migration from Exchange (EWS)
@@ -93,10 +94,12 @@ class EWS
      */
     public function debug($line)
     {
-        // TODO: When not in console mode we should
-        // not write to stdout, but to log
-        $output = new \Symfony\Component\Console\Output\ConsoleOutput;
-        $output->writeln("[EWS] $line");
+        if (!empty($this->options['stdout'])) {
+            $output = new \Symfony\Component\Console\Output\ConsoleOutput();
+            $output->writeln("$line");
+        } else {
+            \Log::debug("[EWS] $line");
+        }
     }
 
     /**
@@ -120,8 +123,13 @@ class EWS
      */
     public function migrate(Account $source, Account $destination, array $options = []): void
     {
+        $this->source = $source;
+        $this->destination = $destination;
+        $this->options = $options;
+
         // Create a unique identifier for the migration request
         $queue_id = md5(strval($source).strval($destination).$options['type']);
+
         // If queue exists, we'll display the progress only
         if ($queue = Queue::find($queue_id)) {
             // If queue contains no jobs, assume invalid
@@ -130,7 +138,7 @@ class EWS
                 $queue->delete();
             } else {
                 while (true) {
-                    printf("Progress [%d of %d]\n", $queue->jobs_finished, $queue->jobs_started);
+                    $this->debug(sprintf("Progress [%d of %d]\n", $queue->jobs_finished, $queue->jobs_started));
 
                     if ($queue->jobs_started == $queue->jobs_finished) {
                         break;
@@ -143,10 +151,6 @@ class EWS
                 return;
             }
         }
-
-        $this->source = $source;
-        $this->destination = $destination;
-        $this->options = $options;
 
         // We'll store output in storage/<username> tree
         $this->location = storage_path('export/') . $source->email;
@@ -184,7 +188,7 @@ class EWS
 
         $this->queue->bumpJobsStarted($count);
 
-        $this->debug("Done. {$count} jobs created in queue: {$queue_id}.");
+        $this->debug(sprintf('Done. %d %s created in queue: %s.', $count, Str::plural('job', $count), $queue_id));
     }
 
     /**
@@ -379,8 +383,6 @@ class EWS
                 continue;
             }
 
-            // FIXME: Should we just ignore empty folders?
-
             $result[$id] = [
                 'id' => $folder->getFolderId(),
                 'total' => $folder->getTotalCount(),
@@ -560,11 +562,14 @@ class EWS
         $this->queue = new Queue;
         $this->queue->id = $queue_id;
 
+        $options = $this->options;
+        unset($options['stdout']); // jobs aren't in stdout anymore
+
         // TODO: data should be encrypted
         $this->queue->data = [
             'source' => (string) $this->source,
             'destination' => (string) $this->destination,
-            'options' => $this->options,
+            'options' => $options,
             'ews' => $this->ews,
         ];
 

@@ -40,6 +40,7 @@ class MigrateCommand extends Command
         $options = [
             'type' => $this->option('type'),
             'force' => $this->option('force'),
+            'stdout' => true,
         ];
 
         DataMigrator\Engine::migrate($src, $dst, $options);
