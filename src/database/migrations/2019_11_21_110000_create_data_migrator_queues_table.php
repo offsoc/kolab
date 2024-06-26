@@ -16,7 +16,7 @@ class CreateDataMigratorQueuesTable extends Migration
             $table->string('id', 32);
             $table->integer('jobs_started');
             $table->integer('jobs_finished');
-            $table->text('data');
+            $table->mediumText('data');
             $table->timestamps();
 
             $table->primary('id');
