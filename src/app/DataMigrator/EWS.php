@@ -2,9 +2,8 @@
 
 namespace App\DataMigrator;
 
-use App\DataMigratorQueue;
-use App\Jobs\DataMigratorEWSFolder;
-use App\Jobs\DataMigratorEWSItem;
+use App\Jobs\DataMigrator\EWSFolderJob;
+use App\Jobs\DataMigrator\EWSItemJob;
 use garethp\ews\API;
 use garethp\ews\API\Type;
 use Illuminate\Support\Facades\Http;
@@ -82,7 +81,7 @@ class EWS
     /** @var DAVClient Data importer */
     protected $importer;
 
-    /** @var \App\DataMigratorQueue Migrator jobs queue */
+    /** @var Queue Migrator jobs queue */
     protected $queue;
 
     /** @var array EWS server setup (after autodiscovery) */
@@ -124,7 +123,7 @@ class EWS
         // Create a unique identifier for the migration request
         $queue_id = md5(strval($source).strval($destination).$options['type']);
         // If queue exists, we'll display the progress only
-        if ($queue = DataMigratorQueue::find($queue_id)) {
+        if ($queue = Queue::find($queue_id)) {
             // If queue contains no jobs, assume invalid
             // TODO: An better API to manage (reset) queues
             if (!$queue->jobs_started || !empty($options['force'])) {
@@ -178,7 +177,7 @@ class EWS
                 $this->debug("Processing folder {$folder['fullname']}...");
 
                 // Dispatch the job (for async execution)
-                DataMigratorEWSFolder::dispatch($folder);
+                EWSFolderJob::dispatch($folder);
                 $count++;
             }
         }
@@ -496,7 +495,7 @@ class EWS
             $folder['item'] = $item;
 
             // Dispatch the job (for async execution)
-            DataMigratorEWSItem::dispatch($folder);
+            EWSItemJob::dispatch($folder);
 
             return true;
         }
@@ -558,7 +557,7 @@ class EWS
      */
     protected function createQueue(string $queue_id): void
     {
-        $this->queue = new DataMigratorQueue;
+        $this->queue = new Queue;
         $this->queue->id = $queue_id;
 
         // TODO: data should be encrypted
@@ -579,7 +578,7 @@ class EWS
      */
     protected function initEnv(string $queue_id): void
     {
-        $this->queue = DataMigratorQueue::findOrFail($queue_id);
+        $this->queue = Queue::findOrFail($queue_id);
         $this->source = new Account($this->queue->data['source']);
         $this->destination = new Account($this->queue->data['destination']);
         $this->options = $this->queue->data['options'];

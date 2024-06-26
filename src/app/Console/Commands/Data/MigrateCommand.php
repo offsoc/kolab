@@ -42,6 +42,6 @@ class MigrateCommand extends Command
             'force' => $this->option('force'),
         ];
 
-        DataMigrator::migrate($src, $dst, $options);
+        DataMigrator\Engine::migrate($src, $dst, $options);
     }
 }

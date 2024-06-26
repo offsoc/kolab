@@ -1,6 +1,6 @@
 <?php
 
-namespace App;
+namespace App\DataMigrator;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
@@ -9,8 +9,11 @@ use Illuminate\Support\Facades\DB;
 /**
  * The eloquent definition of a DataMigratorQueue
  */
-class DataMigratorQueue extends Model
+class Queue extends Model
 {
+    /** @var string Database table name */
+    protected $table = 'data_migrator_queues';
+
     /**
      * Indicates if the IDs are auto-incrementing.
      *

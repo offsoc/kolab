@@ -1,13 +1,11 @@
 <?php
 
-namespace App;
-
-use App\DataMigrator\Account;
+namespace App\DataMigrator;
 
 /**
- * Data migration factory
+ * Data migration engine
  */
-class DataMigrator
+class Engine
 {
     /**
      * Execute migration for the specified user
@@ -18,7 +16,7 @@ class DataMigrator
         // IMAP migrator or other, so this will be a factory
         // for selecting (automatically?) the migration engine
 
-        $driver = new DataMigrator\EWS;
+        $driver = new EWS;
 
         $driver->migrate($source, $destination, $options);
     }
