@@ -41,6 +41,7 @@ fi
 
 
 if [[ $REBUILD == true ]]; then
+    rm -f composer.lock
     rm -rf storage/framework
     mkdir -p storage/framework/{sessions,views,cache}
 
