@@ -134,13 +134,8 @@
                     </div>
                     <h2 class="card-title mt-4">{{ $t('wallet.transactions') }}</h2>
                     <transaction-log v-if="wallet.id && !walletReload" class="card-text" :wallet-id="wallet.id" :is-admin="true"></transaction-log>
-                </div>
-            </div>
-            <div class="tab-pane" id="receipts" role="tabpanel" aria-labelledby="tab-receipts">
-                <div class="card-body">
-                    <div class="card-text">
-                        <receipt-list v-if="wallet.id && !walletReload" class="card-text" :wallet-id="wallet.id"></receipt-list>
-                    </div>
+                    <h2 class="card-title mt-4">{{ $t('wallet.receipts') }}</h2>
+                    <receipt-list v-if="wallet.id && !walletReload" class="card-text" :wallet-id="wallet.id"></receipt-list>
                 </div>
             </div>
             <div class="tab-pane" id="aliases" role="tabpanel" aria-labelledby="tab-aliases">
@@ -372,7 +367,6 @@
                 },
                 tabs: [
                     { label: 'user.finances' },
-                    { label: 'wallet.receipts' },
                     { label: 'user.aliases', count: 0 },
                     { label: 'form.subscriptions', count: 0 },
                     { label: 'user.domains', count: 0 },
