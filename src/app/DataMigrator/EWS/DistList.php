@@ -16,18 +16,19 @@ class DistList extends Item
     /**
      * Convert distribution list object to vCard
      */
-    protected function processItem(Type $item): bool
+    protected function processItem(Type $item)
     {
         // Groups (Distribution Lists) are not exported in vCard format, they use eml
 
         $data = [
-            "UID" => [$this->getUID($item)],
-            "KIND" => ["group"],
-            "FN" => [$item->getDisplayName()],
-            "REV" => [$item->getLastModifiedTime(), ['VALUE' => 'DATE-TIME']],
+            'UID' => [$this->getUID($item)],
+            'KIND' => ['group'],
+            'FN' => [$item->getDisplayName()],
+            'REV' => [$item->getLastModifiedTime(), ['VALUE' => 'DATE-TIME']],
+            'X-MS-ID' => [$this->itemId],
         ];
 
-        $vcard = "BEGIN:VCARD\r\nVERSION:4.0\r\nPRODID:Kolab EWS DataMigrator\r\n";
+        $vcard = "BEGIN:VCARD\r\nVERSION:4.0\r\nPRODID:Kolab EWS Data Migrator\r\n";
 
         foreach ($data as $key => $prop) {
             $vcard .= $this->formatProp($key, $prop[0], isset($prop[1]) ? $prop[1] : []);
@@ -55,9 +56,6 @@ class DistList extends Item
 
         $vcard .= "END:VCARD\r\n";
 
-        // TODO: Maybe find less-hacky way
-        $item->setMimeContent((new Type\MimeContentType)->set('_', $vcard));
-
-        return true;
+        return $vcard;
     }
 }

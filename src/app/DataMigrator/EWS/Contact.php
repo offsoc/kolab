@@ -29,21 +29,21 @@ class Contact extends Item
     /**
      * Process contact object
      */
-    protected function processItem(Type $item): bool
+    protected function processItem(Type $item)
     {
         // Decode MIME content
         $vcard = base64_decode((string) $item->getMimeContent());
 
-        // Inject UID to the vCard
+        // Remove empty properties that EWS is exporting
+        $vcard = preg_replace('|\n[^:]+:;*\r|', '', $vcard);
+
+        // Inject UID (and Exchange item ID) to the vCard
         $uid = $this->getUID($item);
-        $vcard = str_replace("BEGIN:VCARD", "BEGIN:VCARD\r\nUID:{$uid}", $vcard);
+        $vcard = str_replace("BEGIN:VCARD", "BEGIN:VCARD\r\nUID:{$uid}\r\nX-MS-ID:{$this->itemId}", $vcard);
 
         // Note: Looks like PHOTO property is exported properly, so we
         //       don't have to handle attachments as we do for calendar items
 
-        // TODO: Maybe find less-hacky way
-        $item->getMimeContent()->_ = $vcard;
-
-        return true;
+        return $vcard;
     }
 }

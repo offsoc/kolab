@@ -32,13 +32,10 @@ class Note extends Item
     /**
      * Process contact object
      */
-    protected function processItem(Type $item): bool
+    protected function processItem(Type $item)
     {
         $email = base64_decode((string) $item->getMimeContent());
 
-        // TODO: Maybe find less-hacky way
-        $item->getMimeContent()->_ = $email;
-
-        return true;
+        return $email;
     }
 }

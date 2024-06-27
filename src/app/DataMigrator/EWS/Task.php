@@ -29,7 +29,7 @@ class Task extends Item
     /**
      * Process task object
      */
-    protected function processItem(Type $item): bool
+    protected function processItem(Type $item)
     {
         // Tasks are exported as Email messages in useless format
         // (does not contain all relevant properties)
@@ -40,26 +40,27 @@ class Task extends Item
         //        and dates are in UTC, shall we remove the 'Z' from dates to make them floating?
 
         $data = [
-            "UID" => [$this->getUID($item)],
-            "DTSTAMP" => [$item->getLastModifiedTime()],
-            "CREATED" => [$item->getDateTimeCreated()],
-            "SEQUENCE" => [intval($item->getChangeCount())],
-            "SUMMARY" => [$item->getSubject()],
-            "DESCRIPTION" => [(string) $item->getBody()],
-            "PERCENT-COMPLETE" => [intval($item->getPercentComplete())],
-            "STATUS" => [strtoupper($item->getStatus())],
+            'UID' => [$this->getUID($item)],
+            'DTSTAMP' => [$this->formatDate($item->getLastModifiedTime()), ['VALUE' => 'DATE-TIME']],
+            'CREATED' => [$this->formatDate($item->getDateTimeCreated()), ['VALUE' => 'DATE-TIME']],
+            'SEQUENCE' => [intval($item->getChangeCount())],
+            'SUMMARY' => [$item->getSubject()],
+            'DESCRIPTION' => [(string) $item->getBody()],
+            'PERCENT-COMPLETE' => [intval($item->getPercentComplete())],
+            'STATUS' => [strtoupper($item->getStatus())],
+            'X-MS-ID' => [$this->itemId],
         ];
 
         if ($dueDate = $item->getDueDate()) {
-            $data["DUE"] = [$dueDate];
+            $data['DUE'] = [$this->formatDate($dueDate), ['VALUE' => 'DATE-TIME']];
         }
 
         if ($startDate = $item->getStartDate()) {
-            $data["DTSTART"] = [$startDate];
+            $data['DTSTART'] = [$this->formatDate($startDate), ['VALUE' => 'DATE-TIME']];
         }
 
         if (($categories = $item->getCategories()) && $categories->String) {
-            $data["CATEGORIES"] = [$categories->String];
+            $data['CATEGORIES'] = [$categories->String];
         }
 
         if ($sensitivity = $item->getSensitivity()) {
@@ -70,7 +71,7 @@ class Task extends Item
                 'PRIVATE' => 'PRIVATE',
             ];
 
-            $data["CLASS"] = [$sensitivity_map[strtoupper($sensitivity)] ?? 'PUBLIC'];
+            $data['CLASS'] = [$sensitivity_map[strtoupper($sensitivity)] ?? 'PUBLIC'];
         }
 
         if ($importance = $item->getImportance()) {
@@ -80,13 +81,13 @@ class Task extends Item
                 'LOW' => '1',
             ];
 
-            $data["PRIORITY"] = [$importance_map[strtoupper($importance)] ?? '0'];
+            $data['PRIORITY'] = [$importance_map[strtoupper($importance)] ?? '0'];
         }
 
         $this->setTaskOrganizer($data, $item);
         $this->setTaskRecurrence($data, $item);
 
-        $ical = "BEGIN:VCALENDAR\r\nMETHOD:PUBLISH\r\nVERSION:2.0\r\nPRODID:Kolab EWS DataMigrator\r\nBEGIN:VTODO\r\n";
+        $ical = "BEGIN:VCALENDAR\r\nMETHOD:PUBLISH\r\nVERSION:2.0\r\nPRODID:Kolab EWS Data Migrator\r\nBEGIN:VTODO\r\n";
 
         foreach ($data as $key => $prop) {
             $ical .= $this->formatProp($key, $prop[0], isset($prop[1]) ? $prop[1] : []);
@@ -122,10 +123,7 @@ class Task extends Item
         $ical .= "END:VTODO\r\n";
         $ical .= "END:VCALENDAR\r\n";
 
-        // TODO: Maybe find less-hacky way
-        $item->setMimeContent((new Type\MimeContentType)->set('_', $ical));
-
-        return true;
+        return $ical;
     }
 
     /**
@@ -140,12 +138,12 @@ class Task extends Item
 
         if (strpos($owner, '@') && $owner != $source->email) {
             // Task owned by another person
-            $data["ORGANIZER"] = ["mailto:{$owner}"];
+            $data['ORGANIZER'] = ["mailto:{$owner}"];
 
             // FIXME: Because attendees are not specified in EWS, assume the user is an attendee
             if ($destination->email) {
-                $params = ["ROLE" => "REQ-PARTICIPANT", "CUTYPE" => "INDIVIDUAL"];
-                $data["ATTENDEE"] = ["mailto:{$destination->email}", $params];
+                $params = ['ROLE' => 'REQ-PARTICIPANT', 'CUTYPE' => 'INDIVIDUAL'];
+                $data['ATTENDEE'] = ["mailto:{$destination->email}", $params];
             }
 
             return;
@@ -153,7 +151,7 @@ class Task extends Item
 
         // Otherwise it must be owned by the user
         if ($destination->email) {
-            $data["ORGANIZER"] = ["mailto:{$destination->email}"];
+            $data['ORGANIZER'] = ["mailto:{$destination->email}"];
         }
     }
 
@@ -202,7 +200,7 @@ class Task extends Item
             if ($recurrence = $r->getNumberedRecurrence()) {
                 $rrule['COUNT'] = $recurrence->getNumberOfOccurrences();
             } else if ($recurrence = $r->getEndDateRecurrence()) {
-                $rrule['UNTIL'] = str_replace('Z', '', $recurrence->getEndDate());
+                $rrule['UNTIL'] = $this->formatDate($recurrence->getEndDate());
             }
 
             $rrule = array_filter($rrule);
@@ -213,7 +211,7 @@ class Task extends Item
                 }
             ), ';');
 
-            $data["RRULE"] = [$rrule];
+            $data['RRULE'] = [$rrule];
         }
     }
 
@@ -224,7 +222,7 @@ class Task extends Item
     {
         // FIXME: To me it looks like ReminderMinutesBeforeStart property is not used
 
-        $date = $task->getReminderDueBy();
+        $date = $this->formatDate($task->getReminderDueBy());
 
         if (empty($task->getReminderIsSet()) || empty($date)) {
             return '';
@@ -289,5 +287,17 @@ class Task extends Item
         );
 
         return implode(',', $months);
+    }
+
+    /**
+     * Format EWS date-time into a iCalendar date-time
+     */
+    protected function formatDate($datetime)
+    {
+        if (empty($datetime)) {
+            return null;
+        }
+
+        return str_replace(['Z', '-', ':'], '', $datetime);
     }
 }

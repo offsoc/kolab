@@ -6,6 +6,17 @@ use App\DataMigrator;
 
 use Illuminate\Console\Command;
 
+/**
+ * Migrate user data from an external service to Kolab.
+ *
+ * Example usage:
+ *
+ * ```
+ * php artisan data:migrate \
+ *   "ews://$user:$pass@$server?client_id=$client_id&client_secret=$client_secret&tenant_id=$tenant_id" \
+ *   "http://$dest_user:$dest_pass@$dest_server"
+ * ```
+ */
 class MigrateCommand extends Command
 {
     /**

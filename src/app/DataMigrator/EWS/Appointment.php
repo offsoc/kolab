@@ -35,12 +35,12 @@ class Appointment extends Item
     /**
      * Process event object
      */
-    protected function processItem(Type $item): bool
+    protected function processItem(Type $item)
     {
         // Decode MIME content
-        // TODO: Maybe find less-hacky way
-        $content = $item->getMimeContent();
-        $ical = base64_decode((string) $content);
+        $ical = base64_decode((string) $item->getMimeContent());
+
+        $ical = str_replace("\r\nBEGIN:VEVENT\r\n", "\r\nBEGIN:VEVENT\r\nX-MS-ID:{$this->itemId}\r\n", $ical);
 
         // TODO: replace source email with destination email address in ORGANIZER/ATTENDEE
 
@@ -80,10 +80,7 @@ class Appointment extends Item
             }
         }
 
-        // TODO: Maybe find less-hacky way
-        $item->getMimeContent()->_ = $ical;
-
-        return true;
+        return $ical;
     }
 
     /**

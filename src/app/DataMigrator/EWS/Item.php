@@ -18,6 +18,9 @@ abstract class Item
     /** @var array Current folder data */
     protected $folder;
 
+    /** @var string Current item ID */
+    protected $itemId;
+
     /** @var string Current item UID */
     protected $uid;
 
@@ -35,9 +38,9 @@ abstract class Item
      * Factory method.
      * Returns object suitable to handle specified item type.
      */
-    public static function factory(EWS $engine, Type $item, array $folder)
+    public static function factory(EWS $engine, string $item_class, array $folder)
     {
-        $item_class = str_replace('IPM.', '', $item->getItemClass());
+        $item_class = str_replace('IPM.', '', $item_class);
         $item_class = "\App\DataMigrator\EWS\\{$item_class}";
 
         if (class_exists($item_class)) {
@@ -46,19 +49,23 @@ abstract class Item
     }
 
     /**
-     * Synchronize specified object
+     * Fetch the specified object and put into a file
      */
-    public function syncItem(Type $item)
+    public function fetchItem(array $itemId)
     {
         // Fetch the item
-        $item = $this->engine->api->getItem($item->getItemId(), $this->getItemRequest());
+        $item = $this->engine->api->getItem($itemId, $this->getItemRequest());
+
+        $this->itemId = implode('!', $itemId);
 
         $uid = $this->getUID($item);
 
-        $this->engine->debug("* Saving item {$uid}...");
+        $this->engine->debug("Saving item {$uid}...");
 
         // Apply type-specific format converters
-        if ($this->processItem($item) === false) {
+        $content = $this->processItem($item);
+
+        if (!is_string($content)) {
             return;
         }
 
@@ -72,7 +79,7 @@ abstract class Item
 
         $location .= '/' . $uid . '.' . $this->fileExtension();
 
-        file_put_contents($location, (string) $item->getMimeContent());
+        file_put_contents($location, $content);
 
         return $location;
     }
@@ -80,7 +87,7 @@ abstract class Item
     /**
      * Item conversion code
      */
-    abstract protected function processItem(Type $item): bool;
+    abstract protected function processItem(Type $item);
 
     /**
      * Get GetItem request parameters

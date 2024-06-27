@@ -58,6 +58,7 @@ class EWS
         'Folder Memberships',
         // TODO: These are different depending on a user locale
         'Calendar/United States holidays',
+        'Kalendarz/Polska — dni wolne od pracy', // pl
     ];
 
     /** @var array Map of EWS folder types to Kolab types */
@@ -177,7 +178,7 @@ class EWS
 
         foreach ($folders as $folder) {
             // Only supported folder types
-            if ($folder['type']) {
+            if (!empty($folder['type'])) {
                 $this->debug("Processing folder {$folder['fullname']}...");
 
                 // Dispatch the job (for async execution)
@@ -243,32 +244,18 @@ class EWS
 
         $this->debug("Using basic authentication on $server...");
 
-        $version = API\ExchangeWebServices::VERSION_2013;
-        $options = [
-            'version' => $version,
-            // 'httpClient' => $client ?? null, // If you want to inject your own GuzzleClient for the requests
-        ];
+        $options = [];
 
         if ($loginas) {
             $options['impersonation'] = $loginas;
         }
-
-        // In debug mode record all responses
-        /*
-        if (\config('app.debug')) {
-            $options['httpPlayback'] = [
-                'mode' => 'record',
-                'recordLocation' => \storage_path('ews'),
-            ];
-        }
-        */
 
         $this->ews = [
             'options' => $options,
             'server' => $server,
         ];
 
-        return API::withUsernameAndPassword($server, $user, $password, $options);
+        return API::withUsernameAndPassword($server, $user, $password, $this->apiOptions($options));
     }
 
     /**
@@ -278,22 +265,7 @@ class EWS
     {
         $this->debug("Using token authentication on $server...");
 
-        $version = API\ExchangeWebServices::VERSION_2013;
-        $options = [
-            'version' => $version,
-            // 'httpClient' => $client, // If you want to inject your own GuzzleClient for the requests
-            'impersonation' => $user,
-        ];
-
-        // In debug mode record all responses
-        /*
-        if (\config('app.debug')) {
-            $options['httpPlayback'] = [
-                'mode' => 'record',
-                'recordLocation' => \storage_path('ews'),
-            ];
-        }
-        */
+        $options = ['impersonation' => $user];
 
         $this->ews = [
             'options' => $options,
@@ -302,7 +274,7 @@ class EWS
             'expires_at' => $expires_at,
         ];
 
-        return API::withCallbackToken($server, $token, $options);
+        return API::withCallbackToken($server, $token, $this->apiOptions($options));
     }
 
     /**
@@ -384,7 +356,7 @@ class EWS
             }
 
             $result[$id] = [
-                'id' => $folder->getFolderId(),
+                'id' => $folder->getFolderId()->toArray(true),
                 'total' => $folder->getTotalCount(),
                 'class' => $class,
                 'type' => $this->type_map[$class] ?? null,
@@ -420,7 +392,7 @@ class EWS
         $request = [
             // Exchange's maximum is 1000
             'IndexedPageItemView' => ['MaxEntriesReturned' => 100, 'Offset' => 0, 'BasePoint' => 'Beginning'],
-            'ParentFolderIds' => $folder['id']->toArray(true),
+            'ParentFolderIds' => $folder['id'],
             'Traversal' => 'Shallow',
             'ItemShape' => [
                 'BaseShape' => 'IdOnly',
@@ -472,13 +444,13 @@ class EWS
     public function processItem(array $item): void
     {
         // Job processing - initialize environment
-        if (!empty($item['queue_id'])) {
-            $this->initEnv($item['queue_id']);
+        if (!empty($item['folder']['queue_id'])) {
+            $this->initEnv($item['folder']['queue_id']);
         }
 
-        if ($driver = EWS\Item::factory($this, $item['item'], $item)) {
-            if ($file = $driver->syncItem($item['item'])) {
-                $this->importer->createObjectFromFile($file, $item['fullname']);
+        if ($driver = EWS\Item::factory($this, $item['itemClass'], $item['folder'])) {
+            if ($file = $driver->fetchItem($item['id'])) {
+                $this->importer->createObjectFromFile($file, $item['folder']['fullname']);
                 // TODO: remove the file
             }
         }
@@ -491,13 +463,18 @@ class EWS
      */
     protected function syncItem(Type $item, array $folder): bool
     {
-        if ($driver = EWS\Item::factory($this, $item, $folder)) {
-            // TODO: This object could probably be streamlined down to save some space
-            //       All we need is item ID and class.
-            $folder['item'] = $item;
+        $item_class = $item->getItemClass();
+
+        if ($driver = EWS\Item::factory($this, $item_class, $folder)) {
+            // To the job we'll pass a slimmed down object
+            $item = [
+                'id' => $item->getItemId()->toArray(),
+                'itemClass' => $item_class,
+                'folder' => $folder,
+            ];
 
             // Dispatch the job (for async execution)
-            EWSItemJob::dispatch($folder);
+            EWSItemJob::dispatch($item);
 
             return true;
         }
@@ -505,7 +482,7 @@ class EWS
         // TODO IPM.Note (email) and IPM.StickyNote
         // Note: iTip messages in mail folders may have different class assigned
         // https://docs.microsoft.com/en-us/office/vba/outlook/Concepts/Forms/item-types-and-message-classes
-        $this->debug("Unsupported object type: {$item->getItemClass()}. Skiped.");
+        $this->debug("Unsupported object type: {$item_class}. Skipped.");
 
         return false;
     }
@@ -577,6 +554,31 @@ class EWS
     }
 
     /**
+     * Set common API options
+     */
+    protected function apiOptions(array $options): array
+    {
+        if (empty($options['version'])) {
+            $options['version'] = API\ExchangeWebServices::VERSION_2013;
+        }
+
+        // If you want to inject your own GuzzleClient for the requests
+        // $options['httpClient]' = $client;
+
+        // In debug mode record all responses
+        /*
+        if (\config('app.debug')) {
+            $options['httpPlayback'] = [
+                'mode' => 'record',
+                'recordLocation' => \storage_path('ews'),
+            ];
+        }
+        */
+
+        return $options;
+    }
+
+    /**
      * Initialize environment for job execution
      *
      * @param string $queue_id Queue identifier
@@ -595,14 +597,14 @@ class EWS
             $this->api = API::withCallbackToken(
                 $this->ews['server'],
                 $this->ews['token'],
-                $this->ews['options']
+                $this->apiOptions($this->ews['options'])
             );
         } else {
             $this->api = API::withUsernameAndPassword(
                 $this->ews['server'],
                 $this->source->username,
                 $this->source->password,
-                $this->ews['options']
+                $this->apiOptions($this->ews['options'])
             );
         }
     }
