@@ -135,7 +135,6 @@ kolab__build() {
 
 # Setup the test environment
 kolab__setup() {
-    kolab__teardown
     echo "Build"
     kolab__build
     echo "Setup"
@@ -143,28 +142,28 @@ kolab__setup() {
     POD=tests
 
     # Create the pod first
-    $PODMAN pod create --name $POD
+    $PODMAN pod create --replace --name $POD
 
     podman__run_mariadb
     podman__run_redis
 
-    podman__healthcheck mariadb redis
+    podman__healthcheck $POD-mariadb $POD-redis
 
     podman__run_webapp config.demo
-    podman__healthcheck webapp
+    podman__healthcheck $POD-webapp
 
     podman__run_imap
-    podman__healthcheck imap
+    podman__healthcheck $POD-imap
 
     # Ensure all commands are processed
     echo "Flushing work queue"
-    $PODMAN exec -ti webapp ./artisan queue:work --stop-when-empty
+    $PODMAN exec -ti $POD-webapp ./artisan queue:work --stop-when-empty
 
     podman__run_minio
-    podman__healthcheck minio
+    podman__healthcheck $POD-minio
 
     # Validate the test environment 
-    kolab__validate
+    kolab__validate $POD
 }
 
 
@@ -172,7 +171,8 @@ kolab__setup() {
 # "quicktest"
 # "tests/Feature/Jobs/WalletCheckTest.php"
 kolab__test() {
-    $PODMAN run -ti --pod tests --name kolab-tests --replace \
+    POD=tests
+    $PODMAN run -ti --pod tests --name $POD-kolab-tests --replace \
         --env-file=ci/env \
         -v ./src:/src/kolabsrc.orig:ro \
         -e APP_SERVICES_DOMAINS="localhost" \
@@ -182,7 +182,7 @@ kolab__test() {
 }
 
 kolab__proxytest() {
-    $PODMAN run -ti --pod tests --name proxy-tests --replace \
+    $PODMAN run -ti --pod tests --name $POD-proxy-tests --replace \
         -v ./ci/certs/:/etc/certs/:ro \
         --env-file=ci/env \
         -e SSL_CERTIFICATE=/etc/certs/imap.hosted.com.cert \
@@ -225,7 +225,7 @@ kolab__shell() {
 
 # Run the roundcube testsuite
 kolab__rctest() {
-    $PODMAN run -t --pod tests --name roundcube --replace \
+    $PODMAN run -t --pod tests --name $POD-roundcube --replace \
         -v ./ext:/src.orig:ro \
         -e APP_DOMAIN=kolab.local \
         -e DES_KEY=kBxUM/53N9p9abusAoT0ZEAxwI2pxFz/ \
@@ -251,7 +251,7 @@ kolab__rctest() {
 
 # Get a shell inside the roundcube test container to run/debug tests
 kolab__rcshell() {
-    $PODMAN run -ti --pod tests --name roundcube --replace \
+    $PODMAN run -ti --pod tests --name $POD-roundcube --replace \
         -v ./ext:/src.orig:ro \
         -e APP_DOMAIN=kolab.local \
         -e DES_KEY=kBxUM/53N9p9abusAoT0ZEAxwI2pxFz/ \
@@ -272,12 +272,13 @@ kolab__rcshell() {
 }
 
 kolab__validate() {
-    $PODMAN exec imap testsaslauthd -u cyrus-admin -p simple123
-    $PODMAN exec imap testsaslauthd -u "john@kolab.org" -p simple123
+    POD=$1
+    $PODMAN exec $POD-imap testsaslauthd -u cyrus-admin -p simple123
+    $PODMAN exec $POD-imap testsaslauthd -u "john@kolab.org" -p simple123
     # Ensure the inbox is created
     FOUND=false
     for i in {1..60}; do
-        if $PODMAN exec imap bash -c 'echo "lm" | cyradm --auth PLAIN -u cyrus-admin -w simple123 --port 11143 localhost | grep "user/john@kolab.org"'; then
+        if $PODMAN exec $POD-imap bash -c 'echo "lm" | cyradm --auth PLAIN -u cyrus-admin -w simple123 --port 11143 localhost | grep "user/john@kolab.org"'; then
             echo "Found mailbox";
             FOUND=true
             break
@@ -302,7 +303,7 @@ podman__healthcheck() {
 }
 
 podman__run_proxy() {
-    $PODMAN run -dt --pod $POD --name proxy --replace \
+    $PODMAN run -dt --pod $POD --name $POD-proxy --replace \
         -v ./ci/certs:/etc/certs:ro \
         -e APP_WEBSITE_DOMAIN="kolab.local" \
         -e SSL_CERTIFICATE="/etc/certs/imap.hosted.com.cert" \
@@ -316,7 +317,7 @@ podman__run_proxy() {
 }
 
 podman__run_roundcube() {
-    $PODMAN run -dt --pod $POD --name roundcube --replace \
+    $PODMAN run -dt --pod $POD --name $POD-roundcube --replace \
         -v ./ext:/src.orig:ro \
         -e APP_DOMAIN=kolab.local \
         -e DES_KEY=kBxUM/53N9p9abusAoT0ZEAxwI2pxFz/ \
@@ -338,7 +339,7 @@ podman__run_roundcube() {
 }
 
 podman__run_mariadb() {
-    $PODMAN run -dt --pod $POD --name mariadb --replace \
+    $PODMAN run -dt --pod $POD --name $POD-mariadb --replace \
         --mount=type=tmpfs,tmpfs-size=512M,destination=/var/lib/mysql,U=true \
         -e MYSQL_ROOT_PASSWORD=simple123 \
         -e TZ="+02:00" \
@@ -356,14 +357,14 @@ podman__run_mariadb() {
 }
 
 podman__run_redis() {
-    $PODMAN run -dt --pod $POD --name redis --replace \
+    $PODMAN run -dt --pod $POD --name $POD-redis --replace \
         --mount=type=tmpfs,tmpfs-size=128M,destination=/var/lib/redis,U=true \
         --health-cmd "redis-cli ping || exit 1" \
         redis:latest
 }
 
 podman__run_minio() {
-    $PODMAN run -dt --pod $POD --name minio --replace \
+    $PODMAN run -dt --pod $POD --name $POD-minio --replace \
         --mount=type=tmpfs,tmpfs-size=128M,destination=/data,U=true \
         -e MINIO_ROOT_USER=minio \
         -e MINIO_ROOT_PASSWORD=simple123 \
@@ -374,7 +375,7 @@ podman__run_minio() {
 
 podman__run_webapp() {
     # We run with a fixed config.demo overlay and override the environment with ci/env
-    $PODMAN run -dt --pod $POD --name webapp --replace \
+    $PODMAN run -dt --pod $POD --name $POD-webapp --replace \
         --env-file=ci/env \
         -v ./src:/src/kolabsrc.orig:ro \
         -v ./$1/src:/src/overlay:ro \
@@ -388,7 +389,7 @@ podman__run_webapp() {
 }
 
 podman__run_imap() {
-    $PODMAN run -dt --pod $POD --name imap --replace \
+    $PODMAN run -dt --pod $POD --name $POD-imap --replace \
         --mount=type=tmpfs,tmpfs-size=128M,tmpfs-mode=777,destination=/var/spool/imap,U=true,notmpcopyup \
         --mount=type=tmpfs,tmpfs-size=128M,tmpfs-mode=777,destination=/var/lib/imap,U=true,notmpcopyup \
         -e APP_SERVICES_DOMAIN="localhost" \
@@ -400,7 +401,7 @@ podman__run_imap() {
 }
 
 podman__run_meet() {
-    $PODMAN run -dt --pod $POD --name meet --replace \
+    $PODMAN run -dt --pod $POD --name $POD-meet --replace \
         -v ./meet/server:/src/meet:ro \
         -v ./ci/certs/meet.kolab.local.cert:/etc/pki/tls/certs/meet.kolab.local.cert \
         -v ./ci/certs/meet.kolab.local.key:/etc/pki/tls/private/meet.kolab.local.key \
@@ -437,22 +438,22 @@ kolab__deploy() {
     podman__run_mariadb
     podman__run_redis
 
-    podman__healthcheck mariadb redis
+    podman__healthcheck $POD-mariadb $POD-redis
 
     podman__run_webapp config.prod
-    podman__healthcheck webapp
+    podman__healthcheck $POD-webapp
 
     podman__run_imap
-    podman__healthcheck imap
+    podman__healthcheck $POD-imap
 
     # Ensure all commands are processed
     echo "Flushing work queue"
-    $PODMAN exec -ti webapp ./artisan queue:work --stop-when-empty
+    $PODMAN exec -ti $POD-webapp ./artisan queue:work --stop-when-empty
 
-    $PODMAN exec webapp ./artisan user:password "admin@kolab.local" "simple123"
+    $PODMAN exec $POD-webapp ./artisan user:password "admin@kolab.local" "simple123"
 
     podman__run_minio
-    podman__healthcheck minio
+    podman__healthcheck $POD-minio
 
     podman__run_meet
 
@@ -469,7 +470,8 @@ kolab__syncroton_sync() {
 }
 
 kolab__db() {
-    $PODMAN exec -ti mariadb /bin/bash -c "mysql -h 127.0.0.1 -u kolabdev --password=simple123 kolabdev"
+    POD=dev
+    $PODMAN exec -ti $POD-mariadb /bin/bash -c "mysql -h 127.0.0.1 -u kolabdev --password=simple123 kolabdev"
 }
 
 kolab__help() {
