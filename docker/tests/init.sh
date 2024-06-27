@@ -25,35 +25,14 @@ fi
 
 EXCLUDE_GROUPS=${EXCLUDE_GROUPS:-"skipci,ldap,coinbase,mollie,stripe,meet,dns,slow"}
 
-if [ "$1" == "suite-Functional" ]; then
-    php \
-        -dmemory_limit=-1 \
-        vendor/bin/phpunit \
-        --exclude-group skipci,ldap \
-        --verbose \
-        --testsuite Unit
-
-    php \
-        -dmemory_limit=-1 \
-        vendor/bin/phpunit \
-        --exclude-group skipci,ldap \
-        --verbose \
-        --testsuite Functional
-elif [ "$1" == "suite-Feature" ]; then
-    php \
-        -dmemory_limit=-1 \
-        vendor/bin/phpunit \
-        --exclude-group "$EXCLUDE_GROUPS" \
-        --verbose \
-        --testsuite Feature
-elif [ "$1" == "suite-Browser" ]; then
-    ./artisan octane:start --port=80 >/dev/null 2>&1 &
+if [ "$1" == "browsertest" ]; then
+    ./artisan octane:start --port=80 &
     echo "127.0.0.1 kolab.local admin.kolab.local reseller.kolab.local" >> /etc/hosts
 
     php \
         -dmemory_limit=-1 \
         vendor/bin/phpunit \
-        --exclude-group skipci,ldap,meet,mollie \
+        --exclude-group "$EXCLUDE_GROUPS" \
         --verbose \
         --testsuite Browser
 elif [ "$1" == "testsuite" ]; then
@@ -119,7 +98,7 @@ else
 
     if [[ "$1" =~ "Browser" ]]; then
         echo "Assuming a browsertest and starting octane"
-        ./artisan octane:start --port=80 >/dev/null 2>&1 &
+        ./artisan octane:start --port=80 &
         echo "127.0.0.1 kolab.local admin.kolab.local reseller.kolab.local" >> /etc/hosts
     fi
 
@@ -131,5 +110,5 @@ else
         --stop-on-defect \
         --stop-on-error \
         --stop-on-failure \
-        "$1"
+        $@
 fi
