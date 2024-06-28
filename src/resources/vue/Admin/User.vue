@@ -136,6 +136,13 @@
                     <transaction-log v-if="wallet.id && !walletReload" class="card-text" :wallet-id="wallet.id" :is-admin="true"></transaction-log>
                 </div>
             </div>
+            <div class="tab-pane" id="receipts" role="tabpanel" aria-labelledby="tab-receipts">
+                <div class="card-body">
+                    <div class="card-text">
+                        <receipt-list v-if="wallet.id && !walletReload" class="card-text" :wallet-id="wallet.id"></receipt-list>
+                    </div>
+                </div>
+            </div>
             <div class="tab-pane" id="aliases" role="tabpanel" aria-labelledby="tab-aliases">
                 <div class="card-body">
                     <div class="card-text">
@@ -281,6 +288,7 @@
     import EventLog from '../Widgets/EventLog'
     import ModalDialog from '../Widgets/ModalDialog'
     import TransactionLog from '../Widgets/TransactionLog'
+    import ReceiptList from '../Widgets/ReceiptList'
     import { ListTable } from '../Widgets/ListTools'
     import { default as DistlistList } from '../Distlist/ListWidget'
     import { default as DomainList } from '../Domain/ListWidget'
@@ -307,6 +315,7 @@
             ResourceList,
             SharedFolderList,
             TransactionLog,
+            ReceiptList,
             UserList
         },
         beforeRouteUpdate (to, from, next) {
@@ -363,6 +372,7 @@
                 },
                 tabs: [
                     { label: 'user.finances' },
+                    { label: 'wallet.receipts' },
                     { label: 'user.aliases', count: 0 },
                     { label: 'form.subscriptions', count: 0 },
                     { label: 'user.domains', count: 0 },

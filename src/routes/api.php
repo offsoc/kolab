@@ -263,6 +263,8 @@ if (\config('app.with_admin')) {
 
             Route::apiResource('wallets', API\V4\Admin\WalletsController::class);
             Route::post('wallets/{id}/one-off', [API\V4\Admin\WalletsController::class, 'oneOff']);
+            Route::get('wallets/{id}/receipts', [API\V4\Admin\WalletsController::class, 'receipts']);
+            Route::get('wallets/{id}/receipts/{receipt}', [API\V4\Admin\WalletsController::class, 'receiptDownload']);
             Route::get('wallets/{id}/transactions', [API\V4\Admin\WalletsController::class, 'transactions']);
 
             Route::get('stats/chart/{chart}', [API\V4\Admin\StatsController::class, 'chart']);

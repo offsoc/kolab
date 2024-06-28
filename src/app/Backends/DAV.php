@@ -250,6 +250,34 @@ class DAV
     }
 
     /**
+     * Create a DAV folder (collection)
+     *
+     * @param DAV\Folder $folder Folder object
+     *
+     * @return bool True on success, False on error
+     */
+    public function folderCreate(DAV\Folder $folder)
+    {
+        $response = $this->request($folder->href, 'MKCOL', $folder->toXML('mkcol'));
+
+        return $response !== false;
+    }
+
+    /**
+     * Delete a DAV folder (collection)
+     *
+     * @param string $location Folder location
+     *
+     * @return bool True on success, False on error
+     */
+    public function folderDelete($location)
+    {
+        $response = $this->request($location, 'DELETE');
+
+        return $response !== false;
+    }
+
+    /**
      * Get all properties of a folder.
      *
      * @param string $location Object location
@@ -258,21 +286,32 @@ class DAV
      */
     public function folderInfo(string $location)
     {
-        $body = '<?xml version="1.0" encoding="utf-8"?>'
-            . '<d:propfind xmlns:d="DAV:">'
-                . '<d:allprop/>'
-            . '</d:propfind>';
+        $body = DAV\Folder::propfindXML();
 
         // Note: Cyrus CardDAV service requires Depth:1 (CalDAV works without it)
-        $headers =  ['Depth' => 1, 'Prefer' => 'return-minimal'];
-
-        $response = $this->request($location, 'PROPFIND', $body, $headers);
+        $response = $this->request($location, 'PROPFIND', $body, ['Depth' => 0, 'Prefer' => 'return-minimal']);
 
         if (!empty($response) && ($element = $response->getElementsByTagName('response')->item(0))) {
             return DAV\Folder::fromDomElement($element);
         }
 
         return false;
+    }
+
+    /**
+     * Update a DAV folder (collection)
+     *
+     * @param DAV\Folder $folder Folder object
+     *
+     * @return bool True on success, False on error
+     */
+    public function folderUpdate(DAV\Folder $folder)
+    {
+        // Note: Changing resourcetype property is forbidden (at least by Cyrus)
+
+        $response = $this->request($folder->href, 'PROPPATCH', $folder->toXML('propertyupdate'));
+
+        return $response !== false;
     }
 
     /**

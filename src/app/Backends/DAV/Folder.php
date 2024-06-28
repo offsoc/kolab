@@ -74,4 +74,82 @@ class Folder
 
         return $folder;
     }
+
+    /**
+     * Parse folder properties input into XML string to use in a request
+     *
+     * @return string
+     */
+    public function toXML($tag)
+    {
+        $ns = 'xmlns:d="DAV:"';
+        $props = '';
+        $type = null;
+
+        if (in_array('addressbook', $this->types)) {
+            $ns .= ' xmlns:c="urn:ietf:params:xml:ns:carddav"';
+            $type = 'addressbook';
+        } elseif (in_array('calendar', $this->types)) {
+            $ns .= ' xmlns:c="urn:ietf:params:xml:ns:caldav"';
+            $type = 'calendar';
+        }
+
+        $props .= '<d:resourcetype><d:collection/>' . ($type ? "<c:{$type}/>" : '') . '</d:resourcetype>';
+
+        if (!empty($this->components)) {
+            $props .= '<c:supported-calendar-component-set>';
+            foreach ($this->components as $component) {
+                $props .= '<c:comp name="' . $component . '"/>';
+            }
+            $props .= '</c:supported-calendar-component-set>';
+        }
+
+        if ($this->name !== null) {
+            $props .= '<d:displayname>' . htmlspecialchars($this->name, ENT_XML1, 'UTF-8') . '</d:displayname>';
+        }
+
+        if ($this->color !== null) {
+            $color = $this->color;
+            if (strlen($color) && $color[0] != '#') {
+                $color = '#' . $color;
+            }
+
+            $ns .= ' xmlns:a="http://apple.com/ns/ical/"';
+            $props .= '<a:calendar-color>' . htmlspecialchars($color, ENT_XML1, 'UTF-8') . '</a:calendar-color>';
+        }
+
+        return '<?xml version="1.0" encoding="utf-8"?>'
+            . "<d:{$tag} {$ns}><d:set><d:prop>{$props}</d:prop></d:set></d:{$tag}>";
+    }
+
+    /**
+     * Get XML string for PROPFIND query on a folder
+     *
+     * @return string
+     */
+    public static function propfindXML()
+    {
+        $ns = implode(' ', [
+            'xmlns:d="DAV:"',
+            // 'xmlns:cs="http://calendarserver.org/ns/"',
+            'xmlns:c="urn:ietf:params:xml:ns:caldav"',
+            // 'xmlns:a="http://apple.com/ns/ical/"',
+            // 'xmlns:k="Kolab:"'
+        ]);
+
+        // Note: <allprop> does not include some of the properties we're interested in
+        return '<?xml version="1.0" encoding="utf-8"?>'
+            . '<d:propfind ' . $ns . '>'
+                . '<d:prop>'
+                    // . '<a:calendar-color/>'
+                    . '<c:supported-calendar-component-set/>'
+                    // . '<cs:getctag/>'
+                    // . '<d:acl/>'
+                    // . '<d:current-user-privilege-set/>'
+                    . '<d:resourcetype/>'
+                    . '<d:displayname/>'
+                    // . '<k:alarms/>'
+                . '</d:prop>'
+            . '</d:propfind>';
+    }
 }

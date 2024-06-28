@@ -68,18 +68,15 @@ class ChargeTest extends TestCase
         $user2 = $this->getTestUser('wallet-charge@kolabnow.com');
         $wallet2 = $user2->wallets()->first();
 
-        // $count = \App\Wallet::join('users', 'users.id', '=', 'wallets.user_id')
-        //         ->withEnvTenantContext('users')
-        //         ->whereNull('users.deleted_at')
-        //         ->count();
+        $count = \App\Wallet::join('users', 'users.id', '=', 'wallets.user_id')
+            ->whereNull('users.deleted_at')
+            ->count();
 
         Queue::fake();
 
         $this->artisan('wallet:charge')->assertExitCode(0);
 
-        //FIXME this is no longer valid, the check job now gets triggered 13 instead of 9 times.
-        //I'm not sure how valuable it is that we count jobs anyways.
-        // Queue::assertPushed(\App\Jobs\WalletCheck::class, $count);
+        Queue::assertPushed(\App\Jobs\WalletCheck::class, $count);
         Queue::assertPushed(\App\Jobs\WalletCheck::class, function ($job) use ($wallet1) {
             $job_wallet_id = TestCase::getObjectProperty($job, 'walletId');
             return $job_wallet_id === $wallet1->id;

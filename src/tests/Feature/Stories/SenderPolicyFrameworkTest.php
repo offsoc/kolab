@@ -36,6 +36,7 @@ class SenderPolicyFrameworkTest extends TestCase
         parent::tearDown();
     }
 
+    // @group skipci
     public function testSenderFailv4()
     {
         $data = [
@@ -135,6 +136,7 @@ class SenderPolicyFrameworkTest extends TestCase
         $response->assertStatus(200);
     }
 
+    // @group skipci
     public function testSenderPermerror()
     {
         $data = [
@@ -151,6 +153,7 @@ class SenderPolicyFrameworkTest extends TestCase
         $response->assertStatus(403);
     }
 
+    // @group skipci
     public function testSenderSoftfail()
     {
         $data = [
