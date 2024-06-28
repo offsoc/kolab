@@ -71,7 +71,7 @@ class DAV
             }
         }
 
-        if ($path && strpos($principal_href, $path) === 0) {
+        if ($path && str_starts_with($principal_href, $path)) {
             $principal_href = substr($principal_href, strlen($path));
         }
 
@@ -100,7 +100,7 @@ class DAV
                     if ($home->firstChild && $home->firstChild->localName == 'href') {
                         $href = $home->firstChild->nodeValue;
 
-                        if ($path && strpos($href, $path) === 0) {
+                        if ($path && str_starts_with($href, $path)) {
                             $href = substr($href, strlen($path));
                         }
 
@@ -463,7 +463,7 @@ class DAV
     {
         $doc = new \DOMDocument('1.0', 'UTF-8');
 
-        if (stripos($xml, '<?xml') === 0) {
+        if (str_starts_with($xml, '<?xml')) {
             if (!$doc->loadXML($xml)) {
                 throw new \Exception("Failed to parse XML");
             }
@@ -489,7 +489,7 @@ class DAV
             $head .= "{$header_name}: {$header_value}\n";
         }
 
-        if (stripos($body, '<?xml') === 0) {
+        if (str_starts_with($body, '<?xml')) {
             $doc = new \DOMDocument('1.0', 'UTF-8');
 
             $doc->formatOutput = true;
@@ -537,7 +537,7 @@ class DAV
 
         $this->responseHeaders = [];
 
-        if ($path && ($rootPath = parse_url($url, PHP_URL_PATH)) && strpos($path, $rootPath) === 0) {
+        if ($path && ($rootPath = parse_url($url, PHP_URL_PATH)) && str_starts_with($path, $rootPath)) {
             $path = substr($path, strlen($rootPath));
         }
 

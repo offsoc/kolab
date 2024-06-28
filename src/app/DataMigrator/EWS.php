@@ -165,7 +165,7 @@ class EWS
 
         // Initialize the destination
         $this->importer = new DAV($destination);
-        $this->importer->authenticate();
+        // $this->importer->authenticate();
 
         // $this->debug("Source/destination user credentials verified.");
         $this->debug("Fetching folders hierarchy...");
