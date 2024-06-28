@@ -40,7 +40,9 @@ class Appointment extends Item
         // Decode MIME content
         $ical = base64_decode((string) $item->getMimeContent());
 
-        $ical = str_replace("\r\nBEGIN:VEVENT\r\n", "\r\nBEGIN:VEVENT\r\nX-MS-ID:{$this->itemId}\r\n", $ical);
+        $itemId = implode("\r\n ", str_split($this->itemId, 75 - strlen('X-MS-ID:')));
+
+        $ical = str_replace("\r\nBEGIN:VEVENT\r\n", "\r\nBEGIN:VEVENT\r\nX-MS-ID:{$itemId}\r\n", $ical);
 
         // TODO: replace source email with destination email address in ORGANIZER/ATTENDEE
 

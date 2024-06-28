@@ -39,7 +39,9 @@ class Contact extends Item
 
         // Inject UID (and Exchange item ID) to the vCard
         $uid = $this->getUID($item);
-        $vcard = str_replace("BEGIN:VCARD", "BEGIN:VCARD\r\nUID:{$uid}\r\nX-MS-ID:{$this->itemId}", $vcard);
+        $itemId = implode("\r\n ", str_split($this->itemId, 75 - strlen('X-MS-ID:')));
+
+        $vcard = str_replace("BEGIN:VCARD", "BEGIN:VCARD\r\nUID:{$uid}\r\nX-MS-ID:{$itemId}", $vcard);
 
         // Note: Looks like PHOTO property is exported properly, so we
         //       don't have to handle attachments as we do for calendar items

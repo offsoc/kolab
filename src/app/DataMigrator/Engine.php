@@ -7,6 +7,13 @@ namespace App\DataMigrator;
  */
 class Engine
 {
+    public const TYPE_CONTACT = 'contact';
+    public const TYPE_EVENT = 'event';
+    public const TYPE_GROUP = 'group';
+    public const TYPE_MAIL = 'mail';
+    public const TYPE_NOTE = 'note';
+    public const TYPE_TASK = 'task';
+
     /**
      * Execute migration for the specified user
      */

@@ -9,6 +9,7 @@ class DAV
     public const TYPE_VEVENT = 'VEVENT';
     public const TYPE_VTODO = 'VTODO';
     public const TYPE_VCARD = 'VCARD';
+    public const TYPE_NOTIFICATION = 'NOTIFICATION';
 
     protected const NAMESPACES = [
         self::TYPE_VEVENT => 'urn:ietf:params:xml:ns:caldav',
@@ -20,13 +21,14 @@ class DAV
     protected $user;
     protected $password;
     protected $responseHeaders = [];
+    protected $homes;
 
     /**
      * Object constructor
      */
-    public function __construct($user, $password)
+    public function __construct($user, $password, $url = null)
     {
-        $this->url      = \config('services.dav.uri');
+        $this->url      = $url ?: \config('services.dav.uri');
         $this->user     = $user;
         $this->password = $password;
     }
@@ -34,23 +36,13 @@ class DAV
     /**
      * Discover DAV home (root) collection of a specified type.
      *
-     * @param string $component Component to filter by (VEVENT, VTODO, VCARD)
-     *
-     * @return string|false Home collection location or False on error
+     * @return array|false Home locations or False on error
      */
-    public function discover(string $component = self::TYPE_VEVENT)
+    public function discover()
     {
-        $roots = [
-            self::TYPE_VEVENT => 'calendars',
-            self::TYPE_VTODO => 'calendars',
-            self::TYPE_VCARD => 'addressbooks',
-        ];
-
-        $homes = [
-            self::TYPE_VEVENT => 'calendar-home-set',
-            self::TYPE_VTODO => 'calendar-home-set',
-            self::TYPE_VCARD => 'addressbook-home-set',
-        ];
+        if (is_array($this->homes)) {
+            return $this->homes;
+        }
 
         $path = parse_url($this->url, PHP_URL_PATH);
 
@@ -62,27 +54,21 @@ class DAV
             . '</d:propfind>';
 
         // Note: Cyrus CardDAV service requires Depth:1 (CalDAV works without it)
-        $headers = ['Depth' => 1, 'Prefer' => 'return-minimal'];
-
-        $response = $this->request('/' . $roots[$component], 'PROPFIND', $body, $headers);
+        $response = $this->request('/', 'PROPFIND', $body, ['Depth' => 1, 'Prefer' => 'return-minimal']);
 
         if (empty($response)) {
-            \Log::error("Failed to get current-user-principal for {$component} from the DAV server.");
+            \Log::error("Failed to get current-user-principal from the DAV server.");
             return false;
         }
 
         $elements = $response->getElementsByTagName('response');
+        $principal_href = '';
 
         foreach ($elements as $element) {
-            foreach ($element->getElementsByTagName('prop') as $prop) {
+            foreach ($element->getElementsByTagName('current-user-principal') as $prop) {
                 $principal_href = $prop->nodeValue;
                 break;
             }
-        }
-
-        if (empty($principal_href)) {
-            \Log::error("No principal on the DAV server.");
-            return false;
         }
 
         if ($path && strpos($principal_href, $path) === 0) {
@@ -90,36 +76,66 @@ class DAV
         }
 
         $body = '<?xml version="1.0" encoding="utf-8"?>'
-            . '<d:propfind xmlns:d="DAV:" xmlns:c="' . self::NAMESPACES[$component] . '">'
+            . '<d:propfind xmlns:d="DAV:" xmlns:cal="urn:ietf:params:xml:ns:caldav" xmlns:card="urn:ietf:params:xml:ns:carddav">'
                 . '<d:prop>'
-                    . '<c:' . $homes[$component] . ' />'
+                    . '<cal:calendar-home-set/>'
+                    . '<card:addressbook-home-set/>'
+                    . '<d:notification-URL/>'
                 . '</d:prop>'
             . '</d:propfind>';
 
         $response = $this->request($principal_href, 'PROPFIND', $body);
 
         if (empty($response)) {
-            \Log::error("Failed to get homes for {$component} from the DAV server.");
+            \Log::error("Failed to get home collections from the DAV server.");
             return false;
         }
 
-        $root_href = false;
         $elements = $response->getElementsByTagName('response');
+        $homes = [];
 
-        foreach ($elements as $element) {
-            foreach ($element->getElementsByTagName('prop') as $prop) {
-                $root_href = $prop->nodeValue;
-                break;
+        if ($element = $response->getElementsByTagName('response')->item(0)) {
+            if ($prop = $element->getElementsByTagName('prop')->item(0)) {
+                foreach ($prop->childNodes as $home) {
+                    if ($home->firstChild && $home->firstChild->localName == 'href') {
+                        $href = $home->firstChild->nodeValue;
+
+                        if ($path && strpos($href, $path) === 0) {
+                            $href = substr($href, strlen($path));
+                        }
+
+                        $homes[$home->localName] = $href;
+                    }
+                }
             }
         }
 
-        if (!empty($root_href)) {
-            if ($path && strpos($root_href, $path) === 0) {
-                $root_href = substr($root_href, strlen($path));
-            }
+        return $this->homes = $homes;
+    }
+
+    /**
+     * Get user home folder of specified type
+     *
+     * @param string $type Home type or component name
+     *
+     * @return string|null Folder location href
+     */
+    public function getHome($type)
+    {
+        $options = [
+            self::TYPE_VEVENT => 'calendar-home-set',
+            self::TYPE_VTODO => 'calendar-home-set',
+            self::TYPE_VCARD => 'addressbook-home-set',
+            self::TYPE_NOTIFICATION => 'notification-URL',
+        ];
+
+        $homes = $this->discover();
+
+        if (is_array($homes) && isset($options[$type])) {
+            return $homes[$options[$type]] ?? null;
         }
 
-        return $root_href;
+        return null;
     }
 
     /**
@@ -142,9 +158,9 @@ class DAV
      */
     public function listFolders(string $component)
     {
-        $root_href = $this->discover($component);
+        $root_href = $this->getHome($component);
 
-        if ($root_href === false) {
+        if ($root_href === null) {
             return false;
         }
 
@@ -209,7 +225,8 @@ class DAV
         $response = $this->request($object->href, 'PUT', $object, $headers);
 
         if ($response !== false) {
-            if ($etag = $this->responseHeaders['etag']) {
+            if (!empty($this->responseHeaders['ETag'])) {
+                $etag = $this->responseHeaders['ETag'][0];
                 if (preg_match('|^".*"$|', $etag)) {
                     $etag = substr($etag, 1, -1);
                 }
@@ -312,6 +329,22 @@ class DAV
         $response = $this->request($folder->href, 'PROPPATCH', $folder->toXML('propertyupdate'));
 
         return $response !== false;
+    }
+
+    /**
+     * Check server options (and authentication)
+     *
+     * @return false|array DAV capabilities on success, False on error
+     */
+    public function options()
+    {
+        $response = $this->request('', 'OPTIONS');
+
+        if ($response !== false) {
+            return preg_split('/,\s+/', implode(',', $this->responseHeaders['DAV'] ?? []));
+        }
+
+        return false;
     }
 
     /**
@@ -469,7 +502,7 @@ class DAV
             $body = $doc->saveXML();
         }
 
-        return $head . "\n" . rtrim($body);
+        return $head . (is_string($body) && strlen($body) > 0 ? "\n$body" : '');
     }
 
     /**
@@ -526,7 +559,8 @@ class DAV
         }
 
         if ($debug) {
-            \Log::debug("C: {$method}: {$url}\n" . $this->debugBody($body, $headers));
+            $body = $this->debugBody($body, $headers);
+            \Log::debug("C: {$method}: {$url}" . (strlen($body) > 0 ? "\n$body" : ''));
         }
 
         $response = $client->send($method, $url);

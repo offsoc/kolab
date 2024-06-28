@@ -63,9 +63,9 @@ class EWS
 
     /** @var array Map of EWS folder types to Kolab types */
     protected $type_map = [
-        EWS\Appointment::FOLDER_TYPE => DAVClient::TYPE_EVENT,
-        EWS\Contact::FOLDER_TYPE => DAVClient::TYPE_CONTACT,
-        EWS\Task::FOLDER_TYPE => DAVClient::TYPE_TASK,
+        EWS\Appointment::FOLDER_TYPE => Engine::TYPE_EVENT,
+        EWS\Contact::FOLDER_TYPE => Engine::TYPE_CONTACT,
+        EWS\Task::FOLDER_TYPE => Engine::TYPE_TASK,
     ];
 
     /** @var string Output location */
@@ -80,7 +80,7 @@ class EWS
     /** @var array Migration options */
     protected $options = [];
 
-    /** @var DAVClient Data importer */
+    /** @var DAV Data importer */
     protected $importer;
 
     /** @var Queue Migrator jobs queue */
@@ -164,8 +164,8 @@ class EWS
         $this->api = $this->authenticate($source);
 
         // Initialize the destination
-        $this->importer = new DAVClient($destination);
-        // $this->importer->authenticate();
+        $this->importer = new DAV($destination);
+        $this->importer->authenticate();
 
         // $this->debug("Source/destination user credentials verified.");
         $this->debug("Fetching folders hierarchy...");
@@ -450,7 +450,7 @@ class EWS
 
         if ($driver = EWS\Item::factory($this, $item['itemClass'], $item['folder'])) {
             if ($file = $driver->fetchItem($item['id'])) {
-                $this->importer->createObjectFromFile($file, $item['folder']['fullname']);
+                $this->importer->createObjectFromFile($file, $item['folder']['fullname'], $item['folder']['type']);
                 // TODO: remove the file
             }
         }
@@ -498,23 +498,23 @@ class EWS
 
             foreach ($types as $type) {
                 switch ($type) {
-                    case 'event':
+                    case Engine::TYPE_EVENT:
                         $result[] = EWS\Appointment::FOLDER_TYPE;
                         break;
 
-                    case 'contact':
+                    case Engine::TYPE_CONTACT:
                         $result[] = EWS\Contact::FOLDER_TYPE;
                         break;
 
-                    case 'task':
+                    case Engine::TYPE_TASK:
                         $result[] = EWS\Task::FOLDER_TYPE;
                         break;
                     /*
-                    case 'note':
+                    case Engine::TYPE_NOTE:
                         $result[] = EWS\StickyNote::FOLDER_TYPE;
                         break;
 
-                    case 'mail':
+                    case Engine::TYPE_MAIL:
                         $result[] = EWS\Note::FOLDER_TYPE;
                         break;
                     */
@@ -589,7 +589,7 @@ class EWS
         $this->source = new Account($this->queue->data['source']);
         $this->destination = new Account($this->queue->data['destination']);
         $this->options = $this->queue->data['options'];
-        $this->importer = new DAVClient($this->destination);
+        $this->importer = new DAV($this->destination);
         $this->ews = $this->queue->data['ews'];
 
         if (!empty($this->ews['token'])) {
