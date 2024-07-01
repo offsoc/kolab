@@ -14,7 +14,7 @@ use Illuminate\Console\Command;
  * ```
  * php artisan data:migrate \
  *   "ews://$user:$pass@$server?client_id=$client_id&client_secret=$client_secret&tenant_id=$tenant_id" \
- *   "http://$dest_user:$dest_pass@$dest_server"
+ *   "dav://$dest_user:$dest_pass@$dest_server"
  * ```
  */
 class MigrateCommand extends Command
@@ -54,6 +54,7 @@ class MigrateCommand extends Command
             'stdout' => true,
         ];
 
-        DataMigrator\Engine::migrate($src, $dst, $options);
+        $migrator = new DataMigrator\Engine();
+        $migrator->migrate($src, $dst, $options);
     }
 }

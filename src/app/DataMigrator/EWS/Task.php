@@ -9,9 +9,9 @@ use garethp\ews\API\Type;
  */
 class Task extends Item
 {
-    const FOLDER_TYPE = 'IPF.Task';
-    const TYPE        = 'IPM.Task';
-    const FILE_EXT    = 'ics';
+    public const FOLDER_TYPE = 'IPF.Task';
+    public const TYPE        = 'IPM.Task';
+    public const FILE_EXT    = 'ics';
 
     /**
      * Get GetItem request parameters
@@ -133,8 +133,8 @@ class Task extends Item
     {
         // FIXME: Looks like the owner might be an email address or just a full user name
         $owner = $task->getOwner();
-        $source = $this->engine->getSource();
-        $destination = $this->engine->getDestination();
+        $source = $this->driver->getSourceAccount();
+        $destination = $this->driver->getDestinationAccount();
 
         if (strpos($owner, '@') && $owner != $source->email) {
             // Task owned by another person
@@ -170,36 +170,36 @@ class Task extends Item
         if ($recurrence = $r->getDailyRecurrence()) {
             $rrule['FREQ'] = 'DAILY';
             $rrule['INTERVAL'] = $recurrence->getInterval() ?: 1;
-        } else if ($recurrence = $r->getWeeklyRecurrence()) {
+        } elseif ($recurrence = $r->getWeeklyRecurrence()) {
             $rrule['FREQ'] = 'WEEKLY';
             $rrule['INTERVAL'] = $recurrence->getInterval() ?: 1;
             $rrule['BYDAY'] = $this->mapDays($recurrence->getDaysOfWeek());
             $rrule['WKST'] = $this->mapDays($recurrence->getFirstDayOfWeek());
-        } else if ($recurrence = $r->getAbsoluteMonthlyRecurrence()) {
+        } elseif ($recurrence = $r->getAbsoluteMonthlyRecurrence()) {
             $rrule['FREQ'] = 'MONTHLY';
             $rrule['INTERVAL'] = $recurrence->getInterval() ?: 1;
             $rrule['BYMONTHDAY'] = $recurrence->getDayOfMonth();
-        } else if ($recurrence = $r->getRelativeMonthlyRecurrence()) {
+        } elseif ($recurrence = $r->getRelativeMonthlyRecurrence()) {
             $rrule['FREQ'] = 'MONTHLY';
             $rrule['INTERVAL'] = $recurrence->getInterval() ?: 1;
             $rrule['BYDAY'] = $this->mapDays($recurrence->getDaysOfWeek(), $recurrence->getDayOfWeekIndex());
-        } else if ($recurrence = $r->getAbsoluteYearlyRecurrence()) {
+        } elseif ($recurrence = $r->getAbsoluteYearlyRecurrence()) {
             $rrule['FREQ'] = 'YEARLY';
             $rrule['BYMONTH'] = $this->mapMonths($recurrence->getMonth());
             $rrule['BYMONTHDAY'] = $recurrence->getDayOfMonth();
-        } else if ($recurrence = $r->getRelativeYearlyRecurrence()) {
+        } elseif ($recurrence = $r->getRelativeYearlyRecurrence()) {
             $rrule['FREQ'] = 'YEARLY';
             $rrule['BYMONTH'] = $this->mapMonths($recurrence->getMonth());
             $rrule['BYDAY'] = $this->mapDays($recurrence->getDaysOfWeek(), $recurrence->getDayOfWeekIndex());
         } else {
             // There might be *Regeneration rules that we don't support
-            $this->engine->debug("Unsupported Recurrence property value. Ignored.");
+            \Log::debug("[EWS] Unsupported Recurrence property value. Ignored.");
         }
 
         if (!empty($rrule)) {
             if ($recurrence = $r->getNumberedRecurrence()) {
                 $rrule['COUNT'] = $recurrence->getNumberOfOccurrences();
-            } else if ($recurrence = $r->getEndDateRecurrence()) {
+            } elseif ($recurrence = $r->getEndDateRecurrence()) {
                 $rrule['UNTIL'] = $this->formatDate($recurrence->getEndDate());
             }
 
@@ -262,7 +262,8 @@ class Task extends Item
         ];
 
         $days = explode(' ', $days);
-        $days = array_map(function($day) use ($days_map, $index_map, $index) {
+        $days = array_map(
+            function ($day) use ($days_map, $index_map, $index) {
                 return ($index ? $index_map[$index] : '') . $days_map[$day];
             },
             $days
@@ -280,7 +281,8 @@ class Task extends Item
             'July', 'August', 'September', 'October', 'November', 'December'];
 
         $months = explode(' ', $months);
-        $months = array_map(function($month) use ($months_map) {
+        $months = array_map(
+            function ($month) use ($months_map) {
                 return array_search($month, $months_map) + 1;
             },
             $months

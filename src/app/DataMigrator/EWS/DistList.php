@@ -9,9 +9,9 @@ use garethp\ews\API\Type;
  */
 class DistList extends Item
 {
-    const FOLDER_TYPE = 'IPF.Contact';
-    const TYPE        = 'IPM.DistList';
-    const FILE_EXT    = 'vcf';
+    public const FOLDER_TYPE = 'IPF.Contact';
+    public const TYPE        = 'IPM.DistList';
+    public const FILE_EXT    = 'vcf';
 
     /**
      * Convert distribution list object to vCard

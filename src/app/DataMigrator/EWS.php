@@ -2,17 +2,16 @@
 
 namespace App\DataMigrator;
 
-use App\Jobs\DataMigrator\EWSFolderJob;
-use App\Jobs\DataMigrator\EWSItemJob;
+use App\DataMigrator\Interface\Folder;
+use App\DataMigrator\Interface\Item;
 use garethp\ews\API;
 use garethp\ews\API\Type;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Str;
 
 /**
  * Data migration from Exchange (EWS)
  */
-class EWS
+class EWS implements Interface\ExporterInterface
 {
     /** @var API EWS API object */
     public $api;
@@ -68,128 +67,20 @@ class EWS
         EWS\Task::FOLDER_TYPE => Engine::TYPE_TASK,
     ];
 
-    /** @var string Output location */
-    protected $location;
+    /** @var Account Account to operate on */
+    protected $account;
 
-    /** @var Account Source account */
-    protected $source;
-
-    /** @var Account Destination account */
-    protected $destination;
-
-    /** @var array Migration options */
-    protected $options = [];
-
-    /** @var DAV Data importer */
-    protected $importer;
-
-    /** @var Queue Migrator jobs queue */
-    protected $queue;
-
-    /** @var array EWS server setup (after autodiscovery) */
-    protected $ews = [];
+    /** @var Engine Data migrator engine */
+    protected $engine;
 
 
     /**
-     * Print progress/debug information
+     * Object constructor
      */
-    public function debug($line)
+    public function __construct(Account $account, Engine $engine)
     {
-        if (!empty($this->options['stdout'])) {
-            $output = new \Symfony\Component\Console\Output\ConsoleOutput();
-            $output->writeln("$line");
-        } else {
-            \Log::debug("[EWS] $line");
-        }
-    }
-
-    /**
-     * Return destination account
-     */
-    public function getDestination()
-    {
-        return $this->destination;
-    }
-
-    /**
-     * Return source account
-     */
-    public function getSource()
-    {
-        return $this->source;
-    }
-
-    /**
-     * Execute migration for the specified user
-     */
-    public function migrate(Account $source, Account $destination, array $options = []): void
-    {
-        $this->source = $source;
-        $this->destination = $destination;
-        $this->options = $options;
-
-        // Create a unique identifier for the migration request
-        $queue_id = md5(strval($source).strval($destination).$options['type']);
-
-        // If queue exists, we'll display the progress only
-        if ($queue = Queue::find($queue_id)) {
-            // If queue contains no jobs, assume invalid
-            // TODO: An better API to manage (reset) queues
-            if (!$queue->jobs_started || !empty($options['force'])) {
-                $queue->delete();
-            } else {
-                while (true) {
-                    $this->debug(sprintf("Progress [%d of %d]\n", $queue->jobs_finished, $queue->jobs_started));
-
-                    if ($queue->jobs_started == $queue->jobs_finished) {
-                        break;
-                    }
-
-                    sleep(1);
-                    $queue->refresh();
-                }
-
-                return;
-            }
-        }
-
-        // We'll store output in storage/<username> tree
-        $this->location = storage_path('export/') . $source->email;
-
-        if (!file_exists($this->location)) {
-            mkdir($this->location, 0740, true);
-        }
-
-        // Initialize the source
-        $this->api = $this->authenticate($source);
-
-        // Initialize the destination
-        $this->importer = new DAV($destination);
-        // $this->importer->authenticate();
-
-        // $this->debug("Source/destination user credentials verified.");
-        $this->debug("Fetching folders hierarchy...");
-
-        // Create a queue
-        $this->createQueue($queue_id);
-
-        $folders = $this->getFolders();
-        $count = 0;
-
-        foreach ($folders as $folder) {
-            // Only supported folder types
-            if (!empty($folder['type'])) {
-                $this->debug("Processing folder {$folder['fullname']}...");
-
-                // Dispatch the job (for async execution)
-                EWSFolderJob::dispatch($folder);
-                $count++;
-            }
-        }
-
-        $this->queue->bumpJobsStarted($count);
-
-        $this->debug(sprintf('Done. %d %s created in queue: %s.', $count, Str::plural('job', $count), $queue_id));
+        $this->account = $account;
+        $this->engine = $engine;
     }
 
     /**
@@ -213,26 +104,28 @@ class EWS
     }
 
     /**
-     * Authenticate to EWS
+     * Authenticate to EWS (initialize the EWS client)
      */
-    protected function authenticate(Account $source)
+    public function authenticate()
     {
-        if (!empty($source->params['client_id'])) {
-            return $this->authenticateWithOAuth2(
-                $source->host,
-                $source->username,
-                $source->params['client_id'],
-                $source->params['client_secret'],
-                $source->params['tenant_id']
+        if (!empty($this->account->params['client_id'])) {
+            $this->api = $this->authenticateWithOAuth2(
+                $this->account->host,
+                $this->account->username,
+                $this->account->params['client_id'],
+                $this->account->params['client_secret'],
+                $this->account->params['tenant_id']
+            );
+        } else {
+            // Note: This initializes the client, but not yet connects to the server
+            // TODO: To know that the credentials work we'll have to do some API call.
+            $this->api = $this->authenticateWithPassword(
+                $this->account->host,
+                $this->account->username,
+                $this->account->password,
+                $this->account->loginas
             );
         }
-
-        return $this->authenticateWithPassword(
-            $source->host,
-            $source->username,
-            $source->password,
-            $source->loginas
-        );
     }
 
     /**
@@ -242,7 +135,7 @@ class EWS
     {
         // Note: Since 2023-01-01 EWS at Office365 requires OAuth2, no way back to basic auth.
 
-        $this->debug("Using basic authentication on $server...");
+        \Log::debug("[EWS] Using basic authentication on $server...");
 
         $options = [];
 
@@ -250,10 +143,10 @@ class EWS
             $options['impersonation'] = $loginas;
         }
 
-        $this->ews = [
+        $this->engine->setOption('ews', [
             'options' => $options,
             'server' => $server,
-        ];
+        ]);
 
         return API::withUsernameAndPassword($server, $user, $password, $this->apiOptions($options));
     }
@@ -263,16 +156,16 @@ class EWS
      */
     protected function authenticateWithToken(string $server, string $user, string $token, $expires_at = null)
     {
-        $this->debug("Using token authentication on $server...");
+        \Log::debug("[EWS] Using token authentication on $server...");
 
         $options = ['impersonation' => $user];
 
-        $this->ews = [
+        $this->engine->setOption('ews', [
             'options' => $options,
             'server' => $server,
             'token' => $token,
             'expires_at' => $expires_at,
-        ];
+        ]);
 
         return API::withCallbackToken($server, $token, $this->apiOptions($options));
     }
@@ -280,14 +173,14 @@ class EWS
     /**
      * Authenticate with OAuth2 (Office365) - get the token
      */
-    protected function authenticateWithOAuth2(string $server, string $user, string $client_id,
-        string $client_secret, string $tenant_id)
+    protected function authenticateWithOAuth2(string $server,
+        string $user, string $client_id, string $client_secret, string $tenant_id)
     {
         // See https://github.com/Garethp/php-ews/blob/master/examples/basic/authenticatingWithOAuth.php
         // See https://github.com/Garethp/php-ews/issues/236#issuecomment-1292521527
         // To register OAuth2 app goto https://entra.microsoft.com > Applications > App registrations
 
-        $this->debug("Fetching OAuth2 token from $server...");
+        \Log::debug("[EWS] Fetching OAuth2 token from $server...");
 
         $scope = 'https://outlook.office365.com/.default';
         $token_uri = "https://login.microsoftonline.com/{$tenant_id}/oauth2/v2.0/token";
@@ -315,11 +208,8 @@ class EWS
     /**
      * Get folders hierarchy
      */
-    protected function getFolders(): array
+    public function getFolders($types = []): array
     {
-        // Folder types we're ineterested in
-        $folder_classes = $this->folderClasses();
-
         // Get full folders hierarchy
         $options = [
             'Traversal' => 'Deep',
@@ -331,9 +221,10 @@ class EWS
 
         foreach ($folders as $folder) {
             $class = $folder->getFolderClass();
+            $type = $this->type_map[$class] ?? null;
 
-            // Skip folder types we do not support
-            if (!in_array($class, $folder_classes)) {
+            // Skip folder types we do not support (need)
+            if (empty($type) || (!empty($types) && !in_array($type, $types))) {
                 continue;
             }
 
@@ -344,55 +235,48 @@ class EWS
 
             // Create folder name with full path
             if ($parentId && !empty($result[$parentId])) {
-                $fullname = $result[$parentId]['fullname'] . '/' . $name;
+                $fullname = $result[$parentId]->fullname . '/' . $name;
             }
 
             // Top-level folder, check if it's a special folder we should ignore
             // FIXME: Is there a better way to distinguish user folders from system ones?
-            if (in_array($fullname, $this->folder_exceptions)
+            if (
+                in_array($fullname, $this->folder_exceptions)
                 || strpos($fullname, 'OwaFV15.1All') === 0
             ) {
                 continue;
             }
 
-            $result[$id] = [
+            $result[$id] = Folder::fromArray([
                 'id' => $folder->getFolderId()->toArray(true),
                 'total' => $folder->getTotalCount(),
                 'class' => $class,
                 'type' => $this->type_map[$class] ?? null,
                 'name' => $name,
                 'fullname' => $fullname,
-                'location' => $this->location . '/' . $fullname,
-                'queue_id' => $this->queue->id,
-            ];
+            ]);
         }
 
         return $result;
     }
 
     /**
-     * Processing of a folder synchronization
+     * Fetch a list of folder items
      */
-    public function processFolder(array $folder): void
+    public function fetchItemList(Folder $folder, $callback): void
     {
         // Job processing - initialize environment
-        if (!empty($folder['queue_id'])) {
-            $this->initEnv($folder['queue_id']);
-        }
-
-        // Create the folder on destination server
-        $this->importer->createFolder($folder['fullname'], $folder['type']);
+        $this->initEnv($this->engine->queue);
 
         // The folder is empty, we can stop here
-        if (empty($folder['total'])) {
-            $this->queue->bumpJobsFinished();
+        if (empty($folder->total)) {
             return;
         }
 
         $request = [
             // Exchange's maximum is 1000
             'IndexedPageItemView' => ['MaxEntriesReturned' => 100, 'Offset' => 0, 'BasePoint' => 'Beginning'],
-            'ParentFolderIds' => $folder['id'],
+            'ParentFolderIds' => $folder->id,
             'Traversal' => 'Shallow',
             'ItemShape' => [
                 'BaseShape' => 'IdOnly',
@@ -413,144 +297,76 @@ class EWS
 
         // Request first page
         $response = $this->api->getClient()->FindItem($request);
-        $count = 0;
 
         // @phpstan-ignore-next-line
         foreach ($response as $item) {
-            $count += (int) $this->syncItem($item, $folder);
+            if ($item = $this->toItem($item, $folder)) {
+                $callback($item);
+            }
         }
-
-        $this->queue->bumpJobsStarted($count);
 
         // Request other pages until we got all
         while (!$response->isIncludesLastItemInRange()) {
             // @phpstan-ignore-next-line
             $response = $this->api->getNextPage($response);
-            $count = 0;
 
             foreach ($response as $item) {
-                $count += (int) $this->syncItem($item, $folder);
+                if ($item = $this->toItem($item, $folder)) {
+                    $callback($item);
+                }
             }
-
-            $this->queue->bumpJobsStarted($count);
         }
-
-        $this->queue->bumpJobsFinished();
     }
 
     /**
-     * Processing of item synchronization
+     * Fetching an item
      */
-    public function processItem(array $item): void
+    public function fetchItem(Item $item): string
     {
         // Job processing - initialize environment
-        if (!empty($item['folder']['queue_id'])) {
-            $this->initEnv($item['folder']['queue_id']);
+        $this->initEnv($this->engine->queue);
+
+        if ($driver = EWS\Item::factory($this, $item)) {
+            return $driver->fetchItem($item);
         }
 
-        if ($driver = EWS\Item::factory($this, $item['itemClass'], $item['folder'])) {
-            if ($file = $driver->fetchItem($item['id'])) {
-                $this->importer->createObjectFromFile($file, $item['folder']['fullname'], $item['folder']['type']);
-                // TODO: remove the file
-            }
-        }
+        throw new \Exception("Failed to fetch an item from EWS");
+    }
 
-        $this->queue->bumpJobsFinished();
+    /**
+     * Get the source account
+     */
+    public function getSourceAccount(): Account
+    {
+        return $this->engine->source;
+    }
+
+    /**
+     * Get the destination account
+     */
+    public function getDestinationAccount(): Account
+    {
+        return $this->engine->destination;
     }
 
     /**
      * Synchronize specified object
      */
-    protected function syncItem(Type $item, array $folder): bool
+    protected function toItem(Type $item, Folder $folder): ?Item
     {
-        $item_class = $item->getItemClass();
+        $item = Item::fromArray([
+            'id' => $item->getItemId()->toArray(),
+            'class' => $item->getItemClass(),
+            'folder' => $folder,
+        ]);
 
-        if ($driver = EWS\Item::factory($this, $item_class, $folder)) {
-            // To the job we'll pass a slimmed down object
-            $item = [
-                'id' => $item->getItemId()->toArray(),
-                'itemClass' => $item_class,
-                'folder' => $folder,
-            ];
-
-            // Dispatch the job (for async execution)
-            EWSItemJob::dispatch($item);
-
-            return true;
+        // TODO: We don't need to instantiate Item at this point, instead
+        // implement EWS\Item::validateClass() method
+        if ($driver = EWS\Item::factory($this, $item)) {
+            return $item;
         }
 
-        // TODO IPM.Note (email) and IPM.StickyNote
-        // Note: iTip messages in mail folders may have different class assigned
-        // https://docs.microsoft.com/en-us/office/vba/outlook/Concepts/Forms/item-types-and-message-classes
-        $this->debug("Unsupported object type: {$item_class}. Skipped.");
-
-        return false;
-    }
-
-    /**
-     * Return list of folder classes for current migrate operation
-     */
-    protected function folderClasses(): array
-    {
-        if (!empty($this->options['type'])) {
-            $types = preg_split('/\s*,\s*/', strtolower($this->options['type']));
-            $result = [];
-
-            foreach ($types as $type) {
-                switch ($type) {
-                    case Engine::TYPE_EVENT:
-                        $result[] = EWS\Appointment::FOLDER_TYPE;
-                        break;
-
-                    case Engine::TYPE_CONTACT:
-                        $result[] = EWS\Contact::FOLDER_TYPE;
-                        break;
-
-                    case Engine::TYPE_TASK:
-                        $result[] = EWS\Task::FOLDER_TYPE;
-                        break;
-                    /*
-                    case Engine::TYPE_NOTE:
-                        $result[] = EWS\StickyNote::FOLDER_TYPE;
-                        break;
-
-                    case Engine::TYPE_MAIL:
-                        $result[] = EWS\Note::FOLDER_TYPE;
-                        break;
-                    */
-                    default:
-                        throw new \Exception("Unsupported type: {$type}");
-                }
-            }
-
-            return $result;
-        }
-
-        return $this->folder_classes;
-    }
-
-    /**
-     * Create a queue for the request
-     *
-     * @param string $queue_id Unique queue identifier
-     */
-    protected function createQueue(string $queue_id): void
-    {
-        $this->queue = new Queue;
-        $this->queue->id = $queue_id;
-
-        $options = $this->options;
-        unset($options['stdout']); // jobs aren't in stdout anymore
-
-        // TODO: data should be encrypted
-        $this->queue->data = [
-            'source' => (string) $this->source,
-            'destination' => (string) $this->destination,
-            'options' => $options,
-            'ews' => $this->ews,
-        ];
-
-        $this->queue->save();
+        return null;
     }
 
     /**
@@ -581,30 +397,25 @@ class EWS
     /**
      * Initialize environment for job execution
      *
-     * @param string $queue_id Queue identifier
+     * @param Queue $queue Queue
      */
-    protected function initEnv(string $queue_id): void
+    protected function initEnv(Queue $queue): void
     {
-        $this->queue = Queue::findOrFail($queue_id);
-        $this->source = new Account($this->queue->data['source']);
-        $this->destination = new Account($this->queue->data['destination']);
-        $this->options = $this->queue->data['options'];
-        $this->importer = new DAV($this->destination);
-        $this->ews = $this->queue->data['ews'];
+        $ews = $queue->data['options']['ews'];
 
-        if (!empty($this->ews['token'])) {
+        if (!empty($ews['token'])) {
             // TODO: Refresh the token if needed
             $this->api = API::withCallbackToken(
-                $this->ews['server'],
-                $this->ews['token'],
-                $this->apiOptions($this->ews['options'])
+                $ews['server'],
+                $ews['token'],
+                $this->apiOptions($ews['options'])
             );
         } else {
             $this->api = API::withUsernameAndPassword(
-                $this->ews['server'],
-                $this->source->username,
-                $this->source->password,
-                $this->apiOptions($this->ews['options'])
+                $ews['server'],
+                $this->account->username,
+                $this->account->password,
+                $this->apiOptions($ews['options'])
             );
         }
     }

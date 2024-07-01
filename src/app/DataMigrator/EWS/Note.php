@@ -9,9 +9,9 @@ use garethp\ews\API\Type;
  */
 class Note extends Item
 {
-    const FOLDER_TYPE = 'IPF.Note';
-    const TYPE        = 'IPM.Note';
-    const FILE_EXT    = 'eml';
+    public const FOLDER_TYPE = 'IPF.Note';
+    public const TYPE        = 'IPM.Note';
+    public const FILE_EXT    = 'eml';
 
     /**
      * Get GetItem request parameters

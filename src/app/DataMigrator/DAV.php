@@ -2,15 +2,22 @@
 
 namespace App\DataMigrator;
 
-use App\Utils;
 use App\Backends\DAV as DAVClient;
 use App\Backends\DAV\Opaque as DAVOpaque;
 use App\Backends\DAV\Folder as DAVFolder;
+use App\DataMigrator\Interface\Folder;
+use App\Utils;
 
-class DAV
+class DAV implements Interface\ImporterInterface
 {
     /** @var DAVClient DAV Backend */
     protected $client;
+
+    /** @var Account Account to operate on */
+    protected $account;
+
+    /** @var Engine Data migrator engine */
+    protected $engine;
 
     /** @var array Settings */
     protected $settings;
@@ -19,7 +26,7 @@ class DAV
     /**
      * Object constructor
      */
-    public function __construct(Account $account)
+    public function __construct(Account $account, Engine $engine)
     {
         $username = $account->username . ($account->loginas ? "**{$account->loginas}" : '');
         $baseUri = rtrim($account->uri, '/');
@@ -32,6 +39,8 @@ class DAV
         ];
 
         $this->client = new DAVClient($username, $account->password, $baseUri);
+        $this->engine = $engine;
+        $this->account = $account;
     }
 
     /**
@@ -49,33 +58,30 @@ class DAV
     }
 
     /**
-     * Create an object.
+     * Create an item in a folder.
      *
      * @param string $filename File location
-     * @param string $folder   Folder name
-     * @param string $type     Folder type
+     * @param Folder $folder   Folder
      *
      * @throws \Exception
      */
-    public function createObjectFromFile(string $filename, string $folder, string $type)
+    public function createItemFromFile(string $filename, Folder $folder): void
     {
-        $href = $this->getFolderPath($folder, $type) . '/' . pathinfo($filename, PATHINFO_BASENAME);
+        $href = $this->getFolderPath($folder) . '/' . pathinfo($filename, PATHINFO_BASENAME);
 
         $object = new DAVOpaque($filename);
         $object->href = $href;
 
-        switch ($type) {
+        switch ($folder->type) {
             case Engine::TYPE_EVENT:
             case Engine::TYPE_TASK:
                 $object->contentType = 'text/calendar; charset=utf-8';
                 break;
 
             case Engine::TYPE_CONTACT:
-            case Engine::TYPE_GROUP:
                 $object->contentType = 'text/vcard; charset=utf-8';
                 break;
         }
-
 
         if ($this->client->create($object) === false) {
             throw new \Exception("Failed to save object into DAV server at {$href}");
@@ -85,14 +91,13 @@ class DAV
     /**
      * Create a folder.
      *
-     * @param string $folder Name of a folder with full path
-     * @param string $type   Folder type
+     * @param Folder $folder Folder data
      *
      * @throws \Exception on error
      */
-    public function createFolder(string $folder, string $type): void
+    public function createFolder(Folder $folder): void
     {
-        $dav_type = $this->type2DAV($type);
+        $dav_type = $this->type2DAV($folder->type);
         $folders = $this->client->listFolders($dav_type);
 
         if ($folders === false) {
@@ -103,7 +108,7 @@ class DAV
         // This is not going to work with Cyrus DAV, but anyway folder
         // hierarchies support is not full in Kolab 4.
         foreach ($folders as $dav_folder) {
-            if (str_replace(' » ', '/', $dav_folder->name) === $folder) {
+            if (str_replace(' » ', '/', $dav_folder->name) === $folder->fullname) {
                 // do nothing, folder already exists
                 return;
             }
@@ -115,7 +120,7 @@ class DAV
 
         // We create all folders on the top-level
         $dav_folder = new DAVFolder();
-        $dav_folder->name = $folder;
+        $dav_folder->name = $folder->fullname;
         $dav_folder->href = rtrim($home, '/') . '/' . $folder_id;
         $dav_folder->components = [$dav_type];
         $dav_folder->types = ['collection', $collection_type];
@@ -128,9 +133,9 @@ class DAV
     /**
      * Get folder relative URI
      */
-    protected function getFolderPath(string $folder, string $type): string
+    protected function getFolderPath(Folder $folder): string
     {
-        $folders = $this->client->listFolders($this->type2DAV($type));
+        $folders = $this->client->listFolders($this->type2DAV($folder->type));
 
         if ($folders === false) {
             throw new \Exception("Failed to list folders on the DAV server");
@@ -140,18 +145,18 @@ class DAV
         // This is not going to work with Cyrus DAV, but anyway folder
         // hierarchies support is not full in Kolab 4.
         foreach ($folders as $dav_folder) {
-            if (str_replace(' » ', '/', $dav_folder->name) === $folder) {
+            if (str_replace(' » ', '/', $dav_folder->name) === $folder->fullname) {
                 return rtrim($dav_folder->href, '/');
             }
         }
 
-        throw new \Exception("Folder not found: {$folder}");
+        throw new \Exception("Folder not found: {$folder->fullname}");
     }
 
     /**
      * Map Kolab type into DAV object type
      */
-    static protected function type2DAV(string $type): string
+    protected static function type2DAV(string $type): string
     {
         switch ($type) {
             case Engine::TYPE_EVENT:

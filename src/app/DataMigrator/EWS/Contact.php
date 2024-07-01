@@ -9,9 +9,9 @@ use garethp\ews\API\Type;
  */
 class Contact extends Item
 {
-    const FOLDER_TYPE = 'IPF.Contact';
-    const TYPE        = 'IPM.Contact';
-    const FILE_EXT    = 'vcf';
+    public const FOLDER_TYPE = 'IPF.Contact';
+    public const TYPE        = 'IPM.Contact';
+    public const FILE_EXT    = 'vcf';
 
     /**
      * Get GetItem request parameters

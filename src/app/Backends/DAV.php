@@ -489,6 +489,10 @@ class DAV
             $head .= "{$header_name}: {$header_value}\n";
         }
 
+        if ($body instanceof DAV\CommonObject) {
+            $body = (string) $body;
+        }
+
         if (str_starts_with($body, '<?xml')) {
             $doc = new \DOMDocument('1.0', 'UTF-8');
 
@@ -502,7 +506,7 @@ class DAV
             $body = $doc->saveXML();
         }
 
-        return $head . (is_string($body) && strlen($body) > 0 ? "\n$body" : '');
+        return $head . (is_string($body) && strlen($body) > 0 ? "\n{$body}" : '');
     }
 
     /**

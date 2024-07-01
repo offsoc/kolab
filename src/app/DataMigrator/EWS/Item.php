@@ -3,7 +3,8 @@
 namespace App\DataMigrator\EWS;
 
 use App\DataMigrator\EWS;
-
+use App\DataMigrator\Interface\Folder as FolderInterface;
+use App\DataMigrator\Interface\Item as ItemInterface;
 use garethp\ews\API;
 use garethp\ews\API\Type;
 
@@ -13,9 +14,9 @@ use garethp\ews\API\Type;
 abstract class Item
 {
     /** @var EWS Data migrator object */
-    protected $engine;
+    protected $driver;
 
-    /** @var array Current folder data */
+    /** @var FolderInterface Current folder */
     protected $folder;
 
     /** @var string Current item ID */
@@ -28,9 +29,9 @@ abstract class Item
     /**
      * Object constructor
      */
-    public function __construct(EWS $engine, array $folder)
+    public function __construct(EWS $driver, FolderInterface $folder)
     {
-        $this->engine = $engine;
+        $this->driver = $driver;
         $this->folder = $folder;
     }
 
@@ -38,29 +39,31 @@ abstract class Item
      * Factory method.
      * Returns object suitable to handle specified item type.
      */
-    public static function factory(EWS $engine, string $item_class, array $folder)
+    public static function factory(EWS $driver, ItemInterface $item)
     {
-        $item_class = str_replace('IPM.', '', $item_class);
+        $item_class = str_replace('IPM.', '', $item->class);
         $item_class = "\App\DataMigrator\EWS\\{$item_class}";
 
         if (class_exists($item_class)) {
-            return new $item_class($engine, $folder);
+            return new $item_class($driver, $item->folder);
         }
     }
 
     /**
      * Fetch the specified object and put into a file
      */
-    public function fetchItem(array $itemId)
+    public function fetchItem(ItemInterface $item)
     {
+        $itemId = $item->id;
+
         // Fetch the item
-        $item = $this->engine->api->getItem($itemId, $this->getItemRequest());
+        $item = $this->driver->api->getItem($itemId, $this->getItemRequest());
 
         $this->itemId = implode('!', $itemId);
 
         $uid = $this->getUID($item);
 
-        $this->engine->debug("Saving item {$uid}...");
+        \Log::debug("[EWS] Saving item {$uid}...");
 
         // Apply type-specific format converters
         $content = $this->processItem($item);
@@ -71,7 +74,7 @@ abstract class Item
 
         $uid = preg_replace('/[^a-zA-Z0-9_:@-]/', '', $uid);
 
-        $location = $this->folder['location'];
+        $location = $this->folder->location;
 
         if (!file_exists($location)) {
             mkdir($location, 0740, true);
@@ -123,7 +126,7 @@ abstract class Item
             ]
         ];
 
-        return $this->engine->api->getClient()->GetAttachment($request);
+        return $this->driver->api->getClient()->GetAttachment($request);
     }
 
     /**

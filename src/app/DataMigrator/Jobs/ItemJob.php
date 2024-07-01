@@ -1,36 +1,39 @@
 <?php
 
-namespace App\Jobs\DataMigrator;
+namespace App\DataMigrator\Jobs;
 
-use App\DataMigrator\EWS;
-
+use App\DataMigrator\Engine;
+use App\DataMigrator\Interface\Item;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 
-class EWSItemJob implements ShouldQueue
+class ItemJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
     /** @var int The number of times the job may be attempted. */
     public $tries = 3;
 
-    /** @var array Job data */
-    protected $data;
+    /** @var Item Job data */
+    protected $item;
 
 
     /**
      * Create a new job instance.
      *
-     * @param array $data Job data (folder/item and queue parameters)
+     * @param Item $item Item to process
      *
      * @return void
      */
-    public function __construct(array $data)
+    public function __construct(Item $item)
     {
-        $this->data = $data;
+        $this->item = $item;
     }
 
     /**
@@ -40,8 +43,8 @@ class EWSItemJob implements ShouldQueue
      */
     public function handle()
     {
-        $ews = new EWS;
-        $ews->processItem($this->data);
+        $migrator = new Engine();
+        $migrator->processItem($this->item);
     }
 
     /**
