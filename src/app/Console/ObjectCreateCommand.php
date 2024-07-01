@@ -35,7 +35,8 @@ abstract class ObjectCreateCommand extends ObjectCommand
 
         $properties = $class->getFillable();
 
-        if ($this->commandPrefix == 'scalpel'
+        if (
+            $this->commandPrefix == 'scalpel'
             && in_array(\App\Traits\BelongsToTenantTrait::class, class_uses($this->objectClass))
         ) {
             $properties[] = 'tenant_id';

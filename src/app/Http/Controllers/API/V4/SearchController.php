@@ -84,7 +84,10 @@ class SearchController extends Controller
         $wallet = $user->wallet();
 
         // Limit users to the user's account
-        $allUsers = $wallet->entitlements()->where('entitleable_type', User::class)->select('entitleable_id')->distinct();
+        $allUsers = $wallet->entitlements()
+            ->where('entitleable_type', User::class)
+            ->select('entitleable_id')
+            ->distinct();
 
         // Sub-query for user IDs who's names match the search criteria
         $foundUserIds = UserSetting::select('user_id')

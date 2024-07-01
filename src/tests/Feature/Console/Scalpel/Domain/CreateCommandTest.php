@@ -49,7 +49,7 @@ class CreateCommandTest extends TestCase
             . " --namespace=domain-delete.com"
             . " --type=" . Domain::TYPE_PUBLIC
             . " --tenant_id={$tenant->id}"
-            );
+        );
 
         $output = trim(\Artisan::output());
 

@@ -69,7 +69,8 @@ class Utils
 
         $payload = explode('!', $decrypted);
 
-        if (count($payload) != 2
+        if (
+            count($payload) != 2
             || !preg_match('|^[0-9]+$|', $payload[0])
             || !preg_match('|^[0-9]{14}+$|', $payload[1])
         ) {

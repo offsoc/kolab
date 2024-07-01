@@ -21,7 +21,7 @@ class CreateCommand extends Command
      *
      * @var string
      */
-    protected $description = "Create a tenant (with a set of SKUs/plans/packages), and a reseller user and domain for it.";
+    protected $description = "Create a tenant (with clonoed plans), and a reseller user and domain for it.";
 
     /**
      * Execute the console command.

@@ -23,8 +23,6 @@ class CreateTenantsTable extends Migration
             }
         );
 
-
-
         foreach (['users', 'discounts', 'domains', 'plans', 'packages', 'skus'] as $tableName) {
             Schema::table(
                 $tableName,
@@ -33,7 +31,6 @@ class CreateTenantsTable extends Migration
                     $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('set null');
                 }
             );
-
         }
 
         // Add fee column

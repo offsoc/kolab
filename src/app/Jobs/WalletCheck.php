@@ -66,7 +66,7 @@ class WalletCheck implements ShouldQueue
         }
 
         if ($this->wallet->chargeEntitlements() > 0) {
-            // We make a payment when there's a charge. If for some reason the 
+            // We make a payment when there's a charge. If for some reason the
             // payment failed we can't just throw here, as another execution of this job
             // will not re-try the payment. So, we attempt a payment in a separate job.
             try {
