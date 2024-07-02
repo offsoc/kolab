@@ -5,7 +5,7 @@ RUN dnf -y install \
         npm nodejs python3 python3-pip meson ninja-build make gcc g++ git rsync && \
     dnf clean all
 
-ARG GIT_REF=dev/mollekopf
+ARG GIT_REF=master
 ARG GIT_REMOTE=https://git.kolab.org/source/kolab.git
 ENV DEBUG="kolabmeet-server* mediasoup*"
 COPY build.sh /build.sh

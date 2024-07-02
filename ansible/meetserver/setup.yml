@@ -25,7 +25,7 @@
       git:
         repo: https://git.kolab.org/source/kolab.git
         dest: /home/kolab/kolab
-        version: dev/mollekopf
+        version: master
         force: true
 
     - name: Permit https traffic
