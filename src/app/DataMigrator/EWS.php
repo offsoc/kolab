@@ -1,0 +1,422 @@
+<?php
+
+namespace App\DataMigrator;
+
+use App\DataMigrator\Interface\Folder;
+use App\DataMigrator\Interface\Item;
+use garethp\ews\API;
+use garethp\ews\API\Type;
+use Illuminate\Support\Facades\Http;
+
+/**
+ * Data migration from Exchange (EWS)
+ */
+class EWS implements Interface\ExporterInterface
+{
+    /** @var API EWS API object */
+    public $api;
+
+    /** @var array Supported folder types */
+    protected $folder_classes = [
+        EWS\Appointment::FOLDER_TYPE,
+        EWS\Contact::FOLDER_TYPE,
+        EWS\Task::FOLDER_TYPE,
+        // TODO: mail and sticky notes are exported as eml files.
+        //       We could use imapsync to synchronize mail, but for notes
+        //       the only option will be to convert them to Kolab format here
+        //       and upload to Kolab via IMAP, I guess
+        // EWS\Note::FOLDER_TYPE,
+        // EWS\StickyNote::FOLDER_TYPE,
+    ];
+
+    /** @var array Interal folders to skip */
+    protected $folder_exceptions = [
+        'AllContacts',
+        'AllPersonMetadata',
+        'AllTodoTasks',
+        'Document Centric Conversations',
+        'ExternalContacts',
+        'Favorites',
+        'Flagged Emails',
+        'GraphFilesAndWorkingSetSearchFolder',
+        'My Contacts',
+        'MyContactsExtended',
+        'Orion Notes',
+        'Outbox',
+        'PersonMetadata',
+        'People I Know',
+        'RelevantContacts',
+        'SharedFilesSearchFolder',
+        'Sharing',
+        'To-Do Search',
+        'UserCuratedContacts',
+        'XrmActivityStreamSearch',
+        'XrmCompanySearch',
+        'XrmDealSearch',
+        'XrmSearch',
+        'Folder Memberships',
+        // TODO: These are different depending on a user locale
+        'Calendar/United States holidays',
+        'Kalendarz/Polska — dni wolne od pracy', // pl
+    ];
+
+    /** @var array Map of EWS folder types to Kolab types */
+    protected $type_map = [
+        EWS\Appointment::FOLDER_TYPE => Engine::TYPE_EVENT,
+        EWS\Contact::FOLDER_TYPE => Engine::TYPE_CONTACT,
+        EWS\Task::FOLDER_TYPE => Engine::TYPE_TASK,
+    ];
+
+    /** @var Account Account to operate on */
+    protected $account;
+
+    /** @var Engine Data migrator engine */
+    protected $engine;
+
+
+    /**
+     * Object constructor
+     */
+    public function __construct(Account $account, Engine $engine)
+    {
+        $this->account = $account;
+        $this->engine = $engine;
+    }
+
+    /**
+     * Server autodiscovery
+     */
+    public static function autodiscover(string $user, string $password): ?string
+    {
+        // You should never run the Autodiscover more than once.
+        // It can make between 1 and 5 calls before giving up, or before finding your server,
+        // depending on how many different attempts it needs to make.
+
+        // TODO: Autodiscovery may fail with an exception thrown. Handle this nicely.
+        // TODO: Looks like this autodiscovery also does not work w/Basic Auth?
+
+        $api = API\ExchangeAutodiscover::getAPI($user, $password);
+
+        $server = $api->getClient()->getServer();
+        $version = $api->getClient()->getVersion();
+
+        return sprintf('ews://%s:%s@%s', urlencode($user), urlencode($password), $server);
+    }
+
+    /**
+     * Authenticate to EWS (initialize the EWS client)
+     */
+    public function authenticate()
+    {
+        if (!empty($this->account->params['client_id'])) {
+            $this->api = $this->authenticateWithOAuth2(
+                $this->account->host,
+                $this->account->username,
+                $this->account->params['client_id'],
+                $this->account->params['client_secret'],
+                $this->account->params['tenant_id']
+            );
+        } else {
+            // Note: This initializes the client, but not yet connects to the server
+            // TODO: To know that the credentials work we'll have to do some API call.
+            $this->api = $this->authenticateWithPassword(
+                $this->account->host,
+                $this->account->username,
+                $this->account->password,
+                $this->account->loginas
+            );
+        }
+    }
+
+    /**
+     * Autodiscover the server and authenticate the user
+     */
+    protected function authenticateWithPassword(string $server, string $user, string $password, string $loginas = null)
+    {
+        // Note: Since 2023-01-01 EWS at Office365 requires OAuth2, no way back to basic auth.
+
+        \Log::debug("[EWS] Using basic authentication on $server...");
+
+        $options = [];
+
+        if ($loginas) {
+            $options['impersonation'] = $loginas;
+        }
+
+        $this->engine->setOption('ews', [
+            'options' => $options,
+            'server' => $server,
+        ]);
+
+        return API::withUsernameAndPassword($server, $user, $password, $this->apiOptions($options));
+    }
+
+    /**
+     * Authenticate with a token (Office365)
+     */
+    protected function authenticateWithToken(string $server, string $user, string $token, $expires_at = null)
+    {
+        \Log::debug("[EWS] Using token authentication on $server...");
+
+        $options = ['impersonation' => $user];
+
+        $this->engine->setOption('ews', [
+            'options' => $options,
+            'server' => $server,
+            'token' => $token,
+            'expires_at' => $expires_at,
+        ]);
+
+        return API::withCallbackToken($server, $token, $this->apiOptions($options));
+    }
+
+    /**
+     * Authenticate with OAuth2 (Office365) - get the token
+     */
+    protected function authenticateWithOAuth2(string $server,
+        string $user, string $client_id, string $client_secret, string $tenant_id)
+    {
+        // See https://github.com/Garethp/php-ews/blob/master/examples/basic/authenticatingWithOAuth.php
+        // See https://github.com/Garethp/php-ews/issues/236#issuecomment-1292521527
+        // To register OAuth2 app goto https://entra.microsoft.com > Applications > App registrations
+
+        \Log::debug("[EWS] Fetching OAuth2 token from $server...");
+
+        $scope = 'https://outlook.office365.com/.default';
+        $token_uri = "https://login.microsoftonline.com/{$tenant_id}/oauth2/v2.0/token";
+        // $authUri = "https://login.microsoftonline.com/{$tenant_id}/oauth2/authorize";
+
+        $response = Http::asForm()
+            ->timeout(5)
+            ->post($token_uri, [
+                'client_id' => $client_id,
+                'client_secret' => $client_secret,
+                'scope' => $scope,
+                'grant_type' => 'client_credentials',
+            ])
+            ->throwUnlessStatus(200);
+
+        $token = $response->json('access_token');
+
+        // Note: Office365 default token expiration time is ~1h,
+        $expires_in = $response->json('expires_in');
+        $expires_at = now()->addSeconds($expires_in)->toDateTimeString();
+
+        return $this->authenticateWithToken($server, $user, $token, $expires_at);
+    }
+
+    /**
+     * Get folders hierarchy
+     */
+    public function getFolders($types = []): array
+    {
+        // Get full folders hierarchy
+        $options = [
+            'Traversal' => 'Deep',
+        ];
+
+        $folders = $this->api->getChildrenFolders('root', $options);
+
+        $result = [];
+
+        foreach ($folders as $folder) {
+            $class = $folder->getFolderClass();
+            $type = $this->type_map[$class] ?? null;
+
+            // Skip folder types we do not support (need)
+            if (empty($type) || (!empty($types) && !in_array($type, $types))) {
+                continue;
+            }
+
+            // Note: Folder names are localized
+            $name = $fullname = $folder->getDisplayName();
+            $id = $folder->getFolderId()->getId();
+            $parentId = $folder->getParentFolderId()->getId();
+
+            // Create folder name with full path
+            if ($parentId && !empty($result[$parentId])) {
+                $fullname = $result[$parentId]->fullname . '/' . $name;
+            }
+
+            // Top-level folder, check if it's a special folder we should ignore
+            // FIXME: Is there a better way to distinguish user folders from system ones?
+            if (
+                in_array($fullname, $this->folder_exceptions)
+                || strpos($fullname, 'OwaFV15.1All') === 0
+            ) {
+                continue;
+            }
+
+            $result[$id] = Folder::fromArray([
+                'id' => $folder->getFolderId()->toArray(true),
+                'total' => $folder->getTotalCount(),
+                'class' => $class,
+                'type' => $this->type_map[$class] ?? null,
+                'name' => $name,
+                'fullname' => $fullname,
+            ]);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Fetch a list of folder items
+     */
+    public function fetchItemList(Folder $folder, $callback): void
+    {
+        // Job processing - initialize environment
+        $this->initEnv($this->engine->queue);
+
+        // The folder is empty, we can stop here
+        if (empty($folder->total)) {
+            return;
+        }
+
+        $request = [
+            // Exchange's maximum is 1000
+            'IndexedPageItemView' => ['MaxEntriesReturned' => 100, 'Offset' => 0, 'BasePoint' => 'Beginning'],
+            'ParentFolderIds' => $folder->id,
+            'Traversal' => 'Shallow',
+            'ItemShape' => [
+                'BaseShape' => 'IdOnly',
+                'AdditionalProperties' => [
+                    'FieldURI' => ['FieldURI' => 'item:ItemClass'],
+                ],
+            ],
+        ];
+
+        $request = Type::buildFromArray($request);
+
+        // Note: It is not possible to get mimeContent with FindItem request
+        //       That's why we first get the list of object identifiers and
+        //       then call GetItem on each separately.
+
+        // TODO: It might be feasible to get all properties for object types
+        //       for which we don't use MimeContent, for better performance.
+
+        // Request first page
+        $response = $this->api->getClient()->FindItem($request);
+
+        // @phpstan-ignore-next-line
+        foreach ($response as $item) {
+            if ($item = $this->toItem($item, $folder)) {
+                $callback($item);
+            }
+        }
+
+        // Request other pages until we got all
+        while (!$response->isIncludesLastItemInRange()) {
+            // @phpstan-ignore-next-line
+            $response = $this->api->getNextPage($response);
+
+            foreach ($response as $item) {
+                if ($item = $this->toItem($item, $folder)) {
+                    $callback($item);
+                }
+            }
+        }
+    }
+
+    /**
+     * Fetching an item
+     */
+    public function fetchItem(Item $item): string
+    {
+        // Job processing - initialize environment
+        $this->initEnv($this->engine->queue);
+
+        if ($driver = EWS\Item::factory($this, $item)) {
+            return $driver->fetchItem($item);
+        }
+
+        throw new \Exception("Failed to fetch an item from EWS");
+    }
+
+    /**
+     * Get the source account
+     */
+    public function getSourceAccount(): Account
+    {
+        return $this->engine->source;
+    }
+
+    /**
+     * Get the destination account
+     */
+    public function getDestinationAccount(): Account
+    {
+        return $this->engine->destination;
+    }
+
+    /**
+     * Synchronize specified object
+     */
+    protected function toItem(Type $item, Folder $folder): ?Item
+    {
+        $item = Item::fromArray([
+            'id' => $item->getItemId()->toArray(),
+            'class' => $item->getItemClass(),
+            'folder' => $folder,
+        ]);
+
+        // TODO: We don't need to instantiate Item at this point, instead
+        // implement EWS\Item::validateClass() method
+        if ($driver = EWS\Item::factory($this, $item)) {
+            return $item;
+        }
+
+        return null;
+    }
+
+    /**
+     * Set common API options
+     */
+    protected function apiOptions(array $options): array
+    {
+        if (empty($options['version'])) {
+            $options['version'] = API\ExchangeWebServices::VERSION_2013;
+        }
+
+        // If you want to inject your own GuzzleClient for the requests
+        // $options['httpClient]' = $client;
+
+        // In debug mode record all responses
+        /*
+        if (\config('app.debug')) {
+            $options['httpPlayback'] = [
+                'mode' => 'record',
+                'recordLocation' => \storage_path('ews'),
+            ];
+        }
+        */
+
+        return $options;
+    }
+
+    /**
+     * Initialize environment for job execution
+     *
+     * @param Queue $queue Queue
+     */
+    protected function initEnv(Queue $queue): void
+    {
+        $ews = $queue->data['options']['ews'];
+
+        if (!empty($ews['token'])) {
+            // TODO: Refresh the token if needed
+            $this->api = API::withCallbackToken(
+                $ews['server'],
+                $ews['token'],
+                $this->apiOptions($ews['options'])
+            );
+        } else {
+            $this->api = API::withUsernameAndPassword(
+                $ews['server'],
+                $this->account->username,
+                $this->account->password,
+                $this->apiOptions($ews['options'])
+            );
+        }
+    }
+}
