@@ -4,7 +4,7 @@
 
     ./mailtransporttest.py --sender-username test1@kolab.org --sender-password foobar --sender-host smtp.kolabnow.com --recipient-username test2@kolab.org --recipient-password foobar --recipient-host imap.kolabnow.com
 """
-from datetime import datetime
+from datetime import datetime, UTC
 import argparse
 import sys
 import imaplib
@@ -88,7 +88,7 @@ class SendTest:
         return False
 
     def send_mail(self, starttls):
-        dtstamp = datetime.utcnow()
+        dtstamp = datetime.now(UTC)
         msg = mailtemplate.format(
             messageid="<{}@deliverycheck.org>".format(self.uuid),
             subject=self.subject,

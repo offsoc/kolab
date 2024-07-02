@@ -5,7 +5,7 @@
     Primarily useful to quickly generate test messages to e.g. troubleshoot mail delivery.
 
     ./sendmail.py --sender-username admin@kolab.local --sender-password test123 --to test@kolab.org --subject 'test4' --body 'test4'"""
-from datetime import datetime
+from datetime import datetime, UTC
 import argparse
 import sys
 import smtplib
@@ -37,7 +37,7 @@ class SendMail:
         self.body = options.body
 
     def send_mail(self):
-        dtstamp = datetime.utcnow()
+        dtstamp = datetime.now(UTC)
         msg = mailtemplate.format(
             messageid="<{}@sendmail.py>".format(self.uuid),
             subject=self.subject,
