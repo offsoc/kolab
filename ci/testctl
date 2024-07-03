@@ -73,24 +73,6 @@ mVn5FgBAFnd/skX6DsRs+eb2lNahkvNZZ15z9UeU2Rl6J9uBx0vbkcB7eiSCPhRM
 IKq/CtkyEgz8ce4kG18fJHDFDASRvGjaBu91lV5h7NLmhFLFzMvb7XoHrv/yD6TV
 E5W47J/DrfrevJkzS1GV++MCAwEAAQ==
 -----END PUBLIC KEY-----"
-KOLAB_GIT_REF=master
-KOLAB_GIT_REMOTE=https://git.kolab.org/source/kolab
-GIT_REF_ROUNDCUBEMAIL=dev/kolab-1.5
-GIT_REMOTE_ROUNDCUBEMAIL=https://git.kolab.org/source/roundcubemail.git
-GIT_REF_ROUNDCUBEMAIL_PLUGINS=master
-GIT_REMOTE_ROUNDCUBEMAIL_PLUGINS=https://git.kolab.org/diffusion/RPK/roundcubemail-plugins-kolab.git
-GIT_REF_CHWALA=master
-GIT_REMOTE_CHWALA=https://git.kolab.org/diffusion/C/chwala.git
-GIT_REF_SYNCROTON=master
-GIT_REMOTE_SYNCROTON=https://git.kolab.org/diffusion/S/syncroton.git
-GIT_REF_AUTOCONF=master
-GIT_REMOTE_AUTOCONF=https://git.kolab.org/diffusion/AC/autoconf.git
-GIT_REF_IRONY=master
-GIT_REMOTE_IRONY=https://git.kolab.org/source/iRony.git
-GIT_REF_FREEBUSY=master
-GIT_REMOTE_FREEBUSY=https://git.kolab.org/diffusion/F/freebusy.git
-IMAP_GIT_REF=dev/kolab-3.6
-IMAP_GIT_REMOTE=https://git.kolab.org/source/cyrus-imapd
 
 PODMAN="podman"
 
@@ -100,35 +82,20 @@ kolab__teardown() {
     $PODMAN pod rm --force dev
 }
 
-podman__build() {
-    path=$1
-    shift
-    name=$1
-    shift
-    if [[ "$CACHE_REGISTRY" != "" ]]; then
-    CACHE_ARGS="--layers --cache-from=$CACHE_REGISTRY/$name --cache-to=$CACHE_REGISTRY/$name --cache-ttl=24h"
-    fi
-    $PODMAN build $@ $CACHE_ARGS $path -t $name
-}
 
 # Build all containers required for testing
 kolab__build() {
-    podman__build docker/base/ apheleia/almalinux9 -f almalinux9
-    podman__build docker/swoole apheleia/swoole
-
-    podman__build docker/webapp kolab-webapp --ulimit nofile=65535:65535 \
-        ${KOLAB_GIT_REMOTE:+"--build-arg=GIT_REMOTE=$KOLAB_GIT_REMOTE"} \
-        ${KOLAB_GIT_REF:+"--build-arg=GIT_REF=$KOLAB_GIT_REF"}
-    podman__build docker/meet kolab-meet --ulimit nofile=65535:65535 \
-        ${KOLAB_GIT_REMOTE:+"--build-arg=GIT_REMOTE=$KOLAB_GIT_REMOTE"} \
-        ${KOLAB_GIT_REF:+"--build-arg=GIT_REF=$KOLAB_GIT_REF"}
+    source ../bin/build.sh
+    podman__build_base
+    podman__build_webapp
+    podman__build_meet
 
     podman__build docker/imap kolab-imap
     podman__build docker/mariadb mariadb
     podman__build docker/redis redis
     podman__build docker/proxy kolab-proxy
     podman__build docker/tests kolab-tests --ulimit nofile=65535:65535
-    podman__build docker/roundcube roundcube --ulimit nofile=65535:65535
+    podman__build_roundcube
 
     env CERT_DIR=ci/certs APP_DOMAIN=kolab.local bin/regen-certs
 }
