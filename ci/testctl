@@ -85,7 +85,7 @@ kolab__teardown() {
 
 # Build all containers required for testing
 kolab__build() {
-    source ../bin/build.sh
+    source bin/build.sh
     podman__build_base
     podman__build_webapp
     podman__build_meet
