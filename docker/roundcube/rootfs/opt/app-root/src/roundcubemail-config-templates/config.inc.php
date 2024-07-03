@@ -52,18 +52,24 @@ if (!function_exists("getenvlist")) {
     $config['session_storage'] = 'db';
 
     // SMTP Server Settings
-    $config['smtp_server'] = getenv('MAIL_HOST');
-    $config['smtp_port'] = getenv('MAIL_PORT');
+    if (getenv('SUBMISSION_ENCRYPTION') == "starttls") {
+        $config['smtp_server'] = "tls://" . getenv('SUBMISSION_HOST');
+    } else {
+        $config['smtp_server'] = getenv('SUBMISSION_HOST');
+    }
+    $config['smtp_port'] = getenv('SUBMISSION_PORT');
     $config['smtp_user'] = '%u';
     $config['smtp_pass'] = '%p';
     $config['smtp_helo_host'] = $_SERVER["HTTP_HOST"] ?? null;
-    $config['smtp_conn_options'] = [
-        'ssl' => [
-            'verify_peer_name' => false,
-            'verify_peer' => false,
-            'allow_self_signed' => true
-        ]
-    ];
+    if (!empty(getenv('SUBMISSION_ENCRYPTION'))) {
+        $config['smtp_conn_options'] = [
+            'ssl' => [
+                'verify_peer_name' => false,
+                'verify_peer' => false,
+                'allow_self_signed' => true
+            ]
+        ];
+    }
 
     // Kolab specific defaults
     $config['product_name'] = 'Kolab Groupware';
