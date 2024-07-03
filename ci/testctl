@@ -306,8 +306,8 @@ podman__run_roundcube() {
         -e MAIL_PORT=10587 \
         -e IMAP_DEBUG=true \
         -e FILEAPI_WOPI_OFFICE=https://kolab.local \
-        -e CALENDAR_CALDAV_SERVER=http://imap:11080/dav \
-        -e KOLAB_ADDRESSBOOK_CARDDAV_SERVER=http://imap:11080/dav \
+        -e CALENDAR_CALDAV_SERVER=http://localhost:11080/dav \
+        -e KOLAB_ADDRESSBOOK_CARDDAV_SERVER=http://localhost:11080/dav \
         roundcube:latest
 }
 
