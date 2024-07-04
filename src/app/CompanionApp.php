@@ -2,8 +2,9 @@
 
 namespace App;
 
-use Illuminate\Database\Eloquent\Model;
 use App\Traits\UuidStrKeyTrait;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Http;
 
 /**
  * The eloquent definition of a CompanionApp.
@@ -35,31 +36,22 @@ class CompanionApp extends Model
     private static function pushFirebaseNotification($deviceIds, $data): bool
     {
         \Log::debug("sending notification to " . var_export($deviceIds, true));
+
         $apiKey = \config('firebase.api_key');
+        $apiUrl = \config('firebase.api_url');
+        $verify = \config('firebase.api_verify_tls');
 
-        $client = new \GuzzleHttp\Client(
-            [
-                'verify' => \config('firebase.api_verify_tls')
-            ]
-        );
-        $response = $client->request(
-            'POST',
-            \config('firebase.api_url'),
-            [
-                'headers' => [
-                        'Authorization' => "key={$apiKey}",
-                ],
-                'json' => [
-                    'registration_ids' => $deviceIds,
-                    'data' => $data
-                ]
-            ]
-        );
-
-
-        if ($response->getStatusCode() != 200) {
-            throw new \Exception('FCM Send Error: ' . $response->getStatusCode());
+        if (empty($apiKey)) {
+            return false;
         }
+
+        Http::withOptions(['verify' => $verify])
+            ->withHeaders(['Authorization' => "key={$apiKey}"])
+            ->timeout(5)
+            ->connectTimeout(5)
+            ->post($apiUrl, ['registration_ids' => $deviceIds, 'data' => $data])
+            ->throwUnlessStatus(200);
+
         return true;
     }
 
@@ -81,8 +73,7 @@ class CompanionApp extends Model
             return false;
         }
 
-        self::pushFirebaseNotification($notificationTokens, $data);
-        return true;
+        return self::pushFirebaseNotification($notificationTokens, $data);
     }
 
     /**
