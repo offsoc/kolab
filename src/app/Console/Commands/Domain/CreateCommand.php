@@ -23,6 +23,9 @@ class CreateCommand extends Command
      */
     protected $description = "Create a domain";
 
+    /** @var bool Adds --tenant option handler */
+    protected $withTenant = true;
+
     /**
      * Execute the console command.
      *
@@ -30,6 +33,8 @@ class CreateCommand extends Command
      */
     public function handle()
     {
+        parent::handle();
+
         $namespace = \strtolower($this->argument('domain'));
 
         // must use withTrashed(), because unique constraint
@@ -73,18 +78,10 @@ class CreateCommand extends Command
                 return 1;
             }
         } else {
-            if ($tenantId = $this->option('tenant')) {
-                $tenant = $this->getObject(Tenant::class, $tenantId, 'title');
-                if (!$tenant) {
-                    $this->error("Tenant {$tenantId} not found");
-                    return 1;
-                }
-            }
-
             $domain = new Domain();
             $domain->namespace = $namespace;
             $domain->type = Domain::TYPE_EXTERNAL;
-            $domain->tenant_id = !empty($tenant) ? $tenant->id : null;
+            $domain->tenant_id = $this->tenantId;
             $domain->save();
 
             $this->info(

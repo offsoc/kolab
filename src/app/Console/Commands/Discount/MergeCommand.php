@@ -69,6 +69,11 @@ class MergeCommand extends Command
             return 1;
         }
 
+        if ($source->tenant_id !== $target->tenant_id) {
+            $this->error("Can't merge two discounts that have different tenants");
+            return 1;
+        }
+
         foreach ($source->wallets as $wallet) {
             $wallet->discount_id = $target->id;
             $wallet->timestamps = false;

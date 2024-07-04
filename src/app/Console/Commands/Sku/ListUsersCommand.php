@@ -11,7 +11,7 @@ class ListUsersCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'sku:list-users {sku}';
+    protected $signature = 'sku:list-users {sku} {--tenant=}';
 
     /**
      * The console command description.
@@ -20,6 +20,9 @@ class ListUsersCommand extends Command
      */
     protected $description = 'List users with the SKU entitlement.';
 
+    /** @var bool Adds --tenant option handler */
+    protected $withTenant = true;
+
     /**
      * Execute the console command.
      *
@@ -27,6 +30,8 @@ class ListUsersCommand extends Command
      */
     public function handle()
     {
+        parent::handle();
+
         $sku = $this->getObject(\App\Sku::class, $this->argument('sku'), 'title');
 
         if (!$sku) {

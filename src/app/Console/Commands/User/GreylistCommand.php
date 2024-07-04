@@ -43,7 +43,6 @@ class GreylistCommand extends Command
             $this->info("Going from timestamp (now) {$timestamp}");
         }
 
-
         \App\Policy\Greylist\Connect::where('recipient_hash', $recipientHash)
             ->where('greylisting', true)
             ->whereDate('updated_at', '>=', $timestamp->copy()->subDays(7))

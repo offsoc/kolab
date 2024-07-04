@@ -42,7 +42,6 @@ class CreateCommand extends Command
             return 1;
         }
 
-
         DB::beginTransaction();
 
         // Create a tenant

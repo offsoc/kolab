@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands\Plan;
 
+use App\Console\Command;
 use App\Plan;
-use Illuminate\Console\Command;
 
 class PackagesCommand extends Command
 {
@@ -12,7 +12,7 @@ class PackagesCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'plan:packages';
+    protected $signature = 'plan:packages {--tenant=}';
 
     /**
      * The console command description.
@@ -21,6 +21,9 @@ class PackagesCommand extends Command
      */
     protected $description = "List packages for plans.";
 
+     /** @var bool Adds --tenant option handler */
+    protected $withTenant = true;
+
     /**
      * Execute the console command.
      *
@@ -28,7 +31,9 @@ class PackagesCommand extends Command
      */
     public function handle()
     {
-        $plans = Plan::withEnvTenantContext()->get();
+        parent::handle();
+
+        $plans = Plan::where('tenant_id', $this->tenantId)->get();
 
         foreach ($plans as $plan) {
             $this->info(sprintf("Plan: %s", $plan->title));

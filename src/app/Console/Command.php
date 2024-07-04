@@ -36,6 +36,10 @@ abstract class Command extends \Illuminate\Console\Command
      */
     protected $tenantId;
 
+    /** @var bool Adds --tenant option handler */
+    protected $withTenant = false;
+
+
     /**
      * Apply current tenant context to the query
      *
@@ -223,7 +227,7 @@ abstract class Command extends \Illuminate\Console\Command
      */
     public function getWallet($wallet)
     {
-        return $this->getObject(\App\Wallet::class, $wallet, null);
+        return $this->getObject(\App\Wallet::class, $wallet);
     }
 
     /**
@@ -246,6 +250,19 @@ abstract class Command extends \Illuminate\Console\Command
             }
 
             $this->info("Vámonos!");
+        }
+
+        // @phpstan-ignore-next-line
+        if ($this->withTenant && $this->hasOption('tenant') && ($tenantId = $this->option('tenant'))) {
+            $tenant = $this->getObject(\App\Tenant::class, $tenantId, 'title');
+            if (!$tenant) {
+                $this->error("Tenant {$tenantId} not found");
+                return 1;
+            }
+
+            $this->tenantId = $tenant->id;
+        } else {
+            $this->tenantId = \config('app.tenant_id');
         }
     }
 

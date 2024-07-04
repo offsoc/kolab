@@ -22,6 +22,9 @@ class SignupTokensCommand extends Command
      */
     protected $description = 'Imports signup tokens from a file.';
 
+    /** @var bool Adds --tenant option handler */
+    protected $withTenant = true;
+
     /**
      * Execute the console command.
      *
@@ -29,17 +32,7 @@ class SignupTokensCommand extends Command
      */
     public function handle()
     {
-        if ($tenantId = $this->option('tenant')) {
-            $tenant = $this->getObject(\App\Tenant::class, $tenantId, 'title');
-            if (!$tenant) {
-                $this->error("Tenant {$tenantId} not found");
-                return 1;
-            }
-
-            $this->tenantId = $tenant->id;
-        } else {
-            $this->tenantId = \config('app.tenant_id');
-        }
+        parent::handle();
 
         $plan = $this->getObject(Plan::class, $this->argument('plan'), 'title', false);
 

@@ -12,7 +12,7 @@ class SkusCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'package:skus';
+    protected $signature = 'package:skus {--tenant=}';
 
     /**
      * The console command description.
@@ -21,6 +21,9 @@ class SkusCommand extends Command
      */
     protected $description = "List SKUs for packages.";
 
+     /** @var bool Adds --tenant option handler */
+    protected $withTenant = true;
+
     /**
      * Execute the console command.
      *
@@ -28,7 +31,9 @@ class SkusCommand extends Command
      */
     public function handle()
     {
-        $packages = Package::withEnvTenantContext()->get();
+        parent::handle();
+
+        $packages = Package::where('tenant_id', $this->tenantId)->get();
 
         foreach ($packages as $package) {
             $this->info(sprintf("Package: %s", $package->title));

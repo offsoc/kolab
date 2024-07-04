@@ -15,7 +15,7 @@ class CreateCommand extends \App\Console\Command
      *
      * @var string
      */
-    protected $signature = 'user:create {email} {--package=*} {--password=} {--role=}';
+    protected $signature = 'user:create {email} {--package=*} {--password=} {--role=} {--tenant=}';
 
     /**
      * The console command description.
@@ -24,6 +24,9 @@ class CreateCommand extends \App\Console\Command
      */
     protected $description = "Create a user.";
 
+    /** @var bool Adds --tenant option handler */
+    protected $withTenant = true;
+
     /**
      * Execute the console command.
      *
@@ -31,6 +34,8 @@ class CreateCommand extends \App\Console\Command
      */
     public function handle()
     {
+        parent::handle();
+
         $email = $this->argument('email');
         $packages = $this->option('package');
         $password = $this->option('password') ?: \App\Utils::generatePassphrase();

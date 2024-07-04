@@ -36,6 +36,7 @@ return new class extends Migration
         Schema::table(
             'signup_codes',
             function (Blueprint $table) {
+                $table->dropForeign(['tenant_id']);
                 $table->dropColumn('tenant_id');
             }
         );
