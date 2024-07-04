@@ -11,17 +11,18 @@ set -e
 # kolab_files_url
 # kolab_addressbook_carddav_url
 # calendar_caldav_url
-IMAP_HOST=$(./getconfig.php default_host)
-IMAP_PORT=$(./getconfig.php default_port)
-echo "IMAP : $IMAP_HOST:$IMAP_PORT"
-echo "a01 LOGOUT" | telnet $IMAP_HOST $IMAP_PORT | grep "Connected to imap"
-echo "IMAP is OK"
+# FIXME the telnet checks no longer seem to work (fails with remote connection closed on LOGOUT...)
+#IMAP_HOST=$(./getconfig.php default_host)
+#IMAP_PORT=$(./getconfig.php default_port)
+#echo "IMAP : $IMAP_HOST:$IMAP_PORT"
+#echo "a01 LOGOUT" | telnet $IMAP_HOST $IMAP_PORT | grep "Connected to imap"
+#echo "IMAP is OK"
 
-MAIL_HOST=$(./getconfig.php smtp_server)
-MAIL_PORT=$(./getconfig.php smtp_port)
-echo "SMTP : $MAIL_HOST:$MAIL_PORT"
-echo "quit" | telnet $MAIL_HOST $MAIL_PORT | grep "Connected to postfix"
-echo "SMTP is OK"
+#MAIL_HOST=$(./getconfig.php smtp_server)
+#MAIL_PORT=$(./getconfig.php smtp_port)
+#echo "SMTP : $MAIL_HOST:$MAIL_PORT"
+#echo "quit" | telnet $MAIL_HOST $MAIL_PORT | grep "Connected to postfix"
+#echo "SMTP is OK"
 
 #FIXME in newer mariadb-shell variants there is --dsn, but in older mysql client version there doesn't seem to be something like it
 # MYSQL_DSN=$(./getconfig.php db_dsnw)

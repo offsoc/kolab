@@ -76,7 +76,7 @@ RUN /opt/app-root/src/build.sh && \
     chown -R 1001:0 /opt/app-root/src /data
 
 COPY /rootfs /
-RUN chmod -R 777 /etc/php.ini /etc/httpd
+RUN chmod -R 777 /etc/php.ini /etc/httpd /opt/app-root/src/*.sh
 
 VOLUME /data
 

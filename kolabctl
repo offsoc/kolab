@@ -3,74 +3,375 @@
 set -e
 
 CONFIG=${CONFIG:-"config.prod"}
-HOST=${HOST:-"kolab.local"}
-BRANCH=${BRANCH:-"master"}
+export HOST=${HOST:-"kolab.local"}
+BRANCH=${BRANCH:-"dev/mollekopf"}
+OPENEXCHANGERATES_API_KEY=${OPENEXCHANGERATES_API_KEY}
+FIREBASE_API_KEY=${FIREBASE_API_KEY}
+PUBLIC_IP=${PUBLIC_IP}
+
+export CERTS_PATH=./docker/certs
+
+export POD=kolab-prod
+export IMAP_SPOOL_STORAGE="--mount=type=volume,src=$POD-imap-spool,destination=/var/spool/imap,U=true"
+export IMAP_LIB_STORAGE="--mount=type=volume,src=$POD-imap-lib,destination=/var/lib/imap,U=true"
+export POSTFIX_SPOOL_STORAGE="--mount=type=volume,src=$POD-postfix-spool,destination=/var/spool/imap,U=true"
+export POSTFIX_LIB_STORAGE="--mount=type=volume,src=$POD-postfix-lib,destination=/var/lib/imap,U=true"
+export MARIADB_STORAGE="--mount=type=volume,src=$POD-mariadb-data,destination=/var/lib/mysql,U=true"
+export REDIS_STORAGE="--mount=type=volume,src=$POD-redis-data,destination=/var/lib/redis,U=true"
+export MINIO_STORAGE="--mount=type=volume,src=$POD-minio-data,destination=/data,U=true"
+
+export PODMAN_IGNORE_CGROUPSV1_WARNING=true
+
+source bin/podman_shared
+
+
+__export_env() {
+    source src/.env
+    export APP_WEBSITE_DOMAIN
+    export APP_DOMAIN
+    export DB_HOST
+    export IMAP_HOST
+    export IMAP_PORT
+    export IMAP_ADMIN_LOGIN
+    export IMAP_ADMIN_PASSWORD
+    export MAIL_HOST
+    export MAIL_PORT
+    export IMAP_DEBUG
+    export FILEAPI_WOPI_OFFICE
+    export CALENDAR_CALDAV_SERVER
+    export KOLAB_ADDRESSBOOK_CARDDAV_SERVER
+    export DB_ROOT_PASSWORD
+    export DB_USERNAME
+    export DB_PASSWORD
+    export DB_DATABASE
+    export MINIO_USER
+    export MINIO_PASSWORD
+    export PASSPORT_PRIVATE_KEY
+    export PASSPORT_PUBLIC_KEY
+    export DES_KEY
+    export MEET_SERVER_TOKEN
+    export MEET_WEBHOOK_TOKEN
+    export KOLAB_SSL_CERTIFICATE
+    export KOLAB_SSL_CERTIFICATE_FULLCHAIN
+    export KOLAB_SSL_CERTIFICATE_KEY
+}
+
+kolab__configure() {
+    if [[ "$1" == "--force" ]]; then
+        rm src/.env
+    fi
+
+    # Generate the .env once with all the necessary secrets
+    if [[ -f src/.env ]]; then
+        echo "src/.env already exists, not regenerating"
+        return
+    fi
+
+    cp "$CONFIG/src/.env" src/.env
+
+    if [[ -z $ADMIN_PASSWORD ]]; then
+        echo "Please enter your new admin password for the admin@$HOST user:"
+        read -r ADMIN_PASSWORD
+    fi
+
+    if [[ -z $PUBLIC_IP ]]; then
+        PUBLIC_IP=$(ip -o route get to 8.8.8.8 | sed -n 's/.*src \([0-9.]\+\).*/\1/p')
+    fi
+
+    # Generate random secrets
+    if ! grep -q "COTURN_STATIC_SECRET" src/.env; then
+        COTURN_STATIC_SECRET=$(openssl rand -hex 32);
+        echo "COTURN_STATIC_SECRET=${COTURN_STATIC_SECRET}" >> src/.env
+    fi
+
+    if ! grep -q "MEET_WEBHOOK_TOKEN" src/.env; then
+        MEET_WEBHOOK_TOKEN=$(openssl rand -hex 32);
+        echo "MEET_WEBHOOK_TOKEN=${MEET_WEBHOOK_TOKEN}" >> src/.env
+    fi
+
+    if ! grep -q "MEET_SERVER_TOKEN" src/.env; then
+        MEET_SERVER_TOKEN=$(openssl rand -hex 32);
+        echo "MEET_SERVER_TOKEN=${MEET_SERVER_TOKEN}" >> src/.env
+    fi
+
+    if ! grep -q "APP_KEY=base64:" src/.env; then
+        APP_KEY=$(openssl rand -base64 32);
+        echo "APP_KEY=base64:${APP_KEY}" >> src/.env
+    fi
+
+    if ! grep -q "PASSPORT_PROXY_OAUTH_CLIENT_ID=" src/.env; then
+        PASSPORT_PROXY_OAUTH_CLIENT_ID=$(uuidgen);
+        echo "PASSPORT_PROXY_OAUTH_CLIENT_ID=${PASSPORT_PROXY_OAUTH_CLIENT_ID}" >> src/.env
+    fi
+
+    if ! grep -q "PASSPORT_PROXY_OAUTH_CLIENT_SECRET=" src/.env; then
+        PASSPORT_PROXY_OAUTH_CLIENT_SECRET=$(openssl rand -base64 32);
+        echo "PASSPORT_PROXY_OAUTH_CLIENT_SECRET=${PASSPORT_PROXY_OAUTH_CLIENT_SECRET}" >> src/.env
+    fi
+
+    if ! grep -q "PASSPORT_PUBLIC_KEY=|PASSPORT_PRIVATE_KEY=" src/.env; then
+        PASSPORT_PRIVATE_KEY=$(openssl genrsa 4096);
+        echo "PASSPORT_PRIVATE_KEY=\"${PASSPORT_PRIVATE_KEY}\"" >> src/.env
+
+        PASSPORT_PUBLIC_KEY=$(echo "$PASSPORT_PRIVATE_KEY" | openssl rsa -pubout 2>/dev/null)
+        echo "PASSPORT_PUBLIC_KEY=\"${PASSPORT_PUBLIC_KEY}\"" >> src/.env
+    fi
+
+    if ! grep -q "DES_KEY=" src/.env; then
+        DES_KEY=$(openssl rand -base64 24);
+        echo "DES_KEY=${DES_KEY}" >> src/.env
+    fi
+
+    # Customize configuration
+    sed -i \
+        -e "s/{{ host }}/${HOST}/g" \
+        -e "s/{{ openexchangerates_api_key }}/${OPENEXCHANGERATES_API_KEY}/g" \
+        -e "s/{{ firebase_api_key }}/${FIREBASE_API_KEY}/g" \
+        -e "s/{{ public_ip }}/${PUBLIC_IP}/g" \
+        -e "s/{{ admin_password }}/${ADMIN_PASSWORD}/g" \
+        src/.env
+
+    if [ -f /etc/letsencrypt/live/${HOST}/cert.pem ]; then
+        echo "Using the available letsencrypt certificate for ${HOST}"
+        cat >> src/.env << EOF
+KOLAB_SSL_CERTIFICATE=/etc/letsencrypt/live/${HOST}/cert.pem
+KOLAB_SSL_CERTIFICATE_FULLCHAIN=/etc/letsencrypt/live/${HOST}/fullchain.pem
+KOLAB_SSL_CERTIFICATE_KEY=/etc/letsencrypt/live/${HOST}/privkey.pem
+PROXY_SSL_CERTIFICATE=/etc/letsencrypt/live/${HOST}/fullchain.pem
+PROXY_SSL_CERTIFICATE_KEY=/etc/letsencrypt/live/${HOST}/privkey.pem
+EOF
+    fi
+}
 
 kolab__deploy() {
-    echo "Please enter your new admin password for the admin@$HOST user:"
-    read -r ADMIN_PASSWORD
+    if [[ -z $ADMIN_PASSWORD ]]; then
+        echo "Please enter your new admin password for the admin@$HOST user:"
+        read -r ADMIN_PASSWORD
+    fi
     echo "Deploying $CONFIG from branch $BRANCH on $HOST"
-    command env KOLAB_GIT_REF=$BRANCH HOST=$HOST ADMIN_PASSWORD="$ADMIN_PASSWORD" bin/configure.sh "$CONFIG"
-    command env ADMIN_PASSWORD="$ADMIN_PASSWORD" bin/deploy.sh
+
+    if [[ ! -f src/.env ]]; then
+        echo "Missing src/.env file, run 'kolabctl configure' to generate"
+        exit 1
+    fi
+
+    if [[ "$1" == "--reset" ]]; then
+        kolab__reset --force
+    fi
+
+    __export_env
+
+    podman volume create $POD-imap-spool --ignore -l=kolab
+    podman volume create $POD-imap-lib --ignore -l=kolab
+    podman volume create $POD-postfix-spool --ignore -l=kolab
+    podman volume create $POD-postfix-lib --ignore -l=kolab
+    podman volume create $POD-mariadb-data --ignore -l=kolab
+    podman volume create $POD-redis-data --ignore -l=kolab
+    podman volume create $POD-minio-data --ignore -l=kolab
+
+    kolab__build
+
+    # Create the pod first
+    $PODMAN pod create \
+        --replace \
+        --add-host=$HOST:127.0.0.1 \
+        --publish "443:6443" \
+        --publish "465:6465" \
+        --publish "587:6587" \
+        --publish "143:6143" \
+        --publish "993:6993" \
+        --publish "44444:44444/udp" \
+        --publish "44444:44444/tcp" \
+        --name $POD
+
+    podman__run_mariadb
+    podman__run_redis
+
+    podman__healthcheck $POD-mariadb $POD-redis
+
+    # Make imap available to the webapp seeder, but don't expect it to be healthy until it can authenticate against the webapp
+    podman__run_imap
+
+    podman__run_webapp src/.env $CONFIG
+    podman__healthcheck $POD-webapp
+
+    podman__healthcheck $POD-imap
+
+    # Ensure all commands are processed
+    echo "Flushing work queue"
+    $PODMAN exec -ti $POD-webapp ./artisan queue:work --stop-when-empty
+
+    if [[ -n $ADMIN_PASSWORD ]]; then
+        podman exec $POD-webapp ./artisan user:password "admin@$APP_DOMAIN" "$ADMIN_PASSWORD"
+    fi
+
+    podman__run_minio
+    podman__healthcheck $POD-minio
+
+    podman__run_meet
+
+    podman__run_roundcube
+    podman__run_postfix
+    podman__run_amavis
+    podman__run_collabora
+    podman__run_proxy
+}
+
+kolab__reset() {
+    if [[ "$1" == "--force" ]]; then
+        REPLY="y"
+    else
+        read -p "Are you sure? This will delete the pod including all data. Type y to confirm." -n 1 -r
+        echo
+    fi
+    if [[ "$REPLY" =~ ^[Yy]$ ]];
+    then
+        podman pod rm --force $POD
+        volumes=($(podman volume ls -f name=$POD | awk '{if (NR > 1) print $2}'))
+        for v in "${volumes[@]}"
+        do
+            podman volume rm --force $v
+        done
+    fi
 }
 
 kolab__start() {
-    command bin/start.sh
+    podman pod start $POD
 }
 
 kolab__stop() {
-    command bin/stop.sh
+    podman pod stop $POD
 }
 
 kolab__update() {
-    command bin/update.sh
+    kolab__stop
+
+    podman pull quay.io/sclorg/mariadb-105-c9s
+    podman pull minio/minio:latest
+    podman pull almalinux:9
+
+    kolab__build
+
+    kolab__start
 }
 
 kolab__backup() {
-    command bin/backup.sh
+    backup_path="$(pwd)/backup/"
+    mkdir -p "$backup_path"
+
+    echo "Stopping containers"
+    kolab__stop
+
+    echo "Backing up volumes"
+    volumes=($(podman volume ls -f name=$POD | awk '{if (NR > 1) print $2}'))
+    for v in "${volumes[@]}"
+    do
+        podman export -o="$backup_path/$v.tar"
+    done
+
+    echo "Restarting containers"
+    kolab__start
 }
 
 kolab__restore() {
-    command bin/restore.sh
+    backup_path="$(pwd)/backup/"
+
+    echo "Stopping containers"
+    kolab__stop
+
+    # We currently expect the volumes to exist.
+    # We could alternatively create volumes form existing tar files
+    # for f in backup/*.tar; do
+    #     echo "$(basename $f .tar)" ;
+    # done
+
+    echo "Restoring volumes"
+    volumes=($(podman volume ls -f name=$POD | awk '{if (NR > 1) print $2}'))
+    for v in "${volumes[@]}"
+    do
+        podman import $v "$backup_path/$v.tar"
+    done
+    echo "Restarting containers"
+    kolab__start
 }
 
 kolab__selfcheck() {
-    command bin/selfcheck.sh
+    set -e
+    set -x
+
+    APP_DOMAIN=$(grep APP_DOMAIN src/.env | tail -n1 | sed "s/APP_DOMAIN=//")
+    if [ -z "$ADMIN_PASSWORD" ]; then
+        ADMIN_PASSWORD="simple123"
+    fi
+    if [ -z "$ADMIN_USER" ]; then
+        ADMIN_USER="admin@$APP_DOMAIN"
+    fi
+
+    # We skip mollie and openexchange
+    podman exec $POD-webapp ./artisan status:health --check DB --check Redis --check IMAP --check Roundcube --check Meet --check DAV
+    podman exec $POD-postfix testsaslauthd -u "$ADMIN_USER" -p "$ADMIN_PASSWORD"
+    podman exec $POD-imap testsaslauthd -u "$ADMIN_USER" -p "$ADMIN_PASSWORD"
+
+    # podman run -ti --rm utils ./mailtransporttest.py --sender-username "$ADMIN_USER" --sender-password "$ADMIN_PASSWORD" --sender-host "127.0.0.1" --recipient-username "$ADMIN_USER" --recipient-password "$ADMIN_PASSWORD" --recipient-host "127.0.0.1" --recipient-port "11143"
+
+    # podman run -ti --rm  utils ./kolabendpointtester.py --verbose --host "$APP_DOMAIN" --dav "https://$APP_DOMAIN/dav/" --imap "$APP_DOMAIN" --activesync "$APP_DOMAIN"  --user "$ADMIN_USER" --password "$ADMIN_PASSWORD"
+
+    echo "All tests have passed!"
 }
 
 kolab__ps() {
-    command docker compose ps
+    command podman pod $POD ps
 }
 
 kolab__exec() {
-    command docker compose exec -ti $@
+    container=$1
+    shift
+    command podman exec -ti $POD-$container $@
 }
 
 kolab__run() {
-    command docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.build.yml run --rm -ti $@
+    __export_env
+    podman__run_$1
 }
 
 kolab__build() {
-    command docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.build.yml build $@
+    if [[ $1 != "" ]]; then
+        podman__build_$1
+    else
+        podman__build_base
+        podman__build_webapp
+        podman__build_meet
+
+        podman__build docker/imap kolab-imap
+        podman__build docker/mariadb mariadb
+        podman__build docker/redis redis
+        podman__build docker/proxy kolab-proxy
+        podman__build_roundcube
+
+        podman__build docker/utils utils
+        podman__build docker/postfix kolab-postfix
+        podman__build docker/amavis kolab-amavis
+        podman__build docker/collabora kolab-collabora --build-arg=REPOSITORY="https://www.collaboraoffice.com/repos/CollaboraOnline/23.05-CODE/CODE-rpm/"
+        env CERT_DIR=docker/certs APP_DOMAIN=$HOST bin/regen-certs
+    fi
 }
 
 kolab__cyradm() {
-    # command docker compose exec -ti imap cyradm --auth PLAIN -u admin@kolab.local -w simple123  --port 11143 localhost
+    # command podman exec -ti $POD-imap cyradm --auth PLAIN -u admin@kolab.local -w simple123  --port 11143 localhost
     if [[ "$@" ]]; then
-        command docker compose exec -ti imap echo "$@" | cyradm --auth PLAIN -u $(grep IMAP_ADMIN_LOGIN .env | cut -d '=' -f 2 ) -w $(grep IMAP_ADMIN_PASSWORD .env | cut -d '=' -f 2 )  --port 11143 localhost
+        command podman exec -ti $POD-imap echo "$@" | cyradm --auth PLAIN -u $(grep IMAP_ADMIN_LOGIN src/.env | cut -d '=' -f 2 ) -w $(grep IMAP_ADMIN_PASSWORD src/.env | cut -d '=' -f 2 )  --port 11143 localhost
     else
-        command docker compose exec -ti imap cyradm --auth PLAIN -u $(grep IMAP_ADMIN_LOGIN .env | cut -d '=' -f 2 ) -w $(grep IMAP_ADMIN_PASSWORD .env | cut -d '=' -f 2 )  --port 11143 localhost
+        command podman exec -ti $POD-imap cyradm --auth PLAIN -u $(grep IMAP_ADMIN_LOGIN src/.env | cut -d '=' -f 2 ) -w $(grep IMAP_ADMIN_PASSWORD src/.env | cut -d '=' -f 2 )  --port 11143 localhost
     fi
 }
 
 kolab__shell() {
-    command docker compose exec -ti $1 /bin/bash
+    kolab__exec $1 /bin/bash
 }
 
 kolab__logs() {
-    command docker compose logs -f $1
+    command podman logs -f $POD-$1
 }
-
 
 kolab__help() {
     cat <<EOF

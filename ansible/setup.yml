@@ -3,24 +3,22 @@
   hosts: "{{ hostname }}"
   remote_user: root
   tasks:
-    - import_tasks: grub.yml
-
     - name: Set hostname
       ansible.builtin.hostname:
         name: "{{ hostname }}"
 
     - import_tasks: packages.yml
 
-    - name: Put SELinux in permissive mode for docker
-      selinux:
-        policy: targeted
-        state: permissive
-
+    # - name: Put SELinux in permissive mode for docker
+    #   selinux:
+    #     policy: targeted
+    #     state: permissive
+    #
     - name: Setup user kolab
       ansible.builtin.user:
         name: kolab
         shell: /bin/bash
-        groups: wheel, audio, docker
+        groups: wheel, audio
         append: yes
 
     - name: sudo without password
@@ -29,11 +27,6 @@
         state: present
         regexp: '^%wheel\s'
         line: '%wheel ALL=(ALL) NOPASSWD: ALL'
-
-    - name: Start service docker, if not started
-      ansible.builtin.service:
-        name: docker
-        state: started
 
     - import_tasks: certbot.yml
 
@@ -115,17 +108,12 @@
         state: enabled
         zone: FedoraServer
 
-    - name: Always restart docker before deploy (because of potential network issues otherwise)
-      ansible.builtin.service:
-        name: docker
-        state: restarted
-
     - name: Deploy
       block:
-        - name: Run bin/deploy
+        - name: Run kolabctl deploy
           become: true
           become_user: kolab
-          ansible.builtin.command: bin/deploy.sh
+          ansible.builtin.command: kolabctl deploy
           args:
             chdir: /home/kolab/kolab
           environment:

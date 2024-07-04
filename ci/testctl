@@ -73,8 +73,49 @@ mVn5FgBAFnd/skX6DsRs+eb2lNahkvNZZ15z9UeU2Rl6J9uBx0vbkcB7eiSCPhRM
 IKq/CtkyEgz8ce4kG18fJHDFDASRvGjaBu91lV5h7NLmhFLFzMvb7XoHrv/yD6TV
 E5W47J/DrfrevJkzS1GV++MCAwEAAQ==
 -----END PUBLIC KEY-----"
+export HOST=kolab.local
+
+export APP_WEBSITE_DOMAIN="$HOST"
+export SSL_CERTIFICATE="/etc/certs/imap.hosted.com.cert"
+export SSL_CERTIFICATE_KEY="/etc/certs/imap.hosted.com.key"
+export APP_DOMAIN=$HOST
+export DES_KEY=kBxUM/53N9p9abusAoT0ZEAxwI2pxFz/
+export DB_HOST=127.0.0.1
+export IMAP_HOST=localhost
+export IMAP_PORT=11143
+export IMAP_ADMIN_LOGIN=cyrus-admin
+export IMAP_ADMIN_PASSWORD=simple123
+export MAIL_HOST=localhost
+export MAIL_PORT=10587
+export IMAP_DEBUG=true
+export FILEAPI_WOPI_OFFICE=https://$HOST
+export CALENDAR_CALDAV_SERVER=http://localhost:11080/dav
+export KOLAB_ADDRESSBOOK_CARDDAV_SERVER=http://localhost:11080/dav
+export DB_ROOT_PASSWORD=simple123
+export DB_HKCCP_PASSWORD=simple123
+export DB_KOLAB_PASSWORD=simple123
+export DB_RC_PASSWORD=simple123
+export DB_PASSWORD=simple123
+export MINIO_ROOT_USER=minio
+export MINIO_ROOT_PASSWORD=simple123
+export MINIO_USER=minio
+export MINIO_PASSWORD=simple123
+export MEET_SERVER_TOKEN=simple123
+export MEET_WEBHOOK_TOKEN=simple123
+
+export CERTS_PATH=./ci/certs
+export IMAP_SPOOL_STORAGE=--mount=type=tmpfs,tmpfs-size=128M,tmpfs-mode=777,destination=/var/spool/imap,U=true,notmpcopyup
+export IMAP_LIB_STORAGE=--mount=type=tmpfs,tmpfs-size=128M,tmpfs-mode=777,destination=/var/lib/imap,U=true,notmpcopyup
+export MARIADB_STORAGE=--mount=type=tmpfs,tmpfs-size=512M,destination=/var/lib/mysql,U=true
+export REDIS_STORAGE=--mount=type=tmpfs,tmpfs-size=128M,destination=/var/lib/redis,U=true
+export MINIO_STORAGE=--mount=type=tmpfs,tmpfs-size=128M,destination=/data,U=true
+
+
+export PODMAN_IGNORE_CGROUPSV1_WARNING=true
 
 PODMAN="podman"
+
+source bin/podman_shared
 
 # Teardown the currently running environment
 kolab__teardown() {
@@ -85,19 +126,26 @@ kolab__teardown() {
 
 # Build all containers required for testing
 kolab__build() {
-    source bin/build.sh
-    podman__build_base
-    podman__build_webapp
-    podman__build_meet
+    if [[ $1 != "" ]]; then
+        if declare -f "podman__build_$1" >/dev/null 2>&1; then
+            podman__build_$1
+        else
+            podman__build docker/$1 $1
+        fi
+    else
+        podman__build_base
+        podman__build_webapp
+        podman__build_meet
 
-    podman__build docker/imap kolab-imap
-    podman__build docker/mariadb mariadb
-    podman__build docker/redis redis
-    podman__build docker/proxy kolab-proxy
-    podman__build docker/tests kolab-tests --ulimit nofile=65535:65535
-    podman__build_roundcube
+        podman__build docker/imap kolab-imap
+        podman__build docker/mariadb mariadb
+        podman__build docker/redis redis
+        podman__build docker/proxy kolab-proxy
+        podman__build_roundcube
 
-    env CERT_DIR=ci/certs APP_DOMAIN=kolab.local bin/regen-certs
+        podman__build docker/tests kolab-tests --ulimit nofile=65535:65535
+        env CERT_DIR=ci/certs APP_DOMAIN=$HOST bin/regen-certs
+    fi
 }
 
 # Setup the test environment
@@ -106,7 +154,7 @@ kolab__setup() {
     kolab__build
     echo "Setup"
 
-    POD=tests
+    export POD=tests
 
     # Create the pod first
     $PODMAN pod create --replace --name $POD
@@ -116,10 +164,11 @@ kolab__setup() {
 
     podman__healthcheck $POD-mariadb $POD-redis
 
-    podman__run_webapp config.demo
+    podman__run_imap
+
+    podman__run_webapp ci/env config.demo
     podman__healthcheck $POD-webapp
 
-    podman__run_imap
     podman__healthcheck $POD-imap
 
     # Ensure all commands are processed
@@ -138,7 +187,7 @@ kolab__setup() {
 # "quicktest"
 # "tests/Feature/Jobs/WalletCheckTest.php"
 kolab__test() {
-    POD=tests
+    export POD=tests
     $PODMAN run -ti --pod tests --name $POD-kolab-tests --replace \
         --env-file=ci/env \
         -v ./src:/src/kolabsrc.orig:ro \
@@ -164,7 +213,9 @@ kolab__proxytest() {
 }
 
 kolab__lint() {
-    kolab__test lint
+    $PODMAN run --rm -ti \
+        -v ./src:/src/kolabsrc.orig:ro \
+        kolab-tests:latest /init.sh lint
 }
 
 # Setup the test environment and run a complete testsuite
@@ -266,135 +317,13 @@ kolab__validate() {
     fi
 }
 
-podman__healthcheck() {
-    for CONTAINER in $@; do
-        echo "Waiting for ${CONTAINER} become healthy "
-        while [ $(podman healthcheck run ${CONTAINER}) ]; do
-            echo -n "."; sleep 5;
-        done
-    done
-}
-
-podman__run_proxy() {
-    $PODMAN run -dt --pod $POD --name $POD-proxy --replace \
-        -v ./ci/certs:/etc/certs:ro \
-        -e APP_WEBSITE_DOMAIN="kolab.local" \
-        -e SSL_CERTIFICATE="/etc/certs/imap.hosted.com.cert" \
-        -e SSL_CERTIFICATE_KEY="/etc/certs/imap.hosted.com.key" \
-        -e WEBAPP_BACKEND="http://localhost:8000" \
-        -e MEET_BACKEND="https://localhost:12443" \
-        -e ROUNDCUBE_BACKEND="http://localhost:8080" \
-        -e DAV_BACKEND="http://localhost:11080/dav" \
-        -e COLLABORA_BACKEND="http://localhost:9980" \
-        kolab-proxy:latest
-}
-
-podman__run_roundcube() {
-    $PODMAN run -dt --pod $POD --name $POD-roundcube --replace \
-        -v ./ext:/src.orig:ro \
-        -e APP_DOMAIN=kolab.local \
-        -e DES_KEY=kBxUM/53N9p9abusAoT0ZEAxwI2pxFz/ \
-        -e DB_HOST=127.0.0.1 \
-        -e DB_RC_DATABASE=roundcube \
-        -e DB_RC_USERNAME=roundcube \
-        -e DB_RC_PASSWORD=simple123 \
-        -e IMAP_HOST=localhost \
-        -e IMAP_PORT=11143 \
-        -e IMAP_ADMIN_LOGIN=cyrus-admin \
-        -e IMAP_ADMIN_PASSWORD=simple123 \
-        -e MAIL_HOST=localhost \
-        -e MAIL_PORT=10587 \
-        -e IMAP_DEBUG=true \
-        -e FILEAPI_WOPI_OFFICE=https://kolab.local \
-        -e CALENDAR_CALDAV_SERVER=http://localhost:11080/dav \
-        -e KOLAB_ADDRESSBOOK_CARDDAV_SERVER=http://localhost:11080/dav \
-        roundcube:latest
-}
-
-podman__run_mariadb() {
-    $PODMAN run -dt --pod $POD --name $POD-mariadb --replace \
-        --mount=type=tmpfs,tmpfs-size=512M,destination=/var/lib/mysql,U=true \
-        -e MYSQL_ROOT_PASSWORD=simple123 \
-        -e TZ="+02:00" \
-        -e DB_HKCCP_DATABASE=kolabdev \
-        -e DB_HKCCP_USERNAME=kolabdev \
-        -e DB_HKCCP_PASSWORD=simple123 \
-        -e DB_KOLAB_DATABASE=kolab \
-        -e DB_KOLAB_USERNAME=kolab \
-        -e DB_KOLAB_PASSWORD=simple123 \
-        -e DB_RC_DATABASE=roundcube \
-        -e DB_RC_USERNAME=roundcube \
-        -e DB_RC_PASSWORD=simple123 \
-        --health-cmd "mysqladmin -u root ping && test -e /tmp/initialized" \
-        mariadb:latest
-}
-
-podman__run_redis() {
-    $PODMAN run -dt --pod $POD --name $POD-redis --replace \
-        --mount=type=tmpfs,tmpfs-size=128M,destination=/var/lib/redis,U=true \
-        --health-cmd "redis-cli ping || exit 1" \
-        redis:latest
-}
-
-podman__run_minio() {
-    $PODMAN run -dt --pod $POD --name $POD-minio --replace \
-        --mount=type=tmpfs,tmpfs-size=128M,destination=/data,U=true \
-        -e MINIO_ROOT_USER=minio \
-        -e MINIO_ROOT_PASSWORD=simple123 \
-        --health-cmd "mc ready local || exit 1" \
-        --entrypoint sh \
-        quay.io/minio/minio:latest -c 'mkdir -p /data/kolab && minio server /data --console-address ":9001"'
-}
-
-podman__run_webapp() {
-    # We run with a fixed config.demo overlay and override the environment with ci/env
-    $PODMAN run -dt --pod $POD --name $POD-webapp --replace \
-        --env-file=ci/env \
-        -v ./src:/src/kolabsrc.orig:ro \
-        -v ./$1/src:/src/overlay:ro \
-        -e NOENVFILE=true \
-        -e APP_SERVICES_ALLOWED_DOMAINS="webapp,localhost,services.kolab.local" \
-        -e KOLAB_ROLE=combined \
-        -e PASSPORT_PRIVATE_KEY="$PASSPORT_PRIVATE_KEY" \
-        -e PASSPORT_PUBLIC_KEY="$PASSPORT_PUBLIC_KEY" \
-        --health-cmd "./artisan octane:status || exit 1" \
-        kolab-webapp:latest
-}
-
-podman__run_imap() {
-    $PODMAN run -dt --pod $POD --name $POD-imap --replace \
-        --mount=type=tmpfs,tmpfs-size=128M,tmpfs-mode=777,destination=/var/spool/imap,U=true,notmpcopyup \
-        --mount=type=tmpfs,tmpfs-size=128M,tmpfs-mode=777,destination=/var/lib/imap,U=true,notmpcopyup \
-        -e APP_SERVICES_DOMAIN="localhost" \
-        -e SERVICES_PORT=8000 \
-        -e IMAP_ADMIN_LOGIN=cyrus-admin \
-        -e IMAP_ADMIN_PASSWORD=simple123 \
-        --health-cmd "test -e /run/saslauthd/mux && kill -0 \$(cat /var/run/master.pid)" \
-        kolab-imap:latest
-}
-
-podman__run_meet() {
-    $PODMAN run -dt --pod $POD --name $POD-meet --replace \
-        -v ./meet/server:/src/meet:ro \
-        -v ./ci/certs/meet.kolab.local.cert:/etc/pki/tls/certs/meet.kolab.local.cert \
-        -v ./ci/certs/meet.kolab.local.key:/etc/pki/tls/private/meet.kolab.local.key \
-        -e WEBRTC_LISTEN_IP=127.0.0.1 \
-        -e WEBRTC_ANNOUNCED_ADDRESS=127.0.0.1 \
-        -e PUBLIC_DOMAIN=kolab.local \
-        -e LISTENING_HOST=127.0.0.1 \
-        -e LISTENING_PORT=12443 \
-        -e DEBUG="*" \
-        -e TURN_SERVER=none \
-        -e AUTH_TOKEN=simple123 \
-        -e WEBHOOK_TOKEN=simple123 \
-        -e WEBHOOK_URL=kolab.local/api/webhooks/meet \
-        -e SSL_CERT=/etc/pki/tls/certs/meet.kolab.local.cert \
-        -e SSL_KEY=/etc/pki/tls/private/meet.kolab.local.key \
-        kolab-meet:latest
+kolab__run() {
+    export POD=dev
+    podman__run_$1
 }
 
 kolab__deploy() {
-    POD=dev
+    export POD=dev
     # Create the pod first
     $PODMAN pod create \
         --replace \
@@ -413,10 +342,11 @@ kolab__deploy() {
 
     podman__healthcheck $POD-mariadb $POD-redis
 
-    podman__run_webapp config.prod
+    podman__run_imap
+
+    podman__run_webapp ci/env config.prod
     podman__healthcheck $POD-webapp
 
-    podman__run_imap
     podman__healthcheck $POD-imap
 
     # Ensure all commands are processed

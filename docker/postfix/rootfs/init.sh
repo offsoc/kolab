@@ -1,10 +1,13 @@
 #!/bin/bash
 
 set -e
+set -x
 
+if [[ -f ${SSL_CERTIFICATE} ]]; then
 cat ${SSL_CERTIFICATE} ${SSL_CERTIFICATE_FULLCHAIN} ${SSL_CERTIFICATE_KEY} > /etc/pki/tls/private/postfix.pem
 chown postfix:mail /etc/pki/tls/private/postfix.pem
 chmod 655 /etc/pki/tls/private/postfix.pem
+fi
 
 chown -R postfix:mail /var/lib/postfix
 chown -R postfix:mail /var/spool/postfix

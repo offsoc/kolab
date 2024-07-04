@@ -64,12 +64,22 @@ export IMAP_GIT_REMOTE=https://git.kolab.org/source/cyrus-imapd
 export IMAP_GIT_REF=$(pin_commit "$GIT_REMOTE_FREEBUSY" "dev/kolab-3.6")
 
 # Execute
-ci/testctl build
-BUILD_RESULT=$(check_success $?)
-ci/testctl lint
-LINT_RESULT=$(check_success $?)
-ci/testctl testrun
-TESTRUN_RESULT=$(check_success $?)
+if [[ $ROLE == "test" ]]; then
+    ci/testctl build
+    BUILD_RESULT=$(check_success $?)
+    ci/testctl lint
+    LINT_RESULT=$(check_success $?)
+    ci/testctl testrun
+    TESTRUN_RESULT=$(check_success $?)
+elif [[ $ROLE == "deploy" ]]; then
+    env ADMIN_PASSWORD=simple123 PUBLIC_IP=127.0.0.1 ./kolabctl configure
+    env ADMIN_PASSWORD=simple123 ./kolabctl deploy
+    DEPLOY_RESULT=$(check_success $?)
+    env ADMIN_PASSWORD=simple123 ./kolabctl selfcheck
+    SELFCHECK_RESULT=$(check_success $?)
+fi
+
+HOST=${HOST:-$HOSTNAME}
 
 # Publish test results
 if [[ "$PROMETHEUS_PUSHGATEWAY" != "" ]]; then
@@ -79,9 +89,9 @@ if [[ "$PROMETHEUS_PUSHGATEWAY" != "" ]]; then
 kolab_ci_timestamp $EPOCH
 # HELP kolab_ci_testsuite Displays whether or not the testsuite passed
 # TYPE kolab_ci_testsuite gauge
-kolab_ci_testsuite{host="$HOSTNAME", testsuite="build"} $BUILD_RESULT
-kolab_ci_testsuite{host="$HOSTNAME", testsuite="lint"} $LINT_RESULT
-kolab_ci_testsuite{host="$HOSTNAME", testsuite="testrun"} $TESTRUN_RESULT
+kolab_ci_testsuite{host="$HOST", testsuite="build"} $BUILD_RESULT
+kolab_ci_testsuite{host="$HOST", testsuite="lint"} $LINT_RESULT
+kolab_ci_testsuite{host="$HOST", testsuite="testrun"} $TESTRUN_RESULT
 EOF
 )
 
