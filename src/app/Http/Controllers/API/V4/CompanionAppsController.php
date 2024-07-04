@@ -254,15 +254,16 @@ class CompanionAppsController extends ResourceController
             $result->setPassportClient($client);
             $result->save();
         }
-        $response['qrcode'] = self::generateQRCode(
-            json_encode([
-                "serverUrl" => Utils::serviceUrl('', $user->tenant_id),
-                "clientIdentifier" => $client->id,
-                "clientSecret" => $client->secret,
-                "companionId" => $id,
-                "username" => $user->email
-            ])
-        );
+
+        $response = [
+            'serverUrl' => Utils::serviceUrl('', $user->tenant_id),
+            'clientIdentifier' => $client->id,
+            'clientSecret' => $client->secret,
+            'companionId' => $id,
+            'username' => $user->email,
+        ];
+
+        $response['qrcode'] = self::generateQRCode(json_encode($response));
 
         return response()->json($response);
     }

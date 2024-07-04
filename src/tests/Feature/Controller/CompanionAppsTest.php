@@ -309,10 +309,15 @@ class CompanionAppsTest extends TestCase
         $response = $this->actingAs($user)->get("api/v4/companions/{$companionApp->id}/pairing");
         $response->assertStatus(200);
 
-        $companionApp->refresh();
-        $this->assertTrue($companionApp->oauth_client_id != null);
-
         $json = $response->json();
+        $client = $companionApp->fresh()->passportClient();
+
+        $this->assertTrue($client !== null);
+        $this->assertSame($user->email, $json['username']);
+        $this->assertSame($companionApp->id, $json['companionId']);
+        $this->assertSame($client->id, $json['clientIdentifier']); // TODO: This should be clientId
+        $this->assertSame($client->secret, $json['clientSecret']);
+        $this->assertSame(\App\Utils::serviceUrl('', $user->tenant_id), $json['serverUrl']);
         $this->assertArrayHasKey('qrcode', $json);
         $this->assertSame('data:image/svg+xml;base64,', substr($json['qrcode'], 0, 26));
     }
