@@ -11,7 +11,7 @@ class DAV
     public const TYPE_VCARD = 'VCARD';
     public const TYPE_NOTIFICATION = 'NOTIFICATION';
 
-    protected const NAMESPACES = [
+    public const NAMESPACES = [
         self::TYPE_VEVENT => 'urn:ietf:params:xml:ns:caldav',
         self::TYPE_VTODO => 'urn:ietf:params:xml:ns:caldav',
         self::TYPE_VCARD => 'urn:ietf:params:xml:ns:carddav',
@@ -350,40 +350,17 @@ class DAV
     /**
      * Search DAV objects in a folder.
      *
-     * @param string $location  Folder location
-     * @param string $component Object type (VEVENT, VTODO, VCARD)
+     * @param string     $location  Folder location
+     * @param DAV\Search $search    Search request parameters
+     * @param ?callable  $callback  Callback to execute on every object
      *
      * @return false|array Objects metadata on success, False on error
      */
-    public function search(string $location, string $component)
+    public function search(string $location, DAV\Search $search, $callback = null)
     {
-        $queries = [
-            self::TYPE_VEVENT => 'calendar-query',
-            self::TYPE_VTODO => 'calendar-query',
-            self::TYPE_VCARD => 'addressbook-query',
-        ];
+        $headers = ['Depth' => $search->depth, 'Prefer' => 'return-minimal'];
 
-        $filter = '';
-        if ($component != self::TYPE_VCARD) {
-            $filter = '<c:comp-filter name="VCALENDAR">'
-                    . '<c:comp-filter name="' . $component . '" />'
-                . '</c:comp-filter>';
-        }
-
-        // TODO: Make filter an argument of this function to build all kind of queries.
-        //       It probably should be a separate object e.g. DAV\Filter.
-        // TODO: List of object props to return should also be an argument, so we not only
-        //       could fetch "an index" but also any of object's data.
-
-        $body = '<?xml version="1.0" encoding="utf-8"?>'
-            . ' <c:' . $queries[$component] . ' xmlns:d="DAV:" xmlns:c="' . self::NAMESPACES[$component] . '">'
-                . '<d:prop>'
-                    . '<d:getetag />'
-                . '</d:prop>'
-                . ($filter ? "<c:filter>$filter</c:filter>" : '')
-            . '</c:' . $queries[$component] . '>';
-
-        $response = $this->request($location, 'REPORT', $body, ['Depth' => 1, 'Prefer' => 'return-minimal']);
+        $response = $this->request($location, 'REPORT', $search, $headers);
 
         if (empty($response)) {
             \Log::error("Failed to get objects from the DAV server.");
@@ -393,7 +370,13 @@ class DAV
         $objects = [];
 
         foreach ($response->getElementsByTagName('response') as $element) {
-            $objects[] = $this->objectFromElement($element, $component);
+            $object = $this->objectFromElement($element, $search->component);
+
+            if ($callback) {
+                $object = $callback($object);
+            }
+
+            $objects[] = $object;
         }
 
         return $objects;

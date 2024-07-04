@@ -16,6 +16,12 @@ class Item
     /** @var string Object class */
     public $class;
 
+    /** @var false|string Identifier/Location of the item if exists in the destination folder */
+    public $existing = false;
+
+    /** @var ?string Exported object location in the local storage */
+    public $filename;
+
 
     public static function fromArray(array $data = [])
     {

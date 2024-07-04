@@ -187,6 +187,11 @@ class Vevent extends CommonObject
                     }
 
                     break;
+
+                default:
+                    if (\str_starts_with($prop->name, 'X-')) {
+                        $this->custom[$prop->name] = (string) $prop;
+                    }
             }
         }
 

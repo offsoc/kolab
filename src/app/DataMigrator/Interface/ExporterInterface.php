@@ -27,7 +27,7 @@ interface ExporterInterface
     /**
      * Fetch a list of folder items
      */
-    public function fetchItemList(Folder $folder, $callback): void;
+    public function fetchItemList(Folder $folder, $callback, ImporterInterface $importer): void;
 
     /**
      * Fetching an item

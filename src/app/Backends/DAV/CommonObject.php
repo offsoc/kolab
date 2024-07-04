@@ -16,6 +16,9 @@ class CommonObject
     /** @var ?string Object UID */
     public $uid;
 
+    /** @var array Custom properties (key->value) */
+    public $custom = [];
+
 
     /**
      * Create DAV object from a DOMElement element

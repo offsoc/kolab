@@ -263,15 +263,38 @@ class EWS implements Interface\ExporterInterface
     /**
      * Fetch a list of folder items
      */
-    public function fetchItemList(Folder $folder, $callback): void
+    public function fetchItemList(Folder $folder, $callback, Interface\ImporterInterface $importer): void
     {
         // Job processing - initialize environment
         $this->initEnv($this->engine->queue);
 
         // The folder is empty, we can stop here
         if (empty($folder->total)) {
+            // TODO: Delete all existing items?
             return;
         }
+
+        // Get items already imported
+        // TODO: This might be slow and/or memory expensive, we should consider
+        // whether storing list of imported items in some cache wouldn't be a better
+        // solution. Of course, cache would not get changes in the destination account.
+        $existing = $importer->getItems($folder);
+
+        // Create X-MS-ID index for easier search in existing items
+        // Note: For some objects we could use UID (events), but for some we don't have UID in Exchange.
+        // Also because fetching extra properties here is problematic, we use X-MS-ID.
+        $existingIndex = [];
+        array_walk(
+            $existing,
+            function (&$item, $idx) use (&$existingIndex) {
+                if (!empty($item['x-ms-id'])) {
+                    [$id, $changeKey] = explode('!', $item['x-ms-id']);
+                    $item['changeKey'] = $changeKey;
+                    $existingIndex[$id] = $idx;
+                    unset($item['x-ms-id']);
+                }
+            }
+        );
 
         $request = [
             // Exchange's maximum is 1000
@@ -300,7 +323,7 @@ class EWS implements Interface\ExporterInterface
 
         // @phpstan-ignore-next-line
         foreach ($response as $item) {
-            if ($item = $this->toItem($item, $folder)) {
+            if ($item = $this->toItem($item, $folder, $existing, $existingIndex)) {
                 $callback($item);
             }
         }
@@ -311,11 +334,13 @@ class EWS implements Interface\ExporterInterface
             $response = $this->api->getNextPage($response);
 
             foreach ($response as $item) {
-                if ($item = $this->toItem($item, $folder)) {
+                if ($item = $this->toItem($item, $folder, $existing, $existingIndex)) {
                     $callback($item);
                 }
             }
         }
+
+        // TODO: Delete items that do not exist anymore?
     }
 
     /**
@@ -352,12 +377,27 @@ class EWS implements Interface\ExporterInterface
     /**
      * Synchronize specified object
      */
-    protected function toItem(Type $item, Folder $folder): ?Item
+    protected function toItem(Type $item, Folder $folder, $existing, $existingIndex): ?Item
     {
+        $id = $item->getItemId()->toArray();
+        $exists = false;
+
+        // Detect an existing item, skip if nothing changed
+        if (isset($existingIndex[$id['Id']])) {
+            $idx = $existingIndex[$id['Id']];
+
+            if ($existing[$idx]['changeKey'] == $id['ChangeKey']) {
+                return null;
+            }
+
+            $existing = $existing[$idx]['href'];
+        }
+
         $item = Item::fromArray([
-            'id' => $item->getItemId()->toArray(),
+            'id' => $id,
             'class' => $item->getItemClass(),
             'folder' => $folder,
+            'existing' => $existing,
         ]);
 
         // TODO: We don't need to instantiate Item at this point, instead

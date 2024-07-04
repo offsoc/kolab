@@ -22,12 +22,11 @@ interface ImporterInterface
     /**
      * Create an item in a folder.
      *
-     * @param string $filename File location
-     * @param Folder $folder   Folder object
+     * @param Item $item Item to import
      *
      * @throws \Exception
      */
-    public function createItemFromFile(string $filename, Folder $folder): void;
+    public function createItem(Item $item): void;
 
     /**
      * Create a folder.
@@ -37,4 +36,10 @@ interface ImporterInterface
      * @throws \Exception
      */
     public function createFolder(Folder $folder): void;
+
+    /**
+     * Get a list of folder items, limited to their essential propeties
+     * used in incremental migration to skip unchanged items.
+     */
+    public function getItems(Folder $folder): array;
 }

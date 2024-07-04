@@ -135,7 +135,8 @@ class Engine
                 // Dispatch the job (for async execution)
                 Jobs\ItemJob::dispatch($item);
                 $count++;
-            }
+            },
+            $this->importer
         );
 
         if ($count) {
@@ -154,7 +155,8 @@ class Engine
         $this->envFromQueue($item->folder->queueId);
 
         if ($filename = $this->exporter->fetchItem($item)) {
-            $this->importer->createItemFromFile($filename, $item->folder);
+            $item->filename = $filename;
+            $this->importer->createItem($item);
             // TODO: remove the file
         }
 

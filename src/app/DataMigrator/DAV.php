@@ -5,7 +5,9 @@ namespace App\DataMigrator;
 use App\Backends\DAV as DAVClient;
 use App\Backends\DAV\Opaque as DAVOpaque;
 use App\Backends\DAV\Folder as DAVFolder;
+use App\Backends\DAV\Search as DAVSearch;
 use App\DataMigrator\Interface\Folder;
+use App\DataMigrator\Interface\Item;
 use App\Utils;
 
 class DAV implements Interface\ImporterInterface
@@ -60,19 +62,33 @@ class DAV implements Interface\ImporterInterface
     /**
      * Create an item in a folder.
      *
-     * @param string $filename File location
-     * @param Folder $folder   Folder
+     * @param Item $item Item to import
      *
      * @throws \Exception
      */
-    public function createItemFromFile(string $filename, Folder $folder): void
+    public function createItem(Item $item): void
     {
-        $href = $this->getFolderPath($folder) . '/' . pathinfo($filename, PATHINFO_BASENAME);
+        // TODO: For now we do DELETE + PUT. It's because the UID might have changed (which
+        // is the case with e.g. contacts from EWS) causing a discrepancy between UID and href.
+        // This is not necessarily a problem and would not happen to calendar events.
+        // So, maybe we could improve that so DELETE is not needed.
+        if ($item->existing) {
+            try {
+                $this->client->delete($item->existing);
+            } catch (\Illuminate\Http\Client\RequestException $e) {
+                // ignore 404 response, item removed in meantime?
+                if ($e->getCode() != 404) {
+                    throw $e;
+                }
+            }
+        }
 
-        $object = new DAVOpaque($filename);
+        $href = $this->getFolderPath($item->folder) . '/' . pathinfo($item->filename, PATHINFO_BASENAME);
+
+        $object = new DAVOpaque($item->filename);
         $object->href = $href;
 
-        switch ($folder->type) {
+        switch ($item->folder->type) {
             case Engine::TYPE_EVENT:
             case Engine::TYPE_TASK:
                 $object->contentType = 'text/calendar; charset=utf-8';
@@ -84,7 +100,7 @@ class DAV implements Interface\ImporterInterface
         }
 
         if ($this->client->create($object) === false) {
-            throw new \Exception("Failed to save object into DAV server at {$href}");
+            throw new \Exception("Failed to save DAV object at {$href}");
         }
     }
 
@@ -128,6 +144,57 @@ class DAV implements Interface\ImporterInterface
         if ($this->client->folderCreate($dav_folder) === false) {
             throw new \Exception("Failed to create a DAV folder {$dav_folder->href}");
         }
+    }
+
+    /**
+     * Get a list of folder items, limited to their essential propeties
+     * used in incremental migration.
+     *
+     * @param Folder $folder Folder data
+     *
+     * @throws \Exception on error
+     */
+    public function getItems(Folder $folder): array
+    {
+        $dav_type = $this->type2DAV($folder->type);
+        $location = $this->getFolderPath($folder);
+
+        $search = new DAVSearch($dav_type);
+
+        // TODO: We request only properties relevant to incremental migration,
+        // i.e. to find that something exists and its last update time.
+        // Some servers (iRony) do ignore that and return full VCARD/VEVENT/VTODO
+        // content, if there's many objects we'll have a memory limit issue.
+        // Also, this list should be controlled by the exporter.
+        $search->dataProperties = ['UID', 'X-MS-ID', 'REV'];
+
+        $items = $this->client->search(
+            $location,
+            $search,
+            function ($item) use ($dav_type) {
+                // Slim down the result to properties we might need
+                $result = [
+                    'href' => $item->href,
+                    'uid' => $item->uid,
+                    'x-ms-id' => $item->custom['X-MS-ID'] ?? null,
+                ];
+                /*
+                switch ($dav_type) {
+                    case DAVClient::TYPE_VCARD:
+                        $result['rev'] = $item->rev;
+                        break;
+                }
+                */
+
+                return $result;
+            }
+        );
+
+        if ($items === false) {
+            throw new \Exception("Failed to get items from a DAV folder {$location}");
+        }
+
+        return $items;
     }
 
     /**

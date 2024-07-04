@@ -138,6 +138,8 @@ abstract class Item
             // We should generate an UID for objects that do not have it
             // and inject it into the output file
             // FIXME: Should we use e.g. md5($itemId->getId()) instead?
+            // It looks that ItemId on EWS consists of three parts separated with a slash,
+            // maybe using the last part as UID would be a solution
             $this->uid = \App\Utils::uuidStr();
         }
 
