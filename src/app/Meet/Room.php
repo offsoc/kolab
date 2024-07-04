@@ -11,6 +11,7 @@ use Dyrynda\Database\Support\NullableFields;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 
 /**
  * The eloquent definition of a Room.
@@ -56,68 +57,14 @@ class Room extends Model
     /** @var string Database table name */
     protected $table = 'openvidu_rooms';
 
-    /** @var \GuzzleHttp\Client|null HTTP client instance */
-    private $client = null;
-
-    /**
-     * Select a Meet server for this room
-     *
-     * This needs to always result in the same server for the same room,
-     * so all participants end up on the same server.
-     *
-     * @return string The server url
-     */
-    private function selectMeetServer()
-    {
-        $urls = \config('meet.api_urls');
-
-        $count = count($urls);
-
-        if ($count == 0) {
-            \Log::error("No meet server configured.");
-            return "";
-        }
-
-        //Select a random backend.
-        //If the names are evenly distributed this should theoretically result in an even distribution.
-        $index = abs(intval(hash("crc32b", $this->name), 16) % $count);
-
-        return $urls[$index];
-    }
-
     /**
      * Creates HTTP client for connections to Meet server
      *
-     * @return \GuzzleHttp\Client HTTP client instance
+     * @return HTTP client instance
      */
     private function client()
     {
-        if (!$this->client) {
-            $url = $this->selectMeetServer();
-
-            $this->client = new \GuzzleHttp\Client(
-                [
-                    'http_errors' => false, // No exceptions from Guzzle
-                    'base_uri' => $url,
-                    'verify' => \config('meet.api_verify_tls'),
-                    'headers' => [
-                        'X-Auth-Token' => \config('meet.api_token'),
-                    ],
-                    'connect_timeout' => 10,
-                    'timeout' => 10,
-                    'on_stats' => function (\GuzzleHttp\TransferStats $stats) {
-                        $threshold = \config('logging.slow_log');
-                        if ($threshold && ($sec = $stats->getTransferTime()) > $threshold) {
-                            $url = $stats->getEffectiveUri();
-                            $method = $stats->getRequest()->getMethod();
-                            \Log::warning(sprintf("[STATS] %s %s: %.4f sec.", $method, $url, $sec));
-                        }
-                    },
-                ]
-            );
-        }
-
-        return $this->client;
+        return Service::clientForRoom($this->name);
     }
 
     /**
@@ -127,20 +74,16 @@ class Room extends Model
      */
     public function createSession(): ?array
     {
-        $params = [
-            'json' => [ /* request params here */ ]
-        ];
+        $response = $this->client()->post('sessions');
 
-        $response = $this->client()->request('POST', "sessions", $params);
-
-        if ($response->getStatusCode() !== 200) {
+        if ($response->status() !== 200) {
             $this->logError("Failed to create the meet session", $response);
             $this->session_id = null;
             $this->save();
             return null;
         }
 
-        $session = json_decode($response->getBody(), true);
+        $session = $response->json();
 
         $this->session_id = $session['id'];
         $this->save();
@@ -164,18 +107,14 @@ class Room extends Model
 
         $url = 'sessions/' . $this->session_id . '/connection';
         $post = [
-            'json' => [
-                'role' => $role,
-            ]
+            'role' => $role,
         ];
 
-        $response = $this->client()->request('POST', $url, $post);
+        $response = $this->client()->post($url, $post);
 
-        if ($response->getStatusCode() == 200) {
-            $json = json_decode($response->getBody(), true);
-
+        if ($response->status() == 200) {
             return [
-                'token' => $json['token'],
+                'token' => $response->json('token'),
                 'role' => $role,
             ];
         }
@@ -196,11 +135,11 @@ class Room extends Model
             return false;
         }
 
-        $response = $this->client()->request('GET', "sessions/{$this->session_id}");
+        $response = $this->client()->get("sessions/{$this->session_id}");
 
         $this->logError("Failed to check that a meet session exists", $response);
 
-        return $response->getStatusCode() == 200;
+        return $response->status() == 200;
     }
 
     /**
@@ -295,11 +234,11 @@ class Room extends Model
             'data'   => $data,
         ];
 
-        $response = $this->client()->request('POST', 'signal', ['json' => $post]);
+        $response = $this->client()->post('signal', $post);
 
         $this->logError("Failed to send a signal to the meet session", $response);
 
-        return $response->getStatusCode() == 200;
+        return $response->status() == 200;
     }
 
     /**
@@ -332,7 +271,7 @@ class Room extends Model
      */
     private function logError(string $str, $response)
     {
-        $code = $response->getStatusCode();
+        $code = $response->status();
         if ($code != 200) {
             \Log::error("$str [$code]");
         }

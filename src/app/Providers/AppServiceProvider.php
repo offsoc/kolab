@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Passport\Passport;
@@ -148,6 +149,19 @@ class AppServiceProvider extends ServiceProvider
                 return $this->where($column, 'like', $search);
             }
         );
+
+        Http::macro('withSlowLog', function () {
+            return Http::withOptions([
+                'on_stats' => function (\GuzzleHttp\TransferStats $stats) {
+                    $threshold = \config('logging.slow_log');
+                    if ($threshold && ($sec = $stats->getTransferTime()) > $threshold) {
+                        $url = $stats->getEffectiveUri();
+                        $method = $stats->getRequest()->getMethod();
+                        \Log::warning(sprintf("[STATS] %s %s: %.4f sec.", $method, $url, $sec));
+                    }
+                },
+            ]);
+        });
 
         $this->applyOverrideConfig();
     }

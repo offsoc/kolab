@@ -3,6 +3,8 @@
 namespace App\Console\Commands\Meet;
 
 use App\Console\Command;
+use App\Meet\Room;
+use App\Meet\Service;
 
 class SessionsCommand extends Command
 {
@@ -27,27 +29,10 @@ class SessionsCommand extends Command
      */
     public function handle()
     {
-        $client = new \GuzzleHttp\Client([
-                'http_errors' => false, // No exceptions from Guzzle
-                'base_uri' => \config('meet.api_url'),
-                'verify' => \config('meet.api_verify_tls'),
-                'headers' => [
-                    'X-Auth-Token' => \config('meet.api_token'),
-                ],
-                'connect_timeout' => 10,
-                'timeout' => 10,
-        ]);
+        $response = Service::client()->get('sessions')->throwUnlessStatus(200);
 
-        $response = $client->request('GET', 'sessions');
-
-        if ($response->getStatusCode() !== 200) {
-            return 1;
-        }
-
-        $sessions = json_decode($response->getBody(), true);
-
-        foreach ($sessions as $session) {
-            $room = \App\Meet\Room::where('session_id', $session['roomId'])->first();
+        foreach ($response->json() as $session) {
+            $room = Room::where('session_id', $session['roomId'])->first();
             if ($room) {
                 $owner = $room->wallet()->owner->email;
                 $roomName = $room->name;

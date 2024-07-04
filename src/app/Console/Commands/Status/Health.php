@@ -141,39 +141,17 @@ class Health extends Command
             $this->line("Checking $url");
 
             try {
-                $client = new \GuzzleHttp\Client(
-                    [
-                        'http_errors' => false, // No exceptions from Guzzle
-                        'base_uri' => $url,
-                        'verify' => \config('meet.api_verify_tls'),
-                        'headers' => [
-                            'X-Auth-Token' => \config('meet.api_token'),
-                        ],
-                        'connect_timeout' => 10,
-                        'timeout' => 10,
-                        'on_stats' => function (\GuzzleHttp\TransferStats $stats) {
-                            $threshold = \config('logging.slow_log');
-                            if ($threshold && ($sec = $stats->getTransferTime()) > $threshold) {
-                                $url = $stats->getEffectiveUri();
-                                $method = $stats->getRequest()->getMethod();
-                                \Log::warning(sprintf("[STATS] %s %s: %.4f sec.", $method, $url, $sec));
-                            }
-                        },
-                    ]
-                );
-
-                $response = $client->request('GET', "ping");
-                if ($response->getStatusCode() != 200) {
-                    $code = $response->getStatusCode();
-                    $reason = $response->getReasonPhrase();
+                $response = \App\Meet\Service::client($url)->get('ping');
+                if (!$response->ok()) {
                     $success = false;
-                    $this->line("Backend {$url} not available. Status: {$code} Reason: {$reason}");
+                    $this->line("Backend {$url} not available. Status: " . $response->status());
                 }
             } catch (\Exception $exception) {
                 $success = false;
-                $this->line("Backend {$url} not available. Error: {$exception}");
+                $this->line("Backend {$url} not available. Error: " . $exception->getMessage());
             }
         }
+
         return $success;
     }
 
