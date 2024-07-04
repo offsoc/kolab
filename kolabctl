@@ -15,6 +15,7 @@ export IMAP_SPOOL_STORAGE="--mount=type=volume,src=$POD-imap-spool,destination=/
 export IMAP_LIB_STORAGE="--mount=type=volume,src=$POD-imap-lib,destination=/var/lib/imap,U=true"
 export POSTFIX_SPOOL_STORAGE="--mount=type=volume,src=$POD-postfix-spool,destination=/var/spool/imap,U=true"
 export POSTFIX_LIB_STORAGE="--mount=type=volume,src=$POD-postfix-lib,destination=/var/lib/imap,U=true"
+export SYNAPSE_STORAGE="--mount=type=volume,src=$POD-synapse-data,destination=/data,U=true"
 export MARIADB_STORAGE="--mount=type=volume,src=$POD-mariadb-data,destination=/var/lib/mysql,U=true"
 export REDIS_STORAGE="--mount=type=volume,src=$POD-redis-data,destination=/var/lib/redis,U=true"
 export MINIO_STORAGE="--mount=type=volume,src=$POD-minio-data,destination=/data,U=true"
@@ -163,6 +164,7 @@ kolab__deploy() {
     podman volume create $POD-imap-lib --ignore -l=kolab
     podman volume create $POD-postfix-spool --ignore -l=kolab
     podman volume create $POD-postfix-lib --ignore -l=kolab
+    podman volume create $POD-synapse-data --ignore -l=kolab
     podman volume create $POD-mariadb-data --ignore -l=kolab
     podman volume create $POD-redis-data --ignore -l=kolab
     podman volume create $POD-minio-data --ignore -l=kolab
@@ -202,6 +204,9 @@ kolab__deploy() {
     if [[ -n $ADMIN_PASSWORD ]]; then
         podman exec $POD-webapp ./artisan user:password "admin@$APP_DOMAIN" "$ADMIN_PASSWORD"
     fi
+
+    podman__run_synapse
+    podman__run_element
 
     podman__run_minio
     podman__healthcheck $POD-minio
@@ -357,6 +362,8 @@ kolab__build() {
         podman__build docker/mariadb mariadb
         podman__build docker/redis redis
         podman__build_proxy
+        podman__build docker/synapse synapse
+        podman__build docker/element element
         podman__build_roundcube
 
         podman__build_utils

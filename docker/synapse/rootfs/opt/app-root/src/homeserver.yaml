@@ -1,0 +1,147 @@
+server_name: "APP_DOMAIN"
+public_baseurl: "https://APP_DOMAIN"
+pid_file: /opt/app-root/src/homeserver.pid
+listeners:
+  - port: 8008
+    tls: false
+    type: http
+    x_forwarded: true
+    bind_addresses: ['::']
+    resources:
+      - names: [client, federation]
+        compress: false
+database:
+  name: sqlite3
+  args:
+    database: /data/homeserver.db
+log_config: "/opt/app-root/src/log.config"
+web_client: False
+soft_file_limit: 0
+# We have no registration
+# registration_shared_secret: "REGISTRATION_SHARED_SECRET"
+# We just use a default derived from the signing key
+# macaroon_secret_key: "MACAROON_SECRET_KEY"
+# Only required for consent forms that we don't use
+# form_secret: "FORM_SECRET"
+report_stats: false
+enable_metrics: false
+signing_key_path: "/data/signing.key"
+old_signing_keys: {}
+key_refresh_interval: "1d"
+trusted_key_servers: []
+
+## Performance ##
+event_cache_size: "10K"
+
+## Ratelimiting ##
+rc_messages_per_second: 0.2
+rc_message_burst_count: 10.0
+federation_rc_window_size: 1000
+federation_rc_sleep_limit: 10
+federation_rc_sleep_delay: 500
+federation_rc_reject_limit: 50
+federation_rc_concurrent: 3
+    
+## Files ##
+media_store_path: /data/media_store
+max_upload_size: 50M
+max_image_pixels: 32M
+dynamic_thumbnails: false
+
+# media_retention:
+#   local_media_lifetime: 90d
+#   remote_media_lifetime: 14d
+    
+# List of thumbnail to precalculate when an image is uploaded.
+thumbnail_sizes:
+- width: 32
+  height: 32
+  method: crop
+- width: 96
+  height: 96
+  method: crop
+- width: 320
+  height: 240
+  method: scale
+- width: 640
+  height: 480
+  method: scale
+- width: 800
+  height: 600
+  method: scale
+
+url_preview_enabled: False
+max_spider_size: "10M"
+    
+## Captcha ##
+enable_registration_captcha: False
+    
+## Turn ##
+turn_uris: [TURN_URIS]
+turn_shared_secret: "TURN_SHARED_SECRET"
+turn_user_lifetime: "1h"
+turn_allow_guests: false
+    
+## Registration ##
+enable_registration: false
+enable_registration_without_verification: false
+bcrypt_rounds: 12
+allow_guest_access: false
+enable_group_creation: false
+inhibit_user_in_use_error: true
+
+user_directory:
+  enabled: false
+  search_all_users: false
+  prefer_local_users: false
+
+allow_public_rooms_without_auth: false
+
+enable_set_displayname: false
+enable_set_avatar_url: false
+enable_3pid_changes: false
+
+# Avoid leaking profile information
+require_auth_for_profile_requests: true
+limit_profile_requests_to_users_who_share_rooms: true
+include_profile_data_on_invite: false
+    
+federation_domain_whitelist:
+  - APP_DOMAIN
+
+# oidc_providers:
+#   - idp_id: kolab
+#     idp_name: "Kolab"
+#     issuer: "https://127.0.0.1:8443/auth/realms/{realm_name}"
+#     client_id: "synapse"
+#     client_secret: "copy secret generated from above"
+#     scopes: ["openid", "profile"]
+#     user_mapping_provider:
+#       config:
+#         localpart_template: "\{\{ user.preferred_username }}"
+#         display_name_template: "\{\{ user.name }}"
+
+modules:
+- module: kolab_auth_provider.KolabAuthProvider
+  config:
+    kolab_url: "KOLAB_URL"
+ 
+    
+## API Configuration ##
+
+# app_service_config_files:
+#   - /config/hookshot.yaml
+
+expire_access_token: false
+
+password_config:
+   enabled: true
+   localdb_enabled: false
+
+# Configure a default retention policy (can be overriden ber room)
+retention:
+  allowed_lifetime_min: 1d
+  allowed_lifetime_max: 1y
+  default_policy:
+    min_lifetime: 1d
+    max_lifetime: 1y

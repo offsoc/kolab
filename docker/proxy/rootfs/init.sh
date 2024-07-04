@@ -11,6 +11,8 @@ sed -i -r \
     -e "s|COLLABORA_BACKEND|$COLLABORA_BACKEND|g" \
     -e "s|WEBMAIL_PATH|$WEBMAIL_PATH|g" \
     -e "s|SIEVE_BACKEND|$SIEVE_BACKEND|g" \
+    -e "s|MATRIX_BACKEND|$MATRIX_BACKEND|g" \
+    -e "s|ELEMENT_BACKEND|$ELEMENT_BACKEND|g" \
     /etc/nginx/nginx.conf
 
 if [[ $1 == "validate" ]]; then

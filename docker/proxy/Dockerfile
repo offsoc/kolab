@@ -26,6 +26,8 @@ ENV DAV_BACKEND http://imap:11080/dav
 ENV COLLABORA_BACKEND http://collabora:9980
 ENV WEBMAIL_PATH /roundcubemail
 ENV SIEVE_BACKEND imap:4190
+ENV MATRIX_BACKEND http://synapse:8008
+ENV ELEMENT_BACKEND http://element:8880
 
 USER 1001
 

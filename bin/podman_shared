@@ -93,6 +93,9 @@ podman__build_all() {
     podman__build_coturn
     podman__build_utils
     podman build docker/fluentbit -t fluentbit
+
+    podman build docker/synapse -t synapse
+    podman build docker/element -t element
     podman__build_roundcube
 }
 
@@ -286,6 +289,20 @@ podman__run_collabora() {
         --privileged \
         -e ALLOWED_HOSTS=${APP_DOMAIN} \
         kolab-collabora:latest
+}
+
+podman__run_synapse() {
+    $PODMAN run -dt --pod $POD --name $POD-synapse --replace \
+         $SYNAPSE_STORAGE \
+        -e APP_DOMAIN \
+        -e KOLAB_URL="http://127.0.0.1:8000" \
+        synapse:latest
+}
+
+podman__run_element() {
+    $PODMAN run -dt --pod $POD --name $POD-element --replace \
+        -e APP_DOMAIN \
+        element:latest
 }
 
 podman__run_meet() {

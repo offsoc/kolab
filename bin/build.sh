@@ -68,6 +68,8 @@ if [[ "${#BASH_SOURCE[@]}" -eq 1 ]]; then
         podman build docker/coturn -t kolab-coturn
         podman build docker/utils -t kolab-utils
         podman build docker/fluentbit -t fluentbit
+        podman build docker/synapse -t synapse
+        podman build docker/element -t element
         podman__build_roundcube
     else
         echo "Building with docker compose"

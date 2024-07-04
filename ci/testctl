@@ -108,6 +108,7 @@ export PUBLIC_IP=127.0.0.1
 export CERTS_PATH=./ci/certs
 export IMAP_SPOOL_STORAGE=--mount=type=tmpfs,tmpfs-size=128M,tmpfs-mode=777,destination=/var/spool/imap,U=true,notmpcopyup
 export IMAP_LIB_STORAGE=--mount=type=tmpfs,tmpfs-size=128M,tmpfs-mode=777,destination=/var/lib/imap,U=true,notmpcopyup
+export SYNAPSE_STORAGE=--mount=type=tmpfs,tmpfs-size=128M,tmpfs-mode=777,destination=/data,U=true,notmpcopyup
 export MARIADB_STORAGE=--mount=type=tmpfs,tmpfs-size=512M,destination=/var/lib/mysql,U=true
 export REDIS_STORAGE=--mount=type=tmpfs,tmpfs-size=128M,destination=/var/lib/redis,U=true
 export MINIO_STORAGE=--mount=type=tmpfs,tmpfs-size=128M,destination=/data,U=true
@@ -143,6 +144,9 @@ kolab__build() {
         podman__build docker/mariadb mariadb
         podman__build docker/redis redis
         podman__build_proxy
+        podman__build docker/synapse synapse
+        podman__build docker/element element
+
         podman__build_roundcube
 
         podman__build docker/tests kolab-tests --ulimit nofile=65535:65535
@@ -331,6 +335,11 @@ kolab__run() {
     podman__run_$1
 }
 
+kolab__run() {
+    POD=dev
+    podman__run_$1
+}
+
 kolab__deploy() {
     export POD=dev
     # Create the pod first
@@ -363,6 +372,9 @@ kolab__deploy() {
     $PODMAN exec -ti $POD-webapp ./artisan queue:work --stop-when-empty
 
     $PODMAN exec $POD-webapp ./artisan user:password "admin@kolab.local" "simple123"
+
+    podman__run_synapse
+    podman__run_element
 
     podman__run_minio
     podman__healthcheck $POD-minio
