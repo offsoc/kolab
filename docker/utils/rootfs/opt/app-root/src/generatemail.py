@@ -4,7 +4,8 @@
 
     ./generate.py --clear --type=contact --count 1000 --username admin@kolab-vanilla.alma8.local --password W3lcom32@ph3lia --host localhost --port 9993 Contacts
 """
-from datetime import datetime, timedelta, UTC
+from datetime import datetime, timedelta
+import pytz
 import random
 import argparse
 import glob
@@ -300,13 +301,13 @@ class Generator:
         # with open(fname, 'wb') as f:
         #     f.write(data.encode())
 
-        ret = self.imap.append(self.target_directory, '', datetime.now(UTC), data.encode())
+        ret = self.imap.append(self.target_directory, '', datetime.now(pytz.UTC), data.encode())
         if ret[0] != 'OK':
             raise Exception(ret)
 
 
     def populatemailbox(self, type, count):
-        dtstamp = datetime.now(UTC)
+        dtstamp = datetime.utcnow()
 
         # Reproducible results
         random.seed(30)
