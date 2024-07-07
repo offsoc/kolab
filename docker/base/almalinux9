@@ -1,4 +1,4 @@
-FROM almalinux:9
+FROM quay.io/almalinuxorg/almalinux:9
 
 LABEL maintainer="contact@apheleia-it.ch"
 
