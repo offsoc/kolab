@@ -16,9 +16,7 @@ class PassportClient extends \Laravel\Passport\Client
 
     /**
      * The allowed scopes for tokens instantiated by this client
-     *
-     * @return Array
-     * */
+     */
     public function getAllowedScopes(): array
     {
         if ($this->allowed_scopes) {

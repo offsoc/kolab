@@ -37,6 +37,9 @@ class Kernel extends ConsoleKernel
 
         // https://laravel.com/docs/10.x/upgrade#redis-cache-tags
         $schedule->command('cache:prune-stale-tags')->hourly();
+
+        // This removes passport expired/revoked tokens and auth codes from the database
+        $schedule->command('passport:purge')->dailyAt('06:30');
     }
 
     /**

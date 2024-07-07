@@ -293,9 +293,12 @@ podman__run_collabora() {
 
 podman__run_synapse() {
     $PODMAN run -dt --pod $POD --name $POD-synapse --replace \
-         $SYNAPSE_STORAGE \
+        $SYNAPSE_STORAGE \
+        -v $CERTS_PATH:/etc/certs:ro \
         -e APP_DOMAIN \
         -e KOLAB_URL="http://127.0.0.1:8000" \
+        -e SYNAPSE_OAUTH_CLIENT_ID="${PASSPORT_SYNAPSE_OAUTH_CLIENT_ID:?"missing env variable"}" \
+        -e SYNAPSE_OAUTH_CLIENT_SECRET="${PASSPORT_SYNAPSE_OAUTH_CLIENT_SECRET:?"missing env variable"}" \
         synapse:latest
 }
 

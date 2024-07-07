@@ -21,6 +21,7 @@
         "dyrynda/laravel-nullable-fields": "^4.3.0",
         "garethp/php-ews": "dev-master",
         "guzzlehttp/guzzle": "^7.8.0",
+        "jeremy379/laravel-openid-connect": "^2.3",
         "kolab/net_ldap3": "dev-master",
         "laravel/framework": "^10.15.0",
         "laravel/horizon": "^5.9",
@@ -39,7 +40,7 @@
     },
     "require-dev": {
         "code-lts/doctum": "^5.5.1",
-        "laravel/dusk": "~7.9.1",
+        "laravel/dusk": "~8.2.2",
         "mockery/mockery": "^1.5",
         "larastan/larastan": "^2.0",
         "phpstan/phpstan": "^1.4",

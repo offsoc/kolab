@@ -4,11 +4,11 @@ namespace App\Providers;
 
 use Defuse\Crypto\Key as EncryptionKey;
 use Defuse\Crypto\Encoding as EncryptionEncoding;
-use League\OAuth2\Server\AuthorizationServer;
-use Laravel\Passport\Passport;
 use Laravel\Passport\Bridge;
+use Laravel\Passport\Passport;
+use OpenIDConnect\Laravel\PassportServiceProvider as ServiceProvider;
 
-class PassportServiceProvider extends \Laravel\Passport\PassportServiceProvider
+class PassportServiceProvider extends ServiceProvider
 {
     /**
      * Register any authentication / authorization services.
@@ -17,11 +17,18 @@ class PassportServiceProvider extends \Laravel\Passport\PassportServiceProvider
      */
     public function boot()
     {
-        Passport::tokensCan([
+        parent::boot();
+
+        // Passport::ignoreRoutes() is in the AppServiceProvider
+        Passport::enablePasswordGrant();
+
+        $scopes = [
             'api' => 'Access API',
             'mfa' => 'Access MFA API',
             'fs' => 'Access Files API',
-        ]);
+        ];
+
+        Passport::tokensCan(array_merge($scopes, \config('openid.passport.tokens_can')));
 
         Passport::tokensExpireIn(now()->addMinutes(\config('auth.token_expiry_minutes')));
         Passport::refreshTokensExpireIn(now()->addMinutes(\config('auth.refresh_token_expiry_minutes')));
@@ -32,31 +39,14 @@ class PassportServiceProvider extends \Laravel\Passport\PassportServiceProvider
     }
 
     /**
-     * Make the authorization service instance.
-     *
-     * @return \League\OAuth2\Server\AuthorizationServer
-     */
-    public function makeAuthorizationServer()
-    {
-        return new AuthorizationServer(
-            $this->app->make(Bridge\ClientRepository::class),
-            $this->app->make(Bridge\AccessTokenRepository::class),
-            $this->app->make(Bridge\ScopeRepository::class),
-            $this->makeCryptKey('private'),
-            $this->makeEncryptionKey(app('encrypter')->getKey())
-        );
-    }
-
-
-    /**
      * Create a Key instance for encrypting the refresh token
      *
      * Based on https://github.com/laravel/passport/pull/820
      *
      * @param string $keyBytes
-     * @return \Defuse\Crypto\Key
+     * @return \Defuse\Crypto\Key|string
      */
-    private function makeEncryptionKey($keyBytes)
+    protected function getEncryptionKey($keyBytes)
     {
         // First, we will encode Laravel's encryption key into a format that the Defuse\Crypto\Key class can use,
         // so we can instantiate a new Key object. We need to do this as the Key class has a private constructor method

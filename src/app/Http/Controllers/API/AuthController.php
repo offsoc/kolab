@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Laravel\Passport\TokenRepository;
 use Laravel\Passport\RefreshTokenRepository;
+use League\OAuth2\Server\AuthorizationServer;
+use Psr\Http\Message\ServerRequestInterface;
+use Nyholm\Psr7\Response as Psr7Response;
 
 class AuthController extends Controller
 {
@@ -84,6 +87,83 @@ class AuthController extends Controller
         }
 
         return self::logonResponse($user, $request->password, $request->secondfactor);
+    }
+
+    /**
+     * Approval request for the oauth authorization endpoint
+     *
+     * * The user is authenticated via the regular login page
+     * * We assume implicit consent in the Authorization page
+     * * Ultimately we return an authorization code to the caller via the redirect_uri
+     *
+     * The implementation is based on Laravel\Passport\Http\Controllers\AuthorizationController
+     *
+     * @param ServerRequestInterface   $psrRequest PSR request
+     * @param \Illuminate\Http\Request $request    The API request
+     * @param AuthorizationServer      $server     Authorization server
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function oauthApprove(ServerRequestInterface $psrRequest, Request $request, AuthorizationServer $server)
+    {
+        if ($request->response_type != 'code') {
+            return self::errorResponse(422, self::trans('validation.invalidvalueof', ['attribute' => 'response_type']));
+        }
+
+        try {
+            // league/oauth2-server/src/Grant/ code expects GET parameters, but we're using POST here
+            $psrRequest = $psrRequest->withQueryParams($request->input());
+
+            $authRequest = $server->validateAuthorizationRequest($psrRequest);
+
+            $user = Auth::guard()->user();
+
+            // TODO I'm not sure if we should still execute this to deny the request
+            $authRequest->setUser(new \Laravel\Passport\Bridge\User($user->getAuthIdentifier()));
+            $authRequest->setAuthorizationApproved(true);
+
+            // This will generate a 302 redirect to the redirect_uri with the generated authorization code
+            $response = $server->completeAuthorizationRequest($authRequest, new Psr7Response());
+        } catch (\League\OAuth2\Server\Exception\OAuthServerException $e) {
+            // Note: We don't want 401 or 400 codes here, use 422 which is used in our API
+            $code = $e->getHttpStatusCode();
+            return self::errorResponse($code < 500 ? 422 : 500, $e->getMessage());
+        } catch (\Exception $e) {
+            return self::errorResponse(422, self::trans('auth.error.invalidrequest'));
+        }
+
+        return response()->json([
+                'status' => 'success',
+                'redirectUrl' => $response->getHeader('Location')[0],
+        ]);
+    }
+
+    /**
+     * Get the authenticated User information (using access token claims)
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function oauthUserInfo()
+    {
+        $user = Auth::guard()->user();
+
+        $response = [
+            // Per OIDC spec. 'sub' must be always returned
+            'sub' => $user->id,
+        ];
+
+        if ($user->tokenCan('email')) {
+            $response['email'] = $user->email;
+            $response['email_verified'] = $user->isActive();
+        }
+
+        // TODO: Other claims (https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims)
+        // address: address
+        // phone: phone_number and phone_number_verified
+        // profile: name, family_name, given_name, middle_name, nickname, preferred_username,
+        //    profile, picture, website, gender, birthdate, zoneinfo, locale, and updated_at
+
+        return response()->json($response);
     }
 
     /**

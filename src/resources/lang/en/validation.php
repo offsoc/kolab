@@ -130,6 +130,7 @@ return [
     'url' => 'The :attribute must be a valid URL.',
     'uuid' => 'The :attribute must be a valid UUID.',
 
+    'invalidvalueof' => 'Invalid value of request property: :attribute.',
     '2fareq' => 'Second factor code is required.',
     '2fainvalid' => 'Second factor code is invalid.',
     'emailinvalid' => 'The specified email address is invalid.',

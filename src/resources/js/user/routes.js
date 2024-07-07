@@ -1,4 +1,5 @@
 import LoginComponent from '../../vue/Login'
+import AuthorizeComponent from '../../vue/Authorize'
 import LogoutComponent from '../../vue/Logout'
 import PageComponent from '../../vue/Page'
 import PasswordResetComponent from '../../vue/PasswordReset'
@@ -84,6 +85,12 @@ const routes = [
         name: 'files',
         component: FileListComponent,
         meta: { requiresAuth: true, perm: 'files' }
+    },
+    {
+        path: '/oauth/authorize',
+        name: 'authorize',
+        component: AuthorizeComponent,
+        meta: { requiresAuth: true }
     },
     {
         path: '/login',

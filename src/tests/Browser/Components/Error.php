@@ -16,6 +16,7 @@ class Error extends BaseComponent
         403 => "Access denied",
         404 => "Not found",
         405 => "Method not allowed",
+        422 => "Unprocessable Content",
         500 => "Internal server error",
     ];
 

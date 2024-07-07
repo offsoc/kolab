@@ -110,6 +110,16 @@ kolab__configure() {
         echo "PASSPORT_PROXY_OAUTH_CLIENT_SECRET=${PASSPORT_PROXY_OAUTH_CLIENT_SECRET}" >> src/.env
     fi
 
+    if ! grep -q "PASSPORT_SYNAPSE_OAUTH_CLIENT_ID=" src/.env; then
+        PASSPORT_SYNAPSE_OAUTH_CLIENT_ID=$(uuidgen);
+        echo "PASSPORT_SYNAPSE_OAUTH_CLIENT_ID=${PASSPORT_SYNAPSE_OAUTH_CLIENT_ID}" >> src/.env
+    fi
+
+    if ! grep -q "PASSPORT_SYNAPSE_OAUTH_CLIENT_SECRET=" src/.env; then
+        PASSPORT_SYNAPSE_OAUTH_CLIENT_SECRET=$(openssl rand -base64 32);
+        echo "PASSPORT_SYNAPSE_OAUTH_CLIENT_SECRET=${PASSPORT_SYNAPSE_OAUTH_CLIENT_SECRET}" >> src/.env
+    fi
+
     if ! grep -q "PASSPORT_PUBLIC_KEY=|PASSPORT_PRIVATE_KEY=" src/.env; then
         PASSPORT_PRIVATE_KEY=$(openssl genrsa 4096);
         echo "PASSPORT_PRIVATE_KEY=\"${PASSPORT_PRIVATE_KEY}\"" >> src/.env

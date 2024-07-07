@@ -15,19 +15,7 @@ class AuthTest extends TestCase
      */
     protected function resetAuth()
     {
-        $guards = array_keys(config('auth.guards'));
-
-        foreach ($guards as $guard) {
-            $guard = $this->app['auth']->guard($guard);
-
-            if ($guard instanceof \Illuminate\Auth\SessionGuard) {
-                $guard->logout();
-            }
-        }
-
-        $protectedProperty = new \ReflectionProperty($this->app['auth'], 'guards');
-        $protectedProperty->setAccessible(true);
-        $protectedProperty->setValue($this->app['auth'], []);
+        $this->app['auth']->forgetGuards();
     }
 
     /**
@@ -325,5 +313,272 @@ class AuthTest extends TestCase
         // And if the new token is working
         $response = $this->withHeaders(['Authorization' => 'Bearer ' . $new_token])->get("api/auth/info");
         $response->assertStatus(200);
+    }
+
+    /**
+     * Test OAuth2 Authorization Code Flow
+     */
+    public function testOAuthAuthorizationCodeFlow(): void
+    {
+        $user = $this->getTestUser('john@kolab.org');
+
+        // Request unauthenticated, testing that it requires auth
+        $response = $this->post("api/oauth/approve");
+        $response->assertStatus(401);
+
+        // Request authenticated, invalid POST data
+        $post = ['response_type' => 'unknown'];
+        $response = $this->actingAs($user)->post("api/oauth/approve", $post);
+        $response->assertStatus(422);
+
+        $json = $response->json();
+
+        $this->assertSame('error', $json['status']);
+        $this->assertSame('Invalid value of request property: response_type.', $json['message']);
+
+        // Request authenticated, invalid POST data
+        $post = [
+            'client_id' => 'unknown',
+            'response_type' => 'code',
+            'scope' => 'email', // space-separated
+            'state' => 'state', // optional
+            'nonce' => 'nonce', // optional
+        ];
+        $response = $this->actingAs($user)->post("api/oauth/approve", $post);
+        $response->assertStatus(422);
+
+        $json = $response->json();
+
+        $this->assertSame('error', $json['status']);
+        $this->assertSame('Client authentication failed', $json['message']);
+
+        $client = \App\Auth\PassportClient::find(\config('auth.synapse.client_id'));
+
+        $post['client_id'] = $client->id;
+
+        // Request authenticated, invalid scope
+        $post['scope'] = 'unknown';
+        $response = $this->actingAs($user)->post("api/oauth/approve", $post);
+        $response->assertStatus(422);
+
+        $json = $response->json();
+
+        $this->assertSame('error', $json['status']);
+        $this->assertSame('The requested scope is invalid, unknown, or malformed', $json['message']);
+
+        // Request authenticated, valid POST data
+        $post['scope'] = 'email';
+        $response = $this->actingAs($user)->post("api/oauth/approve", $post);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $url = $json['redirectUrl'];
+        parse_str(parse_url($url, \PHP_URL_QUERY), $params);
+
+        $this->assertTrue(str_starts_with($url, $client->redirect . '?'));
+        $this->assertCount(2, $params);
+        $this->assertSame('state', $params['state']);
+        $this->assertMatchesRegularExpression('/^[a-f0-9]{50,}$/', $params['code']);
+        $this->assertSame('success', $json['status']);
+
+        // Note: We do not validate the code trusting Passport to do the right thing. Should we not?
+
+        // Token endpoint tests
+
+        // Valid authorization code, but invalid secret
+        $post = [
+            'grant_type' => 'authorization_code',
+            'client_id' => $client->id,
+            'client_secret' => 'invalid',
+            // 'redirect_uri' => '',
+            'code' => $params['code'],
+        ];
+
+        // Note: This is a 'web' route, not 'api'
+        $this->resetAuth(); // reset guards
+        $response = $this->post("/oauth/token", $post);
+        $response->assertStatus(401);
+
+        $json = $response->json();
+
+        $this->assertSame('invalid_client', $json['error']);
+        $this->assertTrue(!empty($json['error_description']));
+
+        // Valid authorization code
+        $post['client_secret'] = \config('auth.synapse.client_secret');
+        $response = $this->post("/oauth/token", $post);
+        $response->assertStatus(200);
+
+        $params = $response->json();
+
+        $this->assertSame('Bearer', $params['token_type']);
+        $this->assertTrue(!empty($params['access_token']));
+        $this->assertTrue(!empty($params['refresh_token']));
+        $this->assertTrue(!empty($params['expires_in']));
+        $this->assertTrue(empty($params['id_token']));
+
+        // Invalid authorization code
+        // Note: The code is being revoked on use, so we expect it does not work anymore
+        $response = $this->post("/oauth/token", $post);
+        $response->assertStatus(400);
+
+        $json = $response->json();
+
+        $this->assertSame('invalid_request', $json['error']);
+        $this->assertTrue(!empty($json['error_description']));
+
+        // Token refresh
+        unset($post['code']);
+        $post['grant_type'] = 'refresh_token';
+        $post['refresh_token'] = $params['refresh_token'];
+
+        $response = $this->post("/oauth/token", $post);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame('Bearer', $json['token_type']);
+        $this->assertTrue(!empty($json['access_token']));
+        $this->assertTrue(!empty($json['refresh_token']));
+        $this->assertTrue(!empty($json['expires_in']));
+        $this->assertTrue(empty($json['id_token']));
+        $this->assertNotEquals($json['access_token'], $params['access_token']);
+        $this->assertNotEquals($json['refresh_token'], $params['refresh_token']);
+
+        $token = $json['access_token'];
+
+        // Validate the access token works on /oauth/userinfo endpoint
+        $this->resetAuth(); // reset guards
+        $headers = ['Authorization' => 'Bearer ' . $token];
+        $response = $this->withHeaders($headers)->get("/oauth/userinfo");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertEquals($user->id, $json['sub']);
+        $this->assertEquals($user->email, $json['email']);
+
+        // Validate that the access token does not give access to API other than /oauth/userinfo
+        $this->resetAuth(); // reset guards
+        $response = $this->withHeaders($headers)->get("/api/auth/location");
+        $response->assertStatus(403);
+    }
+
+    /**
+     * Test OpenID-Connect Authorization Code Flow
+     */
+    public function testOIDCAuthorizationCodeFlow(): void
+    {
+        $user = $this->getTestUser('john@kolab.org');
+        $client = \App\Auth\PassportClient::find(\config('auth.synapse.client_id'));
+
+        // Note: Invalid input cases were tested above, we omit them here
+
+        // This is essentially the same as for OAuth2, but with extended scope
+        $post = [
+            'client_id' => $client->id,
+            'response_type' => 'code',
+            'scope' => 'openid email',
+            'state' => 'state',
+            'nonce' => 'nonce',
+        ];
+
+        $response = $this->actingAs($user)->post("api/oauth/approve", $post);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $url = $json['redirectUrl'];
+        parse_str(parse_url($url, \PHP_URL_QUERY), $params);
+
+        $this->assertTrue(str_starts_with($url, $client->redirect . '?'));
+        $this->assertCount(2, $params);
+        $this->assertSame('state', $params['state']);
+        $this->assertMatchesRegularExpression('/^[a-f0-9]{50,}$/', $params['code']);
+        $this->assertSame('success', $json['status']);
+
+        // Token endpoint tests
+        $post = [
+            'grant_type' => 'authorization_code',
+            'client_id' => $client->id,
+            'client_secret' => \config('auth.synapse.client_secret'),
+            'code' => $params['code'],
+        ];
+
+        $this->resetAuth(); // reset guards state
+        $response = $this->post("/oauth/token", $post);
+        $response->assertStatus(200);
+
+        $params = $response->json();
+
+        $this->assertSame('Bearer', $params['token_type']);
+        $this->assertTrue(!empty($params['access_token']));
+        $this->assertTrue(!empty($params['refresh_token']));
+        $this->assertTrue(!empty($params['id_token']));
+        $this->assertTrue(!empty($params['expires_in']));
+
+        $token = $this->parseIdToken($params['id_token']);
+
+        $this->assertSame('JWT', $token['typ']);
+        $this->assertSame('RS256', $token['alg']);
+        $this->assertSame(url('/'), $token['iss']);
+        $this->assertSame($user->email, $token['email']);
+
+        // TODO: Validate JWT token properly
+
+        // Token refresh
+        unset($post['code']);
+        $post['grant_type'] = 'refresh_token';
+        $post['refresh_token'] = $params['refresh_token'];
+
+        $response = $this->post("/oauth/token", $post);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame('Bearer', $json['token_type']);
+        $this->assertTrue(!empty($json['access_token']));
+        $this->assertTrue(!empty($json['refresh_token']));
+        $this->assertTrue(!empty($json['id_token']));
+        $this->assertTrue(!empty($json['expires_in']));
+
+        // Validate the access token works on /oauth/userinfo endpoint
+        $this->resetAuth(); // reset guards state
+        $headers = ['Authorization' => 'Bearer ' . $json['access_token']];
+        $response = $this->withHeaders($headers)->get("/oauth/userinfo");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertEquals($user->id, $json['sub']);
+        $this->assertEquals($user->email, $json['email']);
+
+        // Validate that the access token does not give access to API other than /oauth/userinfo
+        $this->resetAuth(); // reset guards state
+        $response = $this->withHeaders($headers)->get("/api/auth/location");
+        $response->assertStatus(403);
+    }
+
+    /**
+     * Test to make sure Passport routes are disabled
+     */
+    public function testPassportDisabledRoutes(): void
+    {
+        $this->post("/oauth/authorize", [])->assertStatus(405);
+        $this->post("/oauth/token/refresh", [])->assertStatus(405);
+    }
+
+    /**
+     * Parse JWT token into an array
+     */
+    private function parseIdToken($token): array
+    {
+        [$headb64, $bodyb64, $cryptob64] = explode('.', $token);
+
+        $header = json_decode(base64_decode(strtr($headb64, '-_', '+/'), true), true);
+        $body = json_decode(base64_decode(strtr($bodyb64, '-_', '+/'), true), true);
+
+        return array_merge($header, $body);
     }
 }

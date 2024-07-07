@@ -109,22 +109,32 @@ include_profile_data_on_invite: false
 federation_domain_whitelist:
   - APP_DOMAIN
 
-# oidc_providers:
-#   - idp_id: kolab
-#     idp_name: "Kolab"
-#     issuer: "https://127.0.0.1:8443/auth/realms/{realm_name}"
-#     client_id: "synapse"
-#     client_secret: "copy secret generated from above"
-#     scopes: ["openid", "profile"]
-#     user_mapping_provider:
-#       config:
-#         localpart_template: "\{\{ user.preferred_username }}"
-#         display_name_template: "\{\{ user.name }}"
+sso:
+  client_whitelist:
+    - https://APP_DOMAIN/
+  update_profile_information: true
 
-modules:
-- module: kolab_auth_provider.KolabAuthProvider
-  config:
-    kolab_url: "KOLAB_URL"
+oidc_providers:
+  - idp_id: kolab
+    idp_name: "Kolab"
+    discover: false
+    issuer: "https://APP_DOMAIN"
+    authorization_endpoint: "https://APP_DOMAIN/authorize"
+    #These connections go over localhost, but must still be https (otherwise it doesn't work). Also the certificate must match, so we can't use 127.0.0.1.
+    token_endpoint: "https://APP_DOMAIN:6443/oauth/token"
+    userinfo_endpoint: "https://APP_DOMAIN:6443/api/oauth/info"
+    client_id: "SYNAPSE_OAUTH_CLIENT_ID"
+    client_secret: "SYNAPSE_OAUTH_CLIENT_SECRET"
+    client_auth_method: client_secret_post
+    allow_existing_users: true
+    allow_registration: false
+    scopes: ['oauth']
+    user_mapping_provider:
+      config:
+        subject_claim: "id"
+        email_template: "{{ user.email }}"
+        display_name_template: "{{ user.settings.first_name }}"
+
  
     
 ## API Configuration ##

@@ -20,14 +20,14 @@ RUN dnf -y install \
         openssl-devel \
         sed \
         wget && \
-        pip3 install matrix-synapse && \
+        pip3 install matrix-synapse authlib && \
     dnf clean all
 
 COPY /rootfs /
 
 RUN id default || (groupadd -g 1001 default && useradd -d /opt/app-root/ -u 1001 -g 1001 default)
 
-RUN PATHS=(/opt/app-root/src) && \
+RUN PATHS=(/opt/app-root/src /etc/pki/ca-trust/extracted/ /etc/pki/ca-trust/source/anchors/) && \
     mkdir -p ${PATHS[@]} && \
     chmod -R 777 ${PATHS[@]} && \
     chown -R 1001:0 ${PATHS[@]} && \

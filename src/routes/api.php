@@ -15,6 +15,9 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+Route::post('oauth/approve', [API\AuthController::class, 'oauthApprove'])
+    ->middleware(['auth:api']);
+
 Route::group(
     [
         'middleware' => 'api',
@@ -24,7 +27,7 @@ Route::group(
         Route::post('login', [API\AuthController::class, 'login']);
 
         Route::group(
-            ['middleware' => 'auth:api'],
+            ['middleware' => ['auth:api', 'scope:api']],
             function () {
                 Route::get('info', [API\AuthController::class, 'info']);
                 Route::post('info', [API\AuthController::class, 'info']);

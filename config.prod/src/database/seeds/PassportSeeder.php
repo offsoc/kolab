@@ -30,5 +30,20 @@ class PassportSeeder extends Seeder
         ]);
         $client->id = \config('auth.proxy.client_id');
         $client->save();
+
+        // Create a client for synapse oauth
+        $client = Passport::client()->forceFill([
+            'user_id' => null,
+            'name' => "Synapse oauth client",
+            'secret' => \config('auth.synapse.client_secret'),
+            'provider' => 'users',
+            'redirect' => 'https://' . \config('app.website_domain') . "/_synapse/client/oidc/callback",
+            'personal_access_client' => 0,
+            'password_client' => 0,
+            'revoked' => false,
+            'allowed_scopes' => ['email'],
+        ]);
+        $client->id = \config('auth.synapse.client_id');
+        $client->save();
     }
 }
