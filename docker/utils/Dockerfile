@@ -18,6 +18,7 @@ RUN dnf -y install \
         git \
         libjpeg-turbo-devel \
         lsof \
+        whois \
         net-tools \
         nmap-ncat \
         openldap-clients \
