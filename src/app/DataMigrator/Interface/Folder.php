@@ -34,7 +34,7 @@ class Folder
     public $queueId;
 
 
-    public static function fromArray(array $data = [])
+    public static function fromArray(array $data = []): Folder
     {
         $obj = new self();
 

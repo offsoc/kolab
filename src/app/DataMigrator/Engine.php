@@ -6,6 +6,7 @@ use App\DataMigrator\Interface\ExporterInterface;
 use App\DataMigrator\Interface\Folder;
 use App\DataMigrator\Interface\ImporterInterface;
 use App\DataMigrator\Interface\Item;
+use App\DataMigrator\Interface\ItemSet;
 use Illuminate\Support\Str;
 
 /**
@@ -50,6 +51,8 @@ class Engine
 
         // Create a unique identifier for the migration request
         $queue_id = md5(strval($source) . strval($destination) . $options['type']);
+
+        // TODO: When running in 'sync' mode we shouldn't create a queue at all
 
         // If queue exists, we'll display the progress only
         if ($queue = Queue::find($queue_id)) {
@@ -98,6 +101,7 @@ class Engine
 
         $folders = $this->exporter->getFolders($types);
         $count = 0;
+        $async = empty($options['sync']);
 
         foreach ($folders as $folder) {
             $this->debug("Processing folder {$folder->fullname}...");
@@ -105,14 +109,24 @@ class Engine
             $folder->queueId = $queue_id;
             $folder->location = $location;
 
-            // Dispatch the job (for async execution)
-            Jobs\FolderJob::dispatch($folder);
-            $count++;
+            if ($async) {
+                // Dispatch the job (for async execution)
+                Jobs\FolderJob::dispatch($folder);
+                $count++;
+            } else {
+                $this->processFolder($folder);
+            }
         }
 
-        $this->queue->bumpJobsStarted($count);
+        if ($count) {
+            $this->queue->bumpJobsStarted($count);
+        }
 
-        $this->debug(sprintf('Done. %d %s created in queue: %s.', $count, Str::plural('job', $count), $queue_id));
+        if ($async) {
+            $this->debug(sprintf('Done. %d %s created in queue: %s.', $count, Str::plural('job', $count), $queue_id));
+        } else {
+            $this->debug(sprintf('Done (queue: %s).', $queue_id));
+        }
     }
 
     /**
@@ -121,20 +135,35 @@ class Engine
     public function processFolder(Folder $folder): void
     {
         // Job processing - initialize environment
-        $this->envFromQueue($folder->queueId);
+        if (!$this->queue) {
+            $this->envFromQueue($folder->queueId);
+        }
 
         // Create the folder on the destination server
         $this->importer->createFolder($folder);
 
         $count = 0;
+        $async = empty($this->options['sync']);
 
         // Fetch items from the source
         $this->exporter->fetchItemList(
             $folder,
-            function (Item $item) use (&$count) {
-                // Dispatch the job (for async execution)
-                Jobs\ItemJob::dispatch($item);
-                $count++;
+            function ($item_or_set) use (&$count, $async) {
+                if ($async) {
+                    // Dispatch the job (for async execution)
+                    if ($item_or_set instanceof ItemSet) {
+                        Jobs\ItemSetJob::dispatch($item_or_set);
+                    } else {
+                        Jobs\ItemJob::dispatch($item_or_set);
+                    }
+                    $count++;
+                } else {
+                    if ($item_or_set instanceof ItemSet) {
+                        $this->processItemSet($item_or_set);
+                    } else {
+                        $this->processItem($item_or_set);
+                    }
+                }
             },
             $this->importer
         );
@@ -143,7 +172,9 @@ class Engine
             $this->queue->bumpJobsStarted($count);
         }
 
-        $this->queue->bumpJobsFinished();
+        if ($async) {
+            $this->queue->bumpJobsFinished();
+        }
     }
 
     /**
@@ -152,15 +183,48 @@ class Engine
     public function processItem(Item $item): void
     {
         // Job processing - initialize environment
-        $this->envFromQueue($item->folder->queueId);
-
-        if ($filename = $this->exporter->fetchItem($item)) {
-            $item->filename = $filename;
-            $this->importer->createItem($item);
-            // TODO: remove the file
+        if (!$this->queue) {
+            $this->envFromQueue($item->folder->queueId);
         }
 
-        $this->queue->bumpJobsFinished();
+        $this->exporter->fetchItem($item);
+        $this->importer->createItem($item);
+
+        if (!empty($item->filename)) {
+            unlink($item->filename);
+        }
+
+        if (empty($this->options['sync'])) {
+            $this->queue->bumpJobsFinished();
+        }
+    }
+
+    /**
+     * Processing of item-set synchronization
+     */
+    public function processItemSet(ItemSet $set): void
+    {
+        // Job processing - initialize environment
+        if (!$this->queue) {
+            $this->envFromQueue($set->items[0]->folder->queueId);
+        }
+
+        // TODO: Some exporters, e.g. DAV, might optimize fetching multiple items in one go,
+        // we'll need a new API to do that
+
+        foreach ($set->items as $item) {
+            $this->exporter->fetchItem($item);
+            $this->importer->createItem($item);
+
+            if (!empty($item->filename)) {
+                unlink($item->filename);
+            }
+        }
+
+        // TODO: We should probably also track number of items migrated
+        if (empty($this->options['sync'])) {
+            $this->queue->bumpJobsFinished();
+        }
     }
 
     /**
@@ -250,12 +314,13 @@ class Engine
             case 'davs':
                 $driver = new DAV($account, $this);
                 break;
-            /*
+
             case 'imap':
             case 'imaps':
+            case 'tls':
+            case 'ssl':
                 $driver = new IMAP($account, $this);
                 break;
-            */
 
             default:
                 throw new \Exception("Failed to init driver for '{$account->scheme}'");

@@ -22,8 +22,11 @@ class Item
     /** @var ?string Exported object location in the local storage */
     public $filename;
 
+    /** @var array Extra data to migrate (like email flags, internaldate, etc.) */
+    public $data = [];
 
-    public static function fromArray(array $data = [])
+
+    public static function fromArray(array $data = []): Item
     {
         $obj = new self();
 

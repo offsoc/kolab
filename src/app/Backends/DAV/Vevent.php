@@ -30,6 +30,8 @@ class Vevent extends CommonObject
     public $lastModified;
     public $dtstamp;
 
+    private $vobject;
+
 
     /**
      * Create event object from a DOMElement element
@@ -58,15 +60,15 @@ class Vevent extends CommonObject
     protected function fromIcal(string $ical): void
     {
         $options = VObject\Reader::OPTION_FORGIVING | VObject\Reader::OPTION_IGNORE_INVALID_LINES;
-        $vobject = VObject\Reader::read($ical, $options);
+        $this->vobject = VObject\Reader::read($ical, $options);
 
-        if ($vobject->name != 'VCALENDAR') {
+        if ($this->vobject->name != 'VCALENDAR') {
             return;
         }
 
         $selfType = strtoupper(class_basename(get_class($this)));
 
-        foreach ($vobject->getComponents() as $component) {
+        foreach ($this->vobject->getComponents() as $component) {
             if ($component->name == $selfType) {
                 $this->fromVObject($component);
                 return;
@@ -278,7 +280,10 @@ class Vevent extends CommonObject
      */
     public function __toString()
     {
-        // TODO: This will be needed when we want to create/update objects
-        return '';
+        if (!$this->vobject) {
+            //TODO we currently can only serialize a message back that we just read
+            throw new \Exception("Writing from properties is not implemented");
+        }
+        return VObject\Writer::write($this->vobject);
     }
 }

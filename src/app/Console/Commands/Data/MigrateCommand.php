@@ -16,6 +16,8 @@ use Illuminate\Console\Command;
  *   "ews://$user:$pass@$server?client_id=$client_id&client_secret=$client_secret&tenant_id=$tenant_id" \
  *   "dav://$dest_user:$dest_pass@$dest_server"
  * ```
+ *
+ * Supported account types: ews, dav (davs), imap (tls, ssl, imaps)
  */
 class MigrateCommand extends Command
 {
@@ -28,6 +30,7 @@ class MigrateCommand extends Command
                                 {src : Source account}
                                 {dst : Destination account}
                                 {--type= : Object type(s)}
+                                {--sync : Execute migration synchronously}
                                 {--force : Force existing queue removal}';
 //                                {--export-only : Only export data}
 //                                {--import-only : Only import previously exported data}';
@@ -51,6 +54,7 @@ class MigrateCommand extends Command
         $options = [
             'type' => $this->option('type'),
             'force' => $this->option('force'),
+            'sync' => $this->option('sync'),
             'stdout' => true,
         ];
 

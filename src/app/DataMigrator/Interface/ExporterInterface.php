@@ -32,5 +32,5 @@ interface ExporterInterface
     /**
      * Fetching an item
      */
-    public function fetchItem(Item $item): string;
+    public function fetchItem(Item $item): void;
 }

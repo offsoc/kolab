@@ -106,7 +106,7 @@ class EWS implements Interface\ExporterInterface
     /**
      * Authenticate to EWS (initialize the EWS client)
      */
-    public function authenticate()
+    public function authenticate(): void
     {
         if (!empty($this->account->params['client_id'])) {
             $this->api = $this->authenticateWithOAuth2(
@@ -346,16 +346,18 @@ class EWS implements Interface\ExporterInterface
     /**
      * Fetching an item
      */
-    public function fetchItem(Item $item): string
+    public function fetchItem(Item $item): void
     {
         // Job processing - initialize environment
         $this->initEnv($this->engine->queue);
 
         if ($driver = EWS\Item::factory($this, $item)) {
-            return $driver->fetchItem($item);
+            $item->filename = $driver->fetchItem($item);
         }
 
-        throw new \Exception("Failed to fetch an item from EWS");
+        if (empty($item->filename)) {
+            throw new \Exception("Failed to fetch an item from EWS");
+        }
     }
 
     /**
@@ -390,14 +392,14 @@ class EWS implements Interface\ExporterInterface
                 return null;
             }
 
-            $existing = $existing[$idx]['href'];
+            $exists = $existing[$idx]['href'];
         }
 
         $item = Item::fromArray([
             'id' => $id,
             'class' => $item->getItemClass(),
             'folder' => $folder,
-            'existing' => $existing,
+            'existing' => $exists,
         ]);
 
         // TODO: We don't need to instantiate Item at this point, instead

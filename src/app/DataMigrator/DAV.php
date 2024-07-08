@@ -7,11 +7,17 @@ use App\Backends\DAV\Opaque as DAVOpaque;
 use App\Backends\DAV\Folder as DAVFolder;
 use App\Backends\DAV\Search as DAVSearch;
 use App\DataMigrator\Interface\Folder;
+use App\DataMigrator\Interface\ExporterInterface;
+use App\DataMigrator\Interface\ImporterInterface;
 use App\DataMigrator\Interface\Item;
+use App\DataMigrator\Interface\ItemSet;
 use App\Utils;
 
-class DAV implements Interface\ImporterInterface
+class DAV implements ExporterInterface, ImporterInterface
 {
+    /** @const int Max number of items to migrate in one go */
+    protected const CHUNK_SIZE = 25;
+
     /** @var DAVClient DAV Backend */
     protected $client;
 
@@ -20,9 +26,6 @@ class DAV implements Interface\ImporterInterface
 
     /** @var Engine Data migrator engine */
     protected $engine;
-
-    /** @var array Settings */
-    protected $settings;
 
 
     /**
@@ -34,12 +37,6 @@ class DAV implements Interface\ImporterInterface
         $baseUri = rtrim($account->uri, '/');
         $baseUri = preg_replace('|^dav|', 'http', $baseUri);
 
-        $this->settings = [
-            'baseUri'  => $baseUri,
-            'userName' => $username,
-            'password' => $account->password,
-        ];
-
         $this->client = new DAVClient($username, $account->password, $baseUri);
         $this->engine = $engine;
         $this->account = $account;
@@ -50,10 +47,10 @@ class DAV implements Interface\ImporterInterface
      *
      * @throws \Exception
      */
-    public function authenticate()
+    public function authenticate(): void
     {
         try {
-            $result = $this->client->options();
+            $this->client->options();
         } catch (\Exception $e) {
             throw new \Exception("Invalid DAV credentials or server.");
         }
@@ -147,6 +144,87 @@ class DAV implements Interface\ImporterInterface
     }
 
     /**
+     * Fetching an item
+     */
+    public function fetchItem(Item $item): void
+    {
+        // Save the item content to a file
+        $location = $item->folder->location;
+
+        if (!file_exists($location)) {
+            mkdir($location, 0740, true);
+        }
+
+        $location .= '/' . basename($item->id);
+
+        $result = $this->client->getObjects(dirname($item->id), $this->type2DAV($item->folder->type), [$item->id]);
+
+        if ($result === false) {
+            throw new \Exception("Failed to fetch DAV item for {$item->id}");
+        }
+
+        // TODO: Do any content changes, e.g. organizer/attendee email migration
+
+        if (file_put_contents($location, (string) $result[0]) === false) {
+            throw new \Exception("Failed to write to {$location}");
+        }
+
+        $item->filename = $location;
+    }
+
+    /**
+     * Fetch a list of folder items
+     */
+    public function fetchItemList(Folder $folder, $callback, ImporterInterface $importer): void
+    {
+        // Get existing messages' headers from the destination mailbox
+        $existing = $importer->getItems($folder);
+
+        $set = new ItemSet();
+
+        $dav_type = $this->type2DAV($folder->type);
+        $location = $this->getFolderPath($folder);
+        $search = new DAVSearch($dav_type);
+
+        // TODO: We request only properties relevant to incremental migration,
+        // i.e. to find that something exists and its last update time.
+        // Some servers (iRony) do ignore that and return full VCARD/VEVENT/VTODO
+        // content, if there's many objects we'll have a memory limit issue.
+        // Also, this list should be controlled by the exporter.
+        $search->dataProperties = ['UID', 'REV'];
+
+        $result = $this->client->search(
+            $location,
+            $search,
+            function ($item) use (&$set, $folder, $callback) {
+                // TODO: Skip an item that exists and did not change
+                $exists = false;
+
+                $set->items[] = Item::fromArray([
+                    'id' => $item->href,
+                    'folder' => $folder,
+                    'existing' => $exists,
+                ]);
+
+                if (count($set->items) == self::CHUNK_SIZE) {
+                    $callback($set);
+                    $set = new ItemSet();
+                }
+            }
+        );
+
+        if ($result === false) {
+            throw new \Exception("Failed to get items from a DAV folder {$location}");
+        }
+
+        if (count($set->items)) {
+            $callback($set);
+        }
+
+        // TODO: Delete items that do not exist anymore?
+    }
+
+    /**
      * Get a list of folder items, limited to their essential propeties
      * used in incremental migration.
      *
@@ -171,6 +249,7 @@ class DAV implements Interface\ImporterInterface
         $items = $this->client->search(
             $location,
             $search,
+            // @phpstan-ignore-next-line
             function ($item) use ($dav_type) {
                 // Slim down the result to properties we might need
                 $result = [
@@ -195,6 +274,36 @@ class DAV implements Interface\ImporterInterface
         }
 
         return $items;
+    }
+
+    /**
+     * Get folders hierarchy
+     */
+    public function getFolders($types = []): array
+    {
+        $result = [];
+        foreach (['VEVENT', 'VTODO', 'VCARD'] as $component) {
+            $type = $this->typeFromDAV($component);
+
+            // Skip folder types we do not support (need)
+            if (!empty($types) && !in_array($type, $types)) {
+                continue;
+            }
+
+            // TODO: Skip other users folders
+
+            $folders = $this->client->listFolders($component);
+
+            foreach ($folders as $folder) {
+                $result[$folder->href] = Folder::fromArray([
+                    'fullname' => $folder->name,
+                    'href' => $folder->href,
+                    'type' => $type,
+                ]);
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -235,6 +344,24 @@ class DAV implements Interface\ImporterInterface
                 return DAVClient::TYPE_VCARD;
             default:
                 throw new \Exception("Cannot map type '{$type}' to DAV");
+        }
+    }
+
+    /**
+     * Map DAV object type into Kolab type
+     */
+    protected static function typeFromDAV(string $type): string
+    {
+        switch ($type) {
+            case DAVClient::TYPE_VEVENT:
+                return Engine::TYPE_EVENT;
+            case DAVClient::TYPE_VTODO:
+                return Engine::TYPE_TASK;
+            case DAVClient::TYPE_VCARD:
+                // TODO what about groups
+                return Engine::TYPE_CONTACT;
+            default:
+                throw new \Exception("Cannot map type '{$type}' from DAV");
         }
     }
 }

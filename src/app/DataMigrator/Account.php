@@ -31,6 +31,9 @@ class Account
     /** @var array Additional parameters from the input */
     public $params;
 
+    /** @var ?int Port number */
+    public $port;
+
     /** @var string Full account definition */
     protected $input;
 
@@ -69,9 +72,15 @@ class Account
             $this->scheme = strtolower($url['scheme']);
         }
 
+        if (isset($url['port'])) {
+            $this->port = $url['port'];
+        }
+
         if (isset($url['host'])) {
             $this->host = $url['host'];
-            $this->uri = $this->scheme . '://' . $url['host'] . ($url['path'] ?? '');
+            $this->uri = $this->scheme . '://' . $url['host']
+                . ($this->port ? ":{$this->port}" : null)
+                . ($url['path'] ?? '');
         }
 
         if (!empty($url['query'])) {
