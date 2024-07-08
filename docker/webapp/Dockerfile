@@ -2,7 +2,10 @@ FROM apheleia/swoole:latest
 
 USER root
 
-RUN dnf -y install findutils gnupg2 git rsync && \
+RUN dnf -y install \
+        --setopt=install_weak_deps=False \
+        --setopt 'tsflags=nodocs' \
+        findutils gnupg2 git rsync && \
     dnf clean all
 
 EXPOSE 8000

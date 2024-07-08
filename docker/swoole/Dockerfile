@@ -56,6 +56,8 @@ RUN dnf module reset php && \
         diffutils \
         file \
         make \
+        gcc \
+        gcc-c++ \
         libsodium-devel \
         openssl-devel \
         php-devel \
