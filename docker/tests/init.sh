@@ -10,7 +10,6 @@ rsync -av \
     --exclude=public \
     --exclude=storage \
     --exclude=resources/build \
-    --exclude=bootstrap \
     --exclude=.gitignore \
     /src/kolabsrc.orig/ /opt/app-root/src/ | tee /tmp/rsync.output
 
