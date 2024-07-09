@@ -53,11 +53,10 @@ RUN git clone https://github.com/libwbxml/libwbxml.git && \
     cd .. && \
     rm -rf libwbxml
 
-# RUN pip3 install distro xmltodict dnspython dkimpy && \
-#     pip3 install \
-#     --global-option=build_ext \
-#     --global-option="-I/usr/include/libwbxml-1.0/wbxml/" \
-#     git+https://github.com/kanarip/python-wbxml#egg=wbxml
+ RUN pip3 install distro xmltodict dnspython dkimpy
+ RUN env C_INCLUDE_PATH=/usr/include/libwbxml-1.1/wbxml pip3 install \
+     --global-option=build_ext \
+     git+https://github.com/Apheleia-IT/python-wbxml#egg=wbxml
 
 # imapcli deps
 RUN gem install thor
