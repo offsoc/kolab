@@ -4,7 +4,6 @@ set -e
 
 CONFIG=${CONFIG:-"config.prod"}
 export HOST=${HOST:-"kolab.local"}
-BRANCH=${BRANCH:-"dev/mollekopf"}
 OPENEXCHANGERATES_API_KEY=${OPENEXCHANGERATES_API_KEY}
 FIREBASE_API_KEY=${FIREBASE_API_KEY}
 PUBLIC_IP=${PUBLIC_IP}
@@ -148,7 +147,7 @@ kolab__deploy() {
         echo "Please enter your new admin password for the admin@$HOST user:"
         read -r ADMIN_PASSWORD
     fi
-    echo "Deploying $CONFIG from branch $BRANCH on $HOST"
+    echo "Deploying $CONFIG on $HOST"
 
     if [[ ! -f src/.env ]]; then
         echo "Missing src/.env file, run 'kolabctl configure' to generate"

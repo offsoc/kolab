@@ -37,7 +37,7 @@ pushd kolab || exit
 
 # This are the pinned commits that are going to be used for the base images
 export KOLAB_GIT_REMOTE=https://git.kolab.org/source/kolab
-export KOLAB_GIT_REF=$(pin_commit "$KOLAB_GIT_REMOTE" "dev/mollekopf")
+export KOLAB_GIT_REF=$(pin_commit "$KOLAB_GIT_REMOTE" "master")
 
 export GIT_REMOTE_ROUNDCUBEMAIL=https://git.kolab.org/source/roundcubemail.git
 export GIT_REF_ROUNDCUBEMAIL=$(pin_commit "$GIT_REMOTE_ROUNDCUBEMAIL" "dev/kolab-1.5")
@@ -46,7 +46,7 @@ export GIT_REMOTE_ROUNDCUBEMAIL_PLUGINS=https://git.kolab.org/diffusion/RPK/roun
 export GIT_REF_ROUNDCUBEMAIL_PLUGINS=$(pin_commit "$GIT_REMOTE_ROUNDCUBEMAIL_PLUGINS" "master")
 
 export GIT_REMOTE_CHWALA=https://git.kolab.org/diffusion/C/chwala.git
-export GIT_REF_CHWALA=$(pin_commit "$GIT_REMOTE_CHWALA" "dev/mollekopf")
+export GIT_REF_CHWALA=$(pin_commit "$GIT_REMOTE_CHWALA" "master")
 
 export GIT_REMOTE_SYNCROTON=https://git.kolab.org/diffusion/S/syncroton.git
 export GIT_REF_SYNCROTON=$(pin_commit "$GIT_REMOTE_SYNCROTON" "master")
