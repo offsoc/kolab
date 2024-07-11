@@ -120,7 +120,7 @@ podman__run_proxy() {
         -e SSL_CERTIFICATE=${KOLAB_SSL_CERTIFICATE:-"/etc/certs/imap.hosted.com.cert"} \
         -e SSL_CERTIFICATE_KEY=${KOLAB_SSL_CERTIFICATE_KEY:-"/etc/certs/imap.hosted.com.key"} \
         -e WEBAPP_BACKEND="http://localhost:8000" \
-        -e MEET_BACKEND="https://localhost:12443" \
+        -e MEET_BACKEND="http://localhost:12080" \
         -e ROUNDCUBE_BACKEND="http://localhost:8080" \
         -e DAV_BACKEND="http://localhost:11080/dav" \
         -e COLLABORA_BACKEND="http://localhost:9980" \
@@ -203,6 +203,8 @@ podman__run_webapp() {
         -e PASSPORT_PRIVATE_KEY="$PASSPORT_PRIVATE_KEY" \
         -e PASSPORT_PUBLIC_KEY="$PASSPORT_PUBLIC_KEY" \
         -e MINIO_ENDPOINT="http://localhost:9000" \
+        -e MEET_SERVER_URLS="http://127.0.0.1:12080/meetmedia/api/" \
+        -e MEET_SERVER_VERIFY_TLS=false \
         --health-cmd "./artisan octane:status || exit 1" \
         kolab-webapp:latest
 }
@@ -261,8 +263,8 @@ podman__run_collabora() {
 podman__run_meet() {
     $PODMAN run -dt --pod $POD --name $POD-meet --replace \
         -v ./meet/server:/src/meet:ro \
-        -e WEBRTC_LISTEN_IP=127.0.0.1 \
-        -e WEBRTC_ANNOUNCED_ADDRESS=127.0.0.1 \
+        -e WEBRTC_LISTEN_IP=0.0.0.0 \
+        -e WEBRTC_ANNOUNCED_ADDRESS=${PUBLIC_IP:?"missing env variable"} \
         -e PUBLIC_DOMAIN=$APP_DOMAIN \
         -e LISTENING_HOST=127.0.0.1 \
         -e LISTENING_PORT=12080 \

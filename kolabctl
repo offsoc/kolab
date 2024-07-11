@@ -53,6 +53,7 @@ __export_env() {
     export KOLAB_SSL_CERTIFICATE
     export KOLAB_SSL_CERTIFICATE_FULLCHAIN
     export KOLAB_SSL_CERTIFICATE_KEY
+    export PUBLIC_IP
 }
 
 kolab__configure() {
