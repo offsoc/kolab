@@ -115,9 +115,10 @@ podman__healthcheck() {
 podman__run_proxy() {
     $PODMAN run -dt --pod $POD --name $POD-proxy --replace \
         -v $CERTS_PATH:/etc/certs:ro \
+        -v /etc/letsencrypt/:/etc/letsencrypt/:ro \
         -e APP_WEBSITE_DOMAIN \
-        -e SSL_CERTIFICATE="/etc/certs/imap.hosted.com.cert" \
-        -e SSL_CERTIFICATE_KEY="/etc/certs/imap.hosted.com.key" \
+        -e SSL_CERTIFICATE=${KOLAB_SSL_CERTIFICATE:-"/etc/certs/imap.hosted.com.cert"} \
+        -e SSL_CERTIFICATE_KEY=${KOLAB_SSL_CERTIFICATE_KEY:-"/etc/certs/imap.hosted.com.key"} \
         -e WEBAPP_BACKEND="http://localhost:8000" \
         -e MEET_BACKEND="https://localhost:12443" \
         -e ROUNDCUBE_BACKEND="http://localhost:8080" \
@@ -224,6 +225,7 @@ podman__run_postfix() {
         $POSTFIX_SPOOL_STORAGE \
         $POSTFIX_LIB_STORAGE \
         -v $CERTS_PATH:/etc/certs:ro \
+        -v /etc/letsencrypt/:/etc/letsencrypt/:ro \
         -e SSL_CERTIFICATE="$KOLAB_SSL_CERTIFICATE" \
         -e SSL_CERTIFICATE_FULLCHAIN="$KOLAB_SSL_CERTIFICATE_FULLCHAIN" \
         -e SSL_CERTIFICATE_KEY="$KOLAB_SSL_CERTIFICATE_KEY" \
@@ -259,19 +261,17 @@ podman__run_collabora() {
 podman__run_meet() {
     $PODMAN run -dt --pod $POD --name $POD-meet --replace \
         -v ./meet/server:/src/meet:ro \
-        -v $CERTS_PATH/meet.${APP_DOMAIN}.cert:/etc/pki/tls/certs/meet.${APP_DOMAIN}.cert \
-        -v $CERTS_PATH/meet.${APP_DOMAIN}.key:/etc/pki/tls/private/meet.${APP_DOMAIN}.key \
         -e WEBRTC_LISTEN_IP=127.0.0.1 \
         -e WEBRTC_ANNOUNCED_ADDRESS=127.0.0.1 \
         -e PUBLIC_DOMAIN=$APP_DOMAIN \
         -e LISTENING_HOST=127.0.0.1 \
-        -e LISTENING_PORT=12443 \
+        -e LISTENING_PORT=12080 \
         -e DEBUG="*" \
         -e TURN_SERVER=none \
         -e AUTH_TOKEN=${MEET_SERVER_TOKEN} \
         -e WEBHOOK_TOKEN=${MEET_WEBHOOK_TOKEN} \
         -e WEBHOOK_URL=$APP_DOMAIN/api/webhooks/meet \
-        -e SSL_CERT=/etc/pki/tls/certs/meet.$APP_DOMAIN.cert \
-        -e SSL_KEY=/etc/pki/tls/private/meet.$APP_DOMAIN.key \
+        -e SSL_CERT=none \
+        -e FORCE_WSS=true \
         kolab-meet:latest
 }
