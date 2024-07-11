@@ -306,6 +306,17 @@ kolab__selfcheck() {
         ADMIN_USER="admin@$APP_DOMAIN"
     fi
 
+    podman__is_ready $POD-imap
+    podman__is_ready $POD-mariadb
+    podman__is_ready $POD-redis
+    podman__is_ready $POD-webapp
+    podman__is_ready $POD-minio
+    podman__is_ready $POD-meet
+    podman__is_ready $POD-roundcube
+    podman__is_ready $POD-postfix
+    podman__is_ready $POD-collabora
+    podman__is_ready $POD-proxy
+
     # We skip mollie and openexchange
     podman exec $POD-webapp ./artisan status:health --check DB --check Redis --check IMAP --check Roundcube --check Meet --check DAV
     podman exec $POD-postfix testsaslauthd -u "$ADMIN_USER" -p "$ADMIN_PASSWORD"

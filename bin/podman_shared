@@ -94,6 +94,15 @@ kolab__validate() {
     fi
 }
 
+podman__is_ready() {
+    if [[ "$(timeout 5 podman wait --condition running $1)" != "-1" ]]; then
+        echo "Container $1 is not running"
+        return 1
+    fi
+    # We can only wait for healthy if healthcheck is available
+    return 0
+}
+
 podman__healthcheck() {
     for CONTAINER in $@; do
         echo "Waiting for ${CONTAINER} become healthy "
