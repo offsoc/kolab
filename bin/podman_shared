@@ -116,6 +116,7 @@ podman__run_proxy() {
         -e COLLABORA_BACKEND="http://localhost:9980" \
         -e MATRIX_BACKEND="http://localhost:8008" \
         -e ELEMENT_BACKEND="http://localhost:8880" \
+        -e SIEVE_BACKEND="localhost:4190" \
         kolab-proxy:latest
 }
 
