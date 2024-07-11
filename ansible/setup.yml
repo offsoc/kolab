@@ -13,6 +13,12 @@
     #   selinux:
     #     policy: targeted
     #     state: permissive
+
+    - ansible.posix.sysctl:
+      name: net.ipv4.ip_unprivileged_port_start
+      value: '143'
+      state: present
+
     #
     - name: Setup user kolab
       ansible.builtin.user:
@@ -44,21 +50,6 @@
         version: "{{ git_branch }}"
         force: yes
 
-    - name: Run bin/configure
-      become: true
-      become_user: kolab
-      ansible.builtin.command: bin/configure.sh {{ config }}
-      args:
-        chdir: /home/kolab/kolab
-      environment:
-        HOST: "{{ hostname }}"
-        OPENEXCHANGERATES_API_KEY: "{{ openexchangerates_api_key }}"
-        FIREBASE_API_KEY: "{{ firebase_api_key }}"
-        PUBLIC_IP: "{{ public_ip }}"
-        ADMIN_PASSWORD: "{{ admin_password }}"
-        KOLAB_GIT_REF: "{{ git_branch }}"
-
-
     - name: Permit receiving mail
       firewalld:
         port: 25/tcp
@@ -80,40 +71,47 @@
         state: enabled
         zone: FedoraServer
 
-    - name: Permit TCP trafic for coturn
+    - name: Permit UDP traffic for webrtc
       firewalld:
-        port: 3478/tcp
+        port: 44444/udp
         permanent: yes
         state: enabled
         zone: FedoraServer
 
-    - name: Permit TCP trafic for coturn
+    - name: Permit TCP traffic for webrtc
       firewalld:
-        port: 5349/tcp
+        port: 44444/tcp
         permanent: yes
         state: enabled
         zone: FedoraServer
 
-    - name: Permit UDP trafic for coturn
-      firewalld:
-        port: 3478/udp
-        permanent: yes
-        state: enabled
-        zone: FedoraServer
-
-    - name: Permit UDP trafic for coturn
-      firewalld:
-        port: 5349/udp
-        permanent: yes
-        state: enabled
-        zone: FedoraServer
+    - name: Configure
+      block:
+        - name: Run kolabctl deploy
+          become: true
+          become_user: kolab
+          ansible.builtin.command: ./kolabctl configure
+          args:
+            chdir: /home/kolab/kolab
+          environment:
+            HOST: "{{ hostname }}"
+            OPENEXCHANGERATES_API_KEY: "{{ openexchangerates_api_key }}"
+            FIREBASE_API_KEY: "{{ firebase_api_key }}"
+            PUBLIC_IP: "{{ public_ip }}"
+            ADMIN_PASSWORD: "{{ admin_password }}"
+            KOLAB_GIT_REF: "{{ git_branch }}"
+          register: result
+      always:
+        - name: Print output from previous task with newlines
+          ansible.builtin.debug:
+            msg="{{result.stdout_lines}}"
 
     - name: Deploy
       block:
         - name: Run kolabctl deploy
           become: true
           become_user: kolab
-          ansible.builtin.command: kolabctl deploy
+          ansible.builtin.command: ./kolabctl deploy
           args:
             chdir: /home/kolab/kolab
           environment:
