@@ -380,6 +380,11 @@ kolab__shell() {
     kolab__exec $1 /bin/bash
 }
 
+kolab__run() {
+    __export_env
+    podman__run_$1
+}
+
 kolab__logs() {
     command podman logs -f $POD-$1
 }
