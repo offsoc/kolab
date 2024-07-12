@@ -246,6 +246,8 @@ podman__run_postfix() {
 
 podman__run_amavis() {
     $PODMAN run -dt --pod $POD --name $POD-amavis --replace \
+        -e APP_DOMAIN \
+        -e POSTFIX_HOST=localhost \
         -e DB_HOST=localhost \
         -e DB_USERNAME \
         -e DB_PASSWORD \
