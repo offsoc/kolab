@@ -297,7 +297,6 @@ kolab__restore() {
 
 kolab__selfcheck() {
     set -e
-    set -x
 
     APP_DOMAIN=$(grep APP_DOMAIN src/.env | tail -n1 | sed "s/APP_DOMAIN=//")
     if [ -z "$ADMIN_PASSWORD" ]; then
@@ -307,6 +306,7 @@ kolab__selfcheck() {
         ADMIN_USER="admin@$APP_DOMAIN"
     fi
 
+    echo "Checking for containers"
     podman__is_ready $POD-imap
     podman__is_ready $POD-mariadb
     podman__is_ready $POD-redis
@@ -315,11 +315,13 @@ kolab__selfcheck() {
     podman__is_ready $POD-meet
     podman__is_ready $POD-roundcube
     podman__is_ready $POD-postfix
+    podman__is_ready $POD-amavis
     podman__is_ready $POD-collabora
     podman__is_ready $POD-proxy
+    echo "All containers are available"
 
     # We skip mollie and openexchange
-    podman exec $POD-webapp ./artisan status:health --check DB --check Redis --check IMAP --check Roundcube --check Meet --check DAV
+    podman exec $POD-webapp env APP_DEBUG=false ./artisan status:health --check DB --check Redis --check IMAP --check Roundcube --check Meet --check DAV
     podman exec $POD-postfix testsaslauthd -u "$ADMIN_USER" -p "$ADMIN_PASSWORD"
     podman exec $POD-imap testsaslauthd -u "$ADMIN_USER" -p "$ADMIN_PASSWORD"
 
@@ -331,7 +333,7 @@ kolab__selfcheck() {
 }
 
 kolab__ps() {
-    command podman pod $POD ps
+    command podman ps
 }
 
 kolab__exec() {
