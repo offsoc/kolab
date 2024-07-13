@@ -5,7 +5,6 @@ pushd "${base_dir}"
 pushd ..
 
 set -e
-set -x
 
 PASSPORT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----
 MIIJQwIBADANBgkqhkiG9w0BAQEFAASCCS0wggkpAgEAAoICAQCmYeRp7XXnPe8w
@@ -76,11 +75,11 @@ E5W47J/DrfrevJkzS1GV++MCAwEAAQ==
 export HOST=kolab.local
 
 export APP_WEBSITE_DOMAIN="$HOST"
-export SSL_CERTIFICATE="/etc/certs/imap.hosted.com.cert"
-export SSL_CERTIFICATE_KEY="/etc/certs/imap.hosted.com.key"
 export APP_DOMAIN=$HOST
 export DES_KEY=kBxUM/53N9p9abusAoT0ZEAxwI2pxFz/
 export DB_HOST=127.0.0.1
+export KOLAB_SSL_CERTIFICATE=/etc/certs/kolab.local.cert
+export KOLAB_SSL_CERTIFICATE_KEY=/etc/certs/kolab.local.key
 export IMAP_HOST=localhost
 export IMAP_PORT=11143
 export IMAP_ADMIN_LOGIN=cyrus-admin
@@ -208,8 +207,8 @@ kolab__proxytest() {
     $PODMAN run -ti --pod tests --name $POD-proxy-tests --replace \
         -v ./ci/certs/:/etc/certs/:ro \
         --env-file=ci/env \
-        -e SSL_CERTIFICATE=/etc/certs/imap.hosted.com.cert \
-        -e SSL_CERTIFICATE_KEY=/etc/certs/imap.hosted.com.key \
+        -e SSL_CERTIFICATE=${KOLAB_SSL_CERTIFICATE} \
+        -e SSL_CERTIFICATE_KEY=${KOLAB_SSL_CERTIFICATE_KEY} \
         kolab-proxy:latest /init.sh validate
 }
 
@@ -379,6 +378,12 @@ kolab__watch() {
     trap 'kill $(jobs -p) 2>/dev/null' EXIT
     find src/resources/ src/app -regex '.*\.\(vue\|php\)$' | entr podman exec -ti dev-webapp bash -c "/update-source.sh; ./artisan octane:reload" &
     podman exec -ti dev-webapp npm run watch
+}
+
+# Get the host to trust the generated ca
+kolab__add_ca_trust() {
+    sudo trust anchor --store ci/certs/ca.cert
+    sudo update-ca-trust
 }
 
 kolab__generate_mail() {

@@ -126,12 +126,9 @@ KB_ACCOUNT_DELETE=
 KB_ACCOUNT_SUSPENDED=
 KB_PAYMENT_SYSTEM=
 
-KOLAB_SSL_CERTIFICATE=/etc/certs/kolab.hosted.com.cert
-KOLAB_SSL_CERTIFICATE_FULLCHAIN=/etc/certs/kolab.hosted.com.chain.pem
-KOLAB_SSL_CERTIFICATE_KEY=/etc/certs/kolab.hosted.com.key
-
-PROXY_SSL_CERTIFICATE=/etc/certs/imap.hosted.com.cert
-PROXY_SSL_CERTIFICATE_KEY=/etc/certs/imap.hosted.com.key
+KOLAB_SSL_CERTIFICATE=/etc/certs/kolab.local.cert
+KOLAB_SSL_CERTIFICATE_FULLCHAIN=/etc/certs/kolab.local.chain.pem
+KOLAB_SSL_CERTIFICATE_KEY=/etc/certs/kolab.local.key
 
 OPENEXCHANGERATES_API_KEY=
 FIREBASE_API_KEY=

@@ -6,7 +6,7 @@ CONFIG=${CONFIG:-"config.prod"}
 export HOST=${HOST:-"kolab.local"}
 OPENEXCHANGERATES_API_KEY=${OPENEXCHANGERATES_API_KEY}
 FIREBASE_API_KEY=${FIREBASE_API_KEY}
-PUBLIC_IP=${PUBLIC_IP}
+PUBLIC_IP=${PUBLIC_IP:-"127.0.0.1"}
 
 export CERTS_PATH=./docker/certs
 
@@ -137,8 +137,6 @@ kolab__configure() {
 KOLAB_SSL_CERTIFICATE=/etc/letsencrypt/live/${HOST}/cert.pem
 KOLAB_SSL_CERTIFICATE_FULLCHAIN=/etc/letsencrypt/live/${HOST}/fullchain.pem
 KOLAB_SSL_CERTIFICATE_KEY=/etc/letsencrypt/live/${HOST}/privkey.pem
-PROXY_SSL_CERTIFICATE=/etc/letsencrypt/live/${HOST}/fullchain.pem
-PROXY_SSL_CERTIFICATE_KEY=/etc/letsencrypt/live/${HOST}/privkey.pem
 EOF
     fi
 }

@@ -117,8 +117,8 @@ podman__run_proxy() {
         -v $CERTS_PATH:/etc/certs:ro \
         -v /etc/letsencrypt/:/etc/letsencrypt/:ro \
         -e APP_WEBSITE_DOMAIN \
-        -e SSL_CERTIFICATE=${KOLAB_SSL_CERTIFICATE:-"/etc/certs/imap.hosted.com.cert"} \
-        -e SSL_CERTIFICATE_KEY=${KOLAB_SSL_CERTIFICATE_KEY:-"/etc/certs/imap.hosted.com.key"} \
+        -e SSL_CERTIFICATE=${KOLAB_SSL_CERTIFICATE} \
+        -e SSL_CERTIFICATE_KEY=${KOLAB_SSL_CERTIFICATE_KEY} \
         -e WEBAPP_BACKEND="http://localhost:8000" \
         -e MEET_BACKEND="http://localhost:12080" \
         -e ROUNDCUBE_BACKEND="http://localhost:8080" \

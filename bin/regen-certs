@@ -31,9 +31,9 @@ fi
 
 if [ "$#" -eq  "0" ]; then
     if [[ "$APP_DOMAIN" == "" ]]; then
-        APP_DOMAIN=$(grep -P "^APP_DOMAIN=.*" .env | tail -n1 | sed "s/APP_DOMAIN=//")
+        APP_DOMAIN=$(grep -P "^APP_DOMAIN=.*" src/.env | tail -n1 | sed "s/APP_DOMAIN=//")
     fi
-    DOMAINS="kolab.mgmt.com kolab.hosted.com imap.hosted.com admin.${APP_DOMAIN} meet.${APP_DOMAIN}"
+    DOMAINS="${APP_DOMAIN}"
 else
     DOMAINS=$1
 fi
