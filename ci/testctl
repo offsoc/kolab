@@ -245,7 +245,14 @@ kolab__testrun_complete() {
 
 # Get a shell inside the test container to run/debug tests
 kolab__shell() {
-    kolab__test shell
+    if [[ $1 != "" ]]; then
+        POD="dev"
+        container=$1
+        shift
+        command podman exec -ti $POD-$container /bin/bash
+    else
+        kolab__test shell
+    fi
 }
 
 # Run the roundcube testsuite
@@ -363,6 +370,15 @@ kolab__deploy() {
 
     podman__run_roundcube
     podman__run_proxy
+}
+
+
+# Monitor vue files for changes, and automatically reload the dev webapp container if anything changes.
+# Requires "entr" on the host
+kolab__watch() {
+    trap 'kill $(jobs -p) 2>/dev/null' EXIT
+    find src/resources/ src/app -regex '.*\.\(vue\|php\)$' | entr podman exec -ti dev-webapp bash -c "/update-source.sh; ./artisan octane:reload" &
+    podman exec -ti dev-webapp npm run watch
 }
 
 kolab__generate_mail() {
