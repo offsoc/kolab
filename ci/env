@@ -21,7 +21,7 @@ APP_WITH_SIGNUP=1
 APP_LDAP=0
 APP_IMAP=1
 
-APP_HEADER_CSP="connect-src 'self'; child-src 'self'; font-src 'self'; form-action 'self' data:; frame-ancestors 'self'; img-src blob: data: 'self' *; media-src 'self';
+APP_HEADER_CSP="connect-src 'self'; child-src 'self'; font-src 'self'; form-action 'self' data:; frame-ancestors 'self'; img-src blob: data: 'self' *; media-src 'self';"
 APP_HEADER_XFO=sameorigin
 
 ASSET_URL=https://kolab.local
