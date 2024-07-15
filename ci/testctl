@@ -95,6 +95,8 @@ export DB_HKCCP_PASSWORD=simple123
 export DB_KOLAB_PASSWORD=simple123
 export DB_RC_PASSWORD=simple123
 export DB_PASSWORD=simple123
+export DB_USERNAME=kolabdev
+export DB_DATABASE=kolabdev
 export MINIO_ROOT_USER=minio
 export MINIO_ROOT_PASSWORD=simple123
 export MINIO_USER=minio
@@ -369,6 +371,9 @@ kolab__deploy() {
 
     podman__run_roundcube
     podman__run_proxy
+
+    podman__run_postfix
+    podman__run_amavis
 }
 
 

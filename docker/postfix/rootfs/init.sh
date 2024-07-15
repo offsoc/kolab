@@ -1,7 +1,6 @@
 #!/bin/bash
 
 set -e
-set -x
 
 if [[ -f ${SSL_CERTIFICATE} ]]; then
 cat ${SSL_CERTIFICATE} ${SSL_CERTIFICATE_FULLCHAIN} ${SSL_CERTIFICATE_KEY} > /etc/pki/tls/private/postfix.pem
@@ -28,15 +27,15 @@ rm -f /var/spool/postfix/pid/master.pid
 /usr/libexec/postfix/chroot-update
 
 sed -i -r \
-    -e "s|LMTP_DESTINATION|$LMTP_DESTINATION|g" \
-    -e "s|APP_DOMAIN|$APP_DOMAIN|g" \
-    -e "s|MYNETWORKS|$MYNETWORKS|g" \
-    -e "s|AMAVIS_HOST|$AMAVIS_HOST|g" \
+    -e "s|LMTP_DESTINATION|${LMTP_DESTINATION:?"env required"}|g" \
+    -e "s|APP_DOMAIN|${APP_DOMAIN:?"env required"}|g" \
+    -e "s|MYNETWORKS|${MYNETWORKS:?"env required"}|g" \
+    -e "s|AMAVIS_HOST|${AMAVIS_HOST:?"env required"}|g" \
     /etc/postfix/main.cf
 
 sed -i -r \
-    -e "s|MYNETWORKS|$MYNETWORKS|g" \
-    -e "s|AMAVIS_HOST|$AMAVIS_HOST|g" \
+    -e "s|MYNETWORKS|${MYNETWORKS:?"env requried"}|g" \
+    -e "s|AMAVIS_HOST|${AMAVIS_HOST:?"env requried"}|g" \
     /etc/postfix/master.cf
 
 sed -i -r \
@@ -44,10 +43,10 @@ sed -i -r \
     /usr/libexec/postfix/kolab_policy*
 
 sed -i -r \
-    -e "s|DB_HOST|$DB_HOST|g" \
-    -e "s|DB_USERNAME|$DB_USERNAME|g" \
-    -e "s|DB_PASSWORD|$DB_PASSWORD|g" \
-    -e "s|DB_DATABASE|$DB_DATABASE|g" \
+    -e "s|DB_HOST|${DB_HOST:?"env required"}|g" \
+    -e "s|DB_USERNAME|${DB_USERNAME:?"env required"}|g" \
+    -e "s|DB_PASSWORD|${DB_PASSWORD:?"env required"}|g" \
+    -e "s|DB_DATABASE|${DB_DATABASE:?"env required"}|g" \
     /etc/postfix/sql/*
 
 # echo "/$APP_DOMAIN/              lmtp:$LMTP_DESTINATION" >> /etc/postfix/transport

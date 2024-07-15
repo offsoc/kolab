@@ -139,12 +139,13 @@ podman__run_roundcube() {
         -e DB_RC_DATABASE="roundcube" \
         -e DB_RC_USERNAME="roundcube" \
         -e DB_RC_PASSWORD="${DB_PASSWORD:?"missing env variable"}" \
-        -e IMAP_HOST \
-        -e IMAP_PORT \
+        -e IMAP_HOST=127.0.0.1 \
+        -e IMAP_PORT=11143 \
         -e IMAP_ADMIN_LOGIN \
         -e IMAP_ADMIN_PASSWORD \
-        -e MAIL_HOST \
-        -e MAIL_PORT \
+        -e SUBMISSION_HOST=127.0.0.1 \
+        -e SUBMISSION_ENCRYPTION=starttls \
+        -e SUBMISSION_PORT=10587 \
         -e IMAP_DEBUG \
         -e KOLAB_FILES_SERVER_URL=http://localhost:8080/chwala \
         -e FILEAPI_WOPI_OFFICE=http://localhost:9980 \
