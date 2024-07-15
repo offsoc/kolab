@@ -63,6 +63,10 @@ export GIT_REF_FREEBUSY=$(pin_commit "$GIT_REMOTE_FREEBUSY" "master")
 export IMAP_GIT_REMOTE=https://git.kolab.org/source/cyrus-imapd
 export IMAP_GIT_REF=$(pin_commit "$GIT_REMOTE_FREEBUSY" "dev/kolab-3.6")
 
+
+HOST=${HOST:-$HOSTNAME}
+EPOCH=$(date +"%s")
+
 # Execute
 if [[ $ROLE == "test" ]]; then
     ci/testctl build
@@ -71,19 +75,7 @@ if [[ $ROLE == "test" ]]; then
     LINT_RESULT=$(check_success $?)
     ci/testctl testrun
     TESTRUN_RESULT=$(check_success $?)
-elif [[ $ROLE == "deploy" ]]; then
-    env ADMIN_PASSWORD=simple123 PUBLIC_IP=127.0.0.1 ./kolabctl configure
-    env ADMIN_PASSWORD=simple123 ./kolabctl deploy
-    DEPLOY_RESULT=$(check_success $?)
-    env ADMIN_PASSWORD=simple123 ./kolabctl selfcheck
-    SELFCHECK_RESULT=$(check_success $?)
-fi
 
-HOST=${HOST:-$HOSTNAME}
-
-# Publish test results
-if [[ "$PROMETHEUS_PUSHGATEWAY" != "" ]]; then
-    EPOCH=$(date +"%s")
     METRICS=$(
     cat <<EOF
 kolab_ci_timestamp $EPOCH
@@ -95,11 +87,42 @@ kolab_ci_testsuite{host="$HOST", testsuite="testrun"} $TESTRUN_RESULT
 EOF
 )
 
-    echo "Pushing result to $PROMETHEUS_PUSHGATEWAY"
-    echo "$METRICS"
-    echo "$METRICS" | curl -k --data-binary @- "$PROMETHEUS_PUSHGATEWAY"
+    # Publish test results
+    if [[ "$PROMETHEUS_PUSHGATEWAY" != "" ]]; then
+        echo "Pushing result to $PROMETHEUS_PUSHGATEWAY"
+        echo "$METRICS"
+        echo "$METRICS" | curl -k --data-binary @- "$PROMETHEUS_PUSHGATEWAY"
+    fi
+
+    if [[ $TESTRUN_RESULT != "1" || $BUILD_RESULT != "1" || $LINT_RESULT != "1" ]]; then
+        exit 1
+    fi
+
+elif [[ $ROLE == "deploy" ]]; then
+    env ADMIN_PASSWORD=simple123 ./kolabctl configure
+    env ADMIN_PASSWORD=simple123 ./kolabctl deploy
+    DEPLOY_RESULT=$(check_success $?)
+    env ADMIN_PASSWORD=simple123 ./kolabctl selfcheck
+    SELFCHECK_RESULT=$(check_success $?)
+
+    METRICS=$(
+    cat <<EOF
+kolab_ci_timestamp $EPOCH
+# HELP kolab_ci_testsuite Displays whether or not the testsuite passed
+# TYPE kolab_ci_testsuite gauge
+kolab_ci_testsuite{host="$HOST", testsuite="deploy"} $DEPLOY_RESULT
+kolab_ci_testsuite{host="$HOST", testsuite="selfcheck"} $SELFCHECK_RESULT
+EOF
+)
+    # Publish test results
+    if [[ "$PROMETHEUS_PUSHGATEWAY" != "" ]]; then
+        echo "Pushing result to $PROMETHEUS_PUSHGATEWAY"
+        echo "$METRICS"
+        echo "$METRICS" | curl -k --data-binary @- "$PROMETHEUS_PUSHGATEWAY"
+    fi
+
+    if [[ $DEPLOY_RESULT != "1" || $SELFCHECK_RESULT != "1" ]]; then
+        exit 1
+    fi
 fi
 
-if [[ $TESTRUN_RESULT != "1" || $BUILD_RESULT != "1" || $LINT_RESULT != "1" ]]; then
-    exit 1
-fi
