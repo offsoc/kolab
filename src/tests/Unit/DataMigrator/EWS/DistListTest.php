@@ -85,6 +85,6 @@ class DistListTest extends TestCase
             'mailto:%22Alec%22+%3Calec%40kolab.org%3E',
             'urn:uuid:' . sha1('AAA'),
         ];
-        $this->assertSame($members, $distlist->members);
+        $this->assertSame($members, $distlist->member);
     }
 }

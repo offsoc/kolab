@@ -45,9 +45,10 @@ class CreateCommandTest extends TestCase
         $tenant = \App\Tenant::orderBy('id', 'desc')->first();
 
         // Test successful domain creation
-        $code = \Artisan::call("scalpel:domain:create"
+        $code = \Artisan::call(
+            "scalpel:domain:create"
             . " --namespace=domain-delete.com"
-            . " --type=" . Domain::TYPE_PUBLIC
+            . " --type={Domain::TYPE_PUBLIC}"
             . " --tenant_id={$tenant->id}"
         );
 

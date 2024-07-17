@@ -24,6 +24,7 @@ class AppointmentTest extends TestCase
         $appointment = new EWS\Appointment($ews, $folder);
 
         $ical = file_get_contents(__DIR__ . '/../../../data/ews/event/1.ics');
+        $ical = preg_replace('/\r?\n/', "\r\n", $ical);
 
         // FIXME: I haven't found a way to convert xml content into a Type instance
         // therefore we create it "manually", but it would be better to have both

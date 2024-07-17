@@ -24,6 +24,7 @@ class ContactTest extends TestCase
         $contact = new EWS\Contact($ews, $folder);
 
         $vcard = file_get_contents(__DIR__ . '/../../../data/ews/contact/1.vcf');
+        $vcard = preg_replace('/\r?\n/', "\r\n", $vcard);
 
         // FIXME: I haven't found a way to convert xml content into a Type instance
         // therefore we create it "manually", but it would be better to have both

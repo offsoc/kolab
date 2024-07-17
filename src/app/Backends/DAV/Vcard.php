@@ -17,7 +17,7 @@ class Vcard extends CommonObject
     public $fn;
     public $kind;
     public $note;
-    public $members = [];
+    public $member = [];
     public $prodid;
     public $rev;
     public $version;
@@ -59,7 +59,6 @@ class Vcard extends CommonObject
         }
 
         $this->vobject = $vobject;
-        $this->members = [];
 
         $string_properties = [
             'CLASS',
@@ -94,8 +93,8 @@ class Vcard extends CommonObject
                 case 'MEMBER':
                     foreach ($prop as $member) {
                         $value = (string) $member;
-                        if (preg_match('/^mailto:/', $value)) {
-                            $this->members[] = $value;
+                        if (preg_match('/^(urn:uuid|mailto):/i', $value)) {
+                            $this->member[] = $value;
                         }
                     }
                     break;

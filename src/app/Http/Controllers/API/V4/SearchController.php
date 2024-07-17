@@ -152,7 +152,7 @@ class SearchController extends Controller
                             . ($settings["{$record->id}:last_name"] ?? '')
                         ),
                     ];
-                })
+            })
                 ->sortBy(['name', 'email'])
                 ->values();
         }
