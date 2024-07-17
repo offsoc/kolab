@@ -45,7 +45,7 @@ class Appointment extends Item
 
         $itemId = implode("\r\n ", str_split($this->itemId, 75 - strlen('X-MS-ID:')));
 
-        $ical = str_replace("\r\nBEGIN:VEVENT\r\n", "\r\nBEGIN:VEVENT\r\nX-MS-ID:{$itemId}\r\n", $ical);
+        $ical = preg_replace('/\r\nBEGIN:VEVENT\r\n/', "\r\nBEGIN:VEVENT\r\nX-MS-ID:{$itemId}\r\n", $ical, 1);
 
         // TODO: replace source email with destination email address in ORGANIZER/ATTENDEE
 
