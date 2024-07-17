@@ -171,6 +171,7 @@ podman__run_roundcube() {
         -e SUBMISSION_ENCRYPTION=starttls \
         -e SUBMISSION_PORT=10587 \
         -e IMAP_DEBUG \
+        -e LOG_DRIVER=stdout \
         -e KOLAB_FILES_SERVER_URL=http://localhost:8080/chwala \
         -e FILEAPI_WOPI_OFFICE=http://localhost:9980 \
         -e FILEAPI_KOLABFILES_BASEURI=http://localhost:8000/api \
