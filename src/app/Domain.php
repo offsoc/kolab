@@ -70,6 +70,8 @@ class Domain extends Model
         'created_at' => 'datetime:Y-m-d H:i:s',
         'deleted_at' => 'datetime:Y-m-d H:i:s',
         'updated_at' => 'datetime:Y-m-d H:i:s',
+        'status' => 'integer',
+        'type' => 'integer',
     ];
 
     /** @var array<int, string> The attributes that are mass assignable */

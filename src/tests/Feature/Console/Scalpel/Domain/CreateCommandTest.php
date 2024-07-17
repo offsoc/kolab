@@ -48,7 +48,7 @@ class CreateCommandTest extends TestCase
         $code = \Artisan::call(
             "scalpel:domain:create"
             . " --namespace=domain-delete.com"
-            . " --type={Domain::TYPE_PUBLIC}"
+            . " --type=" . Domain::TYPE_PUBLIC
             . " --tenant_id={$tenant->id}"
         );
 
