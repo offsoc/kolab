@@ -381,7 +381,7 @@ kolab__deploy() {
 # Requires "entr" on the host
 kolab__watch() {
     trap 'kill $(jobs -p) 2>/dev/null' EXIT
-    find src/resources/ src/app -regex '.*\.\(vue\|php\)$' | entr podman exec -ti dev-webapp bash -c "/update-source.sh; ./artisan octane:reload" &
+    find src/resources/ src/app -regex '.*\.\(vue\|php\|js\)$' | entr podman exec -ti dev-webapp bash -c "/update-source.sh; ./artisan octane:reload" &
     podman exec -ti dev-webapp npm run watch
 }
 
@@ -397,6 +397,11 @@ kolab__generate_mail() {
 
 kolab__syncroton_sync() {
     $PODMAN run -t --network=host --add-host=kolab.local:127.0.0.1 --rm kolab-utils:latest ./activesynccli.py --host kolab.local --user admin@kolab.local --password simple123 sync 38b950ebd62cd9a66929c89615d0fc04
+}
+
+kolab__logs() {
+    POD=dev
+    command podman logs --tail=1000 -f $POD-$1
 }
 
 kolab__db() {
