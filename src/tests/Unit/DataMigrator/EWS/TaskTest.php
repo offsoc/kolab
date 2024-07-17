@@ -145,7 +145,10 @@ class TaskTest extends TestCase
         $this->assertSame('TH', $task->rrule['byday']);
         $this->assertSame('SU', $task->rrule['wkst']);
 
-        // TODO: Reminder
+        $this->assertCount(1, $task->valarms);
+        $this->assertCount(2, $task->valarms[0]);
+        $this->assertSame('DISPLAY', $task->valarms[0]['action']);
+        $this->assertSame('2024-07-17T07:00:00+00:00', $task->valarms[0]['trigger']->format('c'));
     }
 
     /**

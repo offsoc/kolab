@@ -21,17 +21,6 @@ class Vtodo extends Vevent
         // Handle common properties with VEVENT
         parent::fromVObject($vobject);
 
-        $string_properties = [
-        ];
-
-        // map string properties
-        foreach ($string_properties as $prop) {
-            if (isset($vobject->{$prop})) {
-                $key = Str::camel(strtolower($prop));
-                $this->{$key} = (string) $vobject->{$prop};
-            }
-        }
-
         // map other properties
         foreach ($vobject->children() as $prop) {
             if (!($prop instanceof Property)) {

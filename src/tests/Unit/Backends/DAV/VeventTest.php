@@ -74,7 +74,7 @@ XML;
             'freq' => 'WEEKLY',
             'interval' => 1,
         ];
-        $this->assertSame($recurrence, $event->recurrence);
+        $this->assertSame($recurrence, $event->rrule);
 
         // TODO: Test all supported properties in detail
     }

@@ -242,8 +242,8 @@ class Task extends Item
             return '';
         }
 
-        return "BEGIN:VALARM\r\nACTION:DISPLAY\r\n"
-            . "TRIGGER;VALUE=DATE-TIME:{$date}\r\n"
+        return "BEGIN:VALARM\r\n"
+            . "ACTION:DISPLAY\r\nTRIGGER;VALUE=DATE-TIME:{$date}\r\n"
             . "END:VALARM\r\n";
     }
 
