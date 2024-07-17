@@ -36,11 +36,8 @@ class DistList extends Item
 
         // TODO: The group description property in Exchange is not available via EWS XML,
         // at least not at outlook.office.com (Exchange 2010). It is available in the
-        // MimeContent which is in email message format.
-
-        // TODO: mailto: members are not supported by Kolab Webclient
-        // We need to use MEMBER:urn:uuid:9bd97510-9dbb-4810-a144-6180962df5e0 syntax
-        // But do not forget lists can have members that are not contacts
+        // MimeContent which is in email message format. However, Kolab Webclient does not
+        // make any use of the NOTE property for contact groups.
 
         // Process list members
         if ($members = $item->getMembers()) {
@@ -54,8 +51,16 @@ class DistList extends Item
                 $mailbox = $member->getMailbox();
                 $mailto = $mailbox->getEmailAddress();
                 $name = $mailbox->getName();
+                $id = $mailbox->getItemId();
 
-                if ($mailto) {
+                // "mailto:" members are not fully supported by Kolab Webclient.
+                // For members that are contacts (have ItemId specified) we use urn:uuid:<UID>
+                // syntax that has good support.
+
+                if ($id) {
+                    $contactUID = sha1($id->toArray()['Id']);
+                    $vcard .= $this->formatProp('MEMBER', "urn:uuid:{$contactUID}");
+                } elseif ($mailto) {
                     if ($name && $name != $mailto) {
                         $mailto = urlencode(sprintf('"%s" <%s>', addcslashes($name, '"'), $mailto));
                     }

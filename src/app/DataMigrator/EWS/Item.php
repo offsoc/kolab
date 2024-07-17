@@ -137,7 +137,8 @@ abstract class Item
         if ($this->uid === null) {
             // Tasks, contacts, distlists do not have an UID. We have to generate one
             // and inject it into the output file.
-            // We'll use the ItemId (excluding the ChangeKey part) as a base for the UID.
+            // We'll use the ItemId (excluding the ChangeKey part) as a base for the UID,
+            // this way we can e.g. get distlist members references working.
             $this->uid = sha1($itemId['Id']);
             // $this->uid = \App\Utils::uuidStr();
         }

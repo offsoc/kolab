@@ -42,23 +42,24 @@ class DistListTest extends TestCase
                     Type\MemberType::buildFromArray([
                         'Key' => 'AAAAAIErH6S+oxAZnW4A3QEPVAIAAAGAYQBsAGUAYwBAAGEAbABlAGMALgBw'
                             . 'AGwAAABTAE0AVABQAAAAYQBsAGUAYwBAAGEAbABlAGMALgBwAGwAAAA=',
-                        'Mailbox' => [
+                        'Mailbox' => Type\Mailbox::buildFromArray([
                             'Name' => 'Alec',
                             'EmailAddress' => 'alec@kolab.org',
                             'RoutingType' => 'SMTP',
                             'MailboxType' => 'OneOff',
-                        ],
+                        ]),
                         'Status' => 'Normal',
                     ]),
                     Type\MemberType::buildFromArray([
                         'Key' => 'AAAAAIErH6S+oxAZnW4A3QEPVAIAAAGAYQBsAGUAYwBAAGEAbABlAGMALgBw'
                             . 'AGwAAABTAE0AVABQAAAAYQBsAGUAYwBAAGEAbABlAGMALgBwAGwAAAB=',
-                        'Mailbox' => [
+                        'Mailbox' => Type\Mailbox::buildFromArray([
                             'Name' => 'Christian',
                             'EmailAddress' => 'christian@kolab.org',
                             'RoutingType' => 'SMTP',
                             'MailboxType' => 'OneOff',
-                        ],
+                            'ItemId' => new Type\ItemIdType('AAA', 'BBB'),
+                        ]),
                         'Status' => 'Normal',
                     ]),
                 ],
@@ -82,7 +83,7 @@ class DistListTest extends TestCase
 
         $members = [
             'mailto:%22Alec%22+%3Calec%40kolab.org%3E',
-            'mailto:%22Christian%22+%3Cchristian%40kolab.org%3E',
+            'urn:uuid:' . sha1('AAA'),
         ];
         $this->assertSame($members, $distlist->members);
     }
