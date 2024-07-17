@@ -274,7 +274,10 @@ trait BackendsTrait
             throw new \Exception("File does not exist: {$source}");
         }
 
-        $uid = $imap->appendFromFile($folder, $source, '', $flags, $date, true);
+        $source = file_get_contents($source);
+        $source = preg_replace('/\r?\n/', "\r\n", $source);
+
+        $uid = $imap->append($folder, $source, $flags, $date, true);
 
         if ($uid === false) {
             throw new \Exception("Failed to append mail into {$account}/{$folder}");
