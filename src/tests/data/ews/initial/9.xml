@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+  <s:Header>
+    <h:ServerVersionInfo xmlns:h="http://schemas.microsoft.com/exchange/services/2006/types" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" MajorVersion="15" MinorVersion="20" MajorBuildNumber="7762" MinorBuildNumber="21" Version="V2018_01_08"/>
+  </s:Header>
+  <s:Body>
+    <m:GetItemResponse xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types">
+      <m:ResponseMessages>
+        <m:GetItemResponseMessage ResponseClass="Success">
+          <m:ResponseCode>NoError</m:ResponseCode>
+          <m:Items>
+            <t:Task>
+              <t:ItemId Id="AAMkAGEzOGRlODRiLTBkN2ItNDgwZS04ZDJmLTM5NDEyY2Q0NGQ0OABGAAAAAAC9tlDYSlG2TaxWBrA1OzWtBwAs2ajhknXlRYN/pbC8JqblAAAAAAESAAAs2ajhknXlRYN/pbC8JqblAAJo4gtPAAA=" ChangeKey="EwAAABYAAAAs2ajhknXlRYN/pbC8JqblAAJo3bvu"/>
+              <t:ParentFolderId Id="AQMkAGEzOGRlODRiLTBkN2ItNDgwZS04ZDJmLTM5NDEyY2Q0NABkNDgALgAAA722UNhKUbZNrFYGsDU7Na0BACzZqOGSdeVFg3+lsLwmpuUAAAIBEgAAAA==" ChangeKey="AQAAAA=="/>
+              <t:ItemClass>IPM.Task</t:ItemClass>
+              <t:Subject>Nowe zadanie</t:Subject>
+              <t:Sensitivity>Normal</t:Sensitivity>
+              <t:Body BodyType="Text" IsTruncated="false"/>
+              <t:DateTimeReceived>2024-06-27T08:58:05Z</t:DateTimeReceived>
+              <t:Size>2025</t:Size>
+              <t:Importance>High</t:Importance>
+              <t:IsSubmitted>false</t:IsSubmitted>
+              <t:IsDraft>false</t:IsDraft>
+              <t:IsFromMe>false</t:IsFromMe>
+              <t:IsResend>false</t:IsResend>
+              <t:IsUnmodified>false</t:IsUnmodified>
+              <t:DateTimeSent>2024-06-27T08:58:05Z</t:DateTimeSent>
+              <t:DateTimeCreated>2024-06-27T08:58:05Z</t:DateTimeCreated>
+              <t:ReminderDueBy>2024-06-28T07:00:00Z</t:ReminderDueBy>
+              <t:ReminderIsSet>true</t:ReminderIsSet>
+              <t:ReminderNextTime>2024-06-28T07:00:00Z</t:ReminderNextTime>
+              <t:ReminderMinutesBeforeStart>0</t:ReminderMinutesBeforeStart>
+              <t:DisplayCc/>
+              <t:DisplayTo/>
+              <t:HasAttachments>false</t:HasAttachments>
+              <t:Culture>en-US</t:Culture>
+              <t:EffectiveRights>
+                <t:CreateAssociated>false</t:CreateAssociated>
+                <t:CreateContents>false</t:CreateContents>
+                <t:CreateHierarchy>false</t:CreateHierarchy>
+                <t:Delete>true</t:Delete>
+                <t:Modify>true</t:Modify>
+                <t:Read>true</t:Read>
+                <t:ViewPrivateItems>true</t:ViewPrivateItems>
+              </t:EffectiveRights>
+              <t:LastModifiedName>Alec Machniak</t:LastModifiedName>
+              <t:LastModifiedTime>2024-06-27T08:58:11Z</t:LastModifiedTime>
+              <t:IsAssociated>false</t:IsAssociated>
+              <t:WebClientReadFormQueryString>https://outlook.office365.com/owa/?ItemID=AAMkAGEzOGRlODRiLTBkN2ItNDgwZS04ZDJmLTM5NDEyY2Q0NGQ0OABGAAAAAAC9tlDYSlG2TaxWBrA1OzWtBwAs2ajhknXlRYN%2FpbC8JqblAAAAAAESAAAs2ajhknXlRYN%2FpbC8JqblAAJo4gtPAAA%3D&amp;exvsurl=1&amp;viewmodel=TaskReadingPaneViewModelPopOutFactory</t:WebClientReadFormQueryString>
+              <t:ConversationId Id="AAQkAGEzOGRlODRiLTBkN2ItNDgwZS04ZDJmLTM5NDEyY2Q0NGQ0OAAQANQdjNmPALIE6YAJmOz4Qn4="/>
+              <t:Flag>
+                <t:FlagStatus>NotFlagged</t:FlagStatus>
+              </t:Flag>
+              <t:InstanceKey>AQEAAAAAAAESAQAAAmjiC08AAAAA</t:InstanceKey>
+              <t:EntityExtractionResult/>
+              <t:ChangeCount>1</t:ChangeCount>
+              <t:DueDate>2024-06-26T22:00:00Z</t:DueDate>
+              <t:IsComplete>false</t:IsComplete>
+              <t:IsRecurring>true</t:IsRecurring>
+              <t:Owner>Alec Machniak</t:Owner>
+              <t:PercentComplete>0</t:PercentComplete>
+              <t:Recurrence>
+                <t:WeeklyRecurrence>
+                  <t:Interval>1</t:Interval>
+                  <t:DaysOfWeek>Thursday</t:DaysOfWeek>
+                  <t:FirstDayOfWeek>Sunday</t:FirstDayOfWeek>
+                </t:WeeklyRecurrence>
+                <t:NoEndRecurrence>
+                  <t:StartDate>2024-06-27Z</t:StartDate>
+                </t:NoEndRecurrence>
+              </t:Recurrence>
+              <t:Status>NotStarted</t:Status>
+              <t:StatusDescription>Not Started</t:StatusDescription>
+            </t:Task>
+          </m:Items>
+        </m:GetItemResponseMessage>
+      </m:ResponseMessages>
+    </m:GetItemResponse>
+  </s:Body>
+</s:Envelope>

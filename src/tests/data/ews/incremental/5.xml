@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+  <s:Header>
+    <h:ServerVersionInfo xmlns:h="http://schemas.microsoft.com/exchange/services/2006/types" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" MajorVersion="15" MinorVersion="20" MajorBuildNumber="7762" MinorBuildNumber="21" Version="V2018_01_08"/>
+  </s:Header>
+  <s:Body>
+    <m:GetItemResponse xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types">
+      <m:ResponseMessages>
+        <m:GetItemResponseMessage ResponseClass="Success">
+          <m:ResponseCode>NoError</m:ResponseCode>
+          <m:Items>
+            <t:Contact>
+              <t:MimeContent CharacterSet="UTF-8">QkVHSU46VkNBUkQNClBST0ZJTEU6VkNBUkQNClZFUlNJT046My4wDQpNQUlMRVI6TWljcm9zb2Z0IEV4Y2hhbmdlDQpQUk9ESUQ6TWljcm9zb2Z0IEV4Y2hhbmdlDQpGTjpUZXN0IFN1cm5hbWUgMQ0KTjpTdXJuYW1lIDE7VGVzdDs7Ow0KTk9URToNCk9SRzo7DQpDTEFTUzpQVUJMSUMNCkFEUjtUWVBFPVdPUks6Ozs7Ozs7DQpBRFI7VFlQRT1IT01FOjs7Ozs7Ow0KQURSO1RZUEU9UE9TVEFMOjs7Ozs7Ow0KVEVMO1RZUEU9Q0VMTDoNClRFTDtUWVBFPVBBR0VSOg0KVEVMO1RZUEU9Q0FSOg0KVEVMO1RZUEU9Vk9JQ0U6DQpYLU1TLVNQT1VTRTtUWVBFPU46DQpYLU1TLU1BTkFHRVI7VFlQRT1OOg0KWC1NUy1BU1NJU1RBTlQ7VFlQRT1OOg0KVElUTEU6DQpVUkw7VFlQRT1IT01FOg0KVVJMO1RZUEU9V09SSzoNClJFVjtWQUxVRT1EQVRFLVRJTUU6MjAyNC0wNi0yNVQxMDo1NDo1NCwyMTRaDQpFTkQ6VkNBUkQNCg==</t:MimeContent>
+              <t:ItemId Id="AAMkAGEzOGRlODRiLTBkN2ItNDgwZS04ZDJmLTM5NDEyY2Q0NGQ0OABGAAAAAAC9tlDYSlG2TaxWBrA1OzWtBwAs2ajhknXlRYN/pbC8JqblAAAAAAEOAAAs2ajhknXlRYN/pbC8JqblAAJnrWkBAAA=" ChangeKey="EQAAABYAAAAs2ajhknXlRYN/pbC8JqblAAJnqlKn"/>
+              <t:HasAttachments>false</t:HasAttachments>
+              <t:Culture>en-US</t:Culture>
+              <t:LastModifiedTime>2024-06-25T09:54:54Z</t:LastModifiedTime>
+              <t:FileAs/>
+              <t:DisplayName>Test Surname 1</t:DisplayName>
+              <t:GivenName>Test</t:GivenName>
+              <t:CompleteName>
+                <t:FirstName>Test</t:FirstName>
+                <t:LastName>Surname 1</t:LastName>
+                <t:FullName>Test Surname 1</t:FullName>
+              </t:CompleteName>
+              <t:EmailAddresses>
+                <t:Entry Key="EmailAddress1" Name="christian@outlook.com" RoutingType="SMTP" MailboxType="Contact">christian@outlook.com</t:Entry>
+              </t:EmailAddresses>
+              <t:PhoneNumbers>
+                <t:Entry Key="CarPhone"/>
+                <t:Entry Key="MobilePhone"/>
+                <t:Entry Key="OtherTelephone"/>
+                <t:Entry Key="Pager"/>
+              </t:PhoneNumbers>
+              <t:Department/>
+              <t:JobTitle/>
+              <t:OfficeLocation/>
+              <t:Surname>Surname 1</t:Surname>
+              <t:AccountName>Q1ne1H54kk35i44UboHGPFRRPI8=</t:AccountName>
+              <t:ObjectId>2790877950c24ec1a3a9b41ce75aec8a</t:ObjectId>
+              <t:SourceId>EXCH</t:SourceId>
+              <t:YomiCompanyName/>
+            </t:Contact>
+          </m:Items>
+        </m:GetItemResponseMessage>
+      </m:ResponseMessages>
+    </m:GetItemResponse>
+  </s:Body>
+</s:Envelope>

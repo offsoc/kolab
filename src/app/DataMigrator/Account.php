@@ -44,16 +44,19 @@ class Account
      * Input can be a valid URI or "<username>:<password>".
      * For proxy authentication use: "<proxy-user>**<username>" as username.
      *
-     * @param string $input Account specification
+     * @param string $input Account specification (URI)
      */
     public function __construct(string $input)
     {
+        if (!preg_match('|^[a-z]+://.*|', $input)) {
+            throw new \Exception("Invalid URI specified");
+        }
+
         $url = parse_url($input);
 
-        // Not valid URI, try the other form of input
-        if ($url === false || !array_key_exists('scheme', $url)) {
-            list($user, $password) = explode(':', $input, 2);
-            $url = ['user' => $user, 'pass' => $password];
+        // Not valid URI
+        if (!is_array($url) || empty($url)) {
+            throw new \Exception("Invalid URI specified");
         }
 
         if (isset($url['user'])) {

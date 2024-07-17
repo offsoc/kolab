@@ -34,7 +34,7 @@ class Task extends Item
         // Tasks are exported as Email messages in useless format
         // (does not contain all relevant properties)
         // We'll build the iCalendar using properties directly
-        // TODO: This probably should be done with sabre-vobject
+        // TODO: This probably should be done with sabre-vobject and our DAV client
 
         // FIXME: Looks like tasks do not have timezone specified in EWS
         //        and dates are in UTC, shall we remove the 'Z' from dates to make them floating?
@@ -47,7 +47,6 @@ class Task extends Item
             'SUMMARY' => [$item->getSubject()],
             'DESCRIPTION' => [(string) $item->getBody()],
             'PERCENT-COMPLETE' => [intval($item->getPercentComplete())],
-            'STATUS' => [strtoupper($item->getStatus())],
             'X-MS-ID' => [$this->itemId],
         ];
 
@@ -57,6 +56,21 @@ class Task extends Item
 
         if ($startDate = $item->getStartDate()) {
             $data['DTSTART'] = [$this->formatDate($startDate), ['VALUE' => 'DATE-TIME']];
+        }
+
+        if ($status = $item->getStatus()) {
+            $status = strtoupper($status);
+            $status_map = [
+                'COMPLETED' => 'COMPLETED',
+                'INPROGRESS' => 'IN-PROGRESS',
+                'DEFERRED' => 'X-DEFERRED',
+                'NOTSTARTED' => 'X-NOTSTARTED',
+                'WAITINGONOTHERS' => 'X-WAITINGFOROTHERS',
+            ];
+
+            if (isset($status_map[$status])) {
+                $data['STATUS'] = [$status_map[$status]];
+            }
         }
 
         if (($categories = $item->getCategories()) && $categories->String) {

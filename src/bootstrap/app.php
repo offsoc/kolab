@@ -5,15 +5,15 @@ if (!defined('RCUBE_CHARSET')) {
     define('RCUBE_CHARSET', 'UTF-8');
 }
 
-// This function is defined by phpunit as well
-if (!function_exists("array_first")) {
+if (!function_exists('array_first')) {
+
     /**
-    * Get first element from an array
-    *
-    * @param array $array Input array
-    *
-    * @return mixed First element if found, Null otherwise
-    */
+     * Get first element from an array
+     *
+     * @param array $array Input array
+     *
+     * @return mixed First element if found, Null otherwise
+     */
     function array_first($array)
     {
         // @phpstan-ignore-next-line

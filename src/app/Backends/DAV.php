@@ -75,8 +75,14 @@ class DAV
             $principal_href = substr($principal_href, strlen($path));
         }
 
+        $ns = [
+            'xmlns:d="DAV:"',
+            'xmlns:cal="urn:ietf:params:xml:ns:caldav"',
+            'xmlns:card="urn:ietf:params:xml:ns:carddav"',
+        ];
+
         $body = '<?xml version="1.0" encoding="utf-8"?>'
-            . '<d:propfind xmlns:d="DAV:" xmlns:cal="urn:ietf:params:xml:ns:caldav" xmlns:card="urn:ietf:params:xml:ns:carddav">'
+            . '<d:propfind ' . implode(' ', $ns) . '>'
                 . '<d:prop>'
                     . '<cal:calendar-home-set/>'
                     . '<card:addressbook-home-set/>'
@@ -222,7 +228,13 @@ class DAV
     {
         $headers = ['Content-Type' => $object->contentType];
 
-        $response = $this->request($object->href, 'PUT', $object, $headers);
+        $content = (string) $object;
+
+        if (!strlen($content)) {
+            throw new \Exception("Cannot PUT an empty DAV object");
+        }
+
+        $response = $this->request($object->href, 'PUT', $content, $headers);
 
         if ($response !== false) {
             if (!empty($this->responseHeaders['ETag'])) {
@@ -352,9 +364,9 @@ class DAV
      *
      * @param string     $location  Folder location
      * @param DAV\Search $search    Search request parameters
-     * @param ?callable  $callback  Callback to execute on every object
+     * @param callable   $callback  A callback to execute on every item
      *
-     * @return false|array Objects metadata on success, False on error
+     * @return false|array List of objects on success, False on error
      */
     public function search(string $location, DAV\Search $search, $callback = null)
     {
@@ -376,7 +388,13 @@ class DAV
                 $object = $callback($object);
             }
 
-            $objects[] = $object;
+            if ($object) {
+                if (is_array($object)) {
+                    $objects[$object[0]] = $object[1];
+                } else {
+                    $objects[] = $object;
+                }
+            }
         }
 
         return $objects;
@@ -387,7 +405,7 @@ class DAV
      *
      * @param string $location  Folder location
      * @param string $component Object type (VEVENT, VTODO, VCARD)
-     * @param array  $hrefs     List of objects' locations to fetch (empty for all objects)
+     * @param array  $hrefs     List of objects' locations to fetch
      *
      * @return false|array Objects metadata on success, False on error
      */

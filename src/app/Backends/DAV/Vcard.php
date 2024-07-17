@@ -5,14 +5,24 @@ namespace App\Backends\DAV;
 use Illuminate\Support\Str;
 use Sabre\VObject\Reader;
 use Sabre\VObject\Property;
+use Sabre\VObject\Writer;
 
 class Vcard extends CommonObject
 {
     /** @var string Object content type (of the string representation) */
     public $contentType = 'text/vcard; charset=utf-8';
 
+    public $class;
+    public $email = [];
     public $fn;
+    public $kind;
+    public $note;
+    public $members = [];
+    public $prodid;
     public $rev;
+    public $version;
+
+    private $vobject;
 
 
     /**
@@ -48,10 +58,18 @@ class Vcard extends CommonObject
             return;
         }
 
+        $this->vobject = $vobject;
+        $this->members = [];
+
         $string_properties = [
+            'CLASS',
             'FN',
+            'KIND',
+            'NOTE',
+            'PRODID',
             'REV',
             'UID',
+            'VERSION',
         ];
 
         foreach ($vobject->children() as $prop) {
@@ -61,6 +79,26 @@ class Vcard extends CommonObject
 
             switch ($prop->name) {
                 // TODO: Map all vCard properties to class properties
+
+                case 'EMAIL':
+                    $props = [];
+                    foreach ($prop->parameters() as $name => $value) {
+                        $key = Str::camel(strtolower($name));
+                        $props[$key] = (string) $value;
+                    }
+
+                    $props['email'] = (string) $prop;
+                    $this->email[] = $props;
+                    break;
+
+                case 'MEMBER':
+                    foreach ($prop as $member) {
+                        $value = (string) $member;
+                        if (preg_match('/^mailto:/', $value)) {
+                            $this->members[] = $value;
+                        }
+                    }
+                    break;
 
                 default:
                     // map string properties
@@ -75,6 +113,10 @@ class Vcard extends CommonObject
                     }
             }
         }
+
+        if (!empty($this->custom['X-ADDRESSBOOKSERVER-KIND']) && empty($this->kind)) {
+            $this->kind = strtolower($this->custom['X-ADDRESSBOOKSERVER-KIND']);
+        }
     }
 
     /**
@@ -84,7 +126,11 @@ class Vcard extends CommonObject
      */
     public function __toString()
     {
-        // TODO: This will be needed when we want to create/update objects
-        return '';
+        if (!$this->vobject) {
+            // TODO we currently can only serialize a message back that we just read
+            throw new \Exception("Writing from properties is not implemented");
+        }
+
+        return Writer::write($this->vobject);
     }
 }

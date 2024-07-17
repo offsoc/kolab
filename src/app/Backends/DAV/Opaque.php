@@ -6,9 +6,13 @@ class Opaque extends CommonObject
 {
     protected $content;
 
-    public function __construct($filename)
+    public function __construct($content, $is_file = false)
     {
-        $this->content = file_get_contents($filename);
+        if ($is_file) {
+            $this->content = file_get_contents($content);
+        } else {
+            $this->content = $content;
+        }
     }
 
     /**

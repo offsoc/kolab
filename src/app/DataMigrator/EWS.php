@@ -173,9 +173,13 @@ class EWS implements Interface\ExporterInterface
     /**
      * Authenticate with OAuth2 (Office365) - get the token
      */
-    protected function authenticateWithOAuth2(string $server,
-        string $user, string $client_id, string $client_secret, string $tenant_id)
-    {
+    protected function authenticateWithOAuth2(
+        string $server,
+        string $user,
+        string $client_id,
+        string $client_secret,
+        string $tenant_id
+    ) {
         // See https://github.com/Garethp/php-ews/blob/master/examples/basic/authenticatingWithOAuth.php
         // See https://github.com/Garethp/php-ews/issues/236#issuecomment-1292521527
         // To register OAuth2 app goto https://entra.microsoft.com > Applications > App registrations
@@ -382,7 +386,7 @@ class EWS implements Interface\ExporterInterface
     protected function toItem(Type $item, Folder $folder, $existing, $existingIndex): ?Item
     {
         $id = $item->getItemId()->toArray();
-        $exists = false;
+        $exists = null;
 
         // Detect an existing item, skip if nothing changed
         if (isset($existingIndex[$id['Id']])) {
@@ -420,18 +424,20 @@ class EWS implements Interface\ExporterInterface
             $options['version'] = API\ExchangeWebServices::VERSION_2013;
         }
 
-        // If you want to inject your own GuzzleClient for the requests
-        // $options['httpClient]' = $client;
-
         // In debug mode record all responses
-        /*
         if (\config('app.debug')) {
             $options['httpPlayback'] = [
                 'mode' => 'record',
                 'recordLocation' => \storage_path('ews'),
             ];
         }
-        */
+
+        // Options for testing
+        foreach (['httpClient', 'httpPlayback'] as $opt) {
+            if (($val = $this->engine->getOption($opt)) !== null) {
+                $options[$opt] = $val;
+            }
+        }
 
         return $options;
     }

@@ -1,0 +1,20 @@
+Date: Thu, 10 Aug 2012 13:18:31 +0000
+Subject: sync test with attachment
+Message-ID: <sync2@kolab.org>
+From: jack@kolab.org
+To: john@kolab.org
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="BOUNDARY"
+
+--BOUNDARY
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: base64
+
+ZWVl
+--BOUNDARY
+Content-Transfer-Encoding: base64
+Content-Type: image/jpeg; name=logo.gif
+Content-Disposition: inline; filename=logo.gif; size=2574
+
+/9j/4AAQSkZJRgABAgEASABIAAD/4QqARXhpZgAATU0AKgAAAAgABwESAAMAAAABAAEAAAEaAAUA
+--BOUNDARY--

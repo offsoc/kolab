@@ -3,7 +3,6 @@
 namespace App\Console\Commands\Data;
 
 use App\DataMigrator;
-
 use Illuminate\Console\Command;
 
 /**
@@ -13,7 +12,7 @@ use Illuminate\Console\Command;
  *
  * ```
  * php artisan data:migrate \
- *   "ews://$user:$pass@$server?client_id=$client_id&client_secret=$client_secret&tenant_id=$tenant_id" \
+ *   "ews://$user@$server?client_id=$client_id&client_secret=$client_secret&tenant_id=$tenant_id" \
  *   "dav://$dest_user:$dest_pass@$dest_server"
  * ```
  *

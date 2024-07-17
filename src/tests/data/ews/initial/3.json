@@ -1,0 +1,96 @@
+{
+    "error": false,
+    "statusCode": 200,
+    "headers": {
+        "Cache-Control": [
+            "private"
+        ],
+        "Transfer-Encoding": [
+            "chunked"
+        ],
+        "Content-Type": [
+            "text\/xml; charset=utf-8"
+        ],
+        "Server": [
+            "Microsoft-HTTPAPI\/2.0"
+        ],
+        "X-NanoProxy": [
+            "1,1"
+        ],
+        "X-AspNet-Version": [
+            "4.0.30319"
+        ],
+        "Request-Id": [
+            "eb8edd0a-70f5-a87e-535b-5bedf507e372"
+        ],
+        "X-CalculatedFETarget": [
+            "ZR0P278CU012.internal.outlook.com"
+        ],
+        "Alt-Svc": [
+            "h3=\":443\";ma=2592000,h3-29=\":443\";ma=2592000"
+        ],
+        "MS-CV": [
+            "Ct2O6\/VwfqhTW1vt9Qfjcg.1.1"
+        ],
+        "Restrict-Access-Confirm": [
+            "1"
+        ],
+        "X-BackEndHttpStatus": [
+            "200,200"
+        ],
+        "X-BEServer": [
+            "ZRAP278MB0826"
+        ],
+        "X-BeSku": [
+            "WCS7"
+        ],
+        "X-CalculatedBETarget": [
+            "ZRAP278MB0826.CHEP278.PROD.OUTLOOK.COM"
+        ],
+        "X-DiagInfo": [
+            "ZRAP278MB0826"
+        ],
+        "x-EwsHandler": [
+            "GetItem"
+        ],
+        "X-FEEFZInfo": [
+            "ZRH"
+        ],
+        "X-FEProxyInfo": [
+            "ZR0P278CA0210"
+        ],
+        "X-FEServer": [
+            "WA0P291CA0004"
+        ],
+        "x-ms-appId": [
+            "6ce1e52b-cd1d-4663-abc3-368fba0bfae7"
+        ],
+        "X-Proxy-BackendServerStatus": [
+            "200"
+        ],
+        "X-Proxy-RoutingCorrectness": [
+            "1"
+        ],
+        "X-RUM-NotUpdateQueriedPath": [
+            "1"
+        ],
+        "X-RUM-NotUpdateQueriedDbCopy": [
+            "1"
+        ],
+        "X-RUM-Validated": [
+            "1"
+        ],
+        "X-FirstHopCafeEFZ": [
+            "WAW"
+        ],
+        "Strict-Transport-Security": [
+            "max-age=31536000; includeSubDomains"
+        ],
+        "Set-Cookie": [
+            "exchangecookie=fff7d362128747ce83b755cc7b5a43c6; expires=Fri, 11-Jul-2025 12:51:41 GMT; path=\/; secure; HttpOnly"
+        ],
+        "Date": [
+            "Thu, 11 Jul 2024 12:51:40 GMT"
+        ]
+    }
+}

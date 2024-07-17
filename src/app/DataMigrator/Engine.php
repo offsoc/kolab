@@ -50,7 +50,7 @@ class Engine
         $this->options = $options;
 
         // Create a unique identifier for the migration request
-        $queue_id = md5(strval($source) . strval($destination) . $options['type']);
+        $queue_id = md5(strval($source) . strval($destination) . ($options['type'] ?? ''));
 
         // TODO: When running in 'sync' mode we shouldn't create a queue at all
 
@@ -84,9 +84,6 @@ class Engine
         $this->importer = $this->initDriver($destination, ImporterInterface::class);
         $this->importer->authenticate();
 
-        // $this->debug("Source/destination user credentials verified.");
-        $this->debug("Fetching folders hierarchy...");
-
         // Create a queue
         $this->createQueue($queue_id);
 
@@ -97,7 +94,9 @@ class Engine
             mkdir($location, 0740, true);
         }
 
-        $types = preg_split('/\s*,\s*/', strtolower($this->options['type'] ?? ''));
+        $types = preg_split('/\s*,\s*/', strtolower($options['type'] ?? ''));
+
+        $this->debug("Fetching folders hierarchy...");
 
         $folders = $this->exporter->getFolders($types);
         $count = 0;
@@ -238,6 +237,14 @@ class Engine
         } else {
             \Log::debug("[DataMigrator] $line");
         }
+    }
+
+    /**
+     * Get migration option value.
+     */
+    public function getOption(string $name)
+    {
+        return $this->options[$name] ?? null;
     }
 
     /**

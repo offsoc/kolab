@@ -27,6 +27,8 @@ class DAV implements ExporterInterface, ImporterInterface
     /** @var Engine Data migrator engine */
     protected $engine;
 
+    /** @var array Folder paths cache */
+    protected $folderPaths = [];
 
     /**
      * Object constructor
@@ -65,24 +67,13 @@ class DAV implements ExporterInterface, ImporterInterface
      */
     public function createItem(Item $item): void
     {
-        // TODO: For now we do DELETE + PUT. It's because the UID might have changed (which
-        // is the case with e.g. contacts from EWS) causing a discrepancy between UID and href.
-        // This is not necessarily a problem and would not happen to calendar events.
-        // So, maybe we could improve that so DELETE is not needed.
         if ($item->existing) {
-            try {
-                $this->client->delete($item->existing);
-            } catch (\Illuminate\Http\Client\RequestException $e) {
-                // ignore 404 response, item removed in meantime?
-                if ($e->getCode() != 404) {
-                    throw $e;
-                }
-            }
+            $href = $item->existing;
+        } else {
+            $href = $this->getFolderPath($item->folder) . '/' . pathinfo($item->filename, PATHINFO_BASENAME);
         }
 
-        $href = $this->getFolderPath($item->folder) . '/' . pathinfo($item->filename, PATHINFO_BASENAME);
-
-        $object = new DAVOpaque($item->filename);
+        $object = new DAVOpaque($item->filename, true);
         $object->href = $href;
 
         switch ($item->folder->type) {
@@ -180,25 +171,41 @@ class DAV implements ExporterInterface, ImporterInterface
         // Get existing messages' headers from the destination mailbox
         $existing = $importer->getItems($folder);
 
-        $set = new ItemSet();
-
         $dav_type = $this->type2DAV($folder->type);
         $location = $this->getFolderPath($folder);
-        $search = new DAVSearch($dav_type);
+        $search = new DAVSearch($dav_type, false);
 
         // TODO: We request only properties relevant to incremental migration,
         // i.e. to find that something exists and its last update time.
         // Some servers (iRony) do ignore that and return full VCARD/VEVENT/VTODO
         // content, if there's many objects we'll have a memory limit issue.
         // Also, this list should be controlled by the exporter.
-        $search->dataProperties = ['UID', 'REV'];
+        $search->dataProperties = ['UID', 'REV', 'DTSTAMP'];
+
+        $set = new ItemSet();
 
         $result = $this->client->search(
             $location,
             $search,
-            function ($item) use (&$set, $folder, $callback) {
-                // TODO: Skip an item that exists and did not change
-                $exists = false;
+            function ($item) use (&$set, $dav_type, $folder, $existing, $callback) {
+                // Skip an item that exists and did not change
+                $exists = null;
+                if (!empty($existing[$item->uid])) {
+                    $exists = $existing[$item->uid]['href'];
+                    switch ($dav_type) {
+                        case DAVClient::TYPE_VCARD:
+                            if ($existing[$item->uid]['rev'] == $item->rev) {
+                                return null;
+                            }
+                            break;
+                        case DAVClient::TYPE_VEVENT:
+                        case DAVClient::TYPE_VTODO:
+                            if ($existing[$item->uid]['dtstamp'] == (string) $item->dtstamp) {
+                                return null;
+                            }
+                            break;
+                    }
+                }
 
                 $set->items[] = Item::fromArray([
                     'id' => $item->href,
@@ -210,22 +217,24 @@ class DAV implements ExporterInterface, ImporterInterface
                     $callback($set);
                     $set = new ItemSet();
                 }
+
+                return null;
             }
         );
 
-        if ($result === false) {
-            throw new \Exception("Failed to get items from a DAV folder {$location}");
-        }
-
         if (count($set->items)) {
             $callback($set);
+        }
+
+        if ($result === false) {
+            throw new \Exception("Failed to get items from a DAV folder {$location}");
         }
 
         // TODO: Delete items that do not exist anymore?
     }
 
     /**
-     * Get a list of folder items, limited to their essential propeties
+     * Get a list of items, limited to their essential propeties
      * used in incremental migration.
      *
      * @param Folder $folder Folder data
@@ -244,28 +253,33 @@ class DAV implements ExporterInterface, ImporterInterface
         // Some servers (iRony) do ignore that and return full VCARD/VEVENT/VTODO
         // content, if there's many objects we'll have a memory limit issue.
         // Also, this list should be controlled by the exporter.
-        $search->dataProperties = ['UID', 'X-MS-ID', 'REV'];
+        $search->dataProperties = ['UID', 'X-MS-ID', 'REV', 'DTSTAMP'];
 
         $items = $this->client->search(
             $location,
             $search,
-            // @phpstan-ignore-next-line
             function ($item) use ($dav_type) {
                 // Slim down the result to properties we might need
-                $result = [
+                $object = [
                     'href' => $item->href,
                     'uid' => $item->uid,
-                    'x-ms-id' => $item->custom['X-MS-ID'] ?? null,
                 ];
-                /*
+
+                if (!empty($item->custom['X-MS-ID'])) {
+                    $object['x-ms-id'] = $item->custom['X-MS-ID'];
+                }
+
                 switch ($dav_type) {
                     case DAVClient::TYPE_VCARD:
-                        $result['rev'] = $item->rev;
+                        $object['rev'] = $item->rev;
+                        break;
+                    case DAVClient::TYPE_VEVENT:
+                    case DAVClient::TYPE_VTODO:
+                        $object['dtstamp'] = (string) $item->dtstamp;
                         break;
                 }
-                */
 
-                return $result;
+                return [$item->uid, $object];
             }
         );
 
@@ -290,13 +304,16 @@ class DAV implements ExporterInterface, ImporterInterface
                 continue;
             }
 
-            // TODO: Skip other users folders
-
             $folders = $this->client->listFolders($component);
 
             foreach ($folders as $folder) {
+                // Skip other users/shared folders
+                if ($this->shouldSkip($folder)) {
+                    continue;
+                }
+
                 $result[$folder->href] = Folder::fromArray([
-                    'fullname' => $folder->name,
+                    'fullname' => str_replace(' » ', '/', $folder->name),
                     'href' => $folder->href,
                     'type' => $type,
                 ]);
@@ -311,6 +328,11 @@ class DAV implements ExporterInterface, ImporterInterface
      */
     protected function getFolderPath(Folder $folder): string
     {
+        $cache_key = $folder->type . '!' . $folder->fullname;
+        if (isset($this->folderPaths[$cache_key])) {
+            return $this->folderPaths[$cache_key];
+        }
+
         $folders = $this->client->listFolders($this->type2DAV($folder->type));
 
         if ($folders === false) {
@@ -322,7 +344,7 @@ class DAV implements ExporterInterface, ImporterInterface
         // hierarchies support is not full in Kolab 4.
         foreach ($folders as $dav_folder) {
             if (str_replace(' » ', '/', $dav_folder->name) === $folder->fullname) {
-                return rtrim($dav_folder->href, '/');
+                return $this->folderPaths[$cache_key] = rtrim($dav_folder->href, '/');
             }
         }
 
@@ -363,5 +385,27 @@ class DAV implements ExporterInterface, ImporterInterface
             default:
                 throw new \Exception("Cannot map type '{$type}' from DAV");
         }
+    }
+
+    /**
+     * Check if the folder should not be migrated
+     */
+    private function shouldSkip($folder): bool
+    {
+        // When dealing with iRony DAV other user folders names have distinct names
+        // there's no other way to recognize them than by the name pattern.
+        // ;et's hope that users do not have personal folders with names starting with a bracket.
+
+        if (preg_match('~\(.*\) .*~', $folder->name)) {
+            return true;
+        }
+
+        if (str_starts_with($folder->name, 'shared » ')) {
+            return true;
+        }
+
+        // TODO: Cyrus DAV shared folders
+
+        return false;
     }
 }

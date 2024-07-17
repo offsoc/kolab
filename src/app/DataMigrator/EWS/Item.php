@@ -57,16 +57,14 @@ abstract class Item
         $itemId = $item->id;
 
         // Fetch the item
-        $item = $this->driver->api->getItem($itemId, $this->getItemRequest());
+        $ewsItem = $this->driver->api->getItem($itemId, $this->getItemRequest());
 
-        $this->itemId = implode('!', $itemId);
-
-        $uid = $this->getUID($item);
+        $uid = $this->getUID($ewsItem);
 
         \Log::debug("[EWS] Saving item {$uid}...");
 
         // Apply type-specific format converters
-        $content = $this->processItem($item);
+        $content = $this->processItem($ewsItem);
 
         if (!is_string($content)) {
             return;
@@ -134,14 +132,17 @@ abstract class Item
      */
     protected function getUID(Type $item): string
     {
+        $itemId = $item->getItemId()->toArray();
+
         if ($this->uid === null) {
-            // We should generate an UID for objects that do not have it
-            // and inject it into the output file
-            // FIXME: Should we use e.g. md5($itemId->getId()) instead?
-            // It looks that ItemId on EWS consists of three parts separated with a slash,
-            // maybe using the last part as UID would be a solution
-            $this->uid = \App\Utils::uuidStr();
+            // Tasks, contacts, distlists do not have an UID. We have to generate one
+            // and inject it into the output file.
+            // We'll use the ItemId (excluding the ChangeKey part) as a base for the UID.
+            $this->uid = sha1($itemId['Id']);
+            // $this->uid = \App\Utils::uuidStr();
         }
+
+        $this->itemId = implode('!', $itemId);
 
         return $this->uid;
     }

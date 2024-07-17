@@ -1,0 +1,96 @@
+{
+    "error": false,
+    "statusCode": 200,
+    "headers": {
+        "Cache-Control": [
+            "private"
+        ],
+        "Transfer-Encoding": [
+            "chunked"
+        ],
+        "Content-Type": [
+            "text\/xml; charset=utf-8"
+        ],
+        "Server": [
+            "Microsoft-HTTPAPI\/2.0"
+        ],
+        "X-NanoProxy": [
+            "1,1"
+        ],
+        "X-AspNet-Version": [
+            "4.0.30319"
+        ],
+        "Request-Id": [
+            "a4ce6838-81ac-65a7-4759-3d9294738779"
+        ],
+        "X-CalculatedFETarget": [
+            "GV0P278CU004.internal.outlook.com"
+        ],
+        "Alt-Svc": [
+            "h3=\":443\";ma=2592000,h3-29=\":443\";ma=2592000"
+        ],
+        "MS-CV": [
+            "OGjOpKyBp2VHWT2SlHOHeQ.1.1"
+        ],
+        "Restrict-Access-Confirm": [
+            "1"
+        ],
+        "X-BackEndHttpStatus": [
+            "200,200"
+        ],
+        "X-BEServer": [
+            "GVAP278MB0615"
+        ],
+        "X-BeSku": [
+            "WCS6"
+        ],
+        "X-CalculatedBETarget": [
+            "GVAP278MB0615.CHEP278.PROD.OUTLOOK.COM"
+        ],
+        "X-DiagInfo": [
+            "GVAP278MB0615"
+        ],
+        "x-EwsHandler": [
+            "FindFolder"
+        ],
+        "X-FEEFZInfo": [
+            "GVA"
+        ],
+        "X-FEProxyInfo": [
+            "GV0P278CA0060"
+        ],
+        "X-FEServer": [
+            "WA0P291CA0004"
+        ],
+        "x-ms-appId": [
+            "6ce1e52b-cd1d-4663-abc3-368fba0bfae7"
+        ],
+        "X-Proxy-BackendServerStatus": [
+            "200"
+        ],
+        "X-Proxy-RoutingCorrectness": [
+            "1"
+        ],
+        "X-RUM-NotUpdateQueriedPath": [
+            "1"
+        ],
+        "X-RUM-NotUpdateQueriedDbCopy": [
+            "1"
+        ],
+        "X-RUM-Validated": [
+            "1"
+        ],
+        "X-FirstHopCafeEFZ": [
+            "WAW"
+        ],
+        "Strict-Transport-Security": [
+            "max-age=31536000; includeSubDomains"
+        ],
+        "Set-Cookie": [
+            "exchangecookie=faf9d40d8bc14d53a013ecd1336e35b5; expires=Fri, 11-Jul-2025 12:51:36 GMT; path=\/; secure; HttpOnly"
+        ],
+        "Date": [
+            "Thu, 11 Jul 2024 12:51:36 GMT"
+        ]
+    }
+}

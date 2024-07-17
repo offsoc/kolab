@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+  <s:Header>
+    <h:ServerVersionInfo xmlns:h="http://schemas.microsoft.com/exchange/services/2006/types" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" MajorVersion="15" MinorVersion="20" MajorBuildNumber="7762" MinorBuildNumber="21" Version="V2018_01_08"/>
+  </s:Header>
+  <s:Body>
+    <m:GetItemResponse xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types">
+      <m:ResponseMessages>
+        <m:GetItemResponseMessage ResponseClass="Success">
+          <m:ResponseCode>NoError</m:ResponseCode>
+          <m:Items>
+            <t:DistributionList>
+              <t:ItemId Id="AAMkAGEzOGRlODRiLTBkN2ItNDgwZS04ZDJmLTM5NDEyY2Q0NGQ0OABGAAAAAAC9tlDYSlG2TaxWBrA1OzWtBwAs2ajhknXlRYN/pbC8JqblAAAAAAEOAAAs2ajhknXlRYN/pbC8JqblAAJo4kQ5AAA=" ChangeKey="EgAAABYAAAAs2ajhknXlRYN/pbC8JqblAAJo3cuK"/>
+              <t:Subject>nowa lista</t:Subject>
+              <t:LastModifiedTime>2024-06-27T13:44:32Z</t:LastModifiedTime>
+              <t:DisplayName>nowa lista</t:DisplayName>
+              <t:FileAs>nowa lista</t:FileAs>
+              <t:Members>
+                <t:Member Key="AAAAAIErH6S+oxAZnW4A3QEPVAIAAAGAYQBsAGUAYwBAAGEAbABlAGMALgBwAGwAAABTAE0AVABQAAAAYQBsAGUAYwBAAGEAbABlAGMALgBwAGwAAAA=">
+                  <t:Mailbox>
+                    <t:Name>alec@kolab.org</t:Name>
+                    <t:EmailAddress>alec@kolab.org</t:EmailAddress>
+                    <t:RoutingType>SMTP</t:RoutingType>
+                    <t:MailboxType>OneOff</t:MailboxType>
+                  </t:Mailbox>
+                  <t:Status>Normal</t:Status>
+                </t:Member>
+                <t:Member Key="AAAAAMCRrdNRnc8RpKkAqgBH+qS1AAAAANynQMjAQhAatLkIACsv4YIBAAAAAAAAAC9vPUV4Y2hhbmdlTGFicy9vdT1FeGNoYW5nZSBBZG1pbmlzdHJhdGl2ZSBHcm91cCAoRllESUJPSEYyM1NQRExUKS9jbj1SZWNpcGllbnRzL2NuPTI1MjA0YzJjNTA1MDRiNmVhYjlhNDk1Yjg2YTg0YjVkLWNocmlzdGlhbgA=">
+                  <t:Mailbox>
+                    <t:Name>Christian Mollekopf</t:Name>
+                    <t:EmailAddress>christian@outlook.com</t:EmailAddress>
+                    <t:RoutingType>SMTP</t:RoutingType>
+                    <t:MailboxType>Mailbox</t:MailboxType>
+                  </t:Mailbox>
+                  <t:Status>Normal</t:Status>
+                </t:Member>
+              </t:Members>
+            </t:DistributionList>
+          </m:Items>
+        </m:GetItemResponseMessage>
+      </m:ResponseMessages>
+    </m:GetItemResponse>
+  </s:Body>
+</s:Envelope>

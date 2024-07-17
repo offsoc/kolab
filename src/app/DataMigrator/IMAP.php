@@ -73,6 +73,8 @@ class IMAP implements ExporterInterface, ImporterInterface
                 throw new \Exception("Failed to create an IMAP folder {$folder->fullname}");
             }
         }
+
+        // TODO: Migrate folder subscription state
     }
 
     /**
@@ -86,15 +88,39 @@ class IMAP implements ExporterInterface, ImporterInterface
     {
         $mailbox = $item->folder->fullname;
 
-        // TODO: When updating an email we have to just update flags
-
         if ($item->filename) {
             $result = $this->imap->appendFromFile(
-                $mailbox, $item->filename, null, $item->data['flags'], $item->data['internaldate'], true
+                $mailbox,
+                $item->filename,
+                null,
+                $item->data['flags'],
+                $item->data['internaldate'],
+                true
             );
 
             if ($result === false) {
                 throw new \Exception("Failed to append IMAP message into {$mailbox}");
+            }
+        }
+
+        // When updating an existing email message we have to...
+        if ($item->existing) {
+            if (!empty($result)) {
+                // Remove the old one
+                $this->imap->flag($mailbox, $item->existing['uid'], 'DELETED');
+                $this->imap->expunge($mailbox, $item->existing['uid']);
+            } else {
+                // Update flags
+                foreach ($item->existing['flags'] as $flag) {
+                    if (!in_array($flag, $item->data['flags'])) {
+                        $this->imap->unflag($mailbox, $item->existing['uid'], $flag);
+                    }
+                }
+                foreach ($item->data['flags'] as $flag) {
+                    if (!in_array($flag, $item->existing['flags'])) {
+                        $this->imap->flag($mailbox, $item->existing['uid'], $flag);
+                    }
+                }
             }
         }
     }
@@ -118,43 +144,50 @@ class IMAP implements ExporterInterface, ImporterInterface
         // Remove flags that we can't append (e.g. RECENT)
         $flags = $this->filterImapFlags(array_keys($header->flags));
 
-        // TODO: If message already exists in the destination account we should update flags
+        // If message already exists in the destination account we should update only flags
         // and be done with it. On the other hand for Drafts it's not unusual to get completely
         // different body for the same Message-ID. Same can happen not only in Drafts, I suppose.
+        // So, we compare size and INTERNALDATE timestamp.
+        if (
+            !$item->existing
+            || $header->timestamp != $item->existing['timestamp']
+            || $header->size != $item->existing['size']
+        ) {
+            // Save the message content to a file
+            $location = $item->folder->location;
 
-        // Save the message content to a file
-        $location = $item->folder->location;
+            if (!file_exists($location)) {
+                mkdir($location, 0740, true);
+            }
 
-        if (!file_exists($location)) {
-            mkdir($location, 0740, true);
-        }
+            // TODO: What if parent folder not yet exists?
+            $location .= '/' . $uid . '.eml';
 
-        // TODO: What if parent folder not yet exists?
-        $location .= '/' . $uid . '.eml';
+            // TODO: We should consider streaming the message, it should be possible
+            // with append() and handlePartBody(), but I don't know if anyone tried that.
 
-        // TODO: We should consider streaming the message, it should be possible
-        // with append() and handlePartBody(), but I don't know if anyone tried that.
+            $fp = fopen($location, 'w');
 
-        $fp = fopen($location, 'w');
+            if (!$fp) {
+                throw new \Exception("Failed to write to {$location}");
+            }
 
-        if (!$fp) {
-            throw new \Exception("Failed to write to {$location}");
-        }
+            $result = $this->imap->handlePartBody($mailbox, $uid, true, '', null, null, $fp);
 
-        $result = $this->imap->handlePartBody($mailbox, $uid, true, '', null, null, $fp);
+            if ($result === false) {
+                fclose($fp);
+                throw new \Exception("Failed to fetch IMAP message for {$mailbox}/{$uid}");
+            }
 
-        if ($result === false) {
+            $item->filename = $location;
+
             fclose($fp);
-            throw new \Exception("Failed to fetch IMAP message for {$mailbox}/{$uid}");
         }
 
-        $item->filename = $location;
         $item->data = [
             'flags' => $flags,
             'internaldate' => $header->internaldate,
         ];
-
-        fclose($fp);
     }
 
     /**
@@ -168,6 +201,7 @@ class IMAP implements ExporterInterface, ImporterInterface
         $mailbox = $folder->fullname;
 
         // TODO: We should probably first use SEARCH/SORT to skip messages marked as \Deleted
+        // It would also allow us to get headers in chunks 200 messages at a time, or so.
         // TODO: fetchHeaders() fetches too many headers, we should slim-down, here we need
         // only UID FLAGS INTERNALDATE BODY.PEEK[HEADER.FIELDS (DATE FROM MESSAGE-ID)]
         $messages = $this->imap->fetchHeaders($mailbox, '1:*', true, false, ['Message-Id']);
@@ -184,17 +218,26 @@ class IMAP implements ExporterInterface, ImporterInterface
         $set = new ItemSet();
 
         foreach ($messages as $message) {
-            // TODO: If Message-Id header does not exist create it based on internaldate/From/Date
+            // If Message-Id header does not exist create it based on internaldate/From/Date
+            $id = $this->getMessageId($message, $mailbox);
 
             // Skip message that exists and did not change
-            $exists = false;
-            if (isset($existing[$message->messageID])) {
-                // TODO: Compare flags (compare message size, internaldate?)
-                continue;
+            $exists = null;
+            if (isset($existing[$id])) {
+                $flags = $this->filterImapFlags(array_keys($message->flags));
+                if (
+                    $flags == $existing[$id]['flags']
+                    && $message->timestamp == $existing[$id]['timestamp']
+                    && $message->size == $existing[$id]['size']
+                ) {
+                    continue;
+                }
+
+                $exists = $existing[$id];
             }
 
             $set->items[] = Item::fromArray([
-                'id' => $message->uid . ':' . $message->messageID,
+                'id' => $message->uid . ':' . $id,
                 'folder' => $folder,
                 'existing' => $exists,
             ]);
@@ -222,6 +265,8 @@ class IMAP implements ExporterInterface, ImporterInterface
         if ($folders === false) {
             throw new \Exception("Failed to get list of IMAP folders");
         }
+
+        // TODO: Migrate folder subscription state
 
         $result = [];
 
@@ -263,10 +308,14 @@ class IMAP implements ExporterInterface, ImporterInterface
             // Remove flags that we can't append (e.g. RECENT)
             $flags = $this->filterImapFlags(array_keys($message->flags));
 
-            // TODO: Generate message ID if the header does not exist
-            $result[$message->messageID] = [
+            // Generate message ID if the header does not exist
+            $id = $this->getMessageId($message, $mailbox);
+
+            $result[$id] = [
                 'uid' => $message->uid,
                 'flags' => $flags,
+                'size' => $message->size,
+                'timestamp' => $message->timestamp,
             ];
         }
 
@@ -355,7 +404,7 @@ class IMAP implements ExporterInterface, ImporterInterface
         return array_filter(
             $flags,
             function ($flag) {
-                return in_array($flag, $this->imap->flags);
+                return isset($this->imap->flags[$flag]);
             }
         );
     }
@@ -366,12 +415,23 @@ class IMAP implements ExporterInterface, ImporterInterface
     private function shouldSkip($folder): bool
     {
         // TODO: This should probably use NAMESPACE information
-        // TODO: This should also skip other user folders
 
-        if (preg_match("/Shared Folders\/.*/", $folder)) {
+        if (preg_match('~(Shared Folders|Other Users)/.*~', $folder)) {
             return true;
         }
 
         return false;
+    }
+
+    /**
+     * Return Message-Id, generate unique identifier if Message-Id does not exist
+     */
+    private function getMessageId($message, $folder): string
+    {
+        if (!empty($message->messageID)) {
+            return $message->messageID;
+        }
+
+        return md5($folder . $message->from . ($message->date ?: $message->timestamp));
     }
 }

@@ -1,0 +1,96 @@
+{
+    "error": false,
+    "statusCode": 200,
+    "headers": {
+        "Cache-Control": [
+            "private"
+        ],
+        "Transfer-Encoding": [
+            "chunked"
+        ],
+        "Content-Type": [
+            "text\/xml; charset=utf-8"
+        ],
+        "Server": [
+            "Microsoft-HTTPAPI\/2.0"
+        ],
+        "X-NanoProxy": [
+            "1,1"
+        ],
+        "X-AspNet-Version": [
+            "4.0.30319"
+        ],
+        "Request-Id": [
+            "447884f2-e7b4-e0b7-35eb-415042ed57b1"
+        ],
+        "X-CalculatedFETarget": [
+            "ZR0P278CU001.internal.outlook.com"
+        ],
+        "Alt-Svc": [
+            "h3=\":443\";ma=2592000,h3-29=\":443\";ma=2592000"
+        ],
+        "MS-CV": [
+            "8oR4RLTnt+A160FQQu1XsQ.1.1"
+        ],
+        "Restrict-Access-Confirm": [
+            "1"
+        ],
+        "X-BackEndHttpStatus": [
+            "200,200"
+        ],
+        "X-BEServer": [
+            "ZR1P278MB1172"
+        ],
+        "X-BeSku": [
+            "WCS7"
+        ],
+        "X-CalculatedBETarget": [
+            "ZR1P278MB1172.CHEP278.PROD.OUTLOOK.COM"
+        ],
+        "X-DiagInfo": [
+            "ZR1P278MB1172"
+        ],
+        "x-EwsHandler": [
+            "GetItem"
+        ],
+        "X-FEEFZInfo": [
+            "ZRH"
+        ],
+        "X-FEProxyInfo": [
+            "ZR0P278CA0015"
+        ],
+        "X-FEServer": [
+            "WA0P291CA0004"
+        ],
+        "x-ms-appId": [
+            "6ce1e52b-cd1d-4663-abc3-368fba0bfae7"
+        ],
+        "X-Proxy-BackendServerStatus": [
+            "200"
+        ],
+        "X-Proxy-RoutingCorrectness": [
+            "1"
+        ],
+        "X-RUM-NotUpdateQueriedPath": [
+            "1"
+        ],
+        "X-RUM-NotUpdateQueriedDbCopy": [
+            "1"
+        ],
+        "X-RUM-Validated": [
+            "1"
+        ],
+        "X-FirstHopCafeEFZ": [
+            "WAW"
+        ],
+        "Strict-Transport-Security": [
+            "max-age=31536000; includeSubDomains"
+        ],
+        "Set-Cookie": [
+            "exchangecookie=38c00eae8e8243da82af82c2859ab5ec; expires=Fri, 11-Jul-2025 12:51:51 GMT; path=\/; secure; HttpOnly"
+        ],
+        "Date": [
+            "Thu, 11 Jul 2024 12:51:51 GMT"
+        ]
+    }
+}

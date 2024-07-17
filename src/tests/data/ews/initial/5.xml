@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+  <s:Header>
+    <h:ServerVersionInfo xmlns:h="http://schemas.microsoft.com/exchange/services/2006/types" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" MajorVersion="15" MinorVersion="20" MajorBuildNumber="7762" MinorBuildNumber="21" Version="V2018_01_08"/>
+  </s:Header>
+  <s:Body>
+    <m:GetItemResponse xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types">
+      <m:ResponseMessages>
+        <m:GetItemResponseMessage ResponseClass="Success">
+          <m:ResponseCode>NoError</m:ResponseCode>
+          <m:Items>
+            <t:Contact>
+              <t:MimeContent CharacterSet="UTF-8">QkVHSU46VkNBUkQNClBST0ZJTEU6VkNBUkQNClZFUlNJT046My4wDQpNQUlMRVI6TWljcm9zb2Z0IEV4Y2hhbmdlDQpQUk9ESUQ6TWljcm9zb2Z0IEV4Y2hhbmdlDQpGTjpOb3d5IEtvbnRha3QNCk46O05vd3kgS29udGFrdDs7Ow0KTk9URToNCk9SRzo7DQpDTEFTUzpQVUJMSUMNCkFEUjtUWVBFPVdPUks6Ozs7Ozs7DQpBRFI7VFlQRT1IT01FOjs7Ozs7Ow0KQURSO1RZUEU9UE9TVEFMOjs7Ozs7Ow0KVEVMO1RZUEU9Q0VMTDoxMjM0NTU2Njc5MjAwDQpURUw7VFlQRT1QQUdFUjoNClRFTDtUWVBFPUNBUjoNClRFTDtUWVBFPVZPSUNFOg0KWC1NUy1TUE9VU0U7VFlQRT1OOg0KWC1NUy1NQU5BR0VSO1RZUEU9TjoNClgtTVMtQVNTSVNUQU5UO1RZUEU9TjoNClRJVExFOg0KVVJMO1RZUEU9SE9NRToNClVSTDtUWVBFPVdPUks6DQpSRVY7VkFMVUU9REFURS1USU1FOjIwMjQtMDctMDRUMDg6MzU6NDgsNDkwWg0KRU5EOlZDQVJEDQo=</t:MimeContent>
+              <t:ItemId Id="AAMkAGEzOGRlODRiLTBkN2ItNDgwZS04ZDJmLTM5NDEyY2Q0NGQ0OABGAAAAAAC9tlDYSlG2TaxWBrA1OzWtBwAs2ajhknXlRYN/pbC8JqblAAAAAAEOAAAs2ajhknXlRYN/pbC8JqblAAJtnpOaAAA=" ChangeKey="EQAAABYAAAAs2ajhknXlRYN/pbC8JqblAAJtmMpk"/>
+              <t:HasAttachments>false</t:HasAttachments>
+              <t:Culture>en-US</t:Culture>
+              <t:LastModifiedTime>2024-07-04T08:35:48Z</t:LastModifiedTime>
+              <t:FileAs/>
+              <t:DisplayName>Nowy Kontakt</t:DisplayName>
+              <t:GivenName>Nowy Kontakt</t:GivenName>
+              <t:CompleteName>
+                <t:FirstName>Nowy Kontakt</t:FirstName>
+                <t:FullName>Nowy Kontakt</t:FullName>
+              </t:CompleteName>
+              <t:EmailAddresses>
+                <t:Entry Key="EmailAddress1" Name="test@kolab.org" RoutingType="SMTP" MailboxType="Contact">test@kolab.org</t:Entry>
+              </t:EmailAddresses>
+              <t:PhoneNumbers>
+                <t:Entry Key="CarPhone"/>
+                <t:Entry Key="MobilePhone">1234556679200</t:Entry>
+                <t:Entry Key="OtherTelephone"/>
+                <t:Entry Key="Pager"/>
+              </t:PhoneNumbers>
+              <t:Department/>
+              <t:JobTitle/>
+              <t:OfficeLocation/>
+              <t:AccountName>Q1ne1H54kk35i44UboHGPFRRPI8=</t:AccountName>
+              <t:ObjectId>8097ef714bb84706bbe35dcdbad33d16</t:ObjectId>
+              <t:SourceId>EXCH</t:SourceId>
+              <t:YomiCompanyName/>
+            </t:Contact>
+          </m:Items>
+        </m:GetItemResponseMessage>
+      </m:ResponseMessages>
+    </m:GetItemResponse>
+  </s:Body>
+</s:Envelope>

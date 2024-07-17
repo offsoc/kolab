@@ -1,0 +1,6 @@
+BEGIN:VCARD
+VERSION:3.0
+UID:uid1
+FN:Jane Doe
+N:Doe;Jane;J.;;
+END:VCARD

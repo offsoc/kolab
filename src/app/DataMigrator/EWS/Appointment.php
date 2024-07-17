@@ -37,6 +37,9 @@ class Appointment extends Item
      */
     protected function processItem(Type $item)
     {
+        // Initialize $this->itemId (for some unit tests)
+        $this->getUID($item);
+
         // Decode MIME content
         $ical = base64_decode((string) $item->getMimeContent());
 
@@ -90,11 +93,10 @@ class Appointment extends Item
      */
     protected function getUID(Type $item): string
     {
-        if ($this->uid === null) {
-            // Only appointments have UID property
-            $this->uid = $item->getUID();
-        }
+        // Only appointments have UID property
+        $this->uid = $item->getUID();
 
-        return $this->uid;
+        // This also sets $this->itemId;
+        return parent::getUID($item);
     }
 }

@@ -16,8 +16,13 @@ class Item
     /** @var string Object class */
     public $class;
 
-    /** @var false|string Identifier/Location of the item if exists in the destination folder */
-    public $existing = false;
+    /**
+     * Identifier/Location of the item if exists in the destination folder.
+     * And/or some metadata on the existing item. This information is driver specific.
+     *
+     * @var string|array|null
+     */
+    public $existing;
 
     /** @var ?string Exported object location in the local storage */
     public $filename;

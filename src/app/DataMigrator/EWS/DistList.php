@@ -34,23 +34,34 @@ class DistList extends Item
             $vcard .= $this->formatProp($key, $prop[0], isset($prop[1]) ? $prop[1] : []);
         }
 
+        // TODO: The group description property in Exchange is not available via EWS XML,
+        // at least not at outlook.office.com (Exchange 2010). It is available in the
+        // MimeContent which is in email message format.
+
+        // TODO: mailto: members are not supported by Kolab Webclient
+        // We need to use MEMBER:urn:uuid:9bd97510-9dbb-4810-a144-6180962df5e0 syntax
+        // But do not forget lists can have members that are not contacts
+
         // Process list members
-        // Note: The fact that getMembers() returns stdClass is probably a bug in php-ews
-        foreach ($item->getMembers()->Member as $member) {
-            $mailbox = $member->getMailbox();
-            $mailto = $mailbox->getEmailAddress();
-            $name = $mailbox->getName();
+        if ($members = $item->getMembers()) {
+            // The Member property is either array (multiple members) or Type\MemberType
+            // object (a group with just a one member).
+            if (!is_array($members->Member)) {
+                $members->Member = [$members->Member];
+            }
 
-            // FIXME: Investigate if mailto: members are handled properly by Kolab
-            //        or we need to use MEMBER:urn:uuid:9bd97510-9dbb-4810-a144-6180962df5e0 syntax
-            //        But do not forget lists can have members that are not contacts
+            foreach ($members->Member as $member) {
+                $mailbox = $member->getMailbox();
+                $mailto = $mailbox->getEmailAddress();
+                $name = $mailbox->getName();
 
-            if ($mailto) {
-                if ($name && $name != $mailto) {
-                    $mailto = urlencode(sprintf('"%s" <%s>', addcslashes($name, '"'), $mailto));
+                if ($mailto) {
+                    if ($name && $name != $mailto) {
+                        $mailto = urlencode(sprintf('"%s" <%s>', addcslashes($name, '"'), $mailto));
+                    }
+
+                    $vcard .= $this->formatProp('MEMBER', "mailto:{$mailto}");
                 }
-
-                $vcard .= $this->formatProp('MEMBER', "mailto:{$mailto}");
             }
         }
 

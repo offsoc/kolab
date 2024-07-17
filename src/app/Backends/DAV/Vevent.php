@@ -3,7 +3,10 @@
 namespace App\Backends\DAV;
 
 use Illuminate\Support\Str;
-use Sabre\VObject;
+use Sabre\VObject\Component;
+use Sabre\VObject\Reader;
+use Sabre\VObject\Property;
+use Sabre\VObject\Writer;
 
 class Vevent extends CommonObject
 {
@@ -11,11 +14,16 @@ class Vevent extends CommonObject
     public $contentType = 'text/calendar; charset=utf-8';
 
     public $attendees = [];
+    public $class;
     public $comment;
     public $description;
+    public $exdate = [];
     public $location;
     public $organizer;
-    public $recurrence = [];
+    public $priority;
+    public $prodid;
+    public $rdate = [];
+    public $rrule = [];
     public $sequence;
     public $status;
     public $summary;
@@ -25,7 +33,6 @@ class Vevent extends CommonObject
 
     public $dtstart;
     public $dtend;
-    public $due;
     public $created;
     public $lastModified;
     public $dtstamp;
@@ -59,14 +66,17 @@ class Vevent extends CommonObject
      */
     protected function fromIcal(string $ical): void
     {
-        $options = VObject\Reader::OPTION_FORGIVING | VObject\Reader::OPTION_IGNORE_INVALID_LINES;
-        $this->vobject = VObject\Reader::read($ical, $options);
+        $this->vobject = Reader::read($ical, Reader::OPTION_FORGIVING | Reader::OPTION_IGNORE_INVALID_LINES);
 
         if ($this->vobject->name != 'VCALENDAR') {
             return;
         }
 
         $selfType = strtoupper(class_basename(get_class($this)));
+
+        if (!empty($this->vobject->PRODID)) {
+            $this->prodid = (string) $this->vobject->PRODID;
+        }
 
         foreach ($this->vobject->getComponents() as $component) {
             if ($component->name == $selfType) {
@@ -79,14 +89,16 @@ class Vevent extends CommonObject
     /**
      * Set object properties from a Sabre/VObject component object
      *
-     * @param VObject\Component $vobject Sabre/VObject component
+     * @param Component $vobject Sabre/VObject component
      */
-    protected function fromVObject(VObject\Component $vobject): void
+    protected function fromVObject(Component $vobject): void
     {
         $string_properties = [
+            'CLASS',
             'COMMENT',
             'DESCRIPTION',
             'LOCATION',
+            'PRIORITY',
             'SEQUENCE',
             'STATUS',
             'SUMMARY',
@@ -105,14 +117,13 @@ class Vevent extends CommonObject
 
         // map other properties
         foreach ($vobject->children() as $prop) {
-            if (!($prop instanceof VObject\Property)) {
+            if (!($prop instanceof Property)) {
                 continue;
             }
 
             switch ($prop->name) {
                 case 'DTSTART':
                 case 'DTEND':
-                case 'DUE':
                 case 'CREATED':
                 case 'LAST-MODIFIED':
                 case 'DTSTAMP':
@@ -122,7 +133,7 @@ class Vevent extends CommonObject
                     break;
 
                 case 'RRULE':
-                    $params = !empty($this->recurrence) ? $this->recurrence : [];
+                    $params = [];
 
                     foreach ($prop->getParts() as $k => $v) {
                         $params[Str::camel(strtolower($k))] = is_array($v) ? implode(',', $v) : $v;
@@ -136,20 +147,14 @@ class Vevent extends CommonObject
                         $params['interval'] = 1;
                     }
 
-                    $this->recurrence = array_filter($params);
+                    $this->rrule = array_filter($params);
                     break;
 
                 case 'EXDATE':
                 case 'RDATE':
                     $key = strtolower($prop->name);
-                    $dates = []; // TODO
 
-                    if (!empty($this->recurrence[$key])) {
-                        $this->recurrence[$key] = array_merge($this->recurrence[$key], $dates);
-                    } else {
-                        $this->recurrence[$key] = $dates;
-                    }
-
+                    // TODO
                     break;
 
                 case 'ATTENDEE':
@@ -166,14 +171,14 @@ class Vevent extends CommonObject
                         $key = Str::camel(strtolower($name));
                         switch ($name) {
                             case 'RSVP':
-                                $params[$key] = strtolower($value) == 'true';
+                                $attendee[$key] = strtolower($value) == 'true';
                                 break;
                             case 'CN':
-                                $params[$key] = str_replace('\,', ',', strval($value));
+                                $attendee[$key] = str_replace('\,', ',', strval($value));
                                 break;
                             default:
                                 if (in_array($name, $attendeeProps)) {
-                                    $params[$key] = strval($value);
+                                    $attendee[$key] = strval($value);
                                 }
                                 break;
                         }
@@ -281,9 +286,9 @@ class Vevent extends CommonObject
     public function __toString()
     {
         if (!$this->vobject) {
-            //TODO we currently can only serialize a message back that we just read
+            // TODO we currently can only serialize a message back that we just read
             throw new \Exception("Writing from properties is not implemented");
         }
-        return VObject\Writer::write($this->vobject);
+        return Writer::write($this->vobject);
     }
 }
