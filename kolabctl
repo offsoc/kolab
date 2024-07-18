@@ -353,16 +353,16 @@ kolab__build() {
         podman__build_webapp
         podman__build_meet
 
-        podman__build docker/imap kolab-imap
+        podman__build_imap
         podman__build docker/mariadb mariadb
         podman__build docker/redis redis
-        podman__build docker/proxy kolab-proxy
+        podman__build_proxy
         podman__build_roundcube
 
-        podman__build docker/utils utils
-        podman__build docker/postfix kolab-postfix
-        podman__build docker/amavis kolab-amavis
-        podman__build docker/collabora kolab-collabora --build-arg=REPOSITORY="https://www.collaboraoffice.com/repos/CollaboraOnline/23.05-CODE/CODE-rpm/"
+        podman__build_utils
+        podman__build_postfix
+        podman__build_amavis
+        podman__build_collabora
         env CERT_DIR=docker/certs APP_DOMAIN=$HOST bin/regen-certs
     fi
 }

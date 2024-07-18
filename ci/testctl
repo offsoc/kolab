@@ -139,10 +139,10 @@ kolab__build() {
         podman__build_webapp
         podman__build_meet
 
-        podman__build docker/imap kolab-imap
+        podman__build_imap
         podman__build docker/mariadb mariadb
         podman__build docker/redis redis
-        podman__build docker/proxy kolab-proxy
+        podman__build_proxy
         podman__build_roundcube
 
         podman__build docker/tests kolab-tests --ulimit nofile=65535:65535

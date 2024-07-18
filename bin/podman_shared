@@ -53,21 +53,45 @@ podman__build_postfix() {
     podman__build docker/postfix kolab-postfix
 }
 
+podman__build_imap() {
+    podman__build docker/imap kolab-imap \
+        ${IMAP_GIT_REMOTE:+"--build-arg=GIT_REMOTE=$IMAP_GIT_REMOTE"} \
+        ${IMAP_GIT_REF:+"--build-arg=GIT_REF=$IMAP_GIT_REF"}
+}
+
+podman__build_amavis() {
+    podman__build docker/amavis kolab-amavis
+}
+
+podman__build_proxy() {
+    podman__build docker/proxy kolab-proxy
+}
+
+podman__build_collabora() {
+    podman build docker/collabora -t kolab-collabora --build-arg=REPOSITORY="https://www.collaboraoffice.com/repos/CollaboraOnline/23.05-CODE/CODE-rpm/"
+}
+
+podman__build_coturn() {
+    podman build docker/coturn -t kolab-coturn
+}
+
+podman__build_utils() {
+    podman build docker/utils -t kolab-utils
+}
+
 podman__build_all() {
     podman__build_base
     podman__build_webapp
     podman__build_meet
-    podman build docker/postfix -t kolab-postfix
-    podman build docker/imap -t kolab-imap
-        ${IMAP_GIT_REMOTE:+"--build-arg=GIT_REMOTE=$IMAP_GIT_REMOTE"} \
-        ${IMAP_GIT_REF:+"--build-arg=GIT_REF=$IMAP_GIT_REF"}
-    podman build docker/amavis -t kolab-amavis
-    podman build docker/collabora -t kolab-collabora --build-arg=REPOSITORY="https://www.collaboraoffice.com/repos/CollaboraOnline/23.05-CODE/CODE-rpm/"
+    podman__build_postfix
+    podman__build_imap
+    podman__build_amavis
+    podman__build_collabora
     podman build docker/mariadb -t mariadb
     podman build docker/redis -t redis
-    podman build docker/proxy -t kolab-proxy
-    podman build docker/coturn -t kolab-coturn
-    podman build docker/utils -t kolab-utils
+    podman__build_proxy
+    podman__build_coturn
+    podman__build_utils
     podman build docker/fluentbit -t fluentbit
     podman__build_roundcube
 }
