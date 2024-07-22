@@ -4,6 +4,7 @@ namespace App\DataMigrator\Jobs;
 
 use App\DataMigrator\Engine;
 use App\DataMigrator\Interface\Item;
+use App\DataMigrator\Queue;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -19,6 +20,9 @@ class ItemJob implements ShouldQueue
 
     /** @var int The number of times the job may be attempted. */
     public $tries = 3;
+
+    /** @var int The number of seconds to wait before retrying the job. */
+    public $backoff = 5;
 
     /** @var Item Job data */
     protected $item;
@@ -56,9 +60,7 @@ class ItemJob implements ShouldQueue
      */
     public function failed(\Exception $exception)
     {
-        // TODO: Count failed jobs in the queue
-        // I'm not sure how to do this after the final failure (after X tries)
-        // In other words how do we know all jobs in a queue finished (successfully or not)
-        // Probably we have to set $tries = 1
+        // This method is executed after all tries fail
+        // TODO: Queue::find($this->item->folder->queueId)->bumpJobsFailed();
     }
 }
