@@ -40,6 +40,19 @@ class IMAP implements ExporterInterface, ImporterInterface
     }
 
     /**
+     * Object destructor
+     */
+    public function __destruct()
+    {
+        try {
+            $this->imap->closeConnection();
+        } catch (\Throwable $e) {
+            // Ignore. It may throw when destructing the object in tests
+            // We also don't really care abount an error on this operation
+        }
+    }
+
+    /**
      * Authenticate
      */
     public function authenticate(): void
