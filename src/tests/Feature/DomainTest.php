@@ -138,9 +138,6 @@ class DomainTest extends TestCase
                     $domainNamespace === $domain->namespace;
             }
         );
-
-        $job = new \App\Jobs\Domain\CreateJob($domain->id);
-        $job->handle();
     }
 
     /**

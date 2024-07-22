@@ -15,7 +15,7 @@ class DistListTest extends TestCase
     /**
      * Test contact item processing
      */
-    public function testProcessItem(): void
+    public function testConvertItem(): void
     {
         $account = new Account('ews://test:test@test');
         $engine = new Engine();
@@ -37,6 +37,11 @@ class DistListTest extends TestCase
             'LastModifiedTime' => '2024-06-27T13:44:32Z',
             'DisplayName' => 'Lista',
             'FileAs' => 'lista',
+            'Body' => [
+                'BodyType' => 'Text',
+                'IsTruncated' => false,
+                '_value' => 'distlist body',
+            ],
             'Members' => (object) [
                 'Member' => [
                     Type\MemberType::buildFromArray([
@@ -67,7 +72,7 @@ class DistListTest extends TestCase
         ]);
 
         // Convert the Exchange item into vCard
-        $vcard = $this->invokeMethod($distlist, 'processItem', [$item]);
+        $vcard = $this->invokeMethod($distlist, 'convertItem', [$item]);
 
         // Parse the vCard
         $distlist = new Vcard();
@@ -78,6 +83,7 @@ class DistListTest extends TestCase
         $this->assertMatchesRegularExpression('/^[a-f0-9]{40}$/', $distlist->uid);
         $this->assertSame('group', $distlist->kind);
         $this->assertSame('Lista', $distlist->fn);
+        $this->assertSame('distlist body', $distlist->note);
         $this->assertSame('Kolab EWS Data Migrator', $distlist->prodid);
         $this->assertSame('2024-06-27T13:44:32Z', $distlist->rev);
 

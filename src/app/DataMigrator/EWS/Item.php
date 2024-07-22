@@ -3,8 +3,10 @@
 namespace App\DataMigrator\EWS;
 
 use App\DataMigrator\EWS;
+use App\DataMigrator\Engine;
 use App\DataMigrator\Interface\Folder as FolderInterface;
 use App\DataMigrator\Interface\Item as ItemInterface;
+use App\DataMigrator\Interface\ItemSet as ItemSetInterface;
 use garethp\ews\API;
 use garethp\ews\API\Type;
 
@@ -50,11 +52,24 @@ abstract class Item
     }
 
     /**
-     * Fetch the specified object and put into a file
+     * Validate that specified EWS Item is of supported type
      */
-    public function fetchItem(ItemInterface $item)
+    public static function isValidItem(Type $item): bool
     {
-        $itemId = $item->id;
+        $item_class = str_replace('IPM.', '', $item->getItemClass());
+        $item_class = "\App\DataMigrator\EWS\\{$item_class}";
+
+        return class_exists($item_class);
+    }
+
+    /**
+     * Process an item (fetch data and convert it)
+     */
+    public function processItem(ItemInterface $item): void
+    {
+        $itemId = ['Id' => $item->id];
+
+        \Log::debug("[EWS] Fetching item {$item->id}...");
 
         // Fetch the item
         $ewsItem = $this->driver->api->getItem($itemId, $this->getItemRequest());
@@ -64,46 +79,48 @@ abstract class Item
         \Log::debug("[EWS] Saving item {$uid}...");
 
         // Apply type-specific format converters
-        $content = $this->processItem($ewsItem);
+        $content = $this->convertItem($ewsItem);
 
         if (!is_string($content)) {
-            return;
+            throw new \Exception("Failed to fetch EWS item {$this->itemId}");
         }
 
-        $uid = preg_replace('/[^a-zA-Z0-9_:@-]/', '', $uid);
+        $filename = $uid . '.' . $this->fileExtension();
 
-        $location = $this->folder->location;
+        if (strlen($content) > Engine::MAX_ITEM_SIZE) {
+            $location = $this->folder->tempFileLocation($filename);
 
-        if (!file_exists($location)) {
-            mkdir($location, 0740, true);
+            if (file_put_contents($location, $content) === false) {
+                throw new \Exception("Failed to write to file at {$location}");
+            }
+
+            $item->filename = $location;
+        } else {
+            $item->content = $content;
+            $item->filename = $filename;
         }
-
-        $location .= '/' . $uid . '.' . $this->fileExtension();
-
-        file_put_contents($location, $content);
-
-        return $location;
     }
 
     /**
      * Item conversion code
      */
-    abstract protected function processItem(Type $item);
+    abstract protected function convertItem(Type $item);
 
     /**
      * Get GetItem request parameters
      */
-    protected function getItemRequest(): array
+    protected static function getItemRequest(): array
     {
         $request = [
             'ItemShape' => [
                 // Reqest default set of properties
                 'BaseShape' => 'Default',
                 // Additional properties, e.g. LastModifiedTime
-                // FIXME: How to add multiple properties here?
                 'AdditionalProperties' => [
-                    'FieldURI' => ['FieldURI' => 'item:LastModifiedTime'],
-                ]
+                    'FieldURI' => [
+                        ['FieldURI' => 'item:LastModifiedTime'],
+                    ],
+                ],
             ]
         ];
 

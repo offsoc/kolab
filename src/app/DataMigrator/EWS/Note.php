@@ -16,7 +16,7 @@ class Note extends Item
     /**
      * Get GetItem request parameters
      */
-    protected function getItemRequest(): array
+    protected static function getItemRequest(): array
     {
         $request = parent::getItemRequest();
 
@@ -32,7 +32,7 @@ class Note extends Item
     /**
      * Process contact object
      */
-    protected function processItem(Type $item)
+    protected function convertItem(Type $item)
     {
         $email = base64_decode((string) $item->getMimeContent());
 

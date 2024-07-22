@@ -4,6 +4,7 @@ namespace App\DataMigrator;
 
 use App\DataMigrator\Interface\Folder;
 use App\DataMigrator\Interface\Item;
+use App\DataMigrator\Interface\ItemSet;
 use garethp\ews\API;
 use garethp\ews\API\Type;
 use Illuminate\Support\Facades\Http;
@@ -13,6 +14,9 @@ use Illuminate\Support\Facades\Http;
  */
 class EWS implements Interface\ExporterInterface
 {
+    /** @const int Max number of items to migrate in one go */
+    protected const CHUNK_SIZE = 20;
+
     /** @var API EWS API object */
     public $api;
 
@@ -31,15 +35,16 @@ class EWS implements Interface\ExporterInterface
 
     /** @var array Interal folders to skip */
     protected $folder_exceptions = [
+        'AllCategorizedItems',
         'AllContacts',
+        'AllContactsExtended',
         'AllPersonMetadata',
         'AllTodoTasks',
         'Document Centric Conversations',
         'ExternalContacts',
-        'Favorites',
         'Flagged Emails',
+        'Folder Memberships',
         'GraphFilesAndWorkingSetSearchFolder',
-        'My Contacts',
         'MyContactsExtended',
         'Orion Notes',
         'Outbox',
@@ -48,16 +53,22 @@ class EWS implements Interface\ExporterInterface
         'RelevantContacts',
         'SharedFilesSearchFolder',
         'Sharing',
+        'SpoolsPresentSharedItemsSearchFolder',
+        'SpoolsSearchFolder',
         'To-Do Search',
         'UserCuratedContacts',
         'XrmActivityStreamSearch',
         'XrmCompanySearch',
         'XrmDealSearch',
         'XrmSearch',
-        'Folder Memberships',
-        // TODO: These are different depending on a user locale
+        // TODO: These are different depending on a user locale and it's not possible
+        // to switch to English other than changing the user locale in OWA/Exchange.
         'Calendar/United States holidays',
+        'Favorites',
+        'My Contacts',
         'Kalendarz/Polska — dni wolne od pracy', // pl
+        'Ulubione', // pl
+        'Moje kontakty', // pl
     ];
 
     /** @var array Map of EWS folder types to Kolab types */
@@ -214,9 +225,31 @@ class EWS implements Interface\ExporterInterface
      */
     public function getFolders($types = []): array
     {
-        // Get full folders hierarchy
+        if (empty($types)) {
+            $types = array_values($this->type_map);
+        }
+
+        // Create FolderClass filter
+        $search = new Type\OrType();
+        foreach ($types as $type) {
+            $type = array_search($type, $this->type_map);
+            $search->addContains(Type\Contains::buildFromArray([
+                'FieldURI' => [
+                    Type\FieldURI::buildFromArray(['FieldURI' => 'folder:FolderClass']),
+                ],
+                'Constant' => Type\ConstantValueType::buildFromArray([
+                    'Value' => $type,
+                ]),
+                'ContainmentComparison' => 'Exact',
+                'ContainmentMode' => 'FullString',
+            ]));
+        }
+
+        // Get full folders hierarchy (filtered by folder class)
+        // Use of the filter reduces the response size by excluding system folders
         $options = [
             'Traversal' => 'Deep',
+            'Restriction' => ['Or' => $search],
         ];
 
         $folders = $this->api->getChildrenFolders('root', $options);
@@ -232,7 +265,7 @@ class EWS implements Interface\ExporterInterface
                 continue;
             }
 
-            // Note: Folder names are localized
+            // Note: Folder names are localized, even INBOX
             $name = $fullname = $folder->getDisplayName();
             $id = $folder->getFolderId()->getId();
             $parentId = $folder->getParentFolderId()->getId();
@@ -308,7 +341,10 @@ class EWS implements Interface\ExporterInterface
             'ItemShape' => [
                 'BaseShape' => 'IdOnly',
                 'AdditionalProperties' => [
-                    'FieldURI' => ['FieldURI' => 'item:ItemClass'],
+                    'FieldURI' => [
+                        ['FieldURI' => 'item:ItemClass'],
+                        // ['FieldURI' => 'item:Size'],
+                    ],
                 ],
             ],
         ];
@@ -325,10 +361,16 @@ class EWS implements Interface\ExporterInterface
         // Request first page
         $response = $this->api->getClient()->FindItem($request);
 
+        $set = new ItemSet();
+
         // @phpstan-ignore-next-line
-        foreach ($response as $item) {
+        foreach ($response->getItems() as $item) {
             if ($item = $this->toItem($item, $folder, $existing, $existingIndex)) {
-                $callback($item);
+                $set->items[] = $item;
+                if (count($set->items) == self::CHUNK_SIZE) {
+                    $callback($set);
+                    $set = new ItemSet();
+                }
             }
         }
 
@@ -337,11 +379,19 @@ class EWS implements Interface\ExporterInterface
             // @phpstan-ignore-next-line
             $response = $this->api->getNextPage($response);
 
-            foreach ($response as $item) {
+            foreach ($response->getItems() as $item) {
                 if ($item = $this->toItem($item, $folder, $existing, $existingIndex)) {
-                    $callback($item);
+                    $set->items[] = $item;
+                    if (count($set->items) == self::CHUNK_SIZE) {
+                        $callback($set);
+                        $set = new ItemSet();
+                    }
                 }
             }
+        }
+
+        if (count($set->items)) {
+            $callback($set);
         }
 
         // TODO: Delete items that do not exist anymore?
@@ -356,12 +406,11 @@ class EWS implements Interface\ExporterInterface
         $this->initEnv($this->engine->queue);
 
         if ($driver = EWS\Item::factory($this, $item)) {
-            $item->filename = $driver->fetchItem($item);
+            $driver->processItem($item);
+            return;
         }
 
-        if (empty($item->filename)) {
-            throw new \Exception("Failed to fetch an item from EWS");
-        }
+        throw new \Exception("Failed to fetch an item from EWS");
     }
 
     /**
@@ -399,20 +448,16 @@ class EWS implements Interface\ExporterInterface
             $exists = $existing[$idx]['href'];
         }
 
-        $item = Item::fromArray([
-            'id' => $id,
+        if (!EWS\Item::isValidItem($item)) {
+            return null;
+        }
+
+        return Item::fromArray([
+            'id' => $id['Id'],
             'class' => $item->getItemClass(),
             'folder' => $folder,
             'existing' => $exists,
         ]);
-
-        // TODO: We don't need to instantiate Item at this point, instead
-        // implement EWS\Item::validateClass() method
-        if ($driver = EWS\Item::factory($this, $item)) {
-            return $item;
-        }
-
-        return null;
     }
 
     /**

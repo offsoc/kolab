@@ -34,6 +34,9 @@ class Folder
     public $queueId;
 
 
+    /**
+     * Create Folder instance from an array
+     */
     public static function fromArray(array $data = []): Folder
     {
         $obj = new self();
@@ -43,5 +46,24 @@ class Folder
         }
 
         return $obj;
+    }
+
+    /**
+     * Returns location of a temp file for an Item content
+     */
+    public function tempFileLocation(string $filename): string
+    {
+        $filename = preg_replace('/[^a-zA-Z0-9_:@.-]/', '', $filename);
+
+        $location = $this->location;
+
+        // TODO: What if parent folder not yet exists?
+        if (!file_exists($location)) {
+            mkdir($location, 0740, true);
+        }
+
+        $location .= '/' . $filename;
+
+        return $location;
     }
 }

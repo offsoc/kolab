@@ -15,7 +15,7 @@ class ContactTest extends TestCase
     /**
      * Test contact item processing
      */
-    public function testProcessItem(): void
+    public function testConvertItem(): void
     {
         $account = new Account('ews://test:test@test');
         $engine = new Engine();
@@ -113,7 +113,7 @@ class ContactTest extends TestCase
         ]);
 
         // Convert the Exchange item into vCard
-        $vcard = $this->invokeMethod($contact, 'processItem', [$item]);
+        $vcard = $this->invokeMethod($contact, 'convertItem', [$item]);
 
         // Parse the vCard
         $contact = new Vcard();

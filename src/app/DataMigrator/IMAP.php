@@ -88,7 +88,19 @@ class IMAP implements ExporterInterface, ImporterInterface
     {
         $mailbox = $item->folder->fullname;
 
-        if ($item->filename) {
+        if (strlen($item->content)) {
+            $result = $this->imap->append(
+                $mailbox,
+                $item->content,
+                $item->data['flags'],
+                $item->data['internaldate'],
+                true
+            );
+
+            if ($result === false) {
+                throw new \Exception("Failed to append IMAP message into {$mailbox}");
+            }
+        } elseif ($item->filename) {
             $result = $this->imap->appendFromFile(
                 $mailbox,
                 $item->filename,
@@ -153,35 +165,36 @@ class IMAP implements ExporterInterface, ImporterInterface
             || $header->timestamp != $item->existing['timestamp']
             || $header->size != $item->existing['size']
         ) {
-            // Save the message content to a file
-            $location = $item->folder->location;
+            // Handle message content in memory (up to 20MB), bigger messages will use a temp file
+            if ($header->size > Engine::MAX_ITEM_SIZE) {
+                // Save the message content to a file
+                $location = $item->folder->tempFileLocation($uid . '.eml');
 
-            if (!file_exists($location)) {
-                mkdir($location, 0740, true);
+                $fp = fopen($location, 'w');
+
+                if (!$fp) {
+                    throw new \Exception("Failed to open 'php://temp' stream");
+                }
+
+                $result = $this->imap->handlePartBody($mailbox, $uid, true, '', null, null, $fp);
+            } else {
+                $result = $this->imap->handlePartBody($mailbox, $uid, true);
             }
-
-            // TODO: What if parent folder not yet exists?
-            $location .= '/' . $uid . '.eml';
-
-            // TODO: We should consider streaming the message, it should be possible
-            // with append() and handlePartBody(), but I don't know if anyone tried that.
-
-            $fp = fopen($location, 'w');
-
-            if (!$fp) {
-                throw new \Exception("Failed to write to {$location}");
-            }
-
-            $result = $this->imap->handlePartBody($mailbox, $uid, true, '', null, null, $fp);
 
             if ($result === false) {
-                fclose($fp);
+                if (!empty($fp)) {
+                    fclose($fp);
+                }
+
                 throw new \Exception("Failed to fetch IMAP message for {$mailbox}/{$uid}");
             }
 
-            $item->filename = $location;
-
-            fclose($fp);
+            if (!empty($fp) && !empty($location)) {
+                $item->filename = $location;
+                fclose($fp);
+            } else {
+                $item->content = $result;
+            }
         }
 
         $item->data = [

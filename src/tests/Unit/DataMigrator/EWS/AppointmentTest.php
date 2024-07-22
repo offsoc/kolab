@@ -15,7 +15,7 @@ class AppointmentTest extends TestCase
     /**
      * Test appointment item processing
      */
-    public function testProcessItem(): void
+    public function testConvertItem(): void
     {
         $account = new Account('ews://test:test@test');
         $engine = new Engine();
@@ -78,7 +78,7 @@ class AppointmentTest extends TestCase
         ]);
 
         // Convert the Exchange item into iCalendar
-        $ical = $this->invokeMethod($appointment, 'processItem', [$item]);
+        $ical = $this->invokeMethod($appointment, 'convertItem', [$item]);
 
         // Parse the iCalendar output
         $event = new Vevent();

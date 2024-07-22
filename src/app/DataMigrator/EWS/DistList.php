@@ -14,9 +14,22 @@ class DistList extends Item
     public const FILE_EXT    = 'vcf';
 
     /**
+     * Get GetItem request parameters
+     */
+    protected static function getItemRequest(): array
+    {
+        $request = parent::getItemRequest();
+
+        // Get Body property, it's not included in the Default set
+        $request['ItemShape']['AdditionalProperties']['FieldURI'] = ['FieldURI' => 'item:Body'];
+
+        return $request;
+    }
+
+    /**
      * Convert distribution list object to vCard
      */
-    protected function processItem(Type $item)
+    protected function convertItem(Type $item)
     {
         // Groups (Distribution Lists) are not exported in vCard format, they use eml
 
@@ -33,11 +46,6 @@ class DistList extends Item
         foreach ($data as $key => $prop) {
             $vcard .= $this->formatProp($key, $prop[0], isset($prop[1]) ? $prop[1] : []);
         }
-
-        // TODO: The group description property in Exchange is not available via EWS XML,
-        // at least not at outlook.office.com (Exchange 2010). It is available in the
-        // MimeContent which is in email message format. However, Kolab Webclient does not
-        // make any use of the NOTE property for contact groups.
 
         // Process list members
         if ($members = $item->getMembers()) {
@@ -68,6 +76,11 @@ class DistList extends Item
                     $vcard .= $this->formatProp('MEMBER', "mailto:{$mailto}");
                 }
             }
+        }
+
+        // Note: Kolab Webclient does not make any use of the NOTE property for contact groups
+        if ($body = (string) $item->getBody()) {
+            $vcard .= $this->formatProp('NOTE', $body);
         }
 
         $vcard .= "END:VCARD\r\n";

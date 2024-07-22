@@ -16,7 +16,7 @@ class Contact extends Item
     /**
      * Get GetItem request parameters
      */
-    protected function getItemRequest(): array
+    protected static function getItemRequest(): array
     {
         $request = parent::getItemRequest();
 
@@ -29,7 +29,7 @@ class Contact extends Item
     /**
      * Process contact object
      */
-    protected function processItem(Type $item)
+    protected function convertItem(Type $item)
     {
         // Decode MIME content
         $vcard = base64_decode((string) $item->getMimeContent());
@@ -56,7 +56,7 @@ class Contact extends Item
             $vcard = str_replace($matches[1], "X-SPOUSE:{$spouse}", $vcard);
         }
 
-        // TODO: X-MS-ANNIVERSARY;VALUE=DATE:2020-11-12
+        // Anniversary: X-MS-ANNIVERSARY;VALUE=DATE:2020-11-12
         if (preg_match('/(X-MS-ANNIVERSARY[;:][^\r\n]+)/', $vcard, $matches)) {
             $date = preg_replace('/^[^:]+:/', '', $matches[1]);
             $vcard = str_replace($matches[1], "X-ANNIVERSARY:{$date}", $vcard);

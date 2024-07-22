@@ -18,7 +18,7 @@ class Appointment extends Item
     /**
      * Get GetItem request parameters
      */
-    protected function getItemRequest(): array
+    protected static function getItemRequest(): array
     {
         $request = parent::getItemRequest();
 
@@ -26,8 +26,7 @@ class Appointment extends Item
         $request['ItemShape']['IncludeMimeContent'] = true;
 
         // Get UID property, it's not included in the Default set
-        // FIXME: How to add the property to the set, not replace the whole set
-        $request['ItemShape']['AdditionalProperties']['FieldURI'] = ['FieldURI' => 'calendar:UID'];
+        $request['ItemShape']['AdditionalProperties']['FieldURI'][] = ['FieldURI' => 'calendar:UID'];
 
         return $request;
     }
@@ -35,7 +34,7 @@ class Appointment extends Item
     /**
      * Process event object
      */
-    protected function processItem(Type $item)
+    protected function convertItem(Type $item)
     {
         // Initialize $this->itemId (for some unit tests)
         $this->getUID($item);

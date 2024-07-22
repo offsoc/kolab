@@ -67,13 +67,21 @@ class DAV implements ExporterInterface, ImporterInterface
      */
     public function createItem(Item $item): void
     {
-        if ($item->existing) {
-            $href = $item->existing;
+        $is_file = false;
+        $href = $item->existing ?: null;
+
+        if (strlen($item->content)) {
+            $content = $item->content;
         } else {
-            $href = $this->getFolderPath($item->folder) . '/' . pathinfo($item->filename, PATHINFO_BASENAME);
+            $content = $item->filename;
+            $is_file = true;
         }
 
-        $object = new DAVOpaque($item->filename, true);
+        if (empty($href)) {
+            $href = $this->getFolderPath($item->folder) . '/' . basename($item->filename);
+        }
+
+        $object = new DAVOpaque($content, $is_file);
         $object->href = $href;
 
         switch ($item->folder->type) {
@@ -139,15 +147,6 @@ class DAV implements ExporterInterface, ImporterInterface
      */
     public function fetchItem(Item $item): void
     {
-        // Save the item content to a file
-        $location = $item->folder->location;
-
-        if (!file_exists($location)) {
-            mkdir($location, 0740, true);
-        }
-
-        $location .= '/' . basename($item->id);
-
         $result = $this->client->getObjects(dirname($item->id), $this->type2DAV($item->folder->type), [$item->id]);
 
         if ($result === false) {
@@ -156,11 +155,21 @@ class DAV implements ExporterInterface, ImporterInterface
 
         // TODO: Do any content changes, e.g. organizer/attendee email migration
 
-        if (file_put_contents($location, (string) $result[0]) === false) {
-            throw new \Exception("Failed to write to {$location}");
-        }
+        $content = (string) $result[0];
 
-        $item->filename = $location;
+        if (strlen($content) > Engine::MAX_ITEM_SIZE) {
+            // Save the item content to a file
+            $location = $item->folder->tempFileLocation(basename($item->id));
+
+            if (file_put_contents($location, $content) === false) {
+                throw new \Exception("Failed to write to {$location}");
+            }
+
+            $item->filename = $location;
+        } else {
+            $item->content = $content;
+            $item->filename = basename($item->id);
+        }
     }
 
     /**

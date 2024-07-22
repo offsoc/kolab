@@ -15,7 +15,7 @@ class TaskTest extends TestCase
     /**
      * Test task item processing
      */
-    public function testProcessItem(): void
+    public function testConvertItem(): void
     {
         $source = new Account('ews://test%40domain.tld:test@test');
         $destination = new Account('dav://test%40kolab.org:test@test');
@@ -118,7 +118,7 @@ class TaskTest extends TestCase
         ]);
 
         // Convert the Exchange item into iCalendar
-        $ical = $this->invokeMethod($task, 'processItem', [$item]);
+        $ical = $this->invokeMethod($task, 'convertItem', [$item]);
 
         // Parse the iCalendar output
         $task = new Vtodo();
@@ -154,7 +154,7 @@ class TaskTest extends TestCase
     /**
      * Test processing Recurrence property
      */
-    public function testProcessItemRecurrence(): void
+    public function testConvertItemRecurrence(): void
     {
         $this->markTestIncomplete();
     }

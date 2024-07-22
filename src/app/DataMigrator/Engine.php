@@ -3,6 +3,7 @@
 namespace App\DataMigrator;
 
 use App\DataMigrator\Interface\ExporterInterface;
+use App\DataMigrator\Interface\FetchItemSetInterface;
 use App\DataMigrator\Interface\Folder;
 use App\DataMigrator\Interface\ImporterInterface;
 use App\DataMigrator\Interface\Item;
@@ -20,6 +21,9 @@ class Engine
     public const TYPE_MAIL = 'mail';
     public const TYPE_NOTE = 'note';
     public const TYPE_TASK = 'task';
+
+    /** @const int Max item size to handle in-memory, bigger will be handled with temp files */
+    public const MAX_ITEM_SIZE = 20 * 1024 * 1024;
 
     /** @var Account Source account */
     public $source;
@@ -43,7 +47,7 @@ class Engine
     /**
      * Execute migration for the specified user
      */
-    public function migrate(Account $source, Account $destination, array $options = [])
+    public function migrate(Account $source, Account $destination, array $options = []): void
     {
         $this->source = $source;
         $this->destination = $destination;
@@ -87,14 +91,14 @@ class Engine
         // Create a queue
         $this->createQueue($queue_id);
 
-        // We'll store output in storage/<username> tree
+        // We'll store temp files in storage/<username> tree
         $location = storage_path('export/') . $source->email;
 
         if (!file_exists($location)) {
             mkdir($location, 0740, true);
         }
 
-        $types = preg_split('/\s*,\s*/', strtolower($options['type'] ?? ''));
+        $types = empty($options['type']) ? [] : preg_split('/\s*,\s*/', strtolower($options['type']));
 
         $this->debug("Fetching folders hierarchy...");
 
@@ -189,8 +193,8 @@ class Engine
         $this->exporter->fetchItem($item);
         $this->importer->createItem($item);
 
-        if (!empty($item->filename)) {
-            unlink($item->filename);
+        if (!empty($item->filename) && str_starts_with($item->filename, storage_path('export/'))) {
+            @unlink($item->filename);
         }
 
         if (empty($this->options['sync'])) {
@@ -208,15 +212,21 @@ class Engine
             $this->envFromQueue($set->items[0]->folder->queueId);
         }
 
-        // TODO: Some exporters, e.g. DAV, might optimize fetching multiple items in one go,
-        // we'll need a new API to do that
-
-        foreach ($set->items as $item) {
-            $this->exporter->fetchItem($item);
+        $importItem = function (Item $item) {
             $this->importer->createItem($item);
 
-            if (!empty($item->filename)) {
-                unlink($item->filename);
+            if (!empty($item->filename) && str_starts_with($item->filename, storage_path('export/'))) {
+                @unlink($item->filename);
+            }
+        };
+
+        // Some exporters, e.g. DAV, might optimize fetching multiple items in one go
+        if ($this->exporter instanceof FetchItemSetInterface) {
+            $this->exporter->fetchItemSet($set, $importItem);
+        } else {
+            foreach ($set->items as $item) {
+                $this->exporter->fetchItem($item);
+                $importItem($item);
             }
         }
 
@@ -327,6 +337,10 @@ class Engine
             case 'tls':
             case 'ssl':
                 $driver = new IMAP($account, $this);
+                break;
+
+            case 'test':
+                $driver = new Test($account, $this);
                 break;
 
             default:

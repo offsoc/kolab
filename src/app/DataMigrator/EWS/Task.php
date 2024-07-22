@@ -16,7 +16,7 @@ class Task extends Item
     /**
      * Get GetItem request parameters
      */
-    protected function getItemRequest(): array
+    protected static function getItemRequest(): array
     {
         $request = parent::getItemRequest();
 
@@ -29,7 +29,7 @@ class Task extends Item
     /**
      * Process task object
      */
-    protected function processItem(Type $item)
+    protected function convertItem(Type $item)
     {
         // Tasks are exported as Email messages in useless format
         // (does not contain all relevant properties)

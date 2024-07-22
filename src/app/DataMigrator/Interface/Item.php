@@ -10,7 +10,7 @@ class Item
     /** @var mixed Item identifier */
     public $id;
 
-    /** @var Folder Folder */
+    /** @var ?Folder Folder */
     public $folder;
 
     /** @var string Object class */
@@ -24,13 +24,19 @@ class Item
      */
     public $existing;
 
-    /** @var ?string Exported object location in the local storage */
+    /** @var string Exported object content */
+    public $content = '';
+
+    /** @var ?string Exported object content location */
     public $filename;
 
     /** @var array Extra data to migrate (like email flags, internaldate, etc.) */
     public $data = [];
 
 
+    /**
+     * Create Item object from an array
+     */
     public static function fromArray(array $data = []): Item
     {
         $obj = new self();
