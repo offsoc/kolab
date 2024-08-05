@@ -2,22 +2,13 @@
 set -e
 set -x
 
-rsync -av \
-    --exclude=vendor \
-    --exclude=composer.lock \
-    --exclude=node_modules \
-    --exclude=package-lock.json \
-    --exclude=public \
-    --exclude=storage \
-    --exclude=resources/build \
-    --exclude=.gitignore \
-    /src/kolabsrc.orig/ /opt/app-root/src/ | tee /tmp/rsync.output
-
 cd /opt/app-root/src/
 
 if [ "$1" == "--refresh" ]; then
     /update.sh
     shift
+else
+    /update-source.sh
 fi
 
 ./artisan route:list
