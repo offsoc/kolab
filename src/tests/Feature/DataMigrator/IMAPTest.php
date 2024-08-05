@@ -41,6 +41,10 @@ class IMAPTest extends TestCase
     {
         $uri = \config('imap.uri');
 
+        if (strpos($uri, '://') === false) {
+            $uri = 'imap://' . $uri;
+        }
+
         $src = new Account(str_replace('://', '://john%40kolab.org:simple123@', $uri));
         $dst = new Account(str_replace('://', '://jack%40kolab.org:simple123@', $uri));
 
@@ -100,6 +104,10 @@ class IMAPTest extends TestCase
     public function testIncrementalMigration(): void
     {
         $uri = \config('imap.uri');
+
+        if (strpos($uri, '://') === false) {
+            $uri = 'imap://' . $uri;
+        }
 
         $src = new Account(str_replace('://', '://john%40kolab.org:simple123@', $uri));
         $dst = new Account(str_replace('://', '://jack%40kolab.org:simple123@', $uri));
