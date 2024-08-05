@@ -332,11 +332,6 @@ kolab__validate() {
 }
 
 kolab__run() {
-    export POD=dev
-    podman__run_$1
-}
-
-kolab__run() {
     POD=dev
     podman__run_$1
 }

@@ -132,10 +132,15 @@ podman__is_ready() {
 
 podman__healthcheck() {
     for CONTAINER in $@; do
-        echo "Waiting for ${CONTAINER} become healthy "
+        echo "Waiting for ${CONTAINER} to become healthy"
         while [ $(podman healthcheck run ${CONTAINER}) ]; do
             echo -n "."; sleep 5;
         done
+        echo
+        # Abort if the container failed to start
+        if ! podman__is_ready $CONTAINER; then
+            exit 1
+        fi
     done
 }
 
@@ -223,9 +228,9 @@ podman__run_minio() {
 podman__run_webapp() {
     # We run with a fixed config.demo overlay and override the environment with ci/env
     $PODMAN run -dt --pod $POD --name $POD-webapp --replace \
-        --env-file=$1 \
+        --env-file=${1:-ci/env} \
         -v ./src:/src/kolabsrc.orig:ro \
-        -v ./$2/src:/src/overlay:ro \
+        -v ./${2:-config.prod}/src:/src/overlay:ro \
         -e NOENVFILE=true \
         -e APP_SERVICES_ALLOWED_DOMAINS="webapp,localhost,services.$HOST" \
         -e KOLAB_ROLE=combined \
