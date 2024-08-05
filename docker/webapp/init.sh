@@ -46,10 +46,13 @@ if [[ $REBUILD == true ]]; then
     mkdir -p storage/framework/{sessions,views,cache}
 
     find bootstrap/cache/ -type f ! -name ".gitignore" -delete
-    ./artisan clear-compiled
-    ./artisan cache:clear
 
+    # Must be before the first artisan command because those can fail otherwise)
     php -dmemory_limit=-1 $(command -v composer) install
+
+    ./artisan cache:clear
+    ./artisan clear-compiled
+
     npm run dev
 fi
 
