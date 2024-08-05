@@ -119,21 +119,21 @@ oidc_providers:
     idp_name: "Kolab"
     discover: false
     issuer: "https://APP_DOMAIN"
-    authorization_endpoint: "https://APP_DOMAIN/authorize"
+    authorization_endpoint: "https://APP_DOMAIN/oauth/authorize"
     #These connections go over localhost, but must still be https (otherwise it doesn't work). Also the certificate must match, so we can't use 127.0.0.1.
     token_endpoint: "https://APP_DOMAIN:6443/oauth/token"
-    userinfo_endpoint: "https://APP_DOMAIN:6443/api/oauth/info"
+    userinfo_endpoint: "https://APP_DOMAIN:6443/oauth/userinfo"
     client_id: "SYNAPSE_OAUTH_CLIENT_ID"
     client_secret: "SYNAPSE_OAUTH_CLIENT_SECRET"
     client_auth_method: client_secret_post
     allow_existing_users: true
     allow_registration: false
-    scopes: ['oauth']
+    scopes: ['email']
     user_mapping_provider:
       config:
         subject_claim: "id"
         email_template: "{{ user.email }}"
-        display_name_template: "{{ user.settings.first_name }}"
+        display_name_template: "{{ user.settings.name }}"
 
  
     

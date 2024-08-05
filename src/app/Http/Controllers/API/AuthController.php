@@ -155,6 +155,8 @@ class AuthController extends Controller
         if ($user->tokenCan('email')) {
             $response['email'] = $user->email;
             $response['email_verified'] = $user->isActive();
+            # At least synapse depends on a "settings" structure being available
+            $response['settings'] = [ 'name' => $user->name() ];
         }
 
         // TODO: Other claims (https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims)
