@@ -230,6 +230,8 @@ kolab__deploy() {
     podman__run_amavis
     podman__run_collabora
     podman__run_proxy
+
+    echo "Deployment complete!"
 }
 
 kolab__reset() {
