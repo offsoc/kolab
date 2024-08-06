@@ -14,14 +14,13 @@ trait UuidStrKeyTrait
                 $allegedly_unique = \App\Utils::uuidStr();
 
                 // Verify if unique
-                if (in_array('Illuminate\Database\Eloquent\SoftDeletes', class_uses($model))) {
-                    while ($model->withTrashed()->find($allegedly_unique)) {
-                        $allegedly_unique = \App\Utils::uuidStr();
-                    }
-                } else {
-                    while ($model->find($allegedly_unique)) {
-                        $allegedly_unique = \App\Utils::uuidStr();
-                    }
+                $finder = $model;
+                if (\App\Utils::isSoftDeletable($model)) {
+                    $finder = $finder->withTrashed();
+                }
+
+                while ($finder->find($allegedly_unique)) {
+                    $allegedly_unique = \App\Utils::uuidStr();
                 }
 
                 $model->{$model->getKeyName()} = $allegedly_unique;

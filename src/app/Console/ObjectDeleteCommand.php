@@ -17,7 +17,7 @@ abstract class ObjectDeleteCommand extends ObjectCommand
             $this->objectName
         );
 
-        if ($this->isSoftDeletable($this->objectClass)) {
+        if (\App\Utils::isSoftDeletable($this->objectClass)) {
             $this->signature .= " {--with-deleted : Consider deleted {$this->objectName}s}";
         }
 

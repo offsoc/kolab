@@ -77,6 +77,18 @@ class UtilsTest extends TestCase
     }
 
     /**
+     * Test for Utils::isSoftDeletable()
+     */
+    public function testIsSoftDeletable(): void
+    {
+        $this->assertTrue(Utils::isSoftDeletable(\App\User::class));
+        $this->assertFalse(Utils::isSoftDeletable(\App\Wallet::class));
+
+        $this->assertTrue(Utils::isSoftDeletable(new \App\User()));
+        $this->assertFalse(Utils::isSoftDeletable(new \App\Wallet()));
+    }
+
+    /**
      * Test for Utils::money()
      */
     public function testMoney(): void

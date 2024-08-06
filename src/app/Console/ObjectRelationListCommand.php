@@ -54,7 +54,7 @@ abstract class ObjectRelationListCommand extends ObjectCommand
             $this->objectRelationClass = "App\\" . rtrim(ucfirst($this->objectRelation), 's');
         }
 
-        if ($this->isSoftDeletable($this->objectRelationClass)) {
+        if (\App\Utils::isSoftDeletable($this->objectRelationClass)) {
             $this->signature .= " {--with-deleted : Include deleted objects}";
         }
 
@@ -99,7 +99,7 @@ abstract class ObjectRelationListCommand extends ObjectCommand
             || ($result instanceof \Illuminate\Database\Eloquent\Builder)
         ) {
             // @phpstan-ignore-next-line
-            if ($this->isSoftDeletable($this->objectRelationClass) && $this->option('with-deleted')) {
+            if (\App\Utils::isSoftDeletable($this->objectRelationClass) && $this->option('with-deleted')) {
                 $result->withoutGlobalScope(SoftDeletingScope::class);
             }
 

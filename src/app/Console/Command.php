@@ -267,18 +267,6 @@ abstract class Command extends \Illuminate\Console\Command
     }
 
     /**
-     * Checks that a model is soft-deletable
-     *
-     * @param string $class Model class name
-     *
-     * @return bool
-     */
-    protected function isSoftDeletable($class)
-    {
-        return class_exists($class) && method_exists($class, 'forceDelete');
-    }
-
-    /**
      * Return a string for output, with any additional attributes specified as well.
      *
      * @param mixed $entry An object

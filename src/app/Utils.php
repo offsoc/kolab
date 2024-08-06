@@ -347,6 +347,20 @@ class Utils
     }
 
     /**
+     * Checks that a model is soft-deletable
+     *
+     * @param mixed $model Model object or a class name
+     */
+    public static function isSoftDeletable($model): bool
+    {
+        if (is_string($model) && !class_exists($model)) {
+            return false;
+        }
+
+        return method_exists($model, 'restore');
+    }
+
+    /**
      * Normalize an email address.
      *
      * This means to lowercase and strip components separated with recipient delimiters.
