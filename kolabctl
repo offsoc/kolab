@@ -73,7 +73,7 @@ kolab__configure() {
     cp "$CONFIG/src/.env" src/.env
 
     if [[ -z $ADMIN_PASSWORD ]]; then
-        echo "Please enter your new admin password for the admin@$HOST user:"
+        echo "Please enter your new infrastructure admin password used for various infrastructure components (mysql, imap, ...):"
         read -r ADMIN_PASSWORD
     fi
 
