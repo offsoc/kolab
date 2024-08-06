@@ -360,6 +360,39 @@ kolab__run() {
     podman__run_$1
 }
 
+kolab__pull() {
+    podman pull quay.io/apheleiait/kolab/imap:latest
+    podman tag kolab/imap:latest kolab-imap:latest
+    podman pull quay.io/apheleiait/kolab/webapp:latest
+    podman tag kolab/webapp:latest kolab-webapp:latest
+    podman pull quay.io/apheleiait/kolab/collabora:latest
+    podman tag kolab/collabora:latest kolab-collabora:latest
+    podman pull quay.io/apheleiait/kolab/redis:latest
+    podman tag kolab/redis:latest redis:latest
+    podman pull quay.io/apheleiait/kolab/roundcube:latest
+    podman tag kolab/roundcube:latest roundcube:latest
+    podman pull quay.io/apheleiait/kolab/mariadb:latest
+    podman tag kolab/mariadb:latest mariadb:latest
+    podman pull quay.io/apheleiait/kolab/meet:latest
+    podman tag kolab/meet:latest kolab-meet:latest
+    podman pull quay.io/apheleiait/kolab/coturn:latest
+    podman tag kolab/coturn:latest kolab-coturn:latest
+    podman pull quay.io/apheleiait/kolab/postfix:latest
+    podman tag kolab/postfix:latest kolab-postfix:latest
+    podman pull quay.io/apheleiait/kolab/amavis:latest
+    podman tag kolab/amavis:latest kolab-amavis:latest
+    podman pull quay.io/apheleiait/kolab/utils:latest
+    podman tag kolab/utils:latest kolab-utils:latest
+    podman pull quay.io/apheleiait/kolab/minio:latest
+    podman tag kolab/minio:latest minio/minio:latest
+    podman pull quay.io/apheleiait/kolab/proxy:latest
+    podman tag kolab/proxy:latest kolab-proxy:latest
+    # podman pull quay.io/apheleiait/kolab/synapse:latest
+    # podman tag kolab/synapse:latest synapse:latest
+    # podman pull quay.io/apheleiait/kolab/element:latest
+    # podman tag kolab/element:latest element:latest
+}
+
 kolab__build() {
     if [[ $1 != "" ]]; then
         podman__build_$1
