@@ -315,7 +315,8 @@ kolab__selfcheck() {
 
     APP_DOMAIN=$(grep APP_DOMAIN src/.env | tail -n1 | sed "s/APP_DOMAIN=//")
     if [ -z "$ADMIN_PASSWORD" ]; then
-        ADMIN_PASSWORD=$(grep DB_PASSWORD src/.env | tail -n1 | sed "s/DB_PASSWORD=//")
+        echo "Please enter your new admin password for the admin@$HOST user:"
+        read -r ADMIN_PASSWORD
     fi
     if [ -z "$ADMIN_USER" ]; then
         ADMIN_USER="admin@$APP_DOMAIN"
