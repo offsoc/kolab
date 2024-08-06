@@ -2,7 +2,7 @@
 
 set -e
 
-CONFIG=${CONFIG:-"config.prod"}
+export CONFIG=${CONFIG:-"config.prod"}
 export HOST=${HOST:-"kolab.local"}
 OPENEXCHANGERATES_API_KEY=${OPENEXCHANGERATES_API_KEY}
 FIREBASE_API_KEY=${FIREBASE_API_KEY}
@@ -19,6 +19,8 @@ export SYNAPSE_STORAGE="--mount=type=volume,src=$POD-synapse-data,destination=/d
 export MARIADB_STORAGE="--mount=type=volume,src=$POD-mariadb-data,destination=/var/lib/mysql,U=true"
 export REDIS_STORAGE="--mount=type=volume,src=$POD-redis-data,destination=/var/lib/redis,U=true"
 export MINIO_STORAGE="--mount=type=volume,src=$POD-minio-data,destination=/data,U=true"
+
+export ENV_FILE=src/.env
 
 export PODMAN_IGNORE_CGROUPSV1_WARNING=true
 

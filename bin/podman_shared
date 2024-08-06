@@ -231,9 +231,9 @@ podman__run_minio() {
 podman__run_webapp() {
     # We run with a fixed config.demo overlay and override the environment with ci/env
     $PODMAN run -dt --pod $POD --name $POD-webapp --replace \
-        --env-file=${1:-ci/env} \
+        --env-file=$ENV_FILE \
         -v ./src:/src/kolabsrc.orig:ro \
-        -v ./${2:-config.prod}/src:/src/overlay:ro \
+        -v ./$CONFIG/src:/src/overlay:ro \
         -e NOENVFILE=true \
         -e APP_SERVICES_ALLOWED_DOMAINS="webapp,localhost,services.$HOST" \
         -e KOLAB_ROLE=combined \
