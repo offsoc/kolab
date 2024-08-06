@@ -128,8 +128,52 @@ kolab__teardown() {
 }
 
 
+function pin_commit() {
+    git ls-remote --exit-code -h "$1" "refs/heads/$2" | awk '{print $1}'
+}
+
+pin_commits() {
+    echo "Pinning commits"
+    # This are the pinned commits that are going to be used for the base images
+    export KOLAB_GIT_REMOTE=https://git.kolab.org/source/kolab
+    export KOLAB_GIT_REF=$(pin_commit "$KOLAB_GIT_REMOTE" "master")
+
+    export GIT_REMOTE_ROUNDCUBEMAIL=https://git.kolab.org/source/roundcubemail.git
+    export GIT_REF_ROUNDCUBEMAIL=$(pin_commit "$GIT_REMOTE_ROUNDCUBEMAIL" "dev/kolab-1.5")
+
+    export GIT_REMOTE_ROUNDCUBEMAIL_PLUGINS=https://git.kolab.org/diffusion/RPK/roundcubemail-plugins-kolab.git
+    export GIT_REF_ROUNDCUBEMAIL_PLUGINS=$(pin_commit "$GIT_REMOTE_ROUNDCUBEMAIL_PLUGINS" "master")
+
+    export GIT_REMOTE_CHWALA=https://git.kolab.org/diffusion/C/chwala.git
+    export GIT_REF_CHWALA=$(pin_commit "$GIT_REMOTE_CHWALA" "master")
+
+    export GIT_REMOTE_SYNCROTON=https://git.kolab.org/diffusion/S/syncroton.git
+    export GIT_REF_SYNCROTON=$(pin_commit "$GIT_REMOTE_SYNCROTON" "master")
+
+    export GIT_REMOTE_AUTOCONF=https://git.kolab.org/diffusion/AC/autoconf.git
+    export GIT_REF_AUTOCONF=$(pin_commit "$GIT_REMOTE_AUTOCONF" "master")
+
+    export GIT_REMOTE_IRONY=https://git.kolab.org/source/iRony.git
+    export GIT_REF_IRONY=$(pin_commit "$GIT_REMOTE_IRONY" "master")
+
+    export GIT_REMOTE_FREEBUSY=https://git.kolab.org/diffusion/F/freebusy.git
+    export GIT_REF_FREEBUSY=$(pin_commit "$GIT_REMOTE_FREEBUSY" "master")
+
+    export IMAP_GIT_REMOTE=https://git.kolab.org/source/cyrus-imapd
+    export IMAP_GIT_REF=$(pin_commit "$GIT_REMOTE_FREEBUSY" "dev/kolab-3.6")
+}
+
+podman__build_tests() {
+    podman__build docker/tests kolab-tests --ulimit nofile=65535:65535
+}
+
 # Build all containers required for testing
 kolab__build() {
+    if [[ $1 == "--pin" ]]; then
+        pin_commits
+        shift
+    fi
+
     if [[ $1 != "" ]]; then
         if declare -f "podman__build_$1" >/dev/null 2>&1; then
             podman__build_$1
@@ -140,17 +184,14 @@ kolab__build() {
         podman__build_base
         podman__build_webapp
         podman__build_meet
-
         podman__build_imap
         podman__build docker/mariadb mariadb
         podman__build docker/redis redis
         podman__build_proxy
         podman__build docker/synapse synapse
         podman__build docker/element element
-
         podman__build_roundcube
-
-        podman__build docker/tests kolab-tests --ulimit nofile=65535:65535
+        podman__build_tests
         env CERT_DIR=ci/certs APP_DOMAIN=$HOST bin/regen-certs
     fi
 }
