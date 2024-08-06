@@ -2,6 +2,9 @@
 
 PODMAN=podman
 
+if [ -d /etc/letsencrypt ]; then
+    LETSENCRYPT_VOLUME="-v /etc/letsencrypt/:/etc/letsencrypt/:ro"
+fi
 
 podman__build() {
     path=$1
@@ -147,7 +150,7 @@ podman__healthcheck() {
 podman__run_proxy() {
     $PODMAN run -dt --pod $POD --name $POD-proxy --replace \
         -v $CERTS_PATH:/etc/certs:ro \
-        -v /etc/letsencrypt/:/etc/letsencrypt/:ro \
+        $LETSENCRYPT_VOLUME \
         -e APP_WEBSITE_DOMAIN \
         -e SSL_CERTIFICATE=${KOLAB_SSL_CERTIFICATE} \
         -e SSL_CERTIFICATE_KEY=${KOLAB_SSL_CERTIFICATE_KEY} \
@@ -261,7 +264,7 @@ podman__run_postfix() {
         $POSTFIX_SPOOL_STORAGE \
         $POSTFIX_LIB_STORAGE \
         -v $CERTS_PATH:/etc/certs:ro \
-        -v /etc/letsencrypt/:/etc/letsencrypt/:ro \
+        $LETSENCRYPT_VOLUME \
         -e SSL_CERTIFICATE="$KOLAB_SSL_CERTIFICATE" \
         -e SSL_CERTIFICATE_FULLCHAIN="$KOLAB_SSL_CERTIFICATE_FULLCHAIN" \
         -e SSL_CERTIFICATE_KEY="$KOLAB_SSL_CERTIFICATE_KEY" \
