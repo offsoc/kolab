@@ -386,6 +386,7 @@ kolab__deploy() {
 
     podman__run_postfix
     podman__run_amavis
+    echo "Deployment complete"
 }
 
 # Re-run a container in the dev pod
