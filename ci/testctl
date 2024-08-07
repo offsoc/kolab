@@ -123,7 +123,7 @@ PODMAN="podman"
 
 source bin/podman_shared
 
-# Teardown the currently running environment
+# Teardown the currently running environments (both the tests and dev pod)
 kolab__teardown() {
     $PODMAN pod rm --force tests
     $PODMAN pod rm --force dev
@@ -198,7 +198,7 @@ kolab__build() {
     fi
 }
 
-# Setup the test environment
+# Setup the test environment in the "tests" pod.
 kolab__setup() {
     echo "Build"
     kolab__build
@@ -233,9 +233,7 @@ kolab__setup() {
 }
 
 
-# "testsuite"
-# "quicktest"
-# "tests/Feature/Jobs/WalletCheckTest.php"
+# Execute a testsuite (testsuite|quicktest|tests/Feature/Jobs/WalletCheckTest.php). Requires setup to have been executed previously to prepare the "tests" pod.
 kolab__test() {
     export POD=tests
     $PODMAN run -ti --pod tests --name $POD-kolab-tests --replace \
@@ -253,6 +251,7 @@ kolab__test() {
         kolab-tests:latest /init.sh $@
 }
 
+# Validate that the proxy works
 kolab__proxytest() {
     $PODMAN run -ti --pod tests --name $POD-proxy-tests --replace \
         -v ./ci/certs/:/etc/certs/:ro \
@@ -262,13 +261,14 @@ kolab__proxytest() {
         kolab-proxy:latest /init.sh validate
 }
 
+# Lint the kolab4 codebase
 kolab__lint() {
     $PODMAN run --rm -ti \
         -v ./src:/src/kolabsrc.orig:ro \
         kolab-tests:latest /init.sh lint
 }
 
-# Setup the test environment and run a complete testsuite
+# Setup the test environment and run a complete kolab4 testsuite
 kolab__testrun() {
     echo "Setup"
     kolab__setup
@@ -276,7 +276,7 @@ kolab__testrun() {
     kolab__test testsuite
 }
 
-# Setup the test environment and run all testsuites
+# Setup the test environment and run all available testsuites (including roundcube etc.)
 kolab__testrun_complete() {
     echo "Setup"
     kolab__setup
@@ -292,7 +292,7 @@ kolab__testrun_complete() {
 }
 
 
-# Get a shell inside the test container to run/debug tests
+# Get a shell inside the container. Without arguments his gives you a shell in the test container, with argument inside one of the containers in the dev pod.
 kolab__shell() {
     if [[ $1 != "" ]]; then
         POD="dev"
@@ -352,6 +352,7 @@ kolab__rcshell() {
         roundcube:latest ./init.sh shell
 }
 
+# Validate a deployment, currently only used for test pod
 kolab__validate() {
     POD=$1
     $PODMAN exec $POD-imap testsaslauthd -u cyrus-admin -p simple123
@@ -374,11 +375,7 @@ kolab__validate() {
     fi
 }
 
-kolab__run() {
-    POD=dev
-    podman__run_$1
-}
-
+# Deploy a test deployment in the "dev" pod
 kolab__deploy() {
     export POD=dev
     # Create the pod first
@@ -428,9 +425,13 @@ kolab__deploy() {
     podman__run_amavis
 }
 
+# Re-run a container in the dev pod
+kolab__run() {
+    POD=dev
+    podman__run_$1
+}
 
-# Monitor vue files for changes, and automatically reload the dev webapp container if anything changes.
-# Requires "entr" on the host
+# Monitor vue files for changes, and automatically reload the dev webapp container if anything changes. Requires "entr" on the host.
 kolab__watch() {
     trap 'kill $(jobs -p) 2>/dev/null' EXIT
     find src/resources/ src/app -regex '.*\.\(vue\|php\|js\)$' | entr podman exec -ti dev-webapp bash -c "/update-source.sh; ./artisan octane:reload" &
@@ -443,19 +444,23 @@ kolab__add_ca_trust() {
     sudo update-ca-trust
 }
 
+# Generate mail in the admin inbox
 kolab__generate_mail() {
     $PODMAN run --pod=dev -t --rm kolab-utils:latest ./generatemail.py --maxAttachmentSize=3 --type=mail --count 100 --username admin@kolab.local --password simple123 --host localhost --port 11143 INBOX
 }
 
+# Trigger an activesync sync on the admin inbox
 kolab__syncroton_sync() {
     $PODMAN run -t --network=host --add-host=kolab.local:127.0.0.1 --rm kolab-utils:latest ./activesynccli.py --host kolab.local --user admin@kolab.local --password simple123 sync 38b950ebd62cd9a66929c89615d0fc04
 }
 
+# Access logs of container
 kolab__logs() {
     POD=dev
     command podman logs --tail=1000 -f $POD-$1
 }
 
+# Mysql shell
 kolab__db() {
     POD=dev
     $PODMAN exec -ti $POD-mariadb /bin/bash -c "mysql -h 127.0.0.1 -u kolabdev --password=simple123 kolabdev"
@@ -470,13 +475,10 @@ kolab__help() {
     testctl testrun
 
   The following commands are available:
-    setup: Build containers and setup the test pod
-    test: Run tests (pass testsuite/quicktest or a path to a test starting with tests/ as argument)
-    rctest: Run tests roundcube testsuite (WIP)
-    shell: Get a shell in the test container
-    testrun: Setup & test in one command, suitable as one shot command to run the main tests.
-    deploy: Setup a test environment
+
 EOF
+    # Grep for functions with one line of context, then prettify and remove empty lines
+    grep -B1 ^kolab__ $0 | sed 's/ {//' | sed '/^$/d'
 }
 
 cmdname=$1
