@@ -11,7 +11,7 @@ class WellKnownTest extends TestCase
      */
     public function testOpenidConfiguration(): void
     {
-        $href = 'https://' . \config('app.domain');
+        $href = \App\Utils::serviceUrl("/");
 
         $response = $this->get('.well-known/openid-configuration');
         $response->assertStatus(200)
