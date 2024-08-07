@@ -201,13 +201,12 @@ kolab__deploy() {
 
     podman__healthcheck $POD-mariadb $POD-redis
 
-    # Make imap available to the webapp seeder, but don't expect it to be healthy until it can authenticate against the webapp
+    # IMAP must be avialable for the seeder
     podman__run_imap
+    podman__healthcheck $POD-imap
 
     podman__run_webapp src/.env $CONFIG
     podman__healthcheck $POD-webapp
-
-    podman__healthcheck $POD-imap
 
     # Ensure all commands are processed
     echo "Flushing work queue"
