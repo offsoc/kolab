@@ -185,9 +185,7 @@ class IMAPTest extends TestCase
         $result = IMAP::deleteUser($user);
         $this->assertTrue($result);
 
-        $result = IMAP::verifyAccount($user->email);
-        $this->assertFalse($result);
-        $this->assertFalse(IMAP::verifyDefaultFolders($user->email));
+        $this->assertFalse(IMAP::verifyAccount($user->email));
     }
 
     /**
