@@ -6,12 +6,6 @@ cd /opt/app-root/src/
 
 /update.sh
 
-# If we want to rely on the environment for configuration
-if [[ $NOENVFILE == true ]]; then
-    echo "----> removing envfile"
-    rm -f .env
-fi
-
 if [ ! -f 'resources/countries.php' ]; then
     echo "----> Importing countries"
     ./artisan data:countries

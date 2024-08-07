@@ -26,12 +26,18 @@ if [ -d /src/overlay ]; then
         --exclude=resources/build \
         --exclude=bootstrap \
         --exclude=.gitignore \
+        --exclude=.env \
         /src/overlay/ /opt/app-root/src/ | tee /tmp/rsync-overlay.output
 
     REBUILD=true
 fi
 
 cd /opt/app-root/src/
+
+# We rely on the environment for configuration
+# We have to do this before running composer, because that attempts to read the .env file too.
+rm -f .env
+
 
 if [[ $REBUILD == true ]]; then
     rm -rf storage/framework

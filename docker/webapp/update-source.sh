@@ -9,4 +9,5 @@ rsync -av \
     --exclude=storage \
     --exclude=resources/build \
     --exclude=.gitignore \
+    --exclude=.env \
     /src/kolabsrc.orig/ /opt/app-root/src/ | tee /tmp/rsync.output
