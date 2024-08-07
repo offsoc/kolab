@@ -45,7 +45,8 @@ class EWSTest extends TestCase
     /**
      * Test EWS to DAV migration
      *
-     * @group ews dav
+     * @group dav
+     * @group ews
      */
     public function testInitialMigration(): void
     {
@@ -101,7 +102,8 @@ class EWSTest extends TestCase
     /**
      * Test EWS to DAV incremental migration run
      *
-     * @group ews dav
+     * @group dav
+     * @group ews
      * @depends testInitialMigration
      */
     public function testIncrementalMigration(): void
