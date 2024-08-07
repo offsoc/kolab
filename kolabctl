@@ -350,7 +350,7 @@ kolab__selfcheck() {
 }
 
 kolab__ps() {
-    command podman ps
+    command podman ps | grep $POD
 }
 
 kolab__exec() {
@@ -448,13 +448,21 @@ kolab__help() {
   This is the kolab commandline utility.
 
   The following commands are available:
-    deploy: Deploy kolab
-    start: Start all containers
-    stop: Stop all containers
+    configure: Initial configuration.
+    deploy: Deploy kolab in the kolab-prod pod. Can be re-executed without loosing data.
+    build: Build all containers (Automatically executed as part of deploy).
+    reset: Remove pod and all volumes. Will delete all data.
+    start: Start pod
+    stop: Stop pod
     update: This will update all containers.
     backup: Create a backup in backup/
     restore: Restore a backup from backup/
     selfcheck: Run a selfcheck to ensure kolab is functional
+    shell: Get a shell in the given container.
+    run: Re-run an individual container.
+    exec: exec inside the given container.
+    logs: Access logs of the given container.
+    cyradm: Get a cyradm shell
 EOF
 }
 
