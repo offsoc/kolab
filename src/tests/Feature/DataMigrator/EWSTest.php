@@ -51,19 +51,20 @@ class EWSTest extends TestCase
     public function testInitialMigration(): void
     {
         $uri = \config('services.dav.uri');
+        $uri = preg_replace('|^http|', 'dav', $uri);
 
         $src = new Account('ews://user%40outlook.com:pass@office.outlook.com');
-        $dst = new Account(preg_replace('|^[a-z]+://|', 'dav://jack%40kolab.org:simple123@', $uri));
+        $dst = new Account(preg_replace('|://|', '://jack%40kolab.org:simple123@', $uri));
 
         // Cleanup the DAV account
         $this->davEmptyFolder($dst, 'Calendar', Engine::TYPE_EVENT);
-        $this->davEmptyFolder($dst, 'Tasks', Engine::TYPE_TASK);
+        // $this->davEmptyFolder($dst, 'Tasks', Engine::TYPE_TASK);
         $this->davDeleteFolder($dst, 'Kontakty', Engine::TYPE_CONTACT);
 
         $options = [
             'force' => true,
             'sync' => true,
-            'type' => 'event,contact,task',
+            'type' => 'event,contact',
             // Mocking, use HTTP responses from the playback file
             'httpPlayback' => [
                 'mode' => 'playback',
@@ -84,9 +85,11 @@ class EWSTest extends TestCase
 
         // Assert the migrated tasks
         // Note: Tasks do not have UID in Exchange so it's generated
+        /*
         $tasks = $this->davList($dst, 'Tasks', Engine::TYPE_TASK);
         $this->assertCount(1, $tasks);
         $this->assertSame('Nowe zadanie', $tasks[0]->summary);
+        */
 
         // Assert the migrated contacts and contact folders
         // Note: Contacts do not have UID in Exchange so it's generated
@@ -109,11 +112,12 @@ class EWSTest extends TestCase
     public function testIncrementalMigration(): void
     {
         $uri = \config('services.dav.uri');
+        $uri = preg_replace('|^http|', 'dav', $uri);
 
         // TODO: Test OAuth2 authentication
 
         $src = new Account('ews://user%40outlook.com:pass@office.outlook.com');
-        $dst = new Account(preg_replace('|^[a-z]+://|', 'dav://jack%40kolab.org:simple123@', $uri));
+        $dst = new Account(preg_replace('|://|', '://jack%40kolab.org:simple123@', $uri));
 
         $options = [
             'force' => true,

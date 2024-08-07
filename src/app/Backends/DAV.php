@@ -548,8 +548,9 @@ class DAV
 
         $url .= $path;
 
-        $client = Http::withBasicAuth($this->user, $this->password);
-        // $client = Http::withToken($token); // Bearer token
+        $client = Http::withBasicAuth($this->user, $this->password)
+            // ->withToken($token) // Bearer token
+            ->withOptions(['verify' => \config('services.dav.verify')]);
 
         if ($body) {
             if (!isset($headers['Content-Type'])) {

@@ -44,8 +44,9 @@ class DAVTest extends TestCase
     {
         $uri = \config('services.dav.uri');
 
-        $src = new Account(preg_replace('|^[a-z]+://|', 'dav://john%40kolab.org:simple123@', $uri));
-        $dst = new Account(preg_replace('|^[a-z]+://|', 'dav://jack%40kolab.org:simple123@', $uri));
+        $uri = preg_replace('|^http|', 'dav', $uri);
+        $src = new Account(preg_replace('|://|', '://john%40kolab.org:simple123@', $uri));
+        $dst = new Account(preg_replace('|://|', '://jack%40kolab.org:simple123@', $uri));
 
         // Initialize accounts
         $this->initAccount($src);
@@ -95,8 +96,9 @@ class DAVTest extends TestCase
     {
         $uri = \config('services.dav.uri');
 
-        $src = new Account(preg_replace('|^[a-z]+://|', 'dav://john%40kolab.org:simple123@', $uri));
-        $dst = new Account(preg_replace('|^[a-z]+://|', 'dav://jack%40kolab.org:simple123@', $uri));
+        $uri = preg_replace('|^http|', 'dav', $uri);
+        $src = new Account(preg_replace('|://|', '://john%40kolab.org:simple123@', $uri));
+        $dst = new Account(preg_replace('|://|', '://jack%40kolab.org:simple123@', $uri));
 
         // Add an event and modify another one
         $srcEvents = $this->davList($src, 'Calendar', Engine::TYPE_EVENT);

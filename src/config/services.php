@@ -58,6 +58,7 @@ return [
 
     'dav' => [
         'uri' => env('DAV_URI', 'https://proxy/'),
+        'verify' => (bool) env('DAV_VERIFY', true),
     ],
 
     'activesync' => [
