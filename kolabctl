@@ -400,6 +400,7 @@ kolab__pull() {
 }
 
 kolab__build() {
+    pin_git_refs
     if [[ $1 != "" ]]; then
         podman__build_$1
     else
