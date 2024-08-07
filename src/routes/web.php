@@ -16,7 +16,7 @@ Route::group(
         //'domain' => \config('app.website_domain'),
     ],
     function () {
-        Route::get('content/page/{page}', [Controllers\ContentController::class. 'pageContent'])
+        Route::get('content/page/{page}', [Controllers\ContentController::class, 'pageContent'])
             ->where('page', '(.*)');
         Route::get('content/faq/{page}', [Controllers\ContentController::class, 'faqContent'])
             ->where('page', '(.*)');
