@@ -339,7 +339,9 @@ kolab__selfcheck() {
 
     # We skip mollie and openexchange
     podman exec $POD-webapp env APP_DEBUG=false ./artisan status:health --check DB --check Redis --check IMAP --check Roundcube --check Meet --check DAV
+    echo "Checking postfix authentication"
     podman exec $POD-postfix testsaslauthd -u "$ADMIN_USER" -p "$ADMIN_PASSWORD"
+    echo "Checking imap authentication"
     podman exec $POD-imap testsaslauthd -u "$ADMIN_USER" -p "$ADMIN_PASSWORD"
 
     # podman run -ti --rm utils ./mailtransporttest.py --sender-username "$ADMIN_USER" --sender-password "$ADMIN_PASSWORD" --sender-host "127.0.0.1" --recipient-username "$ADMIN_USER" --recipient-password "$ADMIN_PASSWORD" --recipient-host "127.0.0.1" --recipient-port "11143"
