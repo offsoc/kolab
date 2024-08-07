@@ -205,7 +205,7 @@ kolab__deploy() {
     podman__run_imap
     podman__healthcheck $POD-imap
 
-    podman__run_webapp src/.env $CONFIG
+    podman__run_webapp
     podman__healthcheck $POD-webapp
 
     # Ensure all commands are processed
