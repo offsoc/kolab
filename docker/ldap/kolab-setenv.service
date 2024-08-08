@@ -1,0 +1,9 @@
+[Unit]
+Description=Kolab Set Environment
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c "cat /proc/1/environ | tr '\0' '\n' > /etc/openshift-environment"
+
+[Install]
+WantedBy=multi-user.target

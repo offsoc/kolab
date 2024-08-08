@@ -100,6 +100,7 @@ podman__build_all() {
     podman build docker/synapse -t synapse
     podman build docker/element -t element
     podman__build_roundcube
+    podman build docker/ldap -t ldap
 }
 
 kolab__validate() {
@@ -209,6 +210,30 @@ podman__run_mariadb() {
         -e DB_RC_PASSWORD=${DB_PASSWORD:?"missing env variable"} \
         --health-cmd "mysqladmin -u root ping && test -e /tmp/initialized" \
         mariadb:latest
+}
+
+podman__run_ldap() {
+    $PODMAN run -dt --pod $POD --name $POD-ldap --replace \
+         $LDAP_STORAGE \
+        -e APP_DOMAIN \
+        -e LDAP_BASE_DN="dc=mgmt,dc=com" \
+        -e LDAP_DOMAIN_BASE_DN="ou=Domains,dc=mgmt,dc=com" \
+        -e LDAP_HOSTS=ldap \
+        -e LDAP_PORT=389 \
+        -e LDAP_SERVICE_BIND_DN="uid=kolab-service,ou=Special Users,dc=mgmt,dc=com" \
+        -e LDAP_SERVICE_BIND_PW="simple123" \
+        -e LDAP_USE_SSL=false \
+        -e LDAP_USE_TLS=false \
+        -e LDAP_ADMIN_BIND_DN="cn=Directory Manager" \
+        -e LDAP_ADMIN_BIND_PW="simple123" \
+        -e LDAP_ADMIN_ROOT_DN="dc=mgmt,dc=com" \
+        -e LDAP_HOSTED_BIND_DN="uid=hosted-kolab-service,ou=Special Users,dc=mgmt,dc=com" \
+        -e LDAP_HOSTED_BIND_PW="simple123" \
+        -e LDAP_HOSTED_ROOT_DN="dc=hosted,dc=com" \
+        -e IMAP_ADMIN_LOGIN \
+        -e IMAP_ADMIN_PASSWORD \
+        --health-cmd "systemctl status dirsrv@kolab || exit 1" \
+        ldap:latest
 }
 
 podman__run_redis() {
