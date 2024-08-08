@@ -301,7 +301,7 @@ class SharedFolderTest extends TestCaseDusk
                 ->on(new SharedFolderInfo())
                 ->with(new Status(), function ($browser) {
                     $browser->assertSeeIn('@body', 'We are preparing the shared folder')
-                        ->assertProgress(85, 'Creating a shared folder...', 'pending')
+                        ->assertProgress(\config('app.with_ldap') ? 85 : 80, 'Creating a shared folder...', 'pending')
                         ->assertMissing('@refresh-button')
                         ->assertMissing('@refresh-text')
                         ->assertMissing('#status-link')

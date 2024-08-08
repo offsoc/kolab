@@ -230,6 +230,10 @@ class DistlistTest extends TestCaseDusk
      */
     public function testStatus(): void
     {
+        if (!\config('app.with_ldap')) {
+            $this->markTestSkipped();
+        }
+
         $john = $this->getTestUser('john@kolab.org');
         $group = $this->getTestGroup('group-test@kolab.org');
         $group->assignToWallet($john->wallets->first());

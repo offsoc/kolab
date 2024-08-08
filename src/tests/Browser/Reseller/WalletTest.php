@@ -119,10 +119,7 @@ class WalletTest extends TestCaseDusk
                 ->assertSeeIn('@nav #tab-receipts', 'Receipts')
                 ->with('@receipts-tab', function (Browser $browser) {
                     $browser->waitUntilMissing('.app-loader')
-                        ->assertSeeIn('p', 'There are no receipts for payments')
-                        ->assertDontSeeIn('p', 'Here you can download')
-                        ->assertMissing('select')
-                        ->assertMissing('button');
+                        ->assertSeeIn('tfoot td', 'There are no receipts for payments');
                 });
         });
 
@@ -169,15 +166,14 @@ class WalletTest extends TestCaseDusk
                 ->assertSeeIn('@nav #tab-receipts', 'Receipts')
                 ->with('@receipts-tab', function (Browser $browser) use ($receipts) {
                     $browser->waitUntilMissing('.app-loader')
-                        ->assertDontSeeIn('p', 'There are no receipts for payments')
-                        ->assertSeeIn('p', 'Here you can download')
-                        ->assertSeeIn('button', 'Download')
-                        ->assertElementsCount('select > option', 2)
-                        ->assertSeeIn('select > option:nth-child(1)', $receipts[1])
-                        ->assertSeeIn('select > option:nth-child(2)', $receipts[0]);
+                        ->assertMissing('tfoot')
+                        ->assertElementsCount('table tbody tr', 2)
+                        ->assertSeeIn('table tbody tr:nth-child(1) td.datetime', $receipts[1])
+                        ->assertSeeIn('table tbody tr:nth-child(2) td.datetime', $receipts[0]);
 
                     // Download a receipt file
-                    $browser->select('select', $receipts[0])
+                    $browser->click('table tbody tr:nth-child(2) td.selection button')
+                        ->waitUntilMissing('.app-loader')
                         ->click('button')
                         ->pause(2000);
 

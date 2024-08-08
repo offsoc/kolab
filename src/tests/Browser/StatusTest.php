@@ -76,7 +76,7 @@ class StatusTest extends TestCaseDusk
                 ->on(new Dashboard())
                 ->with(new Status(), function ($browser) use ($john) {
                     $browser->assertSeeIn('@body', 'We are preparing your account')
-                        ->assertProgress(71, 'Creating a mailbox...', 'pending')
+                        ->assertProgress(\config('app.with_ldap') ? 71 : 60, 'Creating a mailbox...', 'pending')
                         ->assertMissing('#status-confirm')
                         ->assertMissing('#status-link')
                         ->assertMissing('@refresh-button')
@@ -88,7 +88,11 @@ class StatusTest extends TestCaseDusk
                     // Wait for auto-refresh, expect domain-confirmed step
                     $browser->pause(6000)
                         ->assertSeeIn('@body', 'Your account is almost ready')
-                        ->assertProgress(85, 'Confirming an ownership of a custom domain...', 'failed')
+                        ->assertProgress(
+                            \config('app.with_ldap') ? 85 : 80,
+                            'Confirming an ownership of a custom domain...',
+                            'failed'
+                        )
                         ->assertMissing('@refresh-button')
                         ->assertMissing('@refresh-text')
                         ->assertMissing('#status-confirm')
@@ -101,7 +105,11 @@ class StatusTest extends TestCaseDusk
                 ->on(new Dashboard())
                 ->with(new Status(), function ($browser) {
                     $browser->assertMissing('@refresh-button')
-                        ->assertProgress(85, 'Confirming an ownership of a custom domain...', 'failed');
+                        ->assertProgress(
+                            \config('app.with_ldap') ? 85 : 80,
+                            'Confirming an ownership of a custom domain...',
+                            'failed'
+                        );
                 });
 
             // Confirm the domain and wait until the whole status box disappears
@@ -130,7 +138,7 @@ class StatusTest extends TestCaseDusk
             $browser->visit(new Dashboard())
                 ->with(new Status(), function ($browser) use ($john, $domain) {
                     $browser->assertSeeIn('@body', 'We are preparing your account')
-                        ->assertProgress(71, 'Creating a mailbox...', 'failed')
+                        ->assertProgress(\config('app.with_ldap') ? 71 : 60, 'Creating a mailbox...', 'failed')
                         ->assertVisible('@refresh-button')
                         ->assertVisible('@refresh-text');
 
@@ -183,7 +191,7 @@ class StatusTest extends TestCaseDusk
                 ->on(new DomainInfo())
                 ->with(new Status(), function ($browser) {
                     $browser->assertSeeIn('@body', 'We are preparing the domain')
-                        ->assertProgress(50, 'Verifying a custom domain...', 'pending')
+                        ->assertProgress(\config('app.with_ldap') ? 50 : 33, 'Verifying a custom domain...', 'pending')
                         ->assertMissing('@refresh-button')
                         ->assertMissing('@refresh-text')
                         ->assertMissing('#status-link')
@@ -197,7 +205,7 @@ class StatusTest extends TestCaseDusk
             $browser->waitFor('@status.process-failed')
                 ->with(new Status(), function ($browser) {
                     $browser->assertSeeIn('@body', 'The domain is almost ready')
-                        ->assertProgress(75, 'Confirming an ownership of a custom domain...', 'failed')
+                        ->assertProgress(\config('app.with_ldap') ? 75 : 66, 'Confirming an ownership of a custom domain...', 'failed')
                         ->assertMissing('@refresh-button')
                         ->assertMissing('@refresh-text')
                         ->assertMissing('#status-link')
@@ -255,7 +263,7 @@ class StatusTest extends TestCaseDusk
                 })
                 ->with(new Status(), function ($browser) use ($john) {
                     $browser->assertSeeIn('@body', 'We are preparing the user account')
-                        ->assertProgress(71, 'Creating a mailbox...', 'pending')
+                        ->assertProgress(\config('app.with_ldap') ? 71 : 60, 'Creating a mailbox...', 'pending')
                         ->assertMissing('#status-confirm')
                         ->assertMissing('#status-link')
                         ->assertMissing('@refresh-button')
@@ -268,7 +276,11 @@ class StatusTest extends TestCaseDusk
                     // Wait for auto-refresh, expect domain-confirmed step
                     $browser->pause(6000)
                         ->assertSeeIn('@body', 'The user account is almost ready')
-                        ->assertProgress(85, 'Confirming an ownership of a custom domain...', 'failed')
+                        ->assertProgress(
+                            \config('app.with_ldap') ? 85 : 80,
+                            'Confirming an ownership of a custom domain...',
+                            'failed'
+                        )
                         ->assertMissing('@refresh-button')
                         ->assertMissing('@refresh-text')
                         ->assertMissing('#status-confirm')

@@ -273,7 +273,7 @@ class ResourceTest extends TestCaseDusk
                 ->on(new ResourceInfo())
                 ->with(new Status(), function ($browser) {
                     $browser->assertSeeIn('@body', 'We are preparing the resource')
-                        ->assertProgress(85, 'Creating a shared folder...', 'pending')
+                        ->assertProgress(\config('app.with_ldap') ? 85 : 80, 'Creating a shared folder...', 'pending')
                         ->assertMissing('@refresh-button')
                         ->assertMissing('@refresh-text')
                         ->assertMissing('#status-link')
