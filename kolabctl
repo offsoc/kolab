@@ -161,6 +161,12 @@ kolab__deploy() {
     fi
     echo "Deploying $CONFIG on $HOST"
 
+    if selinuxenabled; then 
+        # Patches on how to correctly configure selinux are welcome
+        echo "selinux breaks networking, please disable"
+        exit 1
+    fi
+
     if [[ ! -f src/.env ]]; then
         echo "Missing src/.env file, run 'kolabctl configure' to generate"
         exit 1

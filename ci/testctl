@@ -340,6 +340,13 @@ kolab__validate() {
 # Deploy a test deployment in the "dev" pod
 kolab__deploy() {
     export POD=dev
+
+    if selinuxenabled; then 
+        # Patches on how to correctly configure selinux are welcome
+        echo "selinux breaks networking, please disable"
+        exit 1
+    fi
+
     # Create the pod first
     $PODMAN pod create \
         --replace \
