@@ -366,5 +366,5 @@ pin_git_refs() {
     export GIT_REF_FREEBUSY=$(pin_commit "$GIT_REMOTE_FREEBUSY" "master")
 
     export IMAP_GIT_REMOTE=https://git.kolab.org/source/cyrus-imapd
-    export IMAP_GIT_REF=$(pin_commit "$GIT_REMOTE_FREEBUSY" "dev/kolab-3.6")
+    export IMAP_GIT_REF=$(pin_commit "$IMAP_GIT_REMOTE" "dev/kolab-3.6")
 }
