@@ -83,7 +83,7 @@ PGP_GPGCONF=/usr/bin/gpgconf
 PGP_LENGTH=
 
 REDIS_HOST=localhost
-REDIS_PASSWORD=null
+REDIS_PASSWORD=simple123
 REDIS_PORT=6379
 
 OCTANE_HTTP_HOST=kolab.local

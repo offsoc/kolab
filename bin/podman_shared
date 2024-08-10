@@ -191,6 +191,8 @@ podman__run_roundcube() {
         -e KOLAB_ADDRESSBOOK_CARDDAV_SERVER=http://localhost:11080/dav \
         -e CALENDAR_CALDAV_SERVER=http://localhost:11080/dav \
         -e TASKLIST_CALDAV_SERVER=http://localhost:11080/dav \
+        -e REDIS_HOST=localhost \
+        -e REDIS_PASSWORD="${REDIS_PASSWORD:?"missing env variable"}" \
         roundcube:latest
 }
 
@@ -239,6 +241,7 @@ podman__run_ldap() {
 podman__run_redis() {
     $PODMAN run -dt --pod $POD --name $POD-redis --replace \
         $REDIS_STORAGE \
+        -e REDIS_PASSWORD="${REDIS_PASSWORD:?"missing env variable"}" \
         --health-cmd "redis-cli ping || exit 1" \
         redis:latest
 }

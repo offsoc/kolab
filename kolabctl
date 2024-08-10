@@ -46,6 +46,8 @@ __export_env() {
     export DB_USERNAME
     export DB_PASSWORD
     export DB_DATABASE
+    export REDIS_HOST
+    export REDIS_PASSWORD
     export MINIO_USER
     export MINIO_PASSWORD
     export PASSPORT_PRIVATE_KEY

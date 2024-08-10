@@ -104,6 +104,7 @@ export MINIO_PASSWORD=simple123
 export MEET_SERVER_TOKEN=simple123
 export MEET_WEBHOOK_TOKEN=simple123
 export PUBLIC_IP=127.0.0.1
+export REDIS_PASSWORD=simple123
 
 export CERTS_PATH=./ci/certs
 export IMAP_SPOOL_STORAGE=--mount=type=tmpfs,tmpfs-size=128M,tmpfs-mode=777,destination=/var/spool/imap,U=true,notmpcopyup
