@@ -205,7 +205,11 @@ class StatusTest extends TestCaseDusk
             $browser->waitFor('@status.process-failed')
                 ->with(new Status(), function ($browser) {
                     $browser->assertSeeIn('@body', 'The domain is almost ready')
-                        ->assertProgress(\config('app.with_ldap') ? 75 : 66, 'Confirming an ownership of a custom domain...', 'failed')
+                        ->assertProgress(
+                            \config('app.with_ldap') ? 75 : 66,
+                            'Confirming an ownership of a custom domain...',
+                            'failed'
+                        )
                         ->assertMissing('@refresh-button')
                         ->assertMissing('@refresh-text')
                         ->assertMissing('#status-link')
