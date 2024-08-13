@@ -342,7 +342,7 @@ kolab__validate() {
 kolab__deploy() {
     export POD=dev
 
-    if selinuxenabled; then 
+    if [ `getenforce` == "Enforcing" ]; then 
         # Patches on how to correctly configure selinux are welcome
         echo "selinux breaks networking, please disable"
         exit 1

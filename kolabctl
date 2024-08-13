@@ -163,7 +163,7 @@ kolab__deploy() {
     fi
     echo "Deploying $CONFIG on $HOST"
 
-    if selinuxenabled; then 
+    if [ `getenforce` == "Enforcing" ]; then 
         # Patches on how to correctly configure selinux are welcome
         echo "selinux breaks networking, please disable"
         exit 1
