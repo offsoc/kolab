@@ -359,6 +359,8 @@ kolab__deploy() {
         --publish "993:6993" \
         --publish "6379:6379" \
         --publish "3306:3306" \
+        --publish "11143:11143" \
+        --publish "11993:11993" \
         --publish "44444:44444/udp" \
         --publish "44444:44444/tcp" \
         --name $POD
