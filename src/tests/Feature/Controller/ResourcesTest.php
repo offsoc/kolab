@@ -358,23 +358,26 @@ class ResourcesTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertFalse($json['isReady']);
         $this->assertTrue($json['isImapReady']);
+        $this->assertSame('success', $json['status']);
         if (\config('app.with_ldap')) {
+            $this->assertFalse($json['isReady']);
             $this->assertFalse($json['isLdapReady']);
             $this->assertSame('resource-ldap-ready', $json['process'][1]['label']);
             $this->assertSame(false, $json['process'][1]['state']);
             $this->assertSame('resource-imap-ready', $json['process'][2]['label']);
             $this->assertSame(true, $json['process'][2]['state']);
+            $this->assertSame('Setup process has been pushed. Please wait.', $json['message']);
+            $this->assertSame('waiting', $json['processState']);
+
+            Queue::assertPushed(\App\Jobs\Resource\CreateJob::class, 1);
         } else {
+            $this->assertTrue($json['isReady']);
             $this->assertSame('resource-imap-ready', $json['process'][1]['label']);
             $this->assertSame(true, $json['process'][1]['state']);
+            $this->assertSame('Setup process finished successfully.', $json['message']);
+            $this->assertSame('done', $json['processState']);
         }
-        $this->assertSame('success', $json['status']);
-        $this->assertSame('Setup process has been pushed. Please wait.', $json['message']);
-        $this->assertSame('waiting', $json['processState']);
-
-        Queue::assertPushed(\App\Jobs\Resource\CreateJob::class, 1);
 
         // Test a case when a domain is not ready
         Queue::fake();
@@ -386,17 +389,21 @@ class ResourcesTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertFalse($json['isReady']);
+        $this->assertSame('success', $json['status']);
         if (\config('app.with_ldap')) {
+            $this->assertFalse($json['isReady']);
             $this->assertFalse($json['isLdapReady']);
             $this->assertSame('resource-ldap-ready', $json['process'][1]['label']);
             $this->assertSame(false, $json['process'][1]['state']);
-        }
-        $this->assertSame('success', $json['status']);
-        $this->assertSame('Setup process has been pushed. Please wait.', $json['message']);
-        $this->assertSame('waiting', $json['processState']);
+            $this->assertSame('Setup process has been pushed. Please wait.', $json['message']);
+            $this->assertSame('waiting', $json['processState']);
 
-        Queue::assertPushed(\App\Jobs\Resource\CreateJob::class, 1);
+            Queue::assertPushed(\App\Jobs\Resource\CreateJob::class, 1);
+        } else {
+            $this->assertSame('Setup process finished successfully.', $json['message']);
+            $this->assertTrue($json['isReady']);
+            $this->assertSame('done', $json['processState']);
+        }
     }
 
     /**

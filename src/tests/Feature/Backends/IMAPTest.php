@@ -4,6 +4,7 @@ namespace Tests\Feature\Backends;
 
 use App\Backends\IMAP;
 use App\Backends\LDAP;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class IMAPTest extends TestCase
@@ -13,6 +14,18 @@ class IMAPTest extends TestCase
     private $group;
     private $resource;
     private $folder;
+
+    /**
+     * {@inheritDoc}
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+
+        if (!\config('app.with_imap')) {
+            $this->markTestSkipped();
+        }
+    }
 
     /**
      * {@inheritDoc}
@@ -48,6 +61,8 @@ class IMAPTest extends TestCase
      */
     public function testAclCleanup(): void
     {
+        Queue::fake();
+
         $this->user = $user = $this->getTestUser('test-' . time() . '@kolab.org', [], true);
         $this->group = $group = $this->getTestGroup('test-group-' . time() . '@kolab.org');
 
@@ -93,6 +108,8 @@ class IMAPTest extends TestCase
      */
     public function testAclCleanupDomain(): void
     {
+        Queue::fake();
+
         $this->user = $user = $this->getTestUser('test-' . time() . '@kolab.org', [], true);
         $this->group = $group = $this->getTestGroup('test-group-' . time() . '@kolab.org');
 
@@ -140,11 +157,14 @@ class IMAPTest extends TestCase
      * Test creating/updating/deleting an IMAP account
      *
      * @group imap
+     * @group ldap
      */
     public function testUsers(): void
     {
-        $this->user = $user = $this->getTestUser('test-' . time() . '@' . \config('app.domain'), [], true);
-        $storage = \App\Sku::withEnvTenantContext()->where('title', 'storage')->first();
+        Queue::fake();
+
+        $this->user = $user = $this->getTestUser('test-' . time() . '@' . \config('app.domain'), []);
+        $storage = \App\Sku::withObjectTenantContext($user)->where('title', 'storage')->first();
         $user->assignSku($storage, 1, $user->wallets->first());
 
         // User must be in ldap, so imap auth works
@@ -195,6 +215,8 @@ class IMAPTest extends TestCase
      */
     public function testResources(): void
     {
+        Queue::fake();
+
         $this->resource = $resource = $this->getTestResource(
             'test-resource-' . time() . '@kolab.org',
             ['name' => 'Resource ©' . time()]
@@ -239,6 +261,8 @@ class IMAPTest extends TestCase
      */
     public function testSharedFolders(): void
     {
+        Queue::fake();
+
         $this->folder = $folder = $this->getTestSharedFolder(
             'test-folder-' . time() . '@kolab.org',
             ['name' => 'SharedFolder ©' . time()]

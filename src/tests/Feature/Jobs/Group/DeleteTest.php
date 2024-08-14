@@ -41,7 +41,13 @@ class DeleteTest extends TestCase
         $job = new \App\Jobs\Group\CreateJob($group->id);
         $job->handle();
 
-        $this->assertTrue($group->fresh()->isLdapReady());
+        $group->refresh();
+
+        if (\config('app.with_ldap')) {
+            $this->assertTrue($group->isLdapReady());
+        } else {
+            $this->assertFalse($group->isLdapReady());
+        }
 
         Queue::fake();
 

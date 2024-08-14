@@ -326,16 +326,21 @@ class GroupsTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertFalse($json['isLdapReady']);
-        $this->assertFalse($json['isReady']);
+        if (\config('app.with_ldap')) {
+            $this->assertFalse($json['isLdapReady']);
+            $this->assertFalse($json['isReady']);
+            $this->assertCount(6, $json['process']);
+            $this->assertSame('distlist-ldap-ready', $json['process'][1]['label']);
+            $this->assertSame(false, $json['process'][1]['state']);
+        } else {
+            $this->assertCount(4, $json['process']);
+            $this->assertTrue($json['isReady']);
+        }
         $this->assertFalse($json['isSuspended']);
         $this->assertTrue($json['isActive']);
         $this->assertFalse($json['isDeleted']);
-        $this->assertCount(6, $json['process']);
         $this->assertSame('distlist-new', $json['process'][0]['label']);
         $this->assertSame(true, $json['process'][0]['state']);
-        $this->assertSame('distlist-ldap-ready', $json['process'][1]['label']);
-        $this->assertSame(false, $json['process'][1]['state']);
         $this->assertTrue(empty($json['status']));
         $this->assertTrue(empty($json['message']));
 
@@ -350,11 +355,13 @@ class GroupsTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertTrue($json['isLdapReady']);
+        if (\config('app.with_ldap')) {
+            $this->assertTrue($json['isLdapReady']);
+            $this->assertCount(6, $json['process']);
+            $this->assertSame('distlist-ldap-ready', $json['process'][1]['label']);
+            $this->assertSame(true, $json['process'][1]['state']);
+        }
         $this->assertTrue($json['isReady']);
-        $this->assertCount(6, $json['process']);
-        $this->assertSame('distlist-ldap-ready', $json['process'][1]['label']);
-        $this->assertSame(true, $json['process'][1]['state']);
         $this->assertSame('success', $json['status']);
         $this->assertSame('Setup process finished successfully.', $json['message']);
 
@@ -367,11 +374,13 @@ class GroupsTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertTrue($json['isLdapReady']);
+        if (\config('app.with_ldap')) {
+            $this->assertTrue($json['isLdapReady']);
+            $this->assertCount(6, $json['process']);
+            $this->assertSame('distlist-ldap-ready', $json['process'][1]['label']);
+            $this->assertSame(true, $json['process'][1]['state']);
+        }
         $this->assertTrue($json['isReady']);
-        $this->assertCount(6, $json['process']);
-        $this->assertSame('distlist-ldap-ready', $json['process'][1]['label']);
-        $this->assertSame(true, $json['process'][1]['state']);
         $this->assertSame('success', $json['status']);
         $this->assertSame('Setup process finished successfully.', $json['message']);
     }
@@ -391,13 +400,19 @@ class GroupsTest extends TestCase
 
         $result = GroupsController::statusInfo($group);
 
-        $this->assertFalse($result['isDone']);
-        $this->assertCount(6, $result['process']);
-        $this->assertSame('distlist-new', $result['process'][0]['label']);
-        $this->assertSame(true, $result['process'][0]['state']);
-        $this->assertSame('distlist-ldap-ready', $result['process'][1]['label']);
-        $this->assertSame(false, $result['process'][1]['state']);
-        $this->assertSame('running', $result['processState']);
+        if (\config('app.with_ldap')) {
+            $this->assertFalse($result['isDone']);
+            $this->assertCount(6, $result['process']);
+            $this->assertSame('distlist-new', $result['process'][0]['label']);
+            $this->assertSame(true, $result['process'][0]['state']);
+            $this->assertSame('distlist-ldap-ready', $result['process'][1]['label']);
+            $this->assertSame(false, $result['process'][1]['state']);
+            $this->assertSame('running', $result['processState']);
+        } else {
+            $this->assertTrue($result['isDone']);
+            $this->assertSame('done', $result['processState']);
+            $this->markTestSkipped();
+        }
 
         $group->created_at = Carbon::now()->subSeconds(181);
         $group->save();

@@ -14,10 +14,11 @@ class AutodiscoverTest extends TestCase
     public function setUp(): void
     {
         parent::setUp();
+
         if (!self::$client) {
             self::$client = new \GuzzleHttp\Client([
                 'http_errors' => false, // No exceptions
-                'base_uri' => "http://roundcube/",
+                'base_uri' => \config('services.autodiscover.uri'),
                 'verify' => false,
                 'connect_timeout' => 10,
                 'timeout' => 10,

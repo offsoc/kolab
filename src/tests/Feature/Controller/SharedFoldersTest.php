@@ -360,23 +360,29 @@ class SharedFoldersTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertTrue($json['isImapReady']);
-        $this->assertFalse($json['isReady']);
+        if (config('app.with_imap')) {
+            $this->assertTrue($json['isImapReady']);
+        }
+
         if (\config('app.with_ldap')) {
+            $this->assertFalse($json['isReady']);
             $this->assertFalse($json['isLdapReady']);
             $this->assertSame('shared-folder-ldap-ready', $json['process'][1]['label']);
             $this->assertSame(false, $json['process'][1]['state']);
             $this->assertSame('shared-folder-imap-ready', $json['process'][2]['label']);
             $this->assertSame(true, $json['process'][2]['state']);
+            $this->assertSame('Setup process has been pushed. Please wait.', $json['message']);
+            $this->assertSame('waiting', $json['processState']);
+
+            Queue::assertPushed(\App\Jobs\SharedFolder\CreateJob::class, 1);
         } else {
+            $this->assertTrue($json['isReady']);
             $this->assertSame('shared-folder-imap-ready', $json['process'][1]['label']);
             $this->assertSame(true, $json['process'][1]['state']);
+            $this->assertSame('Setup process finished successfully.', $json['message']);
+            $this->assertSame('done', $json['processState']);
         }
         $this->assertSame('success', $json['status']);
-        $this->assertSame('Setup process has been pushed. Please wait.', $json['message']);
-        $this->assertSame('waiting', $json['processState']);
-
-        Queue::assertPushed(\App\Jobs\SharedFolder\CreateJob::class, 1);
 
         // Test a case when a domain is not ready
         Queue::fake();
@@ -389,20 +395,21 @@ class SharedFoldersTest extends TestCase
         $json = $response->json();
 
         $this->assertTrue($json['isImapReady']);
-        $this->assertFalse($json['isReady']);
+        $this->assertSame('success', $json['status']);
         if (\config('app.with_ldap')) {
+            $this->assertFalse($json['isReady']);
             $this->assertFalse($json['isLdapReady']);
             $this->assertSame('shared-folder-ldap-ready', $json['process'][1]['label']);
             $this->assertSame(false, $json['process'][1]['state']);
+            $this->assertSame('Setup process has been pushed. Please wait.', $json['message']);
+
+            Queue::assertPushed(\App\Jobs\SharedFolder\CreateJob::class, 1);
         } else {
+            $this->assertTrue($json['isReady']);
             $this->assertSame('shared-folder-imap-ready', $json['process'][1]['label']);
             $this->assertSame(true, $json['process'][1]['state']);
+            $this->assertSame('done', $json['processState']);
         }
-        $this->assertSame('success', $json['status']);
-        $this->assertSame('Setup process has been pushed. Please wait.', $json['message']);
-        $this->assertSame('waiting', $json['processState']);
-
-        Queue::assertPushed(\App\Jobs\SharedFolder\CreateJob::class, 1);
     }
 
     /**

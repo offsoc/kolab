@@ -61,8 +61,8 @@ class IMAPTest extends TestCase
         $this->imapAppend($src, 'ImapDataMigrator/Test', 'mail/2.eml');
 
         // Clean up the destination folders structure
-        $this->imapDeleteFolder($dst, 'ImapDataMigrator');
         $this->imapDeleteFolder($dst, 'ImapDataMigrator/Test');
+        $this->imapDeleteFolder($dst, 'ImapDataMigrator');
 
         // Run the migration
         $migrator = new Engine();

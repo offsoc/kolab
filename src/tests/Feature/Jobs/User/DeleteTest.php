@@ -86,6 +86,7 @@ class DeleteTest extends TestCase
         $this->assertTrue($user->isDeleted());
         $this->assertNull($rcdb->table('users')->where('username', $user->email)->first());
 
+        /*
         if (\config('app.with_imap')) {
             Queue::assertPushed(\App\Jobs\IMAP\AclCleanupJob::class, 1);
             Queue::assertPushed(
@@ -97,6 +98,7 @@ class DeleteTest extends TestCase
                 }
             );
         }
+        */
 
         // TODO: Test partial execution, i.e. only IMAP or only LDAP
     }

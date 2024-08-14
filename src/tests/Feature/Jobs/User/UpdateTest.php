@@ -59,9 +59,11 @@ class UpdateTest extends TestCase
         $job = new \App\Jobs\User\UpdateJob($user->id);
         $job->handle();
 
-        $ldap_user = LDAP::getUser('new-job-user@' . \config('app.domain'));
+        if (\config('app.with_ldap')) {
+            $ldap_user = LDAP::getUser('new-job-user@' . \config('app.domain'));
 
-        $this->assertSame($aliases, $ldap_user['alias']);
+            $this->assertSame($aliases, $ldap_user['alias']);
+        }
 
         // Test updating aliases list
         $aliases = [
@@ -73,9 +75,11 @@ class UpdateTest extends TestCase
         $job = new \App\Jobs\User\UpdateJob($user->id);
         $job->handle();
 
-        $ldap_user = LDAP::getUser('new-job-user@' . \config('app.domain'));
+        if (\config('app.with_ldap')) {
+            $ldap_user = LDAP::getUser('new-job-user@' . \config('app.domain'));
 
-        $this->assertSame($aliases, (array) $ldap_user['alias']);
+            $this->assertSame($aliases, (array) $ldap_user['alias']);
+        }
 
         // Test unsetting aliases list
         $aliases = [];
@@ -84,9 +88,11 @@ class UpdateTest extends TestCase
         $job = new \App\Jobs\User\UpdateJob($user->id);
         $job->handle();
 
-        $ldap_user = LDAP::getUser('new-job-user@' . \config('app.domain'));
+        if (\config('app.with_ldap')) {
+            $ldap_user = LDAP::getUser('new-job-user@' . \config('app.domain'));
 
-        $this->assertTrue(empty($ldap_user['alias']));
+            $this->assertTrue(empty($ldap_user['alias']));
+        }
 
         // Test deleted user
         $user->delete();

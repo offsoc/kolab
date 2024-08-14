@@ -5,6 +5,9 @@ namespace Tests\Infrastructure;
 use App\Backends\IMAP;
 use Tests\TestCase;
 
+/**
+ * @group imap
+ */
 class IMAPTest extends TestCase
 {
     private static ?\App\User $user = null;

@@ -309,6 +309,13 @@ trait BackendsTrait
     {
         $imap = $this->getImapClient($account);
 
+        // Check the folder existence first, to prevent Cyrus IMAP fatal error when
+        // attempting to delete a non-existing folder
+        $existing = $imap->listMailboxes('', $folder);
+        if (is_array($existing) && in_array($folder, $existing)) {
+            return;
+        }
+
         if (!$imap->deleteFolder($folder)) {
             if (str_contains($imap->error, "Mailbox does not exist")) {
                 // Ignore

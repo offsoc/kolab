@@ -31,14 +31,20 @@ class CreateTest extends TestCase
      */
     public function testHandle(): void
     {
-        $group = $this->getTestGroup('group@kolab.org', ['members' => []]);
+        $group = $this->getTestGroup('group@kolab.org', ['members' => [], 'status' => Group::STATUS_NEW]);
 
         $this->assertFalse($group->isLdapReady());
 
         $job = new \App\Jobs\Group\CreateJob($group->id);
         $job->handle();
 
-        $this->assertTrue($group->fresh()->isLdapReady());
+        $group->refresh();
+
+        if (!\config('app.with_ldap')) {
+            $this->assertTrue($group->isActive());
+        } else {
+            $this->assertTrue($group->isLdapReady());
+        }
 
         // Test non-existing group ID
         $this->expectException(\Exception::class);

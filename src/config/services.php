@@ -61,6 +61,10 @@ return [
         'verify' => (bool) env('DAV_VERIFY', true),
     ],
 
+    'autodiscover' => [
+        'uri' => env('AUTODISCOVER_URI', env('APP_URL', 'http://localhost')),
+    ],
+
     'activesync' => [
         'uri' => env('ACTIVESYNC_URI', 'https://proxy/Microsoft-Server-ActiveSync'),
     ],

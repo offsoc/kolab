@@ -40,9 +40,6 @@ class CreateTest extends TestCase
         $domain->save();
 
         // TODO: Make the test working with various with_imap/with_ldap combinations
-        \config(['app.with_imap' => true]);
-        \config(['app.with_ldap' => true]);
-
         $this->assertFalse($user->isLdapReady());
         $this->assertFalse($user->isImapReady());
         $this->assertFalse($user->isActive());
@@ -52,8 +49,16 @@ class CreateTest extends TestCase
 
         $user->refresh();
 
-        $this->assertTrue($user->isLdapReady());
-        $this->assertTrue($user->isImapReady());
+        if (\config('app.with_ldap')) {
+            $this->assertTrue($user->isLdapReady());
+        } else {
+            $this->assertFalse($user->isLdapReady());
+        }
+        if (\config('app.with_imap')) {
+            $this->assertTrue($user->isImapReady());
+        } else {
+            $this->assertFalse($user->isImapReady());
+        }
         $this->assertTrue($user->isActive());
         $this->assertFalse($job->hasFailed());
 

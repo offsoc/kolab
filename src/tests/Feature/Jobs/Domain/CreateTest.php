@@ -49,7 +49,9 @@ class CreateTest extends TestCase
         $job = new \App\Jobs\Domain\CreateJob($domain->id);
         $job->handle();
 
-        $this->assertTrue($domain->fresh()->isLdapReady());
+        if (\config('app.with_ldap')) {
+            $this->assertTrue($domain->fresh()->isLdapReady());
+        }
 
         Queue::assertPushed(\App\Jobs\Domain\VerifyJob::class, 1);
 

@@ -59,8 +59,16 @@ class CreateTest extends TestCase
         $folder->refresh();
 
         $this->assertFalse($job->hasFailed());
-        $this->assertTrue($folder->isLdapReady());
-        $this->assertTrue($folder->isImapReady());
+        if (\config('app.with_ldap')) {
+            $this->assertTrue($folder->isLdapReady());
+        } else {
+            $this->assertFalse($folder->isLdapReady());
+        }
+        if (\config('app.with_imap')) {
+            $this->assertTrue($folder->isImapReady());
+        } else {
+            $this->assertFalse($folder->isImapReady());
+        }
         $this->assertTrue($folder->isActive());
 
         // Test job failures

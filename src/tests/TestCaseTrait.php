@@ -571,10 +571,7 @@ trait TestCaseTrait
      */
     protected function getTestUser($email, $attrib = [], $createInBackends = false)
     {
-        // Disable jobs (i.e. skip LDAP oprations)
-        if (!$createInBackends) {
-            Queue::fake();
-        }
+        Queue::fake();
 
         $user = User::firstOrCreate(['email' => $email], $attrib);
 
@@ -582,6 +579,11 @@ trait TestCaseTrait
             // Note: we do not want to use user restore here
             User::where('id', $user->id)->forceDelete();
             $user = User::create(['email' => $email] + $attrib);
+        }
+
+        if ($createInBackends) {
+            $job = new \App\Jobs\User\CreateJob($user->id);
+            $job->handle();
         }
 
         return $user;

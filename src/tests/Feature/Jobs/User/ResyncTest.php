@@ -50,12 +50,10 @@ class ResyncTest extends TestCase
             'status' => User::STATUS_LDAP_READY | User::STATUS_IMAP_READY | User::STATUS_ACTIVE,
         ]);
 
-        // TODO: Make the test working with various with_imap/with_ldap combinations
-        \config(['app.with_imap' => true]);
-        \config(['app.with_ldap' => true]);
-
-        $this->assertTrue(empty(LDAP::getDomain($domain->namespace)));
-        $this->assertTrue(empty(LDAP::getUser($user->email)));
+        if (\config('app.with_ldap')) {
+            $this->assertTrue(empty(LDAP::getDomain($domain->namespace)));
+            $this->assertTrue(empty(LDAP::getUser($user->email)));
+        }
 
         // Test a user (and custom domain) that both aren't in ldap (despite their status)
         $job = new \App\Jobs\User\ResyncJob($user->id);
@@ -65,12 +63,14 @@ class ResyncTest extends TestCase
         $domain->refresh();
 
         $this->assertTrue($user->isLdapReady());
-        $this->assertTrue($user->isImapReady());
         $this->assertTrue($domain->isLdapReady());
-
-        $this->assertTrue(!empty(LDAP::getDomain($domain->namespace)));
-        $this->assertTrue(!empty(LDAP::getUser($user->email)));
+        $this->assertTrue($user->isImapReady());
         $this->assertTrue(IMAP::verifyAccount($user->email));
+
+        if (\config('app.with_ldap')) {
+            $this->assertTrue(!empty(LDAP::getDomain($domain->namespace)));
+            $this->assertTrue(!empty(LDAP::getUser($user->email)));
+        }
 
         // TODO: More tests cases
     }

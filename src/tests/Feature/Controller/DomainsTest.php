@@ -433,6 +433,8 @@ class DomainsTest extends TestCase
      */
     public function testStatus(): void
     {
+        $withLdap = \config('app.with_ldap');
+
         $john = $this->getTestUser('john@kolab.org');
         $jack = $this->getTestUser('jack@kolab.org');
         $domain = $this->getTestDomain('kolab.org');
@@ -441,7 +443,10 @@ class DomainsTest extends TestCase
         $response = $this->actingAs($jack)->get("/api/v4/domains/{$domain->id}/status");
         $response->assertStatus(403);
 
-        $domain->status = Domain::STATUS_NEW | Domain::STATUS_ACTIVE | Domain::STATUS_LDAP_READY;
+        $domain->status = Domain::STATUS_NEW | Domain::STATUS_ACTIVE;
+        if ($withLdap) {
+            $domain->status |= Domain::STATUS_LDAP_READY;
+        }
         $domain->save();
 
         // Get domain status
@@ -449,7 +454,6 @@ class DomainsTest extends TestCase
         $response->assertStatus(200);
 
         $json = $response->json();
-        $withLdap = \config('app.with_ldap');
 
         $this->assertFalse($json['isVerified']);
         $this->assertFalse($json['isReady']);

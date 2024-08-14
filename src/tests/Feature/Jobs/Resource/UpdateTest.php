@@ -61,9 +61,11 @@ class UpdateTest extends TestCase
         $job = new \App\Jobs\Resource\UpdateJob($resource->id);
         $job->handle();
 
-        $ldap_resource = LDAP::getResource($resource->email);
+        if (\config('app.with_ldap')) {
+            $ldap_resource = LDAP::getResource($resource->email);
 
-        $this->assertSame('ACT_ACCEPT', $ldap_resource['kolabinvitationpolicy']);
+            $this->assertSame('ACT_ACCEPT', $ldap_resource['kolabinvitationpolicy']);
+        }
 
         // TODO: Assert IMAP change worked
 

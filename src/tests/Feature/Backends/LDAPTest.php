@@ -23,6 +23,10 @@ class LDAPTest extends TestCase
     {
         parent::setUp();
 
+        if (!\config('app.with_ldap')) {
+            $this->markTestSkipped();
+        }
+
         $this->ldap_config = [
             'ldap.hosts' => \config('ldap.hosts'),
         ];

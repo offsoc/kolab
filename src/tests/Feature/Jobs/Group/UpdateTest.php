@@ -44,6 +44,16 @@ class UpdateTest extends TestCase
 
         // Create the group
         $group = $this->getTestGroup('group@kolab.org', ['members' => []]);
+
+        if (!\config('app.with_ldap')) {
+            $job = new \App\Jobs\Group\UpdateJob($group->id);
+            $job->handle();
+
+            $this->assertTrue($job->isDeleted());
+            $this->markTestSkipped();
+        }
+
+        // Create the group in LDAP
         LDAP::createGroup($group);
 
         // Test if group properties (members) actually changed in LDAP
