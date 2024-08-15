@@ -20,6 +20,10 @@ class PaymentCoinbaseTest extends TestCaseDusk
     {
         parent::setUp();
 
+        if (!\config('services.coinbase.key')) {
+            $this->markTestSkipped('No COINBASE_KEY');
+        }
+
         $this->deleteTestUser('payment-test@kolabnow.com');
     }
 
@@ -28,7 +32,9 @@ class PaymentCoinbaseTest extends TestCaseDusk
      */
     public function tearDown(): void
     {
-        $this->deleteTestUser('payment-test@kolabnow.com');
+        if (\config('services.coinbase.key')) {
+            $this->deleteTestUser('payment-test@kolabnow.com');
+        }
 
         parent::tearDown();
     }

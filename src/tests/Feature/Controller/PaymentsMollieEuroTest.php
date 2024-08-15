@@ -26,6 +26,10 @@ class PaymentsMollieEuroTest extends TestCase
     {
         parent::setUp();
 
+        if (!\config('services.mollie.key')) {
+            $this->markTestSkipped('No MOLLIE_KEY');
+        }
+
         // All tests in this file use Mollie
         \config(['services.payment_provider' => 'mollie']);
     }
@@ -35,7 +39,9 @@ class PaymentsMollieEuroTest extends TestCase
      */
     public function tearDown(): void
     {
-        $this->deleteTestUser('euro@' . \config('app.domain'));
+        if (\config('services.mollie.key')) {
+            $this->deleteTestUser('euro@' . \config('app.domain'));
+        }
 
         parent::tearDown();
     }

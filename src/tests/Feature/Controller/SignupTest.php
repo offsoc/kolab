@@ -814,6 +814,10 @@ class SignupTest extends TestCase
      */
     public function testSignupMandateMode(): void
     {
+        if (!\config('services.mollie.key')) {
+            $this->markTestSkipped('No MOLLIE_KEY');
+        }
+
         Queue::fake();
 
         \config(['services.payment_provider' => 'mollie']);

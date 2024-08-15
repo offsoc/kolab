@@ -22,6 +22,10 @@ class PaymentMollieTest extends TestCaseDusk
     {
         parent::setUp();
 
+        if (!\config('services.mollie.key')) {
+            $this->markTestSkipped('No MOLLIE_KEY');
+        }
+
         $this->deleteTestUser('payment-test@kolabnow.com');
     }
 
@@ -30,7 +34,9 @@ class PaymentMollieTest extends TestCaseDusk
      */
     public function tearDown(): void
     {
-        $this->deleteTestUser('payment-test@kolabnow.com');
+        if (\config('services.mollie.key')) {
+            $this->deleteTestUser('payment-test@kolabnow.com');
+        }
 
         parent::tearDown();
     }

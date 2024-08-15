@@ -22,6 +22,10 @@ class PaymentStripeTest extends TestCaseDusk
     {
         parent::setUp();
 
+        if (!\config('services.stripe.key')) {
+            $this->markTestSkipped('No STRIPE_KEY');
+        }
+
         $this->deleteTestUser('payment-test@kolabnow.com');
     }
 
@@ -30,7 +34,9 @@ class PaymentStripeTest extends TestCaseDusk
      */
     public function tearDown(): void
     {
-        $this->deleteTestUser('payment-test@kolabnow.com');
+        if (\config('services.stripe.key')) {
+            $this->deleteTestUser('payment-test@kolabnow.com');
+        }
 
         parent::tearDown();
     }
@@ -179,7 +185,6 @@ class PaymentStripeTest extends TestCaseDusk
                 )
                 ->assertMissing('@body .alert');
         });
-
 
         // Test updating (disabled) auto-payment
         $this->browse(function (Browser $browser) use ($user) {

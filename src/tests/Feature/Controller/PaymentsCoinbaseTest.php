@@ -26,6 +26,10 @@ class PaymentsCoinbaseTest extends TestCase
     {
         parent::setUp();
 
+        if (!\config('services.coinbase.key')) {
+            $this->markTestSkipped('No COINBASE_KEY');
+        }
+
         \config(['services.payment_provider' => '']);
 
         Utils::setTestExchangeRates(['EUR' => '0.90503424978382']);
@@ -47,18 +51,20 @@ class PaymentsCoinbaseTest extends TestCase
      */
     public function tearDown(): void
     {
-        $john = $this->getTestUser('john@kolab.org');
-        $wallet = $john->wallets()->first();
-        Payment::where('wallet_id', $wallet->id)->delete();
-        Wallet::where('id', $wallet->id)->update(['balance' => 0]);
-        WalletSetting::where('wallet_id', $wallet->id)->delete();
-        $types = [
-            Transaction::WALLET_CREDIT,
-            Transaction::WALLET_REFUND,
-            Transaction::WALLET_CHARGEBACK,
-        ];
-        Transaction::where('object_id', $wallet->id)->whereIn('type', $types)->delete();
-        Utils::setTestExchangeRates([]);
+        if (\config('services.coinbase.key')) {
+            $john = $this->getTestUser('john@kolab.org');
+            $wallet = $john->wallets()->first();
+            Payment::where('wallet_id', $wallet->id)->delete();
+            Wallet::where('id', $wallet->id)->update(['balance' => 0]);
+            WalletSetting::where('wallet_id', $wallet->id)->delete();
+            $types = [
+                Transaction::WALLET_CREDIT,
+                Transaction::WALLET_REFUND,
+                Transaction::WALLET_CHARGEBACK,
+            ];
+            Transaction::where('object_id', $wallet->id)->whereIn('type', $types)->delete();
+            Utils::setTestExchangeRates([]);
+        }
 
         parent::tearDown();
     }
@@ -257,7 +263,6 @@ class PaymentsCoinbaseTest extends TestCase
         Bus::assertDispatchedTimes(\App\Jobs\PaymentEmail::class, 0);
     }
 
-
     /**
      * Test creating a payment and receiving a status via webhook using a foreign currency
      *
@@ -316,7 +321,6 @@ class PaymentsCoinbaseTest extends TestCase
         $this->assertEquals(1234, $wallet->fresh()->balance);
     }
 
-
     /**
      * Generate Coinbase-Signature header for a webhook payload
      */
@@ -330,7 +334,6 @@ class PaymentsCoinbaseTest extends TestCase
         return $this->withHeaders(['x-cc-webhook-signature' => $sig])
             ->json('POST', "api/webhooks/payment/coinbase", $post);
     }
-
 
     /**
      * Test listing a pending payment

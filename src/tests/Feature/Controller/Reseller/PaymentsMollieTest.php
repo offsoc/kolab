@@ -25,6 +25,10 @@ class PaymentsMollieTest extends TestCase
     {
         parent::setUp();
 
+        if (!\config('services.mollie.key')) {
+            $this->markTestSkipped('No MOLLIE_KEY');
+        }
+
         // All tests in this file use Mollie
         \config(['services.payment_provider' => 'mollie']);
 
@@ -41,12 +45,14 @@ class PaymentsMollieTest extends TestCase
      */
     public function tearDown(): void
     {
-        $reseller = $this->getTestUser('reseller@' . \config('app.domain'));
-        $wallet = $reseller->wallets()->first();
-        Payment::where('wallet_id', $wallet->id)->delete();
-        Wallet::where('id', $wallet->id)->update(['balance' => 0]);
-        WalletSetting::where('wallet_id', $wallet->id)->delete();
-        Transaction::where('object_id', $wallet->id)->delete();
+        if (\config('services.mollie.key')) {
+            $reseller = $this->getTestUser('reseller@' . \config('app.domain'));
+            $wallet = $reseller->wallets()->first();
+            Payment::where('wallet_id', $wallet->id)->delete();
+            Wallet::where('id', $wallet->id)->update(['balance' => 0]);
+            WalletSetting::where('wallet_id', $wallet->id)->delete();
+            Transaction::where('object_id', $wallet->id)->delete();
+        }
 
         parent::tearDown();
     }

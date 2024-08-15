@@ -529,6 +529,10 @@ class SignupTest extends TestCaseDusk
      */
     public function testSignupMandate(): void
     {
+        if (!\config('services.mollie.key')) {
+            $this->markTestSkipped('No MOLLIE_KEY');
+        }
+
         // Test the individual plan
         $plan = Plan::withEnvTenantContext()->where('title', 'individual')->first();
         $plan->mode = Plan::MODE_MANDATE;

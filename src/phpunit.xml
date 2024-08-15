@@ -23,7 +23,7 @@
 
         <testsuite name="Browser">
             <directory suffix="Test.php">tests/Browser</directory>
-            <exclude>tests/Browser/PaymentStripeTest.php</exclude>
+             <exclude>tests/Browser/PaymentCoinbaseTest.php</exclude>
         </testsuite>
     </testsuites>
     <coverage processUncoveredFiles="true">

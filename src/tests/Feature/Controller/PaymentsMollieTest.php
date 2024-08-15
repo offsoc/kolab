@@ -29,6 +29,10 @@ class PaymentsMollieTest extends TestCase
     {
         parent::setUp();
 
+        if (!\config('services.mollie.key')) {
+            $this->markTestSkipped('No MOLLIE_KEY');
+        }
+
         // All tests in this file use Mollie
         \config(['services.payment_provider' => 'mollie']);
         \config(['app.vat.mode' => 0]);
@@ -56,22 +60,24 @@ class PaymentsMollieTest extends TestCase
      */
     public function tearDown(): void
     {
-        $this->deleteTestUser('payment-test@' . \config('app.domain'));
+        if (\config('services.mollie.key')) {
+            $this->deleteTestUser('payment-test@' . \config('app.domain'));
 
-        $john = $this->getTestUser('john@kolab.org');
-        $wallet = $john->wallets()->first();
-        Payment::query()->delete();
-        VatRate::query()->delete();
-        Wallet::where('id', $wallet->id)->update(['balance' => 0]);
-        WalletSetting::where('wallet_id', $wallet->id)->delete();
-        $types = [
-            Transaction::WALLET_CREDIT,
-            Transaction::WALLET_REFUND,
-            Transaction::WALLET_CHARGEBACK,
-        ];
-        Transaction::where('object_id', $wallet->id)->whereIn('type', $types)->delete();
-        Plan::withEnvTenantContext()->where('title', 'individual')->update(['mode' => 'email', 'months' => 1]);
-        Utils::setTestExchangeRates([]);
+            $john = $this->getTestUser('john@kolab.org');
+            $wallet = $john->wallets()->first();
+            Payment::query()->delete();
+            VatRate::query()->delete();
+            Wallet::where('id', $wallet->id)->update(['balance' => 0]);
+            WalletSetting::where('wallet_id', $wallet->id)->delete();
+            $types = [
+                Transaction::WALLET_CREDIT,
+                Transaction::WALLET_REFUND,
+                Transaction::WALLET_CHARGEBACK,
+            ];
+            Transaction::where('object_id', $wallet->id)->whereIn('type', $types)->delete();
+            Plan::withEnvTenantContext()->where('title', 'individual')->update(['mode' => 'email', 'months' => 1]);
+            Utils::setTestExchangeRates([]);
+        }
 
         parent::tearDown();
     }

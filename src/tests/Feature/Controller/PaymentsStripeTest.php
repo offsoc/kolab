@@ -25,6 +25,10 @@ class PaymentsStripeTest extends TestCase
     {
         parent::setUp();
 
+        if (!\config('services.stripe.key')) {
+            $this->markTestSkipped('No STRIPE_KEY');
+        }
+
         // All tests in this file use Stripe
         \config(['services.payment_provider' => 'stripe']);
         \config(['app.vat.mode' => 0]);
@@ -46,16 +50,18 @@ class PaymentsStripeTest extends TestCase
      */
     public function tearDown(): void
     {
-        $this->deleteTestUser('payment-test@' . \config('app.domain'));
+        if (\config('services.stripe.key')) {
+            $this->deleteTestUser('payment-test@' . \config('app.domain'));
 
-        $john = $this->getTestUser('john@kolab.org');
-        $wallet = $john->wallets()->first();
-        Wallet::where('id', $wallet->id)->update(['balance' => 0]);
-        WalletSetting::where('wallet_id', $wallet->id)->delete();
-        Transaction::where('object_id', $wallet->id)
-            ->where('type', Transaction::WALLET_CREDIT)->delete();
-        Payment::query()->delete();
-        VatRate::query()->delete();
+            $john = $this->getTestUser('john@kolab.org');
+            $wallet = $john->wallets()->first();
+            Wallet::where('id', $wallet->id)->update(['balance' => 0]);
+            WalletSetting::where('wallet_id', $wallet->id)->delete();
+            Transaction::where('object_id', $wallet->id)
+                ->where('type', Transaction::WALLET_CREDIT)->delete();
+            Payment::query()->delete();
+            VatRate::query()->delete();
+        }
 
         parent::tearDown();
     }

@@ -20,6 +20,11 @@ class PaymentMollieTest extends TestCaseDusk
     public function setUp(): void
     {
         parent::setUp();
+
+        if (!\config('services.mollie.key')) {
+            $this->markTestSkipped('No MOLLIE_KEY');
+        }
+
         self::useResellerUrl();
     }
 
@@ -28,11 +33,13 @@ class PaymentMollieTest extends TestCaseDusk
      */
     public function tearDown(): void
     {
-        $user = $this->getTestUser('reseller@' . \config('app.domain'));
-        $wallet = $user->wallets()->first();
-        $wallet->payments()->delete();
-        $wallet->balance = 0;
-        $wallet->save();
+        if (\config('services.mollie.key')) {
+            $user = $this->getTestUser('reseller@' . \config('app.domain'));
+            $wallet = $user->wallets()->first();
+            $wallet->payments()->delete();
+            $wallet->balance = 0;
+            $wallet->save();
+        }
 
         parent::tearDown();
     }
