@@ -45,11 +45,12 @@ if (!function_exists("getenvlist")) {
     $config['proxy_whitelist'] = getenvlist('PROXY_WHITELIST');
 
     // Caching and storage settings
-    $config['imap_cache'] = 'db';
+    $config['imap_cache'] = 'redis';
     $config['imap_cache_ttl'] = '10d';
-    $config['messages_cache'] = 'db';
+    $config['messages_cache'] = 'db'; // no redis available
     $config['message_cache_ttl'] = '10d';
-    $config['session_storage'] = 'db';
+    $config['session_storage'] = 'redis';
+    $config['redis_hosts'] = [getenv('REDIS_HOST') . ':6379:3:' . getenv('REDIS_PASSWORD')];
 
     // SMTP Server Settings
     if (getenv('SUBMISSION_ENCRYPTION') == "starttls") {
