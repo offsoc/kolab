@@ -397,6 +397,7 @@ kolab__deploy() {
 
     podman__run_postfix
     podman__run_amavis
+    podman__run_collabora
     echo "Deployment complete"
 }
 
