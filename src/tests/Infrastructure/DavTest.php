@@ -260,13 +260,10 @@ class DavTest extends TestCase
             </d:propfind>
         EOF;
 
-        $email = $this->user->email;
-        $href = $this->isCyrus ? "principals/user/{$email}" : "principals/{email}";
-
-        $response = $this->client->request('OPTIONS', $href, ['body' => $body]);
+        $response = $this->client->request('OPTIONS', "principals/{$this->user->email}", ['body' => $body]);
 
         $this->assertEquals(200, $response->getStatusCode());
-        $this->assertStringContainsString('PROPFIND', $response->getHeader('Allow')[0]);
+        $this->assertStringContainsString('PROPFIND', implode(', ', $response->getHeader('Allow')));
     }
 
     public function testWellKnown(): void
@@ -300,21 +297,20 @@ class DavTest extends TestCase
 
         $redirectTarget = $response->getHeader('location')[0];
 
-        // FIXME: Is this indeed expected?
-        $this->assertEquals($path . ($this->isCyrus ? '/calendars/user/' : '/calendars'), $redirectTarget);
+        $this->assertEquals($path . '/calendars', trim($redirectTarget, '/'));
 
         // Follow the redirect
         $response = $this->client->request('PROPFIND', $redirectTarget, $params);
         $this->assertEquals(207, $response->getStatusCode());
 
         // Any URL should result in a redirect to the same path
-        $response = $this->client->request('PROPFIND', "/.well-known/caldav/calendars/{$email}", $params);
+        $url = $this->isCyrus ? "/user/{$email}" : "/calendars/{$email}";
+        $response = $this->client->request('PROPFIND', "/.well-known/caldav/{$url}", $params);
         $this->assertEquals(301, $response->getStatusCode());
 
         $redirectTarget = $response->getHeader('location')[0];
 
-        // FIXME: This is imho not what I'd expect from Cyrus, and that location fails in the following request
-        $expected = $path . ($this->isCyrus ? "/calendars/user/calendars/{$email}" : "/calendars/{$email}");
+        $expected = $path . ($this->isCyrus ? "/calendars/user/{$email}" : "/calendars/{$email}");
         $this->assertEquals($expected, $redirectTarget);
 
         // Follow the redirect
