@@ -27,6 +27,25 @@ abstract class TestCaseDusk extends BaseTestCase
     }
 
     /**
+     * Tear down the Dusk test case class.
+     *
+     * Note: This is copied here from Dusk's ProvidesBrowser trait to properly
+     * close Chrome when using Dusk >= 8 with PHPUnit v9. It can be removed
+     * when we switch to PHPUnit v10.
+     *
+     * @afterClass
+     * @return void
+     */
+    public static function tearDownDuskClass()
+    {
+        static::closeAll();
+
+        foreach (static::$afterClassCallbacks as $callback) {
+            $callback();
+        }
+    }
+
+    /**
      * Create the RemoteWebDriver instance.
      *
      * @return \Facebook\WebDriver\Remote\RemoteWebDriver

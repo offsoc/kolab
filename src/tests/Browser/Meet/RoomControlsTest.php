@@ -319,21 +319,21 @@ class RoomControlsTest extends TestCaseDusk
             $owner->keys('@chat-input', 'test2', '{enter}', 'test3', '{enter}')
                 ->assertElementsCount('@chat-list .message', 1)
                 ->assertSeeIn('@chat-list .message .nickname', 'john')
-                ->assertElementsCount('@chat-list .message div', 4)
+                ->waitFor('@chat-list .message div:nth-child(4)')
                 ->assertSeeIn('@chat-list .message div:last-child', 'test3');
 
             $guest->waitFor('@menu button.link-chat .badge')
                 ->assertSeeIn('@menu button.link-chat .badge', '2')
                 ->click('@menu button.link-chat')
-                ->assertElementsCount('@chat-list .message', 1)
+                ->waitFor('@chat-list .message')
                 ->assertSeeIn('@chat-list .message .nickname', 'john')
                 ->assertSeeIn('@chat-list .message div:last-child', 'test3')
                 ->keys('@chat-input', 'guest1', '{enter}')
-                ->assertElementsCount('@chat-list .message', 2)
+                ->waitFor('@chat-list .message:nth-child(2)')
                 ->assertMissing('@chat-list .message:last-child .nickname')
                 ->assertSeeIn('@chat-list .message:last-child div:last-child', 'guest1');
 
-            $owner->assertElementsCount('@chat-list .message', 2)
+            $owner->waitFor('@chat-list .message:nth-child(2)')
                 ->assertMissing('@chat-list .message:last-child .nickname')
                 ->assertSeeIn('@chat-list .message:last-child div:last-child', 'guest1');
 

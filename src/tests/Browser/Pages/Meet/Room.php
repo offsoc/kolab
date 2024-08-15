@@ -138,7 +138,7 @@ class Room extends Page
             $class .= ':not([disabled])';
         }
 
-        $browser->assertVisible('@menu button.link-' . $button . $class);
+        $browser->waitFor('@menu button.link-' . $button . $class, 2);
     }
 
     /**

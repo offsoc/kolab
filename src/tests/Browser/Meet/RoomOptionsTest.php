@@ -238,7 +238,7 @@ class RoomOptionsTest extends TestCaseDusk
                         ->click('@message button.accept');
                 });
 
-            // Guest automatically anters the room
+            // Guest automatically enters the room
             $guest->waitFor('@session', 12)
                 // make sure he has no access to the Options menu
                 ->waitFor('@session .meet-video:not(.self)')
