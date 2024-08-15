@@ -74,6 +74,7 @@ RUN /opt/app-root/src/build.sh && \
     done
 
 COPY /rootfs /
+RUN chmod 777 /opt/app-root/src
 RUN chmod -R 777 /etc/php.ini /etc/httpd /opt/app-root/src/*.sh
 
 VOLUME /data
