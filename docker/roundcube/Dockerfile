@@ -65,16 +65,13 @@ ARG GIT_REF_FREEBUSY=master
 ARG GIT_REMOTE_FREEBUSY=https://git.kolab.org/diffusion/F/freebusy.git
 
 RUN /opt/app-root/src/build.sh && \
-    chgrp -R 0 /opt/app-root/src && \
-    chmod -R g=u /opt/app-root/src && \
-    mkdir -p /run/php-fpm && \
-    chmod 777 /run/php-fpm && \
-    mkdir -p /run/httpd && \
-    chmod 777 /run/httpd && \
-    mkdir -p /data && \
-    chmod 777 /data && \
-    chmod -R 777 /etc/php.ini /etc/httpd /var/log/httpd /var/lib/httpd /data && \
-    chown -R 1001:0 /opt/app-root/src /data
+    for PATH in /run/php-fpm /run/httpd /var/log/httpd /var/lib/httpd /data /opt/app-root; \
+    do \
+        /usr/bin/mkdir -p $PATH; \
+        /usr/bin/chmod -R 777 $PATH; \
+        /usr/bin/chown -R 1001:0 $PATH; \
+        /usr/bin/chmod -R g=u $PATH; \
+    done
 
 COPY /rootfs /
 RUN chmod -R 777 /etc/php.ini /etc/httpd /opt/app-root/src/*.sh
