@@ -1,0 +1,58 @@
+transforms:
+  apps:
+    type: route
+    inputs:
+      - input
+    reroute_unmatched: true
+    route:
+      roundcube: contains!(.pod_name, "roundcube")
+      proxy: contains!(.pod_name, "proxy")
+      kolab: contains!(.pod_name, "kolab")
+      postfix: contains!(.pod_name, "postfix")
+      imap: contains!(.pod_name, "imap")
+  parse_kolab:
+    type: remap
+    inputs:
+      - apps.kolab
+    source: |
+      structured = parse_logfmt(.message) ?? {}
+      . = merge(., structured)
+      .timestamp = parse_timestamp(.timestamp, "%Y/%m/%d %H:%M:%S %z") ?? now()
+  parse_roundcube:
+    type: remap
+    inputs:
+      - apps.roundcube
+    source: |
+      structured = parse_apache_log(.message, format: "common") ?? parse_logfmt(.message) ?? {}
+      . = merge(., structured)
+      .timestamp = parse_timestamp(.timestamp, "%Y/%m/%d %H:%M:%S %z") ?? now()
+  parse_imap:
+    type: remap
+    inputs:
+      - apps.imap
+    source: |
+      structured = parse_regex(.message, pattern: r'^(?<program>.*)\[(?<pid>[0-9]+)\]( )?: *(?<message>.*)$') ?? {}
+      . = merge(., structured)
+      .timestamp = parse_timestamp(.timestamp, "%Y/%m/%d %H:%M:%S %z") ?? now()
+  parse_proxy:
+    type: remap
+    inputs:
+      - apps.proxy
+    source: |
+      structured = parse_regex(.message, pattern: r'^(?<remote>[^ ]*) (?<host>[^ ]*) (?<user>[^ ]*) \[(?<time>[^\]]*)\] "(?<method>\S+)(?: +(?<path>[^\"]*?)(?: +\S*)?)?" (?<code>[^ ]*) (?<size>[^ ]*)(?: "(?<referer>[^\"]*)" "(?<agent>[^\"]*)")') ?? {}
+      . = merge(., structured)
+      .timestamp = parse_timestamp(.timestamp, "%Y/%m/%d %H:%M:%S %z") ?? now()
+  parse_postfix:
+    type: remap
+    inputs:
+      - apps.postfix
+    source: |
+      structured = parse_regex(.message, pattern: r'^(?<time>[^ ]+ [0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9]) (?<host>[^ ]+) (?<process>[^:]+): (?<message>((?<key>[^ :]+)[ :])? ?((to|from)=<(?<address>[^>]+)>)?.*)$') ?? {}
+      . = merge(., structured)
+      .timestamp = parse_timestamp(.timestamp, "%Y/%m/%d %H:%M:%S %z") ?? now()
+  parse_unmatched:
+    type: remap
+    inputs:
+      - apps._unmatched
+    source: |
+      .timestamp = parse_timestamp(.timestamp, "%Y/%m/%d %H:%M:%S %z") ?? now()

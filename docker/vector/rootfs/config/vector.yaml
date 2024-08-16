@@ -1,0 +1,51 @@
+# Change this to use a non-default directory for Vector data storage:
+data_dir: "/data"
+
+sources:
+  # This way we can read json blobs from a file for testing
+  read_from_file:
+    type: file
+    include:
+      - /config/testinput.json
+  # kubernetes:
+  #   type: kubernetes_logs
+  #   extra_namespace_label_selector: "kubernetes.io/metadata.name=kolab"
+
+transforms:
+  # Turn the log lines into json, only useful for testinput.json
+  parse_testinput:
+    type: remap
+    inputs:
+      - read_from_file
+    source: |
+      . = merge(., parse_json!(string!(.message))) ?? .
+
+  input:
+    type: remap
+    inputs:
+      - parse_testinput
+      # - kubernetes
+    source: |
+      .container_name = del(.kubernetes.container_name)
+      .container_id = del(.kubernetes.container_id)
+      .namespace_name = del(.kubernetes.pod_namespace)
+      .pod_name = del(.kubernetes.pod_name)
+      .pod_owner = del(.kubernetes.pod_owner)
+      .pod_node_name = del(.kubernetes.pod_node_name)
+      del(.file)
+      del(.kubernetes)
+
+sinks:
+  print:
+    type: "console"
+    inputs:
+      - "parse_kolab"
+      - "parse_roundcube"
+      - "parse_proxy"
+      - "parse_imap"
+      - "parse_postfix"
+      - apps._unmatched
+    encoding:
+      codec: "json"
+      json:
+        pretty: true

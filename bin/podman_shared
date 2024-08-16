@@ -344,6 +344,11 @@ podman__run_element() {
         element:latest
 }
 
+podman__run_vector() {
+    podman__run vector \
+        vector:latest $@
+}
+
 podman__run_meet() {
     $PODMAN run -dt --pod $POD --name $POD-meet --replace \
         -v ./meet/server:/src/meet:ro \
