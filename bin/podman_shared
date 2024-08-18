@@ -148,8 +148,19 @@ podman__healthcheck() {
     done
 }
 
+podman__run() {
+    NAME=$1
+    shift
+    if [[ "$DEBUG_ARGS" != "" ]]; then
+        RUN_ARGS=$DEBUG_ARGS
+    else
+        RUN_ARGS="-dt --pod $POD --name $POD-$NAME"
+    fi
+    $PODMAN run $RUN_ARGS --replace "$@"
+}
+
 podman__run_proxy() {
-    $PODMAN run -dt --pod $POD --name $POD-proxy --replace \
+    podman__run proxy \
         -v $CERTS_PATH:/etc/certs:ro \
         $LETSENCRYPT_VOLUME \
         -e APP_WEBSITE_DOMAIN \
@@ -163,11 +174,11 @@ podman__run_proxy() {
         -e MATRIX_BACKEND="http://localhost:8008" \
         -e ELEMENT_BACKEND="http://localhost:8880" \
         -e SIEVE_BACKEND="localhost:4190" \
-        kolab-proxy:latest
+        kolab-proxy:latest $@
 }
 
 podman__run_roundcube() {
-    $PODMAN run -dt --pod $POD --name $POD-roundcube --replace \
+    podman__run roundcube \
         -v ./ext:/src.orig:ro \
         -e APP_DOMAIN \
         -e DES_KEY \
@@ -193,11 +204,11 @@ podman__run_roundcube() {
         -e TASKLIST_CALDAV_SERVER=http://localhost:11080/dav \
         -e REDIS_HOST=localhost \
         -e REDIS_PASSWORD="${REDIS_PASSWORD:?"missing env variable"}" \
-        roundcube:latest
+        roundcube:latest $@
 }
 
 podman__run_mariadb() {
-    $PODMAN run -dt --pod $POD --name $POD-mariadb --replace \
+    podman__run mariadb \
          $MARIADB_STORAGE \
         -e MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD:?"missing env variable"} \
         -e TZ="+02:00" \
@@ -211,11 +222,11 @@ podman__run_mariadb() {
         -e DB_RC_USERNAME="roundcube" \
         -e DB_RC_PASSWORD=${DB_PASSWORD:?"missing env variable"} \
         --health-cmd "mysqladmin -u root ping && test -e /tmp/initialized" \
-        mariadb:latest
+        mariadb:latest $@
 }
 
 podman__run_ldap() {
-    $PODMAN run -dt --pod $POD --name $POD-ldap --replace \
+    podman__run ldap \
          $LDAP_STORAGE \
         -e APP_DOMAIN \
         -e LDAP_BASE_DN="dc=mgmt,dc=com" \
@@ -235,19 +246,19 @@ podman__run_ldap() {
         -e IMAP_ADMIN_LOGIN \
         -e IMAP_ADMIN_PASSWORD \
         --health-cmd "systemctl status dirsrv@kolab || exit 1" \
-        ldap:latest
+        ldap:latest $@
 }
 
 podman__run_redis() {
-    $PODMAN run -dt --pod $POD --name $POD-redis --replace \
+    podman__run redis \
         $REDIS_STORAGE \
         -e REDIS_PASSWORD="${REDIS_PASSWORD:?"missing env variable"}" \
         --health-cmd "redis-cli ping || exit 1" \
-        redis:latest
+        redis:latest $@
 }
 
 podman__run_minio() {
-    $PODMAN run -dt --pod $POD --name $POD-minio --replace \
+    podman__run minio \
         $MINIO_STORAGE \
         -e MINIO_ROOT_USER=${MINIO_USER:?"missing env variable"} \
         -e MINIO_ROOT_PASSWORD=${MINIO_PASSWORD:?"missing env variable"} \
@@ -258,7 +269,7 @@ podman__run_minio() {
 
 podman__run_webapp() {
     # We run with a fixed config.demo overlay and override the environment with ci/env
-    $PODMAN run -dt --pod $POD --name $POD-webapp --replace \
+    podman__run webapp \
         --env-file=$ENV_FILE \
         -v ./src:/src/kolabsrc.orig:ro \
         -v ./$CONFIG/src:/src/overlay:ro \
@@ -275,7 +286,7 @@ podman__run_webapp() {
 }
 
 podman__run_imap() {
-    $PODMAN run -dt --pod $POD --name $POD-imap --replace \
+    podman__run imap \
         $IMAP_SPOOL_STORAGE \
         $IMAP_LIB_STORAGE \
         -e APP_SERVICES_DOMAIN="localhost" \
@@ -283,11 +294,11 @@ podman__run_imap() {
         -e IMAP_ADMIN_LOGIN \
         -e IMAP_ADMIN_PASSWORD \
         --health-cmd "test -e /run/saslauthd/mux && kill -0 \$(cat /var/run/master.pid)" \
-        kolab-imap:latest
+        kolab-imap:latest $@
 }
 
 podman__run_postfix() {
-    $PODMAN run -dt --pod $POD --name $POD-postfix --replace \
+    podman__run postfix \
         --privileged \
         $POSTFIX_SPOOL_STORAGE \
         $POSTFIX_LIB_STORAGE \
@@ -306,42 +317,42 @@ podman__run_postfix() {
         -e DB_DATABASE \
         -e LMTP_DESTINATION="localhost:11024" \
         --health-cmd "test -e /run/saslauthd/mux && kill -0 \$(cat /var/spool/postfix/pid/master.pid)" \
-        kolab-postfix:latest
+        kolab-postfix:latest $@
 }
 
 podman__run_amavis() {
-    $PODMAN run -dt --pod $POD --name $POD-amavis --replace \
+    podman__run amavis \
         -e APP_DOMAIN \
         -e POSTFIX_HOST=localhost \
         -e DB_HOST=localhost \
         -e DB_USERNAME \
         -e DB_PASSWORD \
         -e DB_DATABASE \
-        kolab-amavis:latest
+        kolab-amavis:latest $@
 }
 
 podman__run_collabora() {
-    $PODMAN run -dt --pod $POD --name $POD-collabora --replace \
+    podman__run collabora \
         --privileged \
         -e ALLOWED_HOSTS=${APP_DOMAIN} \
-        kolab-collabora:latest
+        kolab-collabora:latest $@
 }
 
 podman__run_synapse() {
-    $PODMAN run -dt --pod $POD --name $POD-synapse --replace \
+    podman__run synapse \
         $SYNAPSE_STORAGE \
         -v $CERTS_PATH:/etc/certs:ro \
         -e APP_DOMAIN \
         -e KOLAB_URL="http://127.0.0.1:8000" \
         -e SYNAPSE_OAUTH_CLIENT_ID="${PASSPORT_SYNAPSE_OAUTH_CLIENT_ID:?"missing env variable"}" \
         -e SYNAPSE_OAUTH_CLIENT_SECRET="${PASSPORT_SYNAPSE_OAUTH_CLIENT_SECRET:?"missing env variable"}" \
-        synapse:latest
+        synapse:latest $@
 }
 
 podman__run_element() {
-    $PODMAN run -dt --pod $POD --name $POD-element --replace \
+    podman__run element \
         -e APP_DOMAIN \
-        element:latest
+        element:latest $@
 }
 
 podman__run_vector() {
@@ -350,7 +361,7 @@ podman__run_vector() {
 }
 
 podman__run_meet() {
-    $PODMAN run -dt --pod $POD --name $POD-meet --replace \
+    podman__run meet \
         -v ./meet/server:/src/meet:ro \
         -e WEBRTC_LISTEN_IP=0.0.0.0 \
         -e WEBRTC_ANNOUNCED_ADDRESS=${PUBLIC_IP:?"missing env variable"} \
@@ -364,7 +375,7 @@ podman__run_meet() {
         -e WEBHOOK_URL=$APP_DOMAIN/api/webhooks/meet \
         -e SSL_CERT=none \
         -e FORCE_WSS=true \
-        kolab-meet:latest
+        kolab-meet:latest $@
 }
 
 function pin_commit() {
