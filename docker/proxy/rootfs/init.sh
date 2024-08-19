@@ -57,6 +57,12 @@ cat <<EOF >> /etc/nginx/nginx.conf
         # Load configuration files for the default server block.
         include /etc/nginx/default.d/*.conf;
 
+        location = /health {
+            access_log off;
+            add_header 'Content-Type' 'application/json';
+            return 200 '{"status":"UP"}';
+        }
+
 EOF
 
 if [[ "$ELEMENT_BACKEND" != "" ]]; then
