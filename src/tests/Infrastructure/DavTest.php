@@ -249,18 +249,7 @@ class DavTest extends TestCase
      */
     public function testOptions(): void
     {
-        $body = <<<EOF
-            <d:propfind xmlns:d="DAV:" xmlns:cs="http://calendarserver.org/ns/" xmlns:c="urn:ietf:params:xml:ns:caldav">
-                <d:prop>
-                    <d:resourcetype />
-                    <d:displayname />
-                    <cs:getctag />
-                    <c:supported-calendar-component-set />
-                </d:prop>
-            </d:propfind>
-        EOF;
-
-        $response = $this->client->request('OPTIONS', "principals/{$this->user->email}", ['body' => $body]);
+        $response = $this->client->request('OPTIONS', "principals/{$this->user->email}");
 
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertStringContainsString('PROPFIND', implode(', ', $response->getHeader('Allow')));
@@ -304,7 +293,7 @@ class DavTest extends TestCase
         $this->assertEquals(207, $response->getStatusCode());
 
         // Any URL should result in a redirect to the same path
-        $url = $this->isCyrus ? "/user/{$email}" : "/calendars/{$email}";
+        $url = $this->isCyrus ? "user/{$email}" : "calendars/{$email}";
         $response = $this->client->request('PROPFIND', "/.well-known/caldav/{$url}", $params);
         $this->assertEquals(301, $response->getStatusCode());
 
