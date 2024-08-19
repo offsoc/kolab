@@ -137,4 +137,33 @@ class DomainTest extends TestCase
 
         $this->assertSame($hash_code, $hash_code2);
     }
+
+    /**
+     * Test domain statusText()
+     */
+    public function testStatusText(): void
+    {
+        $domain = new Domain();
+
+        $this->assertSame('', $domain->statusText());
+
+        $domain->status = Domain::STATUS_NEW
+            | Domain::STATUS_ACTIVE
+            | Domain::STATUS_SUSPENDED
+            | Domain::STATUS_DELETED
+            | Domain::STATUS_CONFIRMED
+            | Domain::STATUS_VERIFIED
+            | Domain::STATUS_LDAP_READY;
+
+        $expected = [
+            'new (1)',
+            'suspended (4)',
+            'deleted (8)',
+            'confirmed (16)',
+            'verified (32)',
+            'ldapReady (64)',
+        ];
+
+        $this->assertSame(implode(', ', $expected), $domain->statusText());
+    }
 }

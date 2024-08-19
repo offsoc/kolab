@@ -35,30 +35,6 @@ class StatusCommand extends Command
             return 1;
         }
 
-        $statuses = [
-            'active' => User::STATUS_ACTIVE,
-            'suspended' => User::STATUS_SUSPENDED,
-            'deleted' => User::STATUS_DELETED,
-            'ldapReady' => User::STATUS_LDAP_READY,
-            'imapReady' => User::STATUS_IMAP_READY,
-            'degraded' => User::STATUS_DEGRADED,
-            'restricted' => User::STATUS_RESTRICTED,
-        ];
-
-        $user_state = [];
-
-        foreach ($statuses as $text => $bit) {
-            if ($text == 'deleted') {
-                $status = $user->trashed();
-            } else {
-                $status = $user->{'is' . \ucfirst($text)}();
-            }
-
-            if ($status) {
-                $user_state[] = "$text ($bit)";
-            }
-        }
-
-        $this->info("Status ({$user->status}): " . \implode(', ', $user_state));
+        $this->info("Status ({$user->status}): " . $user->statusText());
     }
 }

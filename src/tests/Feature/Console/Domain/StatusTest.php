@@ -51,18 +51,15 @@ class StatusTest extends TestCase
         }
 
         // Test deleted domain
-        $user = $this->getTestUser('john@kolab.org');
         $domain = $this->getTestDomain('domain-delete.com', [
                 'status' => \App\Domain::STATUS_NEW,
                 'type' => \App\Domain::TYPE_HOSTED,
         ]);
-        $package_domain = \App\Package::where('title', 'domain-hosting')->first();
-        $domain->assignPackage($package_domain, $user);
         $domain->delete();
 
         $code = \Artisan::call("domain:status {$domain->namespace}");
         $output = trim(\Artisan::output());
         $this->assertSame(0, $code);
-        $this->assertSame("Status (1): deleted (8)", $output);
+        $this->assertSame("Status (1): new (1)", $output);
     }
 }

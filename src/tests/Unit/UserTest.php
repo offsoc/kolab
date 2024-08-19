@@ -136,4 +136,36 @@ class UserTest extends TestCase
             ]
         );
     }
+
+    /**
+     * Test basic User funtionality
+     */
+    public function testStatusText(): void
+    {
+        $user = new User(['email' => 'user@email.com']);
+
+        $this->assertSame('', $user->statusText());
+
+        $user->status = User::STATUS_NEW
+            | User::STATUS_ACTIVE
+            | User::STATUS_SUSPENDED
+            | User::STATUS_DELETED
+            | User::STATUS_IMAP_READY
+            | User::STATUS_LDAP_READY
+            | User::STATUS_DEGRADED
+            | User::STATUS_RESTRICTED;
+
+        $expected = [
+            'new (1)',
+            'active (2)',
+            'suspended (4)',
+            'deleted (8)',
+            'ldapReady (16)',
+            'imapReady (32)',
+            'degraded (64)',
+            'restricted (128)',
+        ];
+
+        $this->assertSame(implode(', ', $expected), $user->statusText());
+    }
 }

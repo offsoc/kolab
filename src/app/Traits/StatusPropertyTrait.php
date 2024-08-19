@@ -2,6 +2,8 @@
 
 namespace App\Traits;
 
+use Illuminate\Support\Str;
+
 trait StatusPropertyTrait
 {
     /**
@@ -62,6 +64,23 @@ trait StatusPropertyTrait
     public function isSuspended(): bool
     {
         return defined('static::STATUS_SUSPENDED') && ($this->status & static::STATUS_SUSPENDED) > 0;
+    }
+
+    /**
+     * Returns object's statuses in a textual form
+     */
+    public function statusText(): string
+    {
+        $reflection = new \ReflectionClass(get_class($this));
+        $result = [];
+
+        foreach ($reflection->getConstants() as $const => $value) {
+            if (str_starts_with($const, 'STATUS_') && ($this->status & $value) > 0) {
+                $result[] = Str::camel(strtolower(str_replace('STATUS_', '', $const))) . " ($value)";
+            }
+        }
+
+        return implode(', ', $result);
     }
 
     /**

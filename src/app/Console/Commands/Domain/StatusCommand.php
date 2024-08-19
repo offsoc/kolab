@@ -35,29 +35,6 @@ class StatusCommand extends Command
             return 1;
         }
 
-        $statuses = [
-            'active' => Domain::STATUS_ACTIVE,
-            'suspended' => Domain::STATUS_SUSPENDED,
-            'deleted' => Domain::STATUS_DELETED,
-            'confirmed' => Domain::STATUS_CONFIRMED,
-            'verified' => Domain::STATUS_VERIFIED,
-            'ldapReady' => Domain::STATUS_LDAP_READY,
-        ];
-
-        $domain_state = [];
-
-        foreach ($statuses as $text => $bit) {
-            if ($text == 'deleted') {
-                $status = $domain->trashed();
-            } else {
-                $status = $domain->{'is' . \ucfirst($text)}();
-            }
-
-            if ($status) {
-                $domain_state[] = "$text ($bit)";
-            }
-        }
-
-        $this->info("Status ({$domain->status}): " . \implode(', ', $domain_state));
+        $this->info("Status ({$domain->status}): " . $domain->statusText());
     }
 }
