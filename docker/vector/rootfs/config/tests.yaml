@@ -14,7 +14,7 @@ tests:
       pod_node_name: dws07.kolabsys.com
       pod_owner: ReplicaSet/roundcube-78bd5fccb
       pod_uid: cc681420-f781-4332-b966-73812b372801
-      message: name=kolabfiles component=chwala session=a410dfeb user=admin@kolab.local log="Refreshing the access token"
+      log: name=kolabfiles component=chwala session=a410dfeb user=admin@kolab.local log="Refreshing the access token"
       source_type: kubernetes_logs
       stream: stderr
       timestamp: "2024-08-19T20:18:49.006951369Z"
@@ -42,7 +42,7 @@ tests:
       pod_node_name: dws07.kolabsys.com
       pod_owner: ReplicaSet/roundcube-78bd5fccb
       pod_uid: cc681420-f781-4332-b966-73812b372801
-      message: 'PHP message: PHP Warning:  Array to string conversion in /opt/app-root/src/roundcubemail/vendor/pear/crypt_gpg/Crypt/GPG/Engine.php on line 1667'
+      log: 'PHP message: PHP Warning:  Array to string conversion in /opt/app-root/src/roundcubemail/vendor/pear/crypt_gpg/Crypt/GPG/Engine.php on line 1667'
       source_type: kubernetes_logs
       stream: stderr
       timestamp: "2024-08-19T20:19:06.317485633Z"
@@ -51,9 +51,7 @@ tests:
     conditions:
     - type: "vrl"
       source: |
-        # assert_eq!(.component, "what")
-        # assert_eq!(.user, "admin@kolab.local")
-        assert_eq!(.message, "PHP message: PHP Warning:  Array to string conversion in /opt/app-root/src/roundcubemail/vendor/pear/crypt_gpg/Crypt/GPG/Engine.php on line 1667")
+        assert_eq!(.log, "PHP message: PHP Warning:  Array to string conversion in /opt/app-root/src/roundcubemail/vendor/pear/crypt_gpg/Crypt/GPG/Engine.php on line 1667")
         assert!(is_timestamp(.timestamp))
 - name: "Roundcube generic message"
   inputs:
@@ -70,7 +68,7 @@ tests:
       pod_node_name: dws07.kolabsys.com
       pod_owner: ReplicaSet/roundcube-74d95fdbf5
       pod_uid: 7625ef26-43e4-4398-956f-c8b9f10c38e8
-      message: "+ for plugin in $(find plugins -mindepth 1 -maxdepth 1 -type d | sort)"
+      log: "+ for plugin in $(find plugins -mindepth 1 -maxdepth 1 -type d | sort)"
       source_type: kubernetes_logs
       stream: stderr
       timestamp: "2024-08-18T09:18:38.276041789Z"
@@ -79,7 +77,7 @@ tests:
     conditions:
     - type: "vrl"
       source: |
-        assert_eq!(.message, "+ for plugin in $(find plugins -mindepth 1 -maxdepth 1 -type d | sort)")
+        assert_eq!(.log, "+ for plugin in $(find plugins -mindepth 1 -maxdepth 1 -type d | sort)")
         assert!(is_timestamp(.timestamp))
 - name: "Roundcube apache"
   inputs:
@@ -96,7 +94,7 @@ tests:
       pod_node_name: dws07.kolabsys.com
       pod_owner: ReplicaSet/roundcube-74d95fdbf5
       pod_uid: 7625ef26-43e4-4398-956f-c8b9f10c38e8
-      message: "10.42.0.238 - - [20/Aug/2024:09:28:05 +0000] \"POST /webmail/71NpOUihc2TMCKJy/?_task=mail&_action=refresh HTTP/1.0\" 200 193 \"https://kolab.local/webmail/71NpOUihc2TMCKJy/?_task=mail&_mbox=INBOX\" \"Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0\""
+      log: "10.42.0.238 - - [20/Aug/2024:09:28:05 +0000] \"POST /webmail/71NpOUihc2TMCKJy/?_task=mail&_action=refresh HTTP/1.0\" 200 193 \"https://kolab.local/webmail/71NpOUihc2TMCKJy/?_task=mail&_mbox=INBOX\" \"Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0\""
       source_type: kubernetes_logs
       stream: stderr
       timestamp: "2024-08-18T09:18:38.276041789Z"
@@ -105,7 +103,35 @@ tests:
     conditions:
     - type: "vrl"
       source: |
-        assert_eq!(.message, "10.42.0.238 - - [20/Aug/2024:09:28:05 +0000] \"POST /webmail/71NpOUihc2TMCKJy/?_task=mail&_action=refresh HTTP/1.0\" 200 193 \"https://kolab.local/webmail/71NpOUihc2TMCKJy/?_task=mail&_mbox=INBOX\" \"Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0\"")
+        assert_eq!(.log, "10.42.0.238 - - [20/Aug/2024:09:28:05 +0000] \"POST /webmail/71NpOUihc2TMCKJy/?_task=mail&_action=refresh HTTP/1.0\" 200 193 \"https://kolab.local/webmail/71NpOUihc2TMCKJy/?_task=mail&_mbox=INBOX\" \"Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0\"")
+        assert!(is_timestamp(.timestamp))
+- name: "Syncroton"
+  inputs:
+  - insert_at: "apps"
+    type: "log"
+    log_fields:
+      file: /var/log/pods/kolab_roundcube-78bd5fccb-lssj6_cc681420-f781-4332-b966-73812b372801/roundcube/0.log
+      container_id: containerd://e3a3059ac016578c967f4034831feff7fea79c5152f92f0cfb523e779fdd0a0a
+      container_image: localhost:5000/roundcube:latest
+      container_image_id: localhost:5000/roundcube@sha256:01b87d337ef0fe7e15943b38dc2b4023638ef0a06dabbc0ac387128bc744e879
+      container_name: roundcube
+      pod_name: roundcube-78bd5fccb-lssj6
+      pod_namespace: kolab
+      pod_node_name: dws07.kolabsys.com
+      pod_owner: ReplicaSet/roundcube-78bd5fccb
+      pod_uid: cc681420-f781-4332-b966-73812b372801
+      log: name=console component=syncroton cmd=FolderSync device=v140Device type=iphone user=admin@kolab.local log="Syncroton_Server::_handlePost::186 xml response (0):\n<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<!DOCTYPE AirSync PUBLIC \"-\/\/AIRSYNC\/\/DTD AirSync\/\/EN\" \"http:\/\/www.microsoft.com\/\">\n<FolderSync xmlns=\"uri:FolderHierarchy\" xmlns:Syncroton=\"uri:Syncroton\" xmlns:Internal=\"uri:Internal\">\n  <Status>1<\/Status>\n  <SyncKey>1<\/SyncKey>\n  <Changes>\n    <Count>9<\/Count>\n    <Add>\n      <ServerId>DAV:event:f8a6ef015ca8eb311f00bc145523363da<\/ServerId>\n      <ParentId>0<\/ParentId>\n      <DisplayName>Calendar<\/DisplayName>\n      <Type>8<\/Type>\n    <\/Add>\n    <Add>\n      <ServerId>DAV:contact:f027577d9ee8a8fafaf314f1a5db41a81<\/ServerId>\n      <ParentId>0<\/ParentId>\n      <DisplayName>Addressbook<\/DisplayName>\n      <Type>9<\/Type>\n    <\/Add>\n    <Add>\n      <ServerId>38b950ebd62cd9a66929c89615d0fc04<\/ServerId>\n      <ParentId>0<\/ParentId>\n      <DisplayName>INBOX<\/DisplayName>\n      <Type>2<\/Type>\n    <\/Add>\n    <Add>\n      <ServerId>1bb8c55fe84d52c6968db2571f7dc124<\/ServerId>\n      <ParentId>0<\/ParentId>\n      <DisplayName>Archive<\/DisplayName>\n      <Type>12<\/Type>\n    <\/Add>\n    <Add>\n      <ServerId>16833612eebc283ce2fe3c447fb53eff<\/ServerId>\n      <ParentId>0<\/ParentId>\n      <DisplayName>Drafts<\/DisplayName>\n      <Type>3<\/Type>\n    <\/Add>\n    <Add>\n      <ServerId>ea8bb554b4246f8a48ccab88b653da54<\/ServerId>\n      <ParentId>0<\/ParentId>\n      <DisplayName>Sent<\/DisplayName>\n      <Type>5<\/Type>\n    <\/Add>\n    <Add>\n      <ServerId>715ed9ea29b8a5377a69c1f758037c65<\/ServerId>\n      <ParentId>0<\/ParentId>\n      <DisplayName>Spam<\/DisplayName>\n      <Type>12<\/Type>\n    <\/Add>\n    <Add>\n      <ServerId>22b8cf366c106d7c8253f4d390f697b8<\/ServerId>\n      <ParentId>0<\/ParentId>\n      <DisplayName>Trash<\/DisplayName>\n      <Type>4<\/Type>\n    <\/Add>\n    <Add>\n      <ServerId>DAV:task:f8a6ef015ca8eb311f00bc145523363da<\/ServerId>\n      <ParentId>0<\/ParentId>\n      <DisplayName>Calendar<\/DisplayName>\n      <Type>7<\/Type>\n    <\/Add>\n  <\/Changes>\n<\/FolderSync>\n"
+      source_type: kubernetes_logs
+      stream: stderr
+      timestamp: "2024-08-20T13:19:46.879013117Z"
+  outputs:
+  - extract_from: "parse_roundcube"
+    conditions:
+    - type: "vrl"
+      source: |
+        assert_eq!(.log, "Syncroton_Server::_handlePost::186 xml response (0):\n<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<!DOCTYPE AirSync PUBLIC \"-\\/\\/AIRSYNC\\/\\/DTD AirSync\\/\\/EN\" \"http:\\/\\/www.microsoft.com\\/\">\n<FolderSync xmlns=\"uri:FolderHierarchy\" xmlns:Syncroton=\"uri:Syncroton\" xmlns:Internal=\"uri:Internal\">\n  <Status>1<\\/Status>\n  <SyncKey>1<\\/SyncKey>\n  <Changes>\n    <Count>9<\\/Count>\n    <Add>\n      <ServerId>DAV:event:f8a6ef015ca8eb311f00bc145523363da<\\/ServerId>\n      <ParentId>0<\\/ParentId>\n      <DisplayName>Calendar<\\/DisplayName>\n      <Type>8<\\/Type>\n    <\\/Add>\n    <Add>\n      <ServerId>DAV:contact:f027577d9ee8a8fafaf314f1a5db41a81<\\/ServerId>\n      <ParentId>0<\\/ParentId>\n      <DisplayName>Addressbook<\\/DisplayName>\n      <Type>9<\\/Type>\n    <\\/Add>\n    <Add>\n      <ServerId>38b950ebd62cd9a66929c89615d0fc04<\\/ServerId>\n      <ParentId>0<\\/ParentId>\n      <DisplayName>INBOX<\\/DisplayName>\n      <Type>2<\\/Type>\n    <\\/Add>\n    <Add>\n      <ServerId>1bb8c55fe84d52c6968db2571f7dc124<\\/ServerId>\n      <ParentId>0<\\/ParentId>\n      <DisplayName>Archive<\\/DisplayName>\n      <Type>12<\\/Type>\n    <\\/Add>\n    <Add>\n      <ServerId>16833612eebc283ce2fe3c447fb53eff<\\/ServerId>\n      <ParentId>0<\\/ParentId>\n      <DisplayName>Drafts<\\/DisplayName>\n      <Type>3<\\/Type>\n    <\\/Add>\n    <Add>\n      <ServerId>ea8bb554b4246f8a48ccab88b653da54<\\/ServerId>\n      <ParentId>0<\\/ParentId>\n      <DisplayName>Sent<\\/DisplayName>\n      <Type>5<\\/Type>\n    <\\/Add>\n    <Add>\n      <ServerId>715ed9ea29b8a5377a69c1f758037c65<\\/ServerId>\n      <ParentId>0<\\/ParentId>\n      <DisplayName>Spam<\\/DisplayName>\n      <Type>12<\\/Type>\n    <\\/Add>\n    <Add>\n      <ServerId>22b8cf366c106d7c8253f4d390f697b8<\\/ServerId>\n      <ParentId>0<\\/ParentId>\n      <DisplayName>Trash<\\/DisplayName>\n      <Type>4<\\/Type>\n    <\\/Add>\n    <Add>\n      <ServerId>DAV:task:f8a6ef015ca8eb311f00bc145523363da<\\/ServerId>\n      <ParentId>0<\\/ParentId>\n      <DisplayName>Calendar<\\/DisplayName>\n      <Type>7<\\/Type>\n    <\\/Add>\n  <\\/Changes>\n<\\/FolderSync>\n")
+        assert_eq!(.component, "syncroton")
+        assert_eq!(.user, "admin@kolab.local")
         assert!(is_timestamp(.timestamp))
 - name: "IMAP SASL"
   inputs:
@@ -122,7 +148,7 @@ tests:
       pod_node_name: dws07.kolabsys.com
       pod_owner: ReplicaSet/imap-8ff9c4bdd
       pod_uid: d59374a6-e466-446e-bcfa-dd0c0d089acb
-      message: 'saslauthd[12] :auth success: [user=admin] [service=imap] [realm=kolab.local] [mech=httpform]'
+      log: 'saslauthd[12] :auth success: [user=admin] [service=imap] [realm=kolab.local] [mech=httpform]'
       source_type: kubernetes_logs
       stream: stderr
       timestamp: "2024-08-19T20:17:16.927434664Z"
@@ -131,7 +157,7 @@ tests:
     conditions:
     - type: "vrl"
       source: |
-        assert_eq!(.message, "auth success: [user=admin] [service=imap] [realm=kolab.local] [mech=httpform]")
+        assert_eq!(.log, "auth success: [user=admin] [service=imap] [realm=kolab.local] [mech=httpform]")
         assert!(is_timestamp(.timestamp))
 - name: "IMAP Cyrus"
   inputs:
@@ -148,7 +174,7 @@ tests:
       pod_node_name: dws07.kolabsys.com
       pod_owner: ReplicaSet/imap-8ff9c4bdd
       pod_uid: d59374a6-e466-446e-bcfa-dd0c0d089acb
-      message: 'cyrus-imapd/imap[13064]: USAGE admin@kolab.local user: 0.017951 sys: 0.011378'
+      log: 'cyrus-imapd/imap[13064]: USAGE admin@kolab.local user: 0.017951 sys: 0.011378'
       source_type: kubernetes_logs
       stream: stderr
       timestamp: "2024-08-19T20:15:24.033133869Z"
@@ -157,7 +183,7 @@ tests:
     conditions:
     - type: "vrl"
       source: |
-        assert_eq!(.message, "USAGE admin@kolab.local user: 0.017951 sys: 0.011378")
+        assert_eq!(.log, "USAGE admin@kolab.local user: 0.017951 sys: 0.011378")
         assert!(is_timestamp(.timestamp))
 - name: "Mariadb warning"
   inputs:
@@ -174,16 +200,16 @@ tests:
       pod_node_name: dws07.kolabsys.com
       pod_owner: ReplicaSet/mariadb-6bcf7d9595
       pod_uid: b4836388-ed0e-4cca-81ee-97827274c290
-      message: "2024-08-19 10:57:36 18532 [Warning] Aborted connection 18532 to db: ''unconnected'' user: ''unauthenticated'' host: ''10.42.0.1'' (This connection closed normally without authentication)"
+      log: "2024-08-19 10:57:36 18532 [Warning] Aborted connection 18532 to db: ''unconnected'' user: ''unauthenticated'' host: ''10.42.0.1'' (This connection closed normally without authentication)"
       source_type: kubernetes_logs
       stream: stdout
       timestamp: "2024-08-19T10:57:36.696731329Z"
   outputs:
-  - extract_from: "apps._unmatched"
+  - extract_from: "parse_unmatched"
     conditions:
     - type: "vrl"
       source: |
-        assert_eq!(.message, "2024-08-19 10:57:36 18532 [Warning] Aborted connection 18532 to db: ''unconnected'' user: ''unauthenticated'' host: ''10.42.0.1'' (This connection closed normally without authentication)")
+        assert_eq!(.log, "2024-08-19 10:57:36 18532 [Warning] Aborted connection 18532 to db: ''unconnected'' user: ''unauthenticated'' host: ''10.42.0.1'' (This connection closed normally without authentication)")
         assert!(is_timestamp(.timestamp))
 - name: "Proxy warning"
   inputs:
@@ -200,7 +226,7 @@ tests:
       pod_node_name: dws07.kolabsys.com
       pod_owner: ReplicaSet/proxy-84bb89799b
       pod_uid: f0c38b2a-56ab-4417-8bde-d1729ce07ad3
-      message: '2024/08/19 10:57:25 [info] 11#11: *18701 client closed connection while SSL handshaking, client: 10.42.0.1, server: 0.0.0.0:6443'
+      log: '2024/08/19 10:57:25 [info] 11#11: *18701 client closed connection while SSL handshaking, client: 10.42.0.1, server: 0.0.0.0:6443'
       source_type: kubernetes_logs
       stream: stderr
       timestamp: "2024-08-19T10:57:25.026161935Z"
@@ -209,5 +235,5 @@ tests:
     conditions:
     - type: "vrl"
       source: |
-        assert_eq!(.message, "2024/08/19 10:57:25 [info] 11#11: *18701 client closed connection while SSL handshaking, client: 10.42.0.1, server: 0.0.0.0:6443")
+        assert_eq!(.log, "2024/08/19 10:57:25 [info] 11#11: *18701 client closed connection while SSL handshaking, client: 10.42.0.1, server: 0.0.0.0:6443")
         assert!(is_timestamp(.timestamp))

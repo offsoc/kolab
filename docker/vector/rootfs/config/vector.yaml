@@ -26,6 +26,7 @@ transforms:
       - parse_testinput
       # - kubernetes
     source: |
+      .log = del(.message)
       .container_name = del(.kubernetes.container_name)
       .container_id = del(.kubernetes.container_id)
       .namespace_name = del(.kubernetes.pod_namespace)

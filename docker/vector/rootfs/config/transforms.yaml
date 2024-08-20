@@ -15,7 +15,7 @@ transforms:
     inputs:
       - apps.kolab
     source: |
-      structured = parse_logfmt(.message) ?? {}
+      structured = parse_logfmt(.log) ?? {}
       . = merge(., structured)
       .timestamp = parse_timestamp(.timestamp, "%Y/%m/%d %H:%M:%S %z") ?? now()
   parse_roundcube:
@@ -23,7 +23,7 @@ transforms:
     inputs:
       - apps.roundcube
     source: |
-      structured = parse_apache_log(.message, format: "common") ?? parse_logfmt(.message) ?? {}
+      structured = parse_apache_log(.log, format: "common") ?? parse_logfmt(.log) ?? {}
       . = merge(., structured)
       .timestamp = parse_timestamp(.timestamp, "%Y/%m/%d %H:%M:%S %z") ?? now()
   parse_imap:
@@ -31,7 +31,7 @@ transforms:
     inputs:
       - apps.imap
     source: |
-      structured = parse_regex(.message, pattern: r'^(?<program>.*)\[(?<pid>[0-9]+)\]( )?: *(?<message>.*)$') ?? {}
+      structured = parse_regex(.log, pattern: r'^(?<program>.*)\[(?<pid>[0-9]+)\]( )?: *(?<log>.*)$') ?? {}
       . = merge(., structured)
       .timestamp = parse_timestamp(.timestamp, "%Y/%m/%d %H:%M:%S %z") ?? now()
   parse_proxy:
@@ -39,7 +39,7 @@ transforms:
     inputs:
       - apps.proxy
     source: |
-      structured = parse_regex(.message, pattern: r'^(?<remote>[^ ]*) (?<host>[^ ]*) (?<user>[^ ]*) \[(?<time>[^\]]*)\] "(?<method>\S+)(?: +(?<path>[^\"]*?)(?: +\S*)?)?" (?<code>[^ ]*) (?<size>[^ ]*)(?: "(?<referer>[^\"]*)" "(?<agent>[^\"]*)")') ?? {}
+      structured = parse_regex(.log, pattern: r'^(?<remote>[^ ]*) (?<host>[^ ]*) (?<user>[^ ]*) \[(?<time>[^\]]*)\] "(?<method>\S+)(?: +(?<path>[^\"]*?)(?: +\S*)?)?" (?<code>[^ ]*) (?<size>[^ ]*)(?: "(?<referer>[^\"]*)" "(?<agent>[^\"]*)")') ?? {}
       . = merge(., structured)
       .timestamp = parse_timestamp(.timestamp, "%Y/%m/%d %H:%M:%S %z") ?? now()
   parse_postfix:
@@ -47,7 +47,7 @@ transforms:
     inputs:
       - apps.postfix
     source: |
-      structured = parse_regex(.message, pattern: r'^(?<time>[^ ]+ [0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9]) (?<host>[^ ]+) (?<process>[^:]+): (?<message>((?<key>[^ :]+)[ :])? ?((to|from)=<(?<address>[^>]+)>)?.*)$') ?? {}
+      structured = parse_regex(.log, pattern: r'^(?<time>[^ ]+ [0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9]) (?<host>[^ ]+) (?<process>[^:]+): (?<log>((?<key>[^ :]+)[ :])? ?((to|from)=<(?<address>[^>]+)>)?.*)$') ?? {}
       . = merge(., structured)
       .timestamp = parse_timestamp(.timestamp, "%Y/%m/%d %H:%M:%S %z") ?? now()
   parse_unmatched:
