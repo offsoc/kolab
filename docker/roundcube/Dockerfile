@@ -20,12 +20,11 @@ RUN sed -i -e '/^ssl/d' /etc/yum.repos.d/kolab*.repo && \
         mariadb \
         which \
         rsync \
-        openssl-devel \
+        openssl \
         httpd \
         patch \
         php-cli \
         php-common \
-        php-devel \
         php-ldap \
         php-opcache \
         php-pecl-apcu \
