@@ -216,11 +216,34 @@ kolab__test() {
 
 # Validate that the proxy works
 kolab__proxytest() {
-    $PODMAN run -ti --pod tests --name $POD-proxy-tests --replace \
+    # Without element
+    $PODMAN run -ti --rm \
         -v ./ci/certs/:/etc/certs/:ro \
-        --env-file=ci/env \
+        -e APP_WEBSITE_DOMAIN \
         -e SSL_CERTIFICATE=${KOLAB_SSL_CERTIFICATE} \
         -e SSL_CERTIFICATE_KEY=${KOLAB_SSL_CERTIFICATE_KEY} \
+        -e WEBAPP_BACKEND="http://localhost:8000" \
+        -e MEET_BACKEND="http://localhost:12080" \
+        -e ROUNDCUBE_BACKEND="http://localhost:8080" \
+        -e DAV_BACKEND="http://localhost:11080/dav" \
+        -e COLLABORA_BACKEND="http://localhost:9980" \
+        -e SIEVE_BACKEND="localhost:4190" \
+        kolab-proxy:latest /init.sh validate
+
+    # With element
+    $PODMAN run -ti --rm \
+        -v ./ci/certs/:/etc/certs/:ro \
+        -e APP_WEBSITE_DOMAIN \
+        -e SSL_CERTIFICATE=${KOLAB_SSL_CERTIFICATE} \
+        -e SSL_CERTIFICATE_KEY=${KOLAB_SSL_CERTIFICATE_KEY} \
+        -e WEBAPP_BACKEND="http://localhost:8000" \
+        -e MEET_BACKEND="http://localhost:12080" \
+        -e ROUNDCUBE_BACKEND="http://localhost:8080" \
+        -e DAV_BACKEND="http://localhost:11080/dav" \
+        -e COLLABORA_BACKEND="http://localhost:9980" \
+        -e SIEVE_BACKEND="localhost:4190" \
+        -e ELEMENT_BACKEND=http://element:8880 \
+        -e MATRIX_BACKEND=http://synapse:8008 \
         kolab-proxy:latest /init.sh validate
 }
 
