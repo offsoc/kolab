@@ -169,10 +169,9 @@ podman__run_proxy() {
         -e WEBAPP_BACKEND="http://localhost:8000" \
         -e MEET_BACKEND="http://localhost:12080" \
         -e ROUNDCUBE_BACKEND="http://localhost:8080" \
-        -e DAV_BACKEND="http://localhost:11080/dav" \
+        -e DAV_BACKEND="http://localhost:11080" \
+        -e DAV_PATH="/dav" \
         -e COLLABORA_BACKEND="http://localhost:9980" \
-        -e MATRIX_BACKEND="http://localhost:8008" \
-        -e ELEMENT_BACKEND="http://localhost:8880" \
         -e SIEVE_BACKEND="localhost:4190" \
         kolab-proxy:latest $@
 }

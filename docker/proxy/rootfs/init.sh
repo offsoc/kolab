@@ -196,9 +196,9 @@ cat <<EOF >> /etc/nginx/nginx.conf
             proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         }
 
-        location ~ ^/\\.well-known/(caldav|carddav)(.*)\$ {
+        location ~* ^/\.well-known/(caldav|carddav) {
             proxy_pass       $DAV_BACKEND;
-            proxy_redirect   http:// $scheme://;
+            proxy_redirect   http:// \$scheme://;
             proxy_set_header Host \$host;
             proxy_set_header X-Real-IP \$remote_addr;
             proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -207,7 +207,7 @@ cat <<EOF >> /etc/nginx/nginx.conf
         location /dav {
             #auth_request_set \$auth_status \$upstream_status;
 
-            proxy_pass       $DAV_BACKEND;
+            proxy_pass       $DAV_BACKEND$DAV_PATH;
             proxy_set_header Host \$host;
             proxy_set_header X-Real-IP \$remote_addr;
             proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
