@@ -6,21 +6,25 @@ if (!function_exists("imap_defaultFolders")) {
             'Drafts' => [
                 'metadata' => [
                     '/private/vendor/kolab/folder-type' => 'mail.drafts',
+                    '/private/specialuse' => '\Drafts',
                 ],
             ],
             'Sent' => [
                 'metadata' => [
                     '/private/vendor/kolab/folder-type' => 'mail.sentitems',
+                    '/private/specialuse' => '\Sent',
                 ],
             ],
             'Trash' => [
                 'metadata' => [
                     '/private/vendor/kolab/folder-type' => 'mail.wastebasket',
+                    '/private/specialuse' => '\Trash',
                 ],
             ],
             'Spam' => [
                 'metadata' => [
                     '/private/vendor/kolab/folder-type' => 'mail.junkemail',
+                    '/private/specialuse' => '\Junk',
                 ],
             ],
         ];
