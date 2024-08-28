@@ -292,50 +292,16 @@ kolab__shell() {
 
 # Run the roundcube testsuite
 kolab__rctest() {
-    $PODMAN run -t --pod tests --name $POD-roundcube --replace \
-        -v ./ext:/src.orig:ro \
-        -e APP_DOMAIN=kolab.local \
-        -e DES_KEY=kBxUM/53N9p9abusAoT0ZEAxwI2pxFz/ \
-        -e DB_HOST=127.0.0.1 \
-        -e DB_RC_DATABASE=roundcube \
-        -e DB_RC_USERNAME=roundcube \
-        -e DB_RC_PASSWORD=simple123 \
-        -e IMAP_HOST=localhost \
-        -e IMAP_PORT=11143 \
-        -e IMAP_ADMIN_LOGIN=cyrus-admin \
-        -e IMAP_ADMIN_PASSWORD=simple123 \
-        -e IMAP_DEBUG=false \
-        -e SQL_DEBUG=false \
-        -e ACTIVESYNC_DEBUG=false \
-        -e RUN_MIGRATIONS=true \
-        -e MAIL_HOST=localhost \
-        -e MAIL_PORT=10587 \
-        -e FILEAPI_WOPI_OFFICE=https://kolab.local \
-        -e CALENDAR_CALDAV_SERVER=http://imap:11080/dav \
-        -e KOLAB_ADDRESSBOOK_CARDDAV_SERVER=http://imap:11080/dav \
-        roundcube:latest ./init.sh $@
+    export POD=tests
+    DEBUG_ARGS="-ti --rm --pod tests --name debug-$1 -e KOLABOBJECTS_COMPAT_MODE=true"
+    podman__run_roundcube ./init.sh $@
 }
 
 # Get a shell inside the roundcube test container to run/debug tests
 kolab__rcshell() {
-    $PODMAN run -ti --pod tests --name $POD-roundcube --replace \
-        -v ./ext:/src.orig:ro \
-        -e APP_DOMAIN=kolab.local \
-        -e DES_KEY=kBxUM/53N9p9abusAoT0ZEAxwI2pxFz/ \
-        -e DB_HOST=127.0.0.1 \
-        -e DB_RC_DATABASE=roundcube \
-        -e DB_RC_USERNAME=roundcube \
-        -e DB_RC_PASSWORD=simple123 \
-        -e IMAP_HOST=localhost \
-        -e IMAP_PORT=11143 \
-        -e IMAP_ADMIN_LOGIN=cyrus-admin \
-        -e IMAP_ADMIN_PASSWORD=simple123 \
-        -e MAIL_HOST=localhost \
-        -e MAIL_PORT=10587 \
-        -e FILEAPI_WOPI_OFFICE=https://kolab.local \
-        -e CALENDAR_CALDAV_SERVER=http://localhost:11080/dav \
-        -e KOLAB_ADDRESSBOOK_CARDDAV_SERVER=http://localhost:11080/dav \
-        roundcube:latest ./init.sh shell
+    export POD=tests
+    DEBUG_ARGS="-ti --rm --pod tests --name debug-$1 -e KOLABOBJECTS_COMPAT_MODE=true"
+    podman__run_roundcube ./init.sh $@
 }
 
 # Validate a deployment, currently only used for test pod
@@ -469,6 +435,11 @@ kolab__logs() {
 kolab__db() {
     POD=dev
     $PODMAN exec -ti $POD-mariadb /bin/bash -c "mysql -h 127.0.0.1 -u kolabdev --password=simple123 kolabdev"
+}
+
+kolab__rcdb() {
+    POD=dev
+    $PODMAN exec -ti $POD-mariadb /bin/bash -c "mysql -h 127.0.0.1 -u roundcube --password=simple123 roundcube"
 }
 
 kolab__help() {
