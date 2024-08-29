@@ -2,6 +2,7 @@
 
 namespace App\Backends;
 
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 
 class DAV
@@ -341,6 +342,65 @@ class DAV
         $response = $this->request($folder->href, 'PROPPATCH', $folder->toXML('propertyupdate'));
 
         return $response !== false;
+    }
+
+    /**
+     * Initialize default DAV folders (collections)
+     *
+     * @param \App\User $user User object
+     *
+     * @throws \Exception
+     */
+    public static function initDefaultFolders(\App\User $user): void
+    {
+        if (!\config('services.dav.uri')) {
+            return;
+        }
+
+        $folders = \config('services.dav.default_folders');
+        if (!count($folders)) {
+            return;
+        }
+
+        // Cyrus DAV does not support proxy authorization via DAV. Even though it has
+        // the Authorize-As header, it is used only for cummunication with Murder backends.
+        // We use a one-time token instead. It's valid for 10 seconds, assume it's enough time.
+        $password = \App\Auth\Utils::tokenCreate((string) $user->id);
+
+        if ($password === null) {
+            throw new \Exception("Failed to create an authentication token for DAV");
+        }
+
+        $dav = new self($user->email, $password);
+
+        foreach ($folders as $props) {
+            $folder = new DAV\Folder();
+            $folder->href = $props['type'] . 's' . '/user/' . $user->email . '/' . $props['path'];
+            $folder->types = ['collection', $props['type']];
+            $folder->name = $props['displayname'] ?? '';
+            $folder->components = $props['components'] ?? [];
+
+            $existing = null;
+            try {
+                $existing = $dav->folderInfo($folder->href);
+            } catch (RequestException $e) {
+                // Cyrus DAV returns 503 Service Unavailable on a non-existing location (?)
+                if ($e->getCode() != 503 && $e->getCode() != 404) {
+                    throw $e;
+                }
+            }
+
+            // folder already exists? check the properties and update if needed
+            if ($existing) {
+                if ($existing->name != $folder->name || $existing->components != $folder->components) {
+                    if (!$dav->folderUpdate($folder)) {
+                        throw new \Exception("Failed to update DAV folder {$folder->href}");
+                    }
+                }
+            } elseif (!$dav->folderCreate($folder)) {
+                throw new \Exception("Failed to create DAV folder {$folder->href}");
+            }
+        }
     }
 
     /**

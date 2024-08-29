@@ -94,10 +94,15 @@ class Folder
             $type = 'calendar';
         }
 
-        $props .= '<d:resourcetype><d:collection/>' . ($type ? "<c:{$type}/>" : '') . '</d:resourcetype>';
+        // Cyrus DAV does not allow resourcetype property change
+        if ($tag != 'propertyupdate') {
+            $props .= '<d:resourcetype><d:collection/>' . ($type ? "<c:{$type}/>" : '') . '</d:resourcetype>';
+        }
 
         if (!empty($this->components)) {
-            $props .= '<c:supported-calendar-component-set>';
+            // Note: Normally Cyrus DAV does not allow supported-calendar-component-set property update,
+            // but I found in Cyrus code that the action can be forced with force=yes attribute.
+            $props .= '<c:supported-calendar-component-set force="yes">';
             foreach ($this->components as $component) {
                 $props .= '<c:comp name="' . $component . '"/>';
             }

@@ -106,6 +106,9 @@ class CreateJob extends UserJob
             $user->status |= \App\User::STATUS_IMAP_READY;
         }
 
+        // FIXME: Should we ignore exceptions on this operation or introduce DAV_READY status?
+        \App\Backends\DAV::initDefaultFolders($user);
+
         // Make user active in non-mandate mode only
         if (
             !($wallet = $user->wallet())

@@ -58,6 +58,7 @@ return [
 
     'dav' => [
         'uri' => env('DAV_URI', 'https://proxy/'),
+        'default_folders' => \App\Backends\Helper::defaultDavFolders(),
         'verify' => (bool) env('DAV_VERIFY', true),
     ],
 

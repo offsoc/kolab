@@ -43,5 +43,6 @@
         <server name="SESSION_DRIVER" value="array"/>
         <server name="SWOOLE_HTTP_ACCESS_LOG" value="false"/>
         <server name="PGP_LENGTH" value="1024"/>
+        <server name="DAV_WITH_DEFAULT_FOLDERS" value="false"/>
     </php>
 </phpunit>
