@@ -52,7 +52,7 @@ const pick = (obj, properties) => {
     return result
 }
 
-const loader = '<div class="app-loader"><div class="spinner-border" role="status"><span class="visually-hidden">Loading</span></div></div>'
+const loader = '<div class="app-loader"><div class="spinner-border" role="status"><span class="visually-hidden">Loading</span></div><div class="text"></div></div>'
 
 let isLoading = 0
 
@@ -63,7 +63,7 @@ let isLoading = 0
  *              - DOMElement or jQuery collection or selector string: for element-level loader inside
  *              - array: for element-level loader inside the element specified in the first array element
  *              - undefined, null or true: for page-level loader
- * @param object $style Additional element style
+ * @param object $style Additional element style (and loader text)
  */
 const startLoading = (element, style = null) => {
     let small = false
@@ -100,6 +100,8 @@ const startLoading = (element, style = null) => {
     if (small) {
         loaderElement.addClass('small')
     }
+
+    loaderElement.find('.text').text(style && style.text ? style.text : '')
 
     $(element).append(loaderElement)
 

@@ -10,10 +10,11 @@ class Utils
      * Create a simple authentication token
      *
      * @param string $userid User identifier
+     * @param int    $ttl    Token's time to live (in seconds)
      *
      * @return string|null Encrypted token, Null on failure
      */
-    public static function tokenCreate($userid): ?string
+    public static function tokenCreate($userid, $ttl = 10): ?string
     {
         // Note: Laravel's Crypt::encryptString() creates output that is too long
         // We need output string to be max. 127 characters. For that reason
@@ -23,7 +24,7 @@ class Utils
         $key = config('app.key');
         $iv = random_bytes(openssl_cipher_iv_length($cipher));
 
-        $data = $userid . '!' . now()->addSeconds(10)->format('YmdHis');
+        $data = $userid . '!' . now()->addSeconds($ttl)->format('YmdHis');
 
         $value = openssl_encrypt($data, $cipher, $key, 0, $iv, $tag);
 

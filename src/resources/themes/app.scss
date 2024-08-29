@@ -73,6 +73,7 @@ body > .outer-container {
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-direction: column;
     z-index: 8;
 
     .spinner-border {
@@ -80,6 +81,13 @@ body > .outer-container {
         height: 120px;
         border-width: 15px;
         color: #b2aa99;
+    }
+
+    .text {
+        width: 100%;
+        text-align: center;
+        color: #b2aa99;
+        margin-top: 1em;
     }
 
     &.small .spinner-border {

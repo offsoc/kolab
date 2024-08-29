@@ -21,7 +21,7 @@ return [
     'error.password' => "Invalid password",
     'error.invalidrequest' => "Invalid authorization request.",
     'error.geolocation' => "Country code mismatch",
-    'error.nofound' => "User not found",
+    'error.notfound' => "User not found",
     'error.2fa' => "Second factor failure",
     'error.2fa-generic' => "Second factor failure",
 

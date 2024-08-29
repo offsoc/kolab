@@ -346,6 +346,7 @@ return [
         'notfound' => "Resource not found.",
         'info' => "Information",
         'error' => "Error",
+        'redirecting' => "Redirecting...",
         'uploading' => "Uploading...",
         'warning' => "Warning",
         'success' => "Success",

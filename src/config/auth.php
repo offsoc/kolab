@@ -140,6 +140,11 @@ return [
         'client_secret' => env('PASSPORT_SYNAPSE_OAUTH_CLIENT_SECRET'),
     ],
 
+    'sso' => [
+        'client_id' => env('PASSPORT_WEBMAIL_SSO_CLIENT_ID'),
+        'client_secret' => env('PASSPORT_WEBMAIL_SSO_CLIENT_SECRET'),
+    ],
+
     'token_expiry_minutes' => env('OAUTH_TOKEN_EXPIRY', 60),
     'refresh_token_expiry_minutes' => env('OAUTH_REFRESH_TOKEN_EXPIRY', 30 * 24 * 60),
 ];

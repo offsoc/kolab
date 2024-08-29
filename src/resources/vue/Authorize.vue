@@ -1,5 +1,5 @@
 <template>
-    <div class="container">
+    <div class="container" id="auth-container">
     </div>
 </template>
 
@@ -20,8 +20,10 @@
 
                 axios.post('/api/oauth/approve', post, { loading: true })
                     .then(response => {
+                        // Display loading widget, redirecting may take a while
+                        this.$root.startLoading(['#auth-container', { small: false, text: this.$t('msg.redirecting') }])
                         // Follow the redirect to the external page
-                        window.location.href = response.data.redirectUrl;
+                        window.location.href = response.data.redirectUrl
                     })
                     .catch(this.$root.errorHandler)
             }

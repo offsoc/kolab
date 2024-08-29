@@ -14,6 +14,7 @@ return [
             // 'phone' => 'Information about your phone numbers',
             // 'address' => 'Information about your address',
             // 'login' => 'See your login information',
+            'auth.token' => 'Kolab authentication token',
         ],
     ],
 
@@ -30,6 +31,9 @@ return [
         //     'company_phone',
         //     'company_email',
         // ],
+        'auth.token' => [
+            'auth.token',
+        ]
     ],
 
     /**

@@ -111,7 +111,10 @@ class AuthController extends Controller
         }
 
         try {
-            // league/oauth2-server/src/Grant/ code expects GET parameters, but we're using POST here
+            // OpenID handler reads parameters from the request query string (GET)
+            $request->query->replace($request->input());
+
+            // OAuth2 server's code also expects GET parameters, but we're using POST here
             $psrRequest = $psrRequest->withQueryParams($request->input());
 
             $authRequest = $server->validateAuthorizationRequest($psrRequest);

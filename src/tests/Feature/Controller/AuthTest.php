@@ -471,15 +471,15 @@ class AuthTest extends TestCase
     public function testOIDCAuthorizationCodeFlow(): void
     {
         $user = $this->getTestUser('john@kolab.org');
-        $client = \App\Auth\PassportClient::find(\config('auth.synapse.client_id'));
+        $client = \App\Auth\PassportClient::find(\config('auth.sso.client_id'));
 
         // Note: Invalid input cases were tested above, we omit them here
 
-        // This is essentially the same as for OAuth2, but with extended scope
+        // This is essentially the same as for OAuth2, but with extended scopes
         $post = [
             'client_id' => $client->id,
             'response_type' => 'code',
-            'scope' => 'openid email',
+            'scope' => 'openid email auth.token',
             'state' => 'state',
             'nonce' => 'nonce',
         ];
@@ -522,8 +522,10 @@ class AuthTest extends TestCase
 
         $this->assertSame('JWT', $token['typ']);
         $this->assertSame('RS256', $token['alg']);
+        $this->assertSame('nonce', $token['nonce']);
         $this->assertSame(url('/'), $token['iss']);
         $this->assertSame($user->email, $token['email']);
+        $this->assertSame((string) $user->id, \App\Auth\Utils::tokenValidate($token['auth.token']));
 
         // TODO: Validate JWT token properly
 
