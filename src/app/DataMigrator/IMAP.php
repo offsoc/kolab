@@ -409,9 +409,9 @@ class IMAP implements ExporterInterface, ImporterInterface
                         // TODO: These configuration options make sense for "local" Kolab IMAP,
                         // but when connecting to external one we might want to just disable
                         // cert validation, or make it optional via Account URI parameters
-                        'verify_peer' => \config('imap.verify_peer'),
-                        'verify_peer_name' => \config('imap.verify_peer'),
-                        'verify_host' => \config('imap.verify_host')
+                        'verify_peer' => \config('services.imap.verify_peer'),
+                        'verify_peer_name' => \config('services.imap.verify_peer'),
+                        'verify_host' => \config('services.imap.verify_host')
                     ],
                 ],
             ],

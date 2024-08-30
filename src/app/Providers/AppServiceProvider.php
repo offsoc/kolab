@@ -25,7 +25,7 @@ class AppServiceProvider extends ServiceProvider
      *
      * Create a config/override.php file with content like this:
      * return [
-     *   'imap.uri' => 'overrideValue1',
+     *   'services.imap.uri' => 'overrideValue1',
      *   'queue.connections.database.table' => 'overrideValue2',
      * ];
      */

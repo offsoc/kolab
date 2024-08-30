@@ -65,7 +65,7 @@ class UpdateTest extends TestCase
         $job->handle();
 
         $ldapGroup = LDAP::getGroup($group->email);
-        $root_dn = \config('ldap.hosted.root_dn');
+        $root_dn = \config('services.ldap.hosted.root_dn');
 
         $this->assertSame('uid=test1@gmail.com,ou=People,ou=kolab.org,' . $root_dn, $ldapGroup['uniquemember']);
 

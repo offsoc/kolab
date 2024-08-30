@@ -75,8 +75,8 @@ class LDAP
         $config = self::getConfig('admin');
         $ldap = self::initLDAP($config);
 
-        $mgmtRootDN = \config('ldap.admin.root_dn');
-        $hostedRootDN = \config('ldap.hosted.root_dn');
+        $mgmtRootDN = \config('services.ldap.admin.root_dn');
+        $hostedRootDN = \config('services.ldap.hosted.root_dn');
 
         $result = $ldap->search($mgmtRootDN, '', 'base');
         if (!$result || $result->count() != 1) {
@@ -101,8 +101,8 @@ class LDAP
         $config = self::getConfig('admin');
         $ldap = self::initLDAP($config);
 
-        $mgmtRootDN = \config('ldap.admin.root_dn');
-        $hostedRootDN = \config('ldap.hosted.root_dn');
+        $mgmtRootDN = \config('services.ldap.admin.root_dn');
+        $hostedRootDN = \config('services.ldap.hosted.root_dn');
 
         $domainBaseDN = "ou={$domain->namespace},{$hostedRootDN}";
 
@@ -929,8 +929,8 @@ class LDAP
         }
 
         $bound = $ldap->bind(
-            \config("ldap.{$privilege}.bind_dn"),
-            \config("ldap.{$privilege}.bind_pw")
+            \config("services.ldap.{$privilege}.bind_dn"),
+            \config("services.ldap.{$privilege}.bind_pw")
         );
 
         if (!$bound) {
@@ -1131,7 +1131,7 @@ class LDAP
             }
         }
 
-        $hostedRootDN = \config('ldap.hosted.root_dn');
+        $hostedRootDN = \config('services.ldap.hosted.root_dn');
 
         $entry['nsroledn'] = [];
 
@@ -1159,10 +1159,10 @@ class LDAP
     private static function getConfig(string $privilege)
     {
         $config = [
-            'domain_base_dn' => \config('ldap.domain_base_dn'),
-            'domain_filter' => \config('ldap.domain_filter'),
-            'domain_name_attribute' => \config('ldap.domain_name_attribute'),
-            'hosts' => \config('ldap.hosts'),
+            'domain_base_dn' => \config('services.ldap.domain_base_dn'),
+            'domain_filter' => \config('services.ldap.domain_filter'),
+            'domain_name_attribute' => \config('services.ldap.domain_name_attribute'),
+            'hosts' => \config('services.ldap.hosts'),
             'sort' => false,
             'vlv' => false,
             'log_hook' => 'App\Backends\LDAP::logHook',

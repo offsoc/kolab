@@ -123,7 +123,7 @@ class IMAP
      */
     public static function createDefaultFolders(User $user): void
     {
-        if ($defaultFolders = \config('imap.default_folders')) {
+        if ($defaultFolders = \config('services.imap.default_folders')) {
             $config = self::getConfig();
             // Log in as user to set private annotations and subscription state
             $imap = self::initIMAP($config, $user->email);
@@ -479,7 +479,7 @@ class IMAP
         $config = self::getConfig();
         $imap = self::initIMAP($config, $username);
 
-        foreach (\config('imap.default_folders') as $mb => $_metadata) {
+        foreach (\config('services.imap.default_folders') as $mb => $_metadata) {
             $mailbox = self::toUTF7($mb);
             if (!self::folderExists($imap, $mailbox)) {
                 $imap->closeConnection();
@@ -740,7 +740,7 @@ class IMAP
      */
     private static function getConfig()
     {
-        $uri = \parse_url(\config('imap.uri'));
+        $uri = \parse_url(\config('services.imap.uri'));
         $default_port = 143;
         $ssl_mode = null;
 
@@ -755,16 +755,16 @@ class IMAP
 
         $config = [
             'host' => $uri['host'],
-            'user' => \config('imap.admin_login'),
-            'password' => \config('imap.admin_password'),
+            'user' => \config('services.imap.admin_login'),
+            'password' => \config('services.imap.admin_password'),
             'options' => [
                 'port' => !empty($uri['port']) ? $uri['port'] : $default_port,
                 'ssl_mode' => $ssl_mode,
                 'socket_options' => [
                     'ssl' => [
-                        'verify_peer' => \config('imap.verify_peer'),
-                        'verify_peer_name' => \config('imap.verify_peer'),
-                        'verify_host' => \config('imap.verify_host')
+                        'verify_peer' => \config('services.imap.verify_peer'),
+                        'verify_peer_name' => \config('services.imap.verify_peer'),
+                        'verify_host' => \config('services.imap.verify_host')
                     ],
                 ],
             ],

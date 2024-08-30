@@ -320,15 +320,15 @@ class NGINXController extends Controller
     private function authenticateIMAP(Request $request, $prefGuam, $password)
     {
         if ($prefGuam) {
-            $port = \config('imap.guam_port');
+            $port = \config('services.imap.guam_port');
         } else {
-            $port = \config('imap.imap_port');
+            $port = \config('services.imap.imap_port');
         }
 
         $response = response('')->withHeaders(
             [
                 "Auth-Status" => "OK",
-                "Auth-Server" => gethostbyname(\config('imap.host')),
+                "Auth-Server" => gethostbyname(\config('services.imap.host')),
                 "Auth-Port" => $port,
                 "Auth-Pass" => $password
             ]
@@ -350,8 +350,8 @@ class NGINXController extends Controller
         $response = response('')->withHeaders(
             [
                 "Auth-Status" => "OK",
-                "Auth-Server" => gethostbyname(\config('smtp.host')),
-                "Auth-Port" => \config('smtp.port'),
+                "Auth-Server" => gethostbyname(\config('services.smtp.host')),
+                "Auth-Port" => \config('services.smtp.port'),
                 "Auth-Pass" => $password
             ]
         );

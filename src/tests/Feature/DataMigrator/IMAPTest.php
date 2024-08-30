@@ -39,7 +39,7 @@ class IMAPTest extends TestCase
      */
     public function testInitialMigration(): void
     {
-        $uri = \config('imap.uri');
+        $uri = \config('services.imap.uri');
 
         if (strpos($uri, '://') === false) {
             $uri = 'imap://' . $uri;
@@ -103,7 +103,7 @@ class IMAPTest extends TestCase
      */
     public function testIncrementalMigration(): void
     {
-        $uri = \config('imap.uri');
+        $uri = \config('services.imap.uri');
 
         if (strpos($uri, '://') === false) {
             $uri = 'imap://' . $uri;

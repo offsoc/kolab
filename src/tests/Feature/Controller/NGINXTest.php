@@ -76,7 +76,7 @@ class NGINXTest extends TestCase
         $response = $this->withHeaders($headers)->get("api/webhooks/nginx");
         $response->assertStatus(200);
         $response->assertHeader('auth-status', 'OK');
-        $response->assertHeader('auth-port', \config('imap.imap_port'));
+        $response->assertHeader('auth-port', \config('services.imap.imap_port'));
 
         // Invalid Password
         $modifiedHeaders = $headers;
@@ -119,8 +119,8 @@ class NGINXTest extends TestCase
         $response = $this->withHeaders($modifiedHeaders)->get("api/webhooks/nginx");
         $response->assertStatus(200);
         $response->assertHeader('auth-status', 'OK');
-        $response->assertHeader('auth-server', gethostbyname(\config('smtp.host')));
-        $response->assertHeader('auth-port', \config('smtp.port'));
+        $response->assertHeader('auth-server', gethostbyname(\config('services.smtp.host')));
+        $response->assertHeader('auth-port', \config('services.smtp.port'));
         $response->assertHeader('auth-pass', $pass);
 
         // Empty Auth Protocol
@@ -136,8 +136,8 @@ class NGINXTest extends TestCase
         $response = $this->withHeaders($headers)->get("api/webhooks/nginx");
         $response->assertStatus(200);
         $response->assertHeader('auth-status', 'OK');
-        $response->assertHeader('auth-server', gethostbyname(\config('imap.host')));
-        $response->assertHeader('auth-port', \config('imap.guam_port'));
+        $response->assertHeader('auth-server', gethostbyname(\config('services.imap.host')));
+        $response->assertHeader('auth-port', \config('services.imap.guam_port'));
 
         $companionApp = $this->getTestCompanionApp(
             'testdevice',

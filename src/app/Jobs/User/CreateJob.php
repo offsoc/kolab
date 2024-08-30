@@ -38,7 +38,7 @@ class CreateJob extends UserJob
             return;
         }
 
-        if ($user->email == \config('imap.admin_login')) {
+        if ($user->email == \config('services.imap.admin_login')) {
             // Ignore Cyrus admin account
             return;
         }

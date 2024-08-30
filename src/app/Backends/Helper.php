@@ -49,7 +49,68 @@ class Helper
      */
     public static function defaultImapFolders(): array
     {
-        // TODO: Move the list from config/imap.php
-        return [];
+        $folders = [
+            'Drafts' => [
+                'metadata' => [
+                    '/private/vendor/kolab/folder-type' => 'mail.drafts',
+                    '/private/specialuse' => '\Drafts',
+                ],
+            ],
+            'Sent' => [
+                'metadata' => [
+                    '/private/vendor/kolab/folder-type' => 'mail.sentitems',
+                    '/private/specialuse' => '\Sent',
+                ],
+            ],
+            'Trash' => [
+                'metadata' => [
+                    '/private/vendor/kolab/folder-type' => 'mail.wastebasket',
+                    '/private/specialuse' => '\Trash',
+                ],
+            ],
+            'Spam' => [
+                'metadata' => [
+                    '/private/vendor/kolab/folder-type' => 'mail.junkemail',
+                    '/private/specialuse' => '\Junk',
+                ],
+            ],
+        ];
+
+        if (\env('IMAP_WITH_GROUPWARE_DEFAULT_FOLDERS', true)) {
+            $folders = array_merge($folders, [
+                'Calendar' => [
+                    'metadata' => [
+                        '/private/vendor/kolab/folder-type' => 'event.default',
+                        '/shared/vendor/kolab/folder-type' => 'event',
+                    ],
+                ],
+                'Contacts' => [
+                    'metadata' => [
+                        '/private/vendor/kolab/folder-type' => 'contact.default',
+                        '/shared/vendor/kolab/folder-type' => 'event',
+                    ],
+                ],
+                'Tasks' => [
+                    'metadata' => [
+                        '/private/vendor/kolab/folder-type' => 'task.default',
+                        '/shared/vendor/kolab/folder-type' => 'task',
+                    ],
+                ],
+                'Notes' => [
+                    'metadata' => [
+                        '/private/vendor/kolab/folder-type' => 'note.default',
+                        '/shared/vendor/kolab/folder-type' => 'note',
+                    ],
+                ],
+                'Files' => [
+                    'metadata' => [
+                        '/private/vendor/kolab/folder-type' => 'file.default',
+                        '/shared/vendor/kolab/folder-type' => 'file',
+                    ],
+                ],
+            ]);
+        }
+
+        return $folders;
     }
 }

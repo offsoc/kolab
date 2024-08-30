@@ -230,7 +230,7 @@ class Roundcube
                 return null;
             }
 
-            $uri = \parse_url(\config('imap.uri'));
+            $uri = \parse_url(\config('services.imap.uri'));
 
             $user_id = (int) $db->table(self::USERS_TABLE)->insertGetId(
                 [

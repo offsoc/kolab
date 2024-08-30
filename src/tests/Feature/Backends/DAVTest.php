@@ -49,7 +49,7 @@ class DAVTest extends TestCase
         $this->user = $user = $this->getTestUser('davtest-' . time() . '@' . \config('app.domain'), $props);
 
         // Create the IMAP mailbox, it is required otherwise DAV requests will fail
-        \config(['imap.default_folders' => null]);
+        \config(['services.imap.default_folders' => null]);
         IMAP::createUser($user);
 
         $dav_folders = [

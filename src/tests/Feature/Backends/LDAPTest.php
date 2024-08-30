@@ -28,7 +28,7 @@ class LDAPTest extends TestCase
         }
 
         $this->ldap_config = [
-            'ldap.hosts' => \config('ldap.hosts'),
+            'services.ldap.hosts' => \config('services.ldap.hosts'),
         ];
 
         $this->deleteTestUser('user-ldap-test@' . \config('app.domain'));
@@ -63,7 +63,7 @@ class LDAPTest extends TestCase
      */
     public function testConnectException(): void
     {
-        \config(['ldap.hosts' => 'non-existing.host']);
+        \config(['services.ldap.hosts' => 'non-existing.host']);
 
         $this->expectException(\Exception::class);
 
@@ -133,7 +133,7 @@ class LDAPTest extends TestCase
     {
         Queue::fake();
 
-        $root_dn = \config('ldap.hosted.root_dn');
+        $root_dn = \config('services.ldap.hosted.root_dn');
         $group = $this->getTestGroup('group@kolab.org', [
                 'members' => ['member1@testldap.com', 'member2@testldap.com']
         ]);
@@ -225,7 +225,7 @@ class LDAPTest extends TestCase
     {
         Queue::fake();
 
-        $root_dn = \config('ldap.hosted.root_dn');
+        $root_dn = \config('services.ldap.hosted.root_dn');
         $resource = $this->getTestResource('test-resource@kolab.org', ['name' => 'Test1']);
         $resource->setSetting('invitation_policy', null);
 
@@ -311,7 +311,7 @@ class LDAPTest extends TestCase
     {
         Queue::fake();
 
-        $root_dn = \config('ldap.hosted.root_dn');
+        $root_dn = \config('services.ldap.hosted.root_dn');
         $folder = $this->getTestSharedFolder('test-folder@kolab.org', ['type' => 'event']);
         $folder->setSetting('acl', null);
 
@@ -399,7 +399,7 @@ class LDAPTest extends TestCase
             'mail' => $user->email,
             'uid' => $user->email,
             'nsroledn' => [
-                'cn=imap-user,' . \config('ldap.hosted.root_dn')
+                'cn=imap-user,' . \config('services.ldap.hosted.root_dn')
             ],
             'cn' => 'unknown',
             'displayname' => '',
@@ -491,8 +491,8 @@ class LDAPTest extends TestCase
         $expected['inetuserstatus'] = $user->status;
         $expected['mailquota'] = \config('app.storage.min_qty') * 1048576;
         $expected['nsroledn'] = [
-            'cn=2fa-user,' . \config('ldap.hosted.root_dn'),
-            'cn=degraded-user,' . \config('ldap.hosted.root_dn')
+            'cn=2fa-user,' . \config('services.ldap.hosted.root_dn'),
+            'cn=degraded-user,' . \config('services.ldap.hosted.root_dn')
         ];
 
         $ldap_user = LDAP::getUser($user->email);

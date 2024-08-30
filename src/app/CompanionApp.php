@@ -37,9 +37,9 @@ class CompanionApp extends Model
     {
         \Log::debug("sending notification to " . var_export($deviceIds, true));
 
-        $apiKey = \config('firebase.api_key');
-        $apiUrl = \config('firebase.api_url');
-        $verify = \config('firebase.api_verify_tls');
+        $apiKey = \config('services.firebase.api_key');
+        $apiUrl = \config('services.firebase.api_url');
+        $verify = \config('services.firebase.api_verify_tls');
 
         if (empty($apiKey)) {
             return false;
