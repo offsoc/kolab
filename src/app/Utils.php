@@ -4,6 +4,7 @@ namespace App;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 /**
@@ -106,9 +107,9 @@ class Utils
      * @param string $target The target location
      * @param bool $force    Force the download (and overwrite target)
      *
-     * @return void
+     * @throws \Exception
      */
-    public static function downloadFile($source, $target, $force = false)
+    public static function downloadFile($source, $target, $force = false): void
     {
         if (is_file($target) && !$force) {
             return;
@@ -116,26 +117,7 @@ class Utils
 
         \Log::info("Retrieving {$source}");
 
-        $fp = fopen($target, 'w');
-
-        $curl = curl_init();
-        curl_setopt($curl, CURLOPT_URL, $source);
-        curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($curl, CURLOPT_FILE, $fp);
-        curl_exec($curl);
-
-        if (curl_errno($curl)) {
-            \Log::error("Request error on {$source}: " . curl_error($curl));
-
-            curl_close($curl);
-            fclose($fp);
-
-            unlink($target);
-            return;
-        }
-
-        curl_close($curl);
-        fclose($fp);
+        Http::sink($target)->get($source)->throwUnlessStatus(200);
     }
 
     /**
