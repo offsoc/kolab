@@ -70,11 +70,7 @@ class IP4NetsCommand extends Command
                     continue;
                 }
 
-                if ((int)$line) {
-                    continue;
-                }
-
-                if ($line[0] == "#") {
+                if (preg_match('/^[0-9#]/', $line[0])) {
                     continue;
                 }
 
