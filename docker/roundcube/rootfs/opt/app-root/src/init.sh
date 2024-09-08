@@ -9,6 +9,11 @@ chmod 777 /data/pgp-home
 
 pushd /opt/app-root/src/
 
+if [ -d /src.orig/ ]; then
+    echo "----> Updating source"
+    ./update.sh
+fi
+
 ## Copy our configs over the default ones
 cp /opt/app-root/src/roundcubemail-config-templates/* roundcubemail/config/
 

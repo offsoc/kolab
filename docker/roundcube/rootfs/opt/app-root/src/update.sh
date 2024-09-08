@@ -11,6 +11,7 @@ do
             --exclude=temp \
             --exclude=logs \
             --exclude=composer.lock \
+            --exclude=.git \
             /src.orig/$repo/ /opt/app-root/src/$repo
     fi
 done
@@ -18,7 +19,9 @@ done
 pushd /opt/app-root/src/
 
 LESSC=/usr/local/bin/lessc
-SKINS=(kolab plesk)
+if [ "$SKINS" == "" ]; then 
+    SKINS=(kolab plesk)
+fi
 
 pushd roundcubemail
 cp /opt/app-root/src/composer.json composer.json

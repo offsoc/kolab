@@ -188,7 +188,7 @@ if (!function_exists("getenvlist")) {
     $config['smtp_debug'] = getenv('SMTP_DEBUG');
     $config['dav_debug'] = getenv('DAV_DEBUG');
 
-    $config['skin'] = 'kolab';
+    $config['skin'] = getenv('SKIN');
     $config['skin_include_php'] = false;
     $config['mime_magic'] = null;
     $config['im_identify_path'] = '/usr/bin/identify';
