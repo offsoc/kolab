@@ -76,7 +76,7 @@ EOF
     roundcubemail/bin/updatedb.sh --dir syncroton/docs/SQL/ --package syncroton || :
     roundcubemail/bin/updatedb.sh --dir roundcubemail/SQL/ --package roundcube || :
     roundcubemail/bin/updatedb.sh --dir roundcubemail/plugins/libkolab/SQL/ --package libkolab || :
-    roundcubemail/bin/updatedb.sh --dir roundcubemail/plugins/kolab-calendar/SQL/ --package calendar-kolab || :
+    roundcubemail/bin/updatedb.sh --dir roundcubemail/plugins/calendar/drivers/kolab/SQL/ --package calendar-kolab || :
 fi
 
 echo ""
