@@ -14,7 +14,7 @@ function checkout() {
     fi
 }
 
-# Clone what we don't find (roundcubemail-skin-elastic is not publicly available, so can't be included this way)
+# Clone what we don't find
 checkout roundcubemail $GIT_REMOTE_ROUNDCUBEMAIL $GIT_REF_ROUNDCUBEMAIL
 checkout roundcubemail-plugins-kolab $GIT_REMOTE_ROUNDCUBEMAIL_PLUGINS $GIT_REF_ROUNDCUBEMAIL_PLUGINS
 checkout syncroton $GIT_REMOTE_SYNCROTON $GIT_REF_SYNCROTON
@@ -22,6 +22,9 @@ checkout iRony $GIT_REMOTE_IRONY $GIT_REF_IRONY
 checkout chwala $GIT_REMOTE_CHWALA $GIT_REF_CHWALA
 checkout autoconf $GIT_REMOTE_AUTOCONF $GIT_REF_AUTOCONF
 checkout freebusy $GIT_REMOTE_FREEBUSY $GIT_REF_FREEBUSY
+if [[ "$GIT_REMOTE_SKIN_ELASTIC" != ""  ]]; then 
+    checkout roundcubemail-skin-elastic $GIT_REMOTE_SKIN_ELASTIC $GIT_REF_SKIN_ELASTIC
+fi
 
 pushd roundcubemail
 cp /opt/app-root/src/composer.json composer.json

@@ -62,6 +62,9 @@ ARG GIT_REF_IRONY=master
 ARG GIT_REMOTE_IRONY=https://git.kolab.org/source/iRony.git
 ARG GIT_REF_FREEBUSY=master
 ARG GIT_REMOTE_FREEBUSY=https://git.kolab.org/diffusion/F/freebusy.git
+ARG GIT_REMOTE_SKIN_ELASTIC=""
+ARG GIT_REF_SKIN_ELASTIC=master
+ARG SKINS=kolab
 
 RUN /opt/app-root/src/build.sh && \
     for PATH in /run/php-fpm /run/httpd /var/log/httpd /var/lib/httpd /data /opt/app-root; \
