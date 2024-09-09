@@ -190,6 +190,9 @@ if (!function_exists("getenvlist")) {
 
     $config['skin'] = getenv('SKIN');
     $config['skin_include_php'] = false;
+    if (getenv('FORCE_SKIN') == "true") {
+        $config['dont_override'][] = 'skin';
+    }
     $config['mime_magic'] = null;
     $config['im_identify_path'] = '/usr/bin/identify';
     $config['im_convert_path'] = '/usr/bin/convert';
