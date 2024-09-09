@@ -9,9 +9,11 @@ chmod 777 /data/pgp-home
 
 pushd /opt/app-root/src/
 
-if [ -d /src.orig/ ]; then
-    echo "----> Updating source"
-    ./update.sh
+if [[ $1 == "" ]]; then
+    if [ -d /src.orig/ ]; then
+        echo "----> Updating source"
+        ./update.sh
+    fi
 fi
 
 ## Copy our configs over the default ones
