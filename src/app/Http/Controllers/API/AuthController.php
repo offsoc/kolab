@@ -159,7 +159,7 @@ class AuthController extends Controller
         if ($user->tokenCan('email')) {
             $response['email'] = $user->email;
             $response['email_verified'] = $user->isActive();
-            # At least synapse depends on a "settings" structure being available
+            // At least synapse depends on a "settings" structure being available
             $response['settings'] = [ 'name' => $user->name() ];
         }
 

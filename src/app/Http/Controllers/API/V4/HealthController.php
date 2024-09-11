@@ -14,7 +14,7 @@ class HealthController extends Controller
     public function liveness()
     {
         $response = response()->json('success', 200);
-        $response->noLogging = true;
+        $response->noLogging = true; // @phpstan-ignore-line
         return $response;
     }
 
@@ -26,7 +26,7 @@ class HealthController extends Controller
     public function readiness()
     {
         $response = response()->json('success', 200);
-        $response->noLogging = true;
+        $response->noLogging = true; // @phpstan-ignore-line
         return $response;
     }
 }
