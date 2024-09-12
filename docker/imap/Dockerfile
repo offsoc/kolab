@@ -70,6 +70,8 @@ ENV CYRUS_CONF=/etc/cyrus.conf
 ENV SERVERLIST=imap-backend
 ENV MUPDATE=imap-mupdate
 ENV SERVERNAME=imap-backend
+# Seems to be required on ppc64le only? Not sure why
+ENV LD_LIBRARY_PATH=/usr/lib/
 # ENV TLS_SERVER_CA_FILE
 # ENV APP_SERVICES_DOMAIN
 
