@@ -230,7 +230,9 @@ class UsersController extends RelationController
             return $error_response;
         }
 
-        if (empty($request->package) || !($package = \App\Package::withEnvTenantContext()->find($request->package))) {
+        if (empty($request->package)
+            || !($package = \App\Package::withObjectTenantContext($owner)->find($request->package))
+        ) {
             $errors = ['package' => self::trans('validation.packagerequired')];
             return response()->json(['status' => 'error', 'errors' => $errors], 422);
         }
@@ -284,7 +286,11 @@ class UsersController extends RelationController
      */
     public function update(Request $request, $id)
     {
-        $user = User::withEnvTenantContext()->find($id);
+        $user = User::find($id);
+
+        if (!$this->checkTenant($user)) {
+            return $this->errorResponse(404);
+        }
 
         if (empty($user)) {
             return $this->errorResponse(404);

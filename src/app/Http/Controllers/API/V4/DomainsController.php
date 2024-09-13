@@ -69,9 +69,9 @@ class DomainsController extends RelationController
      */
     public function destroy($id)
     {
-        $domain = Domain::withEnvTenantContext()->find($id);
+        $domain = Domain::find($id);
 
-        if (empty($domain)) {
+        if (!$this->checkTenant($domain)) {
             return $this->errorResponse(404);
         }
 
@@ -135,7 +135,9 @@ class DomainsController extends RelationController
             }
         }
 
-        if (empty($request->package) || !($package = \App\Package::withEnvTenantContext()->find($request->package))) {
+        if (empty($request->package)
+            || !($package = \App\Package::withObjectTenantContext($owner)->find($request->package))
+        ) {
             $errors = ['package' => self::trans('validation.packagerequired')];
             return response()->json(['status' => 'error', 'errors' => $errors], 422);
         }
