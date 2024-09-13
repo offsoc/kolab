@@ -6,8 +6,6 @@ class Room extends Base
 {
     /**
      * The entitleable class for this handler.
-     *
-     * @return string
      */
     public static function entitleableClass(): string
     {
@@ -16,10 +14,6 @@ class Room extends Base
 
     /**
      * SKU handler metadata.
-     *
-     * @param \App\Sku $sku The SKU object
-     *
-     * @return array
      */
     public static function metadata(\App\Sku $sku): array
     {
@@ -34,8 +28,6 @@ class Room extends Base
     /**
      * The priority that specifies the order of SKUs in UI.
      * Higher number means higher on the list.
-     *
-     * @return int
      */
     public static function priority(): int
     {

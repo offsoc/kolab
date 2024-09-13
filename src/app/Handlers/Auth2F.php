@@ -3,17 +3,26 @@
 namespace App\Handlers;
 
 use App\Entitlement;
+use App\Sku;
 
 class Auth2F extends \App\Handlers\Base
 {
     /**
      * The entitleable class for this handler.
-     *
-     * @return string
      */
     public static function entitleableClass(): string
     {
         return \App\User::class;
+    }
+
+    /**
+     * Handle entitlement creation event.
+     */
+    public static function entitlementCreated(Entitlement $entitlement): void
+    {
+        if (\config('app.with_ldap')) {
+            \App\Jobs\User\UpdateJob::dispatch($entitlement->entitleable_id);
+        }
     }
 
     /**
@@ -26,17 +35,17 @@ class Auth2F extends \App\Handlers\Base
             // TODO: This should be an async job
             $sf = new \App\Auth\SecondFactor($entitlement->entitleable);
             $sf->removeFactors();
+
+            if (\config('app.with_ldap')) {
+                \App\Jobs\User\UpdateJob::dispatch($entitlement->entitleable_id);
+            }
         }
     }
 
     /**
      * SKU handler metadata.
-     *
-     * @param \App\Sku $sku The SKU object
-     *
-     * @return array
      */
-    public static function metadata(\App\Sku $sku): array
+    public static function metadata(Sku $sku): array
     {
         $data = parent::metadata($sku);
 
@@ -48,8 +57,6 @@ class Auth2F extends \App\Handlers\Base
     /**
      * The priority that specifies the order of SKUs in UI.
      * Higher number means higher on the list.
-     *
-     * @return int
      */
     public static function priority(): int
     {

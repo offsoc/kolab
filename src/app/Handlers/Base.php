@@ -3,13 +3,12 @@
 namespace App\Handlers;
 
 use App\Entitlement;
+use App\Sku;
 
 abstract class Base
 {
     /**
      * The entitleable class for this handler.
-     *
-     * @return string
      */
     public static function entitleableClass(): string
     {
@@ -36,13 +35,8 @@ abstract class Base
      * Check if the SKU is available to the user. An SKU is available
      * to the user/domain when either it is active or there's already an
      * active entitlement.
-     *
-     * @param \App\Sku  $sku    The SKU
-     * @param object    $object The entitleable object
-     *
-     * @return bool
      */
-    public static function isAvailable(\App\Sku $sku, $object): bool
+    public static function isAvailable(Sku $sku, $object): bool
     {
         if (!$sku->active) {
             if (!$object->entitlements()->where('sku_id', $sku->id)->first()) {
@@ -55,12 +49,8 @@ abstract class Base
 
     /**
      * Metadata of this SKU handler.
-     *
-     * @param \App\Sku $sku The SKU object
-     *
-     * @return array
      */
-    public static function metadata(\App\Sku $sku): array
+    public static function metadata(Sku $sku): array
     {
         return [
             // entitleable type
@@ -78,13 +68,8 @@ abstract class Base
 
     /**
      * Prerequisites for the Entitlement to be applied to the object.
-     *
-     * @param \App\Entitlement $entitlement
-     * @param mixed $object
-     *
-     * @return bool
      */
-    public static function preReq($entitlement, $object): bool
+    public static function preReq(Entitlement $entitlement, $object): bool
     {
         $type = static::entitleableClass();
 
@@ -109,8 +94,6 @@ abstract class Base
     /**
      * The priority that specifies the order of SKUs in UI.
      * Higher number means higher on the list.
-     *
-     * @return int
      */
     public static function priority(): int
     {

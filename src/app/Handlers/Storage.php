@@ -3,6 +3,7 @@
 namespace App\Handlers;
 
 use App\Entitlement;
+use App\Sku;
 
 class Storage extends \App\Handlers\Base
 {
@@ -11,8 +12,6 @@ class Storage extends \App\Handlers\Base
 
     /**
      * The entitleable class for this handler.
-     *
-     * @return string
      */
     public static function entitleableClass(): string
     {
@@ -39,12 +38,8 @@ class Storage extends \App\Handlers\Base
 
     /**
      * SKU handler metadata.
-     *
-     * @param \App\Sku $sku The SKU object
-     *
-     * @return array
      */
-    public static function metadata(\App\Sku $sku): array
+    public static function metadata(Sku $sku): array
     {
         $data = parent::metadata($sku);
 
@@ -62,8 +57,6 @@ class Storage extends \App\Handlers\Base
     /**
      * The priority that specifies the order of SKUs in UI.
      * Higher number means higher on the list.
-     *
-     * @return int
      */
     public static function priority(): int
     {

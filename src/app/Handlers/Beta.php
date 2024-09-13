@@ -2,12 +2,12 @@
 
 namespace App\Handlers;
 
+use App\Entitlement;
+
 class Beta extends \App\Handlers\Base
 {
     /**
      * The entitleable class for this handler.
-     *
-     * @return string
      */
     public static function entitleableClass(): string
     {
@@ -16,13 +16,8 @@ class Beta extends \App\Handlers\Base
 
     /**
      * Prerequisites for the Entitlement to be applied to the object.
-     *
-     * @param \App\Entitlement $entitlement
-     * @param mixed $object
-     *
-     * @return bool
      */
-    public static function preReq($entitlement, $object): bool
+    public static function preReq(Entitlement $entitlement, $object): bool
     {
         // We allow inactive "beta" Sku to be assigned
 
@@ -37,8 +32,6 @@ class Beta extends \App\Handlers\Base
     /**
      * The priority that specifies the order of SKUs in UI.
      * Higher number means higher on the list.
-     *
-     * @return int
      */
     public static function priority(): int
     {

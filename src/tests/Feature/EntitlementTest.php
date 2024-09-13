@@ -41,48 +41,87 @@ class EntitlementTest extends TestCase
 
     /**
      * Tests for EntitlementObserver
-     *
-     * @group skipci
      */
     public function testEntitlementObserver(): void
     {
         $skuStorage = Sku::withEnvTenantContext()->where('title', 'storage')->first();
         $skuMailbox = Sku::withEnvTenantContext()->where('title', 'mailbox')->first();
+        $skuGroupware = Sku::withEnvTenantContext()->where('title', 'groupware')->first();
+        $skuActivesync = Sku::withEnvTenantContext()->where('title', 'activesync')->first();
+        $sku2FA = Sku::withEnvTenantContext()->where('title', '2fa')->first();
+        $skuBeta = Sku::withEnvTenantContext()->where('title', 'beta')->first();
         $user = $this->getTestUser('entitlement-test@kolabnow.com');
         $wallet = $user->wallets->first();
 
-        // Test dispatching update jobs for the user, on quota update
+        $assertPushedUserUpdateJob = function ($ifLdap = false) use ($user) {
+            if ($ifLdap && !\config('app.with_ldap')) {
+                Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 0);
+                return;
+            }
+
+            Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 1);
+            Queue::assertPushed(
+                \App\Jobs\User\UpdateJob::class,
+                function ($job) use ($user) {
+                    return $user->id === TestCase::getObjectProperty($job, 'userId');
+                }
+            );
+        };
+
+        // Note: This also is testing SKU handlers
+
+        // 'mailbox' SKU should not dispatch update jobs
         $this->fakeQueueReset();
         $user->assignSku($skuMailbox, 1, $wallet);
         Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 0);
-
-        $this->fakeQueueReset();
-        $user->assignSku($skuStorage, 1, $wallet);
-        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 1);
-        Queue::assertPushed(
-            \App\Jobs\User\UpdateJob::class,
-            function ($job) use ($user) {
-                return $user->id === TestCase::getObjectProperty($job, 'userId');
-            }
-        );
-
         $this->fakeQueueReset();
         $user->entitlements()->where('sku_id', $skuMailbox->id)->first()->delete();
-        //FIXME this sometimes gives 1?
         Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 0);
 
+        // Test dispatching update jobs for the user - 'storage' SKU
+        $this->fakeQueueReset();
+        $user->assignSku($skuStorage, 1, $wallet);
+        $assertPushedUserUpdateJob();
         $this->fakeQueueReset();
         $user->entitlements()->where('sku_id', $skuStorage->id)->first()->delete();
-        //FIXME this sometimes gives 2?
-        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 1);
-        Queue::assertPushed(
-            \App\Jobs\User\UpdateJob::class,
-            function ($job) use ($user) {
-                return $user->id === TestCase::getObjectProperty($job, 'userId');
-            }
-        );
+        $assertPushedUserUpdateJob();
 
-        // TODO: Test all events in the observer in more detail
+        // Test dispatching update jobs for the user - 'groupware' SKU
+        $this->fakeQueueReset();
+        $user->assignSku($skuGroupware, 1, $wallet);
+        $assertPushedUserUpdateJob(true);
+        $this->fakeQueueReset();
+        $user->entitlements()->where('sku_id', $skuGroupware->id)->first()->delete();
+        $assertPushedUserUpdateJob(true);
+
+        // Test dispatching update jobs for the user - 'activesync' SKU
+        $this->fakeQueueReset();
+        $user->assignSku($skuActivesync, 1, $wallet);
+        $assertPushedUserUpdateJob(true);
+        $this->fakeQueueReset();
+        $user->entitlements()->where('sku_id', $skuActivesync->id)->first()->delete();
+        $assertPushedUserUpdateJob(true);
+
+        // Test dispatching update jobs for the user - '2fa' SKU
+        $this->fakeQueueReset();
+        $user->assignSku($sku2FA, 1, $wallet);
+        $assertPushedUserUpdateJob(true);
+        $this->fakeQueueReset();
+        $user->entitlements()->where('sku_id', $sku2FA->id)->first()->delete();
+        $assertPushedUserUpdateJob(true);
+
+        // Beta SKU should not trigger a user update job
+        $this->fakeQueueReset();
+        $user->assignSku($skuBeta, 1, $wallet);
+        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 0);
+        $this->fakeQueueReset();
+        $user->entitlements()->where('sku_id', $skuBeta->id)->first()->delete();
+        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 0);
+
+        // TODO: Assert 'creating' checks
+        // TODO: Assert transaction records being created
+        // TODO: Assert timestamps not updated on delete
+        $this->markTestIncomplete();
     }
 
     /**
