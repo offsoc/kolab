@@ -24,7 +24,7 @@ class Controller extends BaseController
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public static function errorResponse(int $code, string $message = null, array $data = [])
+    public static function errorResponse(int $code, string $message = '', array $data = [])
     {
         $errors = [
             400 => "Bad request",
@@ -39,7 +39,7 @@ class Controller extends BaseController
 
         $response = [
             'status' => 'error',
-            'message' => $message ?: (isset($errors[$code]) ? $errors[$code] : "Server error"),
+            'message' => $message ?: ($errors[$code] ?? "Server error"),
         ];
 
         if (!empty($data)) {
@@ -54,10 +54,8 @@ class Controller extends BaseController
      * by being an admin or existing in the same tenant context.
      *
      * @param ?object $object Model object
-     *
-     * @return bool
      */
-    protected function checkTenant(object $object = null): bool
+    protected function checkTenant(?object $object = null): bool
     {
         if (empty($object)) {
             return false;

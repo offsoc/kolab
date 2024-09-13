@@ -292,10 +292,6 @@ class UsersController extends RelationController
             return $this->errorResponse(404);
         }
 
-        if (empty($user)) {
-            return $this->errorResponse(404);
-        }
-
         $current_user = $this->guard()->user();
         $requires_controller = $request->skus !== null || $request->aliases !== null;
         $can_update = $requires_controller ? $current_user->canDelete($user) : $current_user->canUpdate($user);
