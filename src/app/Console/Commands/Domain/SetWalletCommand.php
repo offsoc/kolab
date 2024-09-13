@@ -4,7 +4,6 @@ namespace App\Console\Commands\Domain;
 
 use App\Console\Command;
 use App\Package;
-use Illuminate\Support\Facades\Queue;
 
 class SetWalletCommand extends Command
 {
@@ -62,8 +61,6 @@ class SetWalletCommand extends Command
             $this->error("Package not found.");
             return 1;
         }
-
-        Queue::fake(); // ignore LDAP for now (note: adding entitlements updates the domain)
 
         // Assign package the same as we do in DomainsController when a new domain is created
         $domain->assignPackageAndWallet($package, $wallet);

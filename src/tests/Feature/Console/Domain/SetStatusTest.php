@@ -32,8 +32,6 @@ class SetStatusTest extends TestCase
      */
     public function testHandle(): void
     {
-        Queue::fake();
-
         // Non-existing domain
         $code = \Artisan::call("domain:set-status unknown.org 1");
         $output = trim(\Artisan::output());
@@ -45,10 +43,13 @@ class SetStatusTest extends TestCase
                 'type' => \App\Domain::TYPE_HOSTED,
         ]);
 
+        Queue::fake();
+
         $code = \Artisan::call("domain:set-status domain-delete.com " . \App\Domain::STATUS_LDAP_READY);
         $output = trim(\Artisan::output());
         $this->assertSame(0, $code);
-        $this->assertSame((string) \App\Domain::STATUS_LDAP_READY, $output);
+        $this->assertSame('Status (64): ldapReady (64)', $output);
+        Queue::assertPushed(\App\Jobs\Domain\UpdateJob::class, 1);
 
         $domain->refresh();
 

@@ -3,7 +3,6 @@
 namespace App\Console\Commands\Domain;
 
 use App\Console\Command;
-use Illuminate\Support\Facades\Queue;
 
 class SetStatusCommand extends Command
 {
@@ -35,11 +34,9 @@ class SetStatusCommand extends Command
             return 1;
         }
 
-        Queue::fake(); // ignore LDAP for now
-
         $domain->status = (int) $this->argument('status');
         $domain->save();
 
-        $this->info((string) $domain->status);
+        $this->info("Status ({$domain->status}): " . $domain->statusText());
     }
 }
