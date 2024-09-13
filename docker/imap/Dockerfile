@@ -70,10 +70,13 @@ ENV CYRUS_CONF=/etc/cyrus.conf
 ENV SERVERLIST=imap-backend
 ENV MUPDATE=imap-mupdate
 ENV SERVERNAME=imap-backend
+ENV MAXLOGINS_PER_USER=50
 # Seems to be required on ppc64le only? Not sure why
 ENV LD_LIBRARY_PATH=/usr/lib/
 # ENV TLS_SERVER_CA_FILE
 # ENV APP_SERVICES_DOMAIN
+# ENV ROLE
+# ENV WITH_TLS
 
 CMD ["/init.sh"]
 

@@ -8,8 +8,10 @@ sed -i -r \
     -e "s|MUPDATE|$MUPDATE|g" \
     -e "s|SERVERLIST|$SERVERLIST|g" \
     -e "s|SERVERNAME|$SERVERNAME|g" \
+    -e "s|MAXLOGINS_PER_USER|$MAXLOGINS_PER_USER|g" \
     -e "s|TLS_SERVER_CA_FILE|$TLS_SERVER_CA_FILE|g" \
     $IMAPD_CONF
+
 
 sed -i -r \
     -e "s|APP_SERVICES_DOMAIN|$APP_SERVICES_DOMAIN|g" \
@@ -27,8 +29,56 @@ fi
 mkdir -p /var/lib/imap/socket
 mkdir -p /var/lib/imap/db
 
-if [[ -f ${SSL_CERTIFICATE} ]]; then
-    cat ${SSL_CERTIFICATE} ${SSL_CERTIFICATE_FULLCHAIN} ${SSL_CERTIFICATE_KEY} > /etc/pki/cyrus-imapd/cyrus-imapd.bundle.pem
+if [[ "$WITH_TLS" == "true" ]]; then
+    if [[ -f ${SSL_CERTIFICATE} ]]; then
+        cat ${SSL_CERTIFICATE} ${SSL_CERTIFICATE_FULLCHAIN} ${SSL_CERTIFICATE_KEY} > /etc/pki/cyrus-imapd/cyrus-imapd.bundle.pem
+    fi
+    sed -i \
+        -e "s|# WITH_TLS ||g" \
+        /etc/imapd.conf
+    sed -i \
+        -e "s|# WITH_TLS ||g" \
+        /etc/cyrus.conf
+fi
+if [[ "$ROLE" == "frontend" ]]; then
+    sed -i \
+        -e "s|# WITH_MUPDATE ||g" \
+        -e "s|# ROLE_FRONTEND ||g" \
+        /etc/imapd.conf
+    sed -i \
+        -e "s|# ROLE_FRONTEND ||g" \
+        /etc/cyrus.conf
+    if [[ "$WITH_TLS" == "true" ]]; then
+        sed -i \
+            -e "s|# ROLE_FRONTEND_WITH_TLS ||g" \
+            /etc/cyrus.conf
+    fi
+elif [[ "$ROLE" == "backend" ]]; then
+    sed -i \
+        -e "s|# WITH_MUPDATE ||g" \
+        -e "s|# ROLE_BACKEND ||g" \
+        /etc/imapd.conf
+    sed -i \
+        -e "s|# WITH_MUPDATE ||g" \
+        -e "s|# ROLE_BACKEND ||g" \
+        /etc/cyrus.conf
+    if [[ "$WITH_TLS" == "true" ]]; then
+        sed -i \
+            -e "s|# ROLE_BACKEND_WITH_TLS ||g" \
+            /etc/cyrus.conf
+    fi
+else
+    sed -i \
+        -e "s|# ROLE_BACKEND ||g" \
+        /etc/imapd.conf
+    sed -i \
+        -e "s|# ROLE_BACKEND ||g" \
+        /etc/cyrus.conf
+    if [[ "$WITH_TLS" == "true" ]]; then
+        sed -i \
+            -e "s|# ROLE_BACKEND_WITH_TLS ||g" \
+            /etc/cyrus.conf
+    fi
 fi
 
 /usr/sbin/saslauthd -m /run/saslauthd -a httpform -d &
@@ -37,7 +87,7 @@ fi
 # sudo rsyslogd
 
 
-# Cyrus needs an entry in /etc/passwd. THe alternative would be perhaps the nss_wrapper
+# Cyrus needs an entry in /etc/passwd. The alternative would perhaps be the nss_wrapper.
 # https://docs.openshift.com/container-platform/3.11/creating_images/guidelines.html#openshift-specific-guidelines
 # FIXME: This probably currently just works because we make /etc/ writable, which I suppose we shouldn't.
 ID=$(id -u)
