@@ -73,7 +73,8 @@ if (!function_exists("getenvlist")) {
     }
 
     // Kolab specific defaults
-    $config['product_name'] = 'Kolab Groupware';
+    $config['product_name'] = getenv('PRODUCT_NAME');
+    $config['support_url'] = getenv('SUPPORT_URL');
     $config['quota_zero_as_unlimited'] = false;
     $config['login_lc'] = 2;
     $config['auto_create_user'] = true;
