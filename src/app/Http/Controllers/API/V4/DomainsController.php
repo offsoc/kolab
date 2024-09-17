@@ -135,7 +135,8 @@ class DomainsController extends RelationController
             }
         }
 
-        if (empty($request->package)
+        if (
+            empty($request->package)
             || !($package = \App\Package::withObjectTenantContext($owner)->find($request->package))
         ) {
             $errors = ['package' => self::trans('validation.packagerequired')];

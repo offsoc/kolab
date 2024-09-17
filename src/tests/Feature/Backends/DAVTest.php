@@ -82,7 +82,9 @@ class DAVTest extends TestCase
         $this->assertSame('Contacts-Test', $folders[0]->name);
 
         $folders = $dav->listFolders(DAV::TYPE_VEVENT);
-        $folders = array_filter($folders, function ($f) { return $f->name != 'Inbox' && $f->name != 'Outbox'; });
+        $folders = array_filter($folders, function ($f) {
+            return $f->name != 'Inbox' && $f->name != 'Outbox';
+        });
         $folders = array_values($folders);
         $this->assertCount(1, $folders);
         $this->assertSame(['VEVENT'], $folders[0]->components);
@@ -90,7 +92,9 @@ class DAVTest extends TestCase
         $this->assertSame('Calendar-Test', $folders[0]->name);
 
         $folders = $dav->listFolders(DAV::TYPE_VTODO);
-        $folders = array_filter($folders, function ($f) { return $f->name != 'Inbox' && $f->name != 'Outbox'; });
+        $folders = array_filter($folders, function ($f) {
+            return $f->name != 'Inbox' && $f->name != 'Outbox';
+        });
         $folders = array_values($folders);
         $this->assertCount(1, $folders);
         $this->assertSame(['VTODO'], $folders[0]->components);
