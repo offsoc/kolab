@@ -35,7 +35,7 @@ class IMAP implements ExporterInterface, ImporterInterface
         $this->engine = $engine;
 
         // TODO: Move this to self::authenticate()?
-        $config = self::getConfig($account->username, $account->password, $account->uri);
+        $config = self::getConfig($account);
         $this->imap = self::initIMAP($config);
     }
 
@@ -351,19 +351,12 @@ class IMAP implements ExporterInterface, ImporterInterface
     /**
      * Initialize IMAP connection and authenticate the user
      */
-    private static function initIMAP(array $config, string $login_as = null): \rcube_imap_generic
+    private static function initIMAP(array $config): \rcube_imap_generic
     {
         $imap = new \rcube_imap_generic();
 
         if (\config('app.debug')) {
             $imap->setDebug(true, 'App\Backends\IMAP::logDebug');
-        }
-
-        if ($login_as) {
-            $config['options']['auth_cid'] = $config['user'];
-            $config['options']['auth_pw'] = $config['password'];
-            $config['options']['auth_type'] = 'PLAIN';
-            $config['user'] = $login_as;
         }
 
         $imap->connect($config['host'], $config['user'], $config['password'], $config['options']);
@@ -382,9 +375,9 @@ class IMAP implements ExporterInterface, ImporterInterface
     /**
      * Get IMAP configuration
      */
-    private static function getConfig($user, $password, $uri): array
+    private static function getConfig(Account $account): array
     {
-        $uri = \parse_url($uri);
+        $uri = \parse_url($account->uri);
         $default_port = 143;
         $ssl_mode = null;
 
@@ -399,8 +392,8 @@ class IMAP implements ExporterInterface, ImporterInterface
 
         $config = [
             'host' => $uri['host'],
-            'user' => $user,
-            'password' => $password,
+            'user' => $account->username,
+            'password' => $account->password,
             'options' => [
                 'port' => !empty($uri['port']) ? $uri['port'] : $default_port,
                 'ssl_mode' => $ssl_mode,
@@ -416,6 +409,14 @@ class IMAP implements ExporterInterface, ImporterInterface
                 ],
             ],
         ];
+
+        // User impersonation. Example URI: imap://admin:password@hostname:143?user=user%40domain.tld
+        if ($account->loginas) {
+            $config['options']['auth_cid'] = $config['user'];
+            $config['options']['auth_pw'] = $config['password'];
+            $config['options']['auth_type'] = 'PLAIN';
+            $config['user'] = $account->loginas;
+        }
 
         return $config;
     }

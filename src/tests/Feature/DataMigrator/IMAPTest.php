@@ -109,8 +109,11 @@ class IMAPTest extends TestCase
             $uri = 'imap://' . $uri;
         }
 
-        $src = new Account(str_replace('://', '://john%40kolab.org:simple123@', $uri));
-        $dst = new Account(str_replace('://', '://jack%40kolab.org:simple123@', $uri));
+        // Let's test with impersonation now
+        $adminUser = \config('services.imap.admin_login');
+        $adminPass = \config('services.imap.admin_password');
+        $src = new Account(str_replace('://', "://$adminUser:$adminPass@", $uri) . '?user=john%40kolab.org');
+        $dst = new Account(str_replace('://', "://$adminUser:$adminPass@", $uri) . '?user=jack%40kolab.org');
 
         // Add some mails to the source account
         $srcMessages = $this->imapList($src, 'INBOX');

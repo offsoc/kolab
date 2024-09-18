@@ -233,9 +233,10 @@ trait BackendsTrait
                 'password' => $account->password,
             ];
 
+            $login_as = $account->params['user'] ?? null;
             $config = array_merge($getConfig->invoke(null), $config);
 
-            $this->clients[$clientId] = $initIMAP->invokeArgs(null, [$config]);
+            $this->clients[$clientId] = $initIMAP->invokeArgs(null, [$config, $login_as]);
         }
 
         return $this->clients[$clientId];

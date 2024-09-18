@@ -42,7 +42,7 @@ class Account
      * Object constructor
      *
      * Input can be a valid URI or "<username>:<password>".
-     * For proxy authentication use: "<proxy-user>**<username>" as username.
+     * For user impersonation use: ?user=<user> in the query part of the URI.
      *
      * @param string $input Account specification (URI)
      */
@@ -61,10 +61,6 @@ class Account
 
         if (isset($url['user'])) {
             $this->username = urldecode($url['user']);
-
-            if (strpos($this->username, '**')) {
-                list($this->username, $this->loginas) = explode('**', $this->username, 2);
-            }
         }
 
         if (isset($url['pass'])) {
@@ -88,6 +84,10 @@ class Account
 
         if (!empty($url['query'])) {
             parse_str($url['query'], $this->params);
+        }
+
+        if (!empty($this->params['user'])) {
+            $this->loginas = $this->params['user'];
         }
 
         if (strpos($this->loginas, '@')) {
