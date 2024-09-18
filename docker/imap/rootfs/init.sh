@@ -94,6 +94,13 @@ ID=$(id -u)
 GID=$(id -g)
 echo "$ID:x:$ID:$GID::/opt/app-root/:/bin/bash" > /etc/passwd
 
-exec env CYRUS_VERBOSE=1 CYRUS_USER="$ID" /usr/libexec/master -D -p /var/run/master.pid
+if [[ "$1" == "validate" ]]; then
+    # This will print a warning about a missing /var/lib/imap/db/skipstamp, but will still validate the config
+    cyr_info conf-lint
+    echo "Config validated"
+else
+    cyr_info conf-lint
+    exec env CYRUS_VERBOSE=1 CYRUS_USER="$ID" /usr/libexec/master -D -p /var/run/master.pid
+fi
 
 

@@ -247,6 +247,50 @@ kolab__proxytest() {
         kolab-proxy:latest /init.sh validate
 }
 
+# Validate that imap works
+kolab__imaptest() {
+    # With tls
+    $PODMAN run -ti --rm \
+        -v ./ci/certs/:/etc/certs/:ro \
+        $IMAP_SPOOL_STORAGE \
+        $IMAP_LIB_STORAGE \
+        -e SSL_CERTIFICATE=${KOLAB_SSL_CERTIFICATE} \
+        -e SSL_CERTIFICATE_KEY=${KOLAB_SSL_CERTIFICATE_KEY} \
+        -e TLS_SERVER_CA_FILE=${KOLAB_SSL_CERTIFICATE_KEY} \
+        -e APP_SERVICES_DOMAIN="localhost" \
+        -e SERVICES_PORT=8000 \
+        -e IMAP_ADMIN_LOGIN \
+        -e IMAP_ADMIN_PASSWORD \
+        -e WITH_TLS="true" \
+        kolab-imap:latest /init.sh validate
+
+    # Without tls
+    $PODMAN run -ti --rm \
+        $IMAP_SPOOL_STORAGE \
+        $IMAP_LIB_STORAGE \
+        -e APP_SERVICES_DOMAIN="localhost" \
+        -e SERVICES_PORT=8000 \
+        -e IMAP_ADMIN_LOGIN \
+        -e IMAP_ADMIN_PASSWORD \
+        kolab-imap:latest /init.sh validate
+
+    # Frontend with tls
+    $PODMAN run -ti --rm \
+        -v ./ci/certs/:/etc/certs/:ro \
+        $IMAP_SPOOL_STORAGE \
+        $IMAP_LIB_STORAGE \
+        -e SSL_CERTIFICATE=${KOLAB_SSL_CERTIFICATE} \
+        -e SSL_CERTIFICATE_KEY=${KOLAB_SSL_CERTIFICATE_KEY} \
+        -e TLS_SERVER_CA_FILE=${KOLAB_SSL_CERTIFICATE_KEY} \
+        -e APP_SERVICES_DOMAIN="localhost" \
+        -e SERVICES_PORT=8000 \
+        -e IMAP_ADMIN_LOGIN \
+        -e IMAP_ADMIN_PASSWORD \
+        -e ROLE="frontend" \
+        -e WITH_TLS="true" \
+        kolab-imap:latest /init.sh validate
+}
+
 # Lint the kolab4 codebase
 kolab__lint() {
     $PODMAN run --rm -ti \
