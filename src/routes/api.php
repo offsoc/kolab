@@ -164,6 +164,8 @@ Route::group(
         Route::post('users/{id}/config', [API\V4\UsersController::class, 'setConfig']);
         Route::get('users/{id}/skus', [API\V4\UsersController::class, 'skus']);
         Route::get('users/{id}/status', [API\V4\UsersController::class, 'status']);
+        Route::get('users/{id}/licenses/{type}', [API\V4\UsersController::class, 'licenses']);
+
 
         Route::apiResource('wallets', API\V4\WalletsController::class);
         Route::get('wallets/{id}/transactions', [API\V4\WalletsController::class, 'transactions']);

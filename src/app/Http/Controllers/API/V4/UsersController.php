@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\V4;
 
 use App\Http\Controllers\RelationController;
 use App\Domain;
+use App\License;
 use App\Plan;
 use App\Rules\Password;
 use App\Rules\UserEmailDomain;
@@ -108,6 +109,64 @@ class UsersController extends RelationController
         ];
 
         return response()->json($result);
+    }
+
+    /**
+     * Get a license information.
+     *
+     * @param string $id   The account to get licenses for
+     * @param string $type License type
+     *
+     * @return \Illuminate\Http\JsonResponse The response
+     */
+    public function licenses(string $id, string $type)
+    {
+        $user = User::find($id);
+
+        if (!$this->checkTenant($user)) {
+            return $this->errorResponse(404);
+        }
+
+        if (!$this->guard()->user()->canRead($user)) {
+            return $this->errorResponse(403);
+        }
+
+        $licenses = $user->licenses()->where('type', $type)->orderBy('created_at')->get();
+
+        // No licenses for the user, take one if available
+        if (!count($licenses)) {
+            DB::beginTransaction();
+
+            $license = License::withObjectTenantContext($user)
+                ->where('type', $type)
+                ->whereNull('user_id')
+                ->limit(1)
+                ->lockForUpdate()
+                ->first();
+
+            if ($license) {
+                $license->user_id = $user->id;
+                $license->save();
+
+                $licenses = \collect([$license]);
+            }
+
+            DB::commit();
+        }
+
+        // Slim down the result set
+        $licenses = $licenses->map(function ($license) {
+                return [
+                    'key' => $license->key,
+                    'type' => $license->type,
+                ];
+        });
+
+        return response()->json([
+            'list' => $licenses,
+            'count' => count($licenses),
+            'hasMore' => false, // TODO
+        ]);
     }
 
     /**

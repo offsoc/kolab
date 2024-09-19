@@ -5,6 +5,7 @@ namespace Tests\Feature\Controller;
 use App\Discount;
 use App\Domain;
 use App\Http\Controllers\API\V4\UsersController;
+use App\License;
 use App\Package;
 use App\Plan;
 use App\Sku;
@@ -288,6 +289,68 @@ class UsersTest extends TestCase
         $this->assertSame($ned->email, $json['list'][0]['email']);
 
         // TODO: Test paging
+    }
+
+    /**
+     * Test fetching licenses for a user (GET /users/<id>/licenses/<type>)
+     */
+    public function testLicenses(): void
+    {
+        $user = $this->getTestUser('john@kolab.org');
+        $jack = $this->getTestUser('jack@kolab.org');
+        $user->licenses()->delete();
+
+        // Unauth access not allowed
+        $response = $this->get("api/v4/users/{$user->id}/licenses/test");
+        $response->assertStatus(401);
+
+        // Access forbidden
+        $response = $this->actingAs($jack)->get("api/v4/users/{$user->id}/licenses/test");
+        $response->assertStatus(403);
+
+        $license = License::create([
+                'key' => (string) microtime(true),
+                'type' => 'test',
+                'tenant_id' => $user->tenant_id,
+        ]);
+
+        // Unknow type
+        $response = $this->actingAs($user)->get("api/v4/users/{$user->id}/licenses/unknown");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertCount(0, $json['list']);
+        $this->assertSame(0, $json['count']);
+        $this->assertFalse($json['hasMore']);
+
+        // Valid type, existing license - expect license assignment
+        $response = $this->actingAs($user)->get("api/v4/users/{$user->id}/licenses/test");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertCount(1, $json['list']);
+        $this->assertSame(1, $json['count']);
+        $this->assertFalse($json['hasMore']);
+        $this->assertSame($license->key, $json['list'][0]['key']);
+        $this->assertSame($license->type, $json['list'][0]['type']);
+
+        $license->refresh();
+        $this->assertEquals($user->id, $license->user_id);
+
+        // Try again with assigned license
+        $response = $this->actingAs($user)->get("api/v4/users/{$user->id}/licenses/test");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertCount(1, $json['list']);
+        $this->assertSame(1, $json['count']);
+        $this->assertFalse($json['hasMore']);
+        $this->assertSame($license->key, $json['list'][0]['key']);
+        $this->assertSame($license->type, $json['list'][0]['type']);
+        $this->assertEquals($user->id, $license->user_id);
     }
 
     /**

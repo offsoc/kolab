@@ -423,6 +423,16 @@ class User extends Authenticatable
     }
 
     /**
+     * Licenses whis user has.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function licenses()
+    {
+        return $this->hasMany(License::class);
+    }
+
+    /**
      * A shortcut to get the user name.
      *
      * @param bool $fallback Return "<aa.name> User" if there's no name
