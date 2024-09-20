@@ -107,26 +107,11 @@ class UserObserver
         // Remove owned users/domains/groups/resources/etc
         self::removeRelatedObjects($user, $user->isForceDeleting());
 
-        // TODO: Especially in tests we're doing delete() on a already deleted user.
-        //       Should we escape here - for performance reasons?
-
         if (!$user->isForceDeleting()) {
             \App\Jobs\User\DeleteJob::dispatch($user->id);
 
             if (\App\Tenant::getConfig($user->tenant_id, 'pgp.enable')) {
                 \App\Jobs\PGP\KeyDeleteJob::dispatch($user->id, $user->email);
-            }
-
-            // Debit the reseller's wallet with the user negative balance
-            $balance = 0;
-            foreach ($user->wallets as $wallet) {
-                // Note: here we assume all user wallets are using the same currency.
-                //       It might get changed in the future
-                $balance += $wallet->balance;
-            }
-
-            if ($balance < 0 && $user->tenant && ($wallet = $user->tenant->wallet())) {
-                $wallet->debit($balance * -1, "Deleted user {$user->email}");
             }
         }
     }
