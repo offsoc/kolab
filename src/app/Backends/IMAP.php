@@ -140,7 +140,36 @@ class IMAP
     }
 
     /**
-     * Delete a mailbox.
+     * Delete a mailbox
+     *
+     * @param string $mailbox Folder name
+     */
+    protected static function deleteMailbox($mailbox): bool
+    {
+        $config = self::getConfig();
+        $imap = self::initIMAP($config);
+
+        // To delete the mailbox cyrus-admin needs extra permissions
+        $result = $imap->setACL($mailbox, $config['user'], 'c');
+
+        // Ignore the error if the folder doesn't exist (maybe it was removed already).
+        if ($result === false && $imap->errornum == $imap::ERROR_NO
+            && strpos($imap->error, 'Mailbox does not exist') !== false
+        ) {
+            \Log::info("The mailbox to delete was already removed: $mailbox");
+            $result = true;
+        } else {
+            // Delete the mailbox (no need to delete subfolders?)
+            $result = $imap->deleteFolder($mailbox);
+        }
+
+        $imap->closeConnection();
+
+        return $result;
+    }
+
+    /**
+     * Delete a user mailbox.
      *
      * @param \App\User $user User
      *
@@ -149,32 +178,9 @@ class IMAP
      */
     public static function deleteUser(User $user): bool
     {
-        $config = self::getConfig();
-        $imap = self::initIMAP($config);
-
         $mailbox = self::toUTF7('user/' . $user->email);
 
-        // To delete the mailbox cyrus-admin needs extra permissions
-        $imap->setACL($mailbox, $config['user'], 'c');
-
-        // Delete the mailbox (no need to delete subfolders?)
-        $result = $imap->deleteFolder($mailbox);
-
-        if (!$result) {
-            // Ignore the error if the folder doesn't exist (maybe it was removed already).
-            if (!self::folderExists($imap, $mailbox)) {
-                \Log::info("The mailbox to delete was already removed: $mailbox");
-                $result = true;
-            }
-        }
-
-        $imap->closeConnection();
-
-        // Cleanup ACL
-        // Commented out in favor of a nightly cleanup job, for performance reasons
-        // \App\Jobs\IMAP\AclCleanupJob::dispatch($user->email);
-
-        return $result;
+        return self::deleteMailbox($mailbox);
     }
 
     /**
@@ -289,21 +295,10 @@ class IMAP
      */
     public static function deleteResource(Resource $resource): bool
     {
-        $config = self::getConfig();
-        $imap = self::initIMAP($config);
-
         $settings = $resource->getSettings(['folder']);
         $mailbox = self::toUTF7($settings['folder']);
 
-        // To delete the mailbox cyrus-admin needs extra permissions
-        $imap->setACL($mailbox, $config['user'], 'c');
-
-        // Delete the mailbox (no need to delete subfolders?)
-        $result = $imap->deleteFolder($mailbox);
-
-        $imap->closeConnection();
-
-        return $result;
+        return self::deleteMailbox($mailbox);
     }
 
     /**
@@ -381,21 +376,10 @@ class IMAP
      */
     public static function deleteSharedFolder(SharedFolder $folder): bool
     {
-        $config = self::getConfig();
-        $imap = self::initIMAP($config);
-
         $settings = $folder->getSettings(['folder']);
         $mailbox = self::toUTF7($settings['folder']);
 
-        // To delete the mailbox cyrus-admin needs extra permissions
-        $imap->setACL($mailbox, $config['user'], 'c');
-
-        // Delete the mailbox
-        $result = $imap->deleteFolder($mailbox);
-
-        $imap->closeConnection();
-
-        return $result;
+        return self::deleteMailbox($mailbox);
     }
 
     /**
