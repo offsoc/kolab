@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Auth\PassportClient;
 use App\Http\Controllers\Controller;
 use App\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
 use Laravel\Passport\TokenRepository;
 use Laravel\Passport\RefreshTokenRepository;
@@ -22,7 +23,7 @@ class AuthController extends Controller
      */
     public function info()
     {
-        $user = Auth::guard()->user();
+        $user = $this->guard()->user();
 
         if (!empty(request()->input('refresh'))) {
             return $this->refreshAndRespond(request(), $user);
@@ -107,11 +108,15 @@ class AuthController extends Controller
      */
     public function oauthApprove(ServerRequestInterface $psrRequest, Request $request, AuthorizationServer $server)
     {
-        if ($request->response_type != 'code') {
-            return self::errorResponse(422, self::trans('validation.invalidvalueof', ['attribute' => 'response_type']));
-        }
+        $clientId = $request->input('client_id');
+        $user = $this->guard()->user();
+        $cacheKey = "oauth-seen-{$user->id}-{$clientId}";
 
         try {
+            if ($request->response_type != 'code') {
+                throw new \Exception('Invalid response_type');
+            }
+
             // OpenID handler reads parameters from the request query string (GET)
             $request->query->replace($request->input());
 
@@ -120,7 +125,14 @@ class AuthController extends Controller
 
             $authRequest = $server->validateAuthorizationRequest($psrRequest);
 
-            $user = Auth::guard()->user();
+            // Check if the client was approved before (in last x days)
+            if ($clientId && $request->ifSeen) {
+                $client = PassportClient::find($clientId);
+
+                if ($client && !Cache::has($cacheKey)) {
+                    throw new \Exception('Not seen yet');
+                }
+            }
 
             // TODO I'm not sure if we should still execute this to deny the request
             $authRequest->setUser(new \Laravel\Passport\Bridge\User($user->getAuthIdentifier()));
@@ -128,12 +140,45 @@ class AuthController extends Controller
 
             // This will generate a 302 redirect to the redirect_uri with the generated authorization code
             $response = $server->completeAuthorizationRequest($authRequest, new Psr7Response());
+
+            // Remember the approval for x days.
+            // In this time we'll not show the UI form and we'll redirect automatically
+            // TODO: If we wanted to give users ability to remove this "approved" state for a client,
+            // we would have to store these records in SQL table. It would become handy especially
+            // if we give users possibility to register external OAuth apps.
+            Cache::put($cacheKey, 1, now()->addDays(14));
         } catch (\League\OAuth2\Server\Exception\OAuthServerException $e) {
             // Note: We don't want 401 or 400 codes here, use 422 which is used in our API
             $code = $e->getHttpStatusCode();
-            return self::errorResponse($code < 500 ? 422 : 500, $e->getMessage());
+            $response = $e->getPayload();
+            $response['redirectUrl'] = !empty($client) ? $client->redirect : $request->input('redirect_uri');
+
+            return self::errorResponse($code < 500 ? 422 : 500, $e->getMessage(), $response);
         } catch (\Exception $e) {
-            return self::errorResponse(422, self::trans('auth.error.invalidrequest'));
+            if (!empty($client)) {
+                $scopes = preg_split('/\s+/', (string) $request->input('scope'));
+
+                $claims = [];
+                foreach (array_intersect($scopes, $client->allowed_scopes) as $claim) {
+                    $claims[$claim] = self::trans("auth.claim.{$claim}");
+                }
+
+                return response()->json([
+                    'status' => 'prompt',
+                    'client' => [
+                        'name' => $client->name,
+                        'url' => $client->redirect,
+                        'claims' => $claims,
+                    ],
+                ]);
+            }
+
+            $response = [
+                'error' => $e->getMessage() == 'Invalid response_type' ? 'unsupported_response_type' : 'server_error',
+                'redirectUrl' => $request->input('redirect_uri'),
+            ];
+
+            return self::errorResponse(422, self::trans('auth.error.invalidrequest'), $response);
         }
 
         return response()->json([
@@ -149,7 +194,7 @@ class AuthController extends Controller
      */
     public function oauthUserInfo()
     {
-        $user = Auth::guard()->user();
+        $user = $this->guard()->user();
 
         $response = [
             // Per OIDC spec. 'sub' must be always returned
@@ -196,8 +241,7 @@ class AuthController extends Controller
      */
     public function logout()
     {
-        $tokenId = Auth::user()->token()->id;
-
+        $tokenId = $this->guard()->user()->token()->id;
         $tokenRepository = app(TokenRepository::class);
         $refreshTokenRepository = app(RefreshTokenRepository::class);
 

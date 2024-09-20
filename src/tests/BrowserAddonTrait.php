@@ -55,7 +55,7 @@ trait BrowserAddonTrait
      */
     protected function driver()
     {
-        static::startChromeDriver();
+        static::startChromeDriver(['--port=9515']);
 
         $options = (new ChromeOptions())->addArguments([
             '--lang=en_US',

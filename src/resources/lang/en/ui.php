@@ -12,6 +12,14 @@ return [
         'faq' => "FAQ",
     ],
 
+    'auth' => [
+        'allow' => "Allow access",
+        'authorize-header' => "The application would like to:",
+        'authorize-title' => "{name} is asking for permission",
+        'authorize-footer' => "On any action you will be redirected to {url}",
+        'deny' => "No, thanks",
+    ],
+
     'btn' => [
         'add' => "Add",
         'accept' => "Accept",

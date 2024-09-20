@@ -2,6 +2,7 @@
 
 namespace Tests\Browser;
 
+use Illuminate\Support\Facades\Cache;
 use Tests\Browser;
 use Tests\Browser\Components\Toast;
 use Tests\Browser\Pages\Home;
@@ -26,11 +27,11 @@ class AuthorizeTest extends TestCaseDusk
                 'name' => 'Test',
                 'secret' => '123',
                 'provider' => 'users',
-                'redirect' => 'https://kolab.org',
+                'redirect' => \App\Utils::serviceUrl('support'),
                 'personal_access_client' => 0,
                 'password_client' => 0,
                 'revoked' => false,
-                'allowed_scopes' => ['email'],
+                'allowed_scopes' => ['email', 'auth.token'],
             ]
         );
     }
@@ -50,31 +51,57 @@ class AuthorizeTest extends TestCaseDusk
      */
     public function testAuthorize(): void
     {
+        $user = $this->getTestUser('john@kolab.org');
+
         $url = '/oauth/authorize?' . http_build_query([
                 'client_id' => $this->client->id,
                 'response_type' => 'code',
-                'scope' => 'email',
+                'scope' => 'email auth.token',
                 'state' => 'state',
+                'redirect_uri' => $this->client->redirect,
         ]);
 
-        $this->browse(function (Browser $browser) use ($url) {
-            $redirect_check = "window.location.host == 'kolab.org'"
-                . " && window.location.search.match(/^\?code=[a-f0-9]+&state=state/)";
+        Cache::forget("oauth-seen-{$user->id}-{$this->client->id}");
 
-            // Unauthenticated user
+        $this->browse(function (Browser $browser) use ($url, $user) {
+            // Visit the page and expect logon form, then log in
             $browser->visit($url)
                 ->on(new Home())
-                ->submitLogon('john@kolab.org', 'simple123')
-                ->waitUntil($redirect_check);
+                ->submitLogon($user->email, 'simple123');
 
-            // Authenticated user
+            // Expect the claims form
+            $browser->waitFor('#auth-form')
+                ->assertSeeIn('#auth-form h1', "Test is asking for permission")
+                ->assertSeeIn('#auth-email', $user->email)
+                ->assertVisible('#auth-header')
+                ->assertElementsCount('#auth-claims li', 2)
+                ->assertSeeIn('#auth-claims li:nth-child(1)', "See your email address")
+                ->assertSeeIn('#auth-claims li:nth-child(2)', "Have read and write access to")
+                ->assertSeeIn('#auth-footer', $this->client->redirect)
+                ->assertSeeIn('#auth-form button.btn-success', 'Allow access')
+                ->assertSeeIn('#auth-form button.btn-danger', 'No, thanks');
+
+            // Click the "No, thanks" button
+            $browser->click('#auth-form button.btn-danger')
+                ->waitForLocation('/support')
+                ->assertScript("location.search.match(/^\?error=access_denied&state=state/) !== null");
+
+            // Visit the page again and click the "Allow access" button
             $browser->visit($url)
-                ->waitUntil($redirect_check);
+                ->waitFor('#auth-form button.btn-success')
+                ->click('#auth-form button.btn-success')
+                ->waitForLocation('/support')
+                ->assertScript("location.search.match(/^\?code=[a-f0-9]+&state=state/) !== null");
+
+            // Visit the page and expect an immediate redirect
+            $browser->visit($url)
+                ->waitForLocation('/support')
+                ->assertScript("location.search.match(/^\?code=[a-f0-9]+&state=state/) !== null");
 
             // Error handling (invalid response_type)
-            $browser->visit('oauth/authorize?response_type=invalid')
-                ->assertErrorPage(422)
-                ->assertToast(Toast::TYPE_ERROR, 'Invalid value of request property: response_type.');
+            $browser->visit(str_replace('response_type=code', 'response_type=invalid', $url))
+                ->waitForLocation('/support')
+                ->assertScript("location.search.match(/^\?error=unsupported_response_type&state=state/) !== null");
         });
     }
 }

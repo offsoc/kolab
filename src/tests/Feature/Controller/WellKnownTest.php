@@ -13,6 +13,10 @@ class WellKnownTest extends TestCase
     {
         $href = \App\Utils::serviceUrl('/');
 
+        // HTTP_HOST is not set in tests for some reason, but it's required down the line
+        $host = parse_url($href, \PHP_URL_HOST);
+        $_SERVER['HTTP_HOST'] = $host;
+
         $response = $this->get('.well-known/openid-configuration');
         $response->assertStatus(200)
             ->assertJson([

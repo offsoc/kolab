@@ -334,7 +334,8 @@ class AuthTest extends TestCase
         $json = $response->json();
 
         $this->assertSame('error', $json['status']);
-        $this->assertSame('Invalid value of request property: response_type.', $json['message']);
+        $this->assertSame('unsupported_response_type', $json['error']);
+        $this->assertSame('Invalid authorization request.', $json['message']);
 
         // Request authenticated, invalid POST data
         $post = [
@@ -350,6 +351,7 @@ class AuthTest extends TestCase
         $json = $response->json();
 
         $this->assertSame('error', $json['status']);
+        $this->assertSame('invalid_client', $json['error']);
         $this->assertSame('Client authentication failed', $json['message']);
 
         $client = \App\Auth\PassportClient::find(\config('auth.synapse.client_id'));
@@ -364,6 +366,7 @@ class AuthTest extends TestCase
         $json = $response->json();
 
         $this->assertSame('error', $json['status']);
+        $this->assertSame('invalid_scope', $json['error']);
         $this->assertSame('The requested scope is invalid, unknown, or malformed', $json['message']);
 
         // Request authenticated, valid POST data
@@ -466,10 +469,71 @@ class AuthTest extends TestCase
     }
 
     /**
+     * Test Oauth approve end-point in ifSeen mode
+     */
+    public function testOAuthApprovePrompt(): void
+    {
+        // HTTP_HOST is not set in tests for some reason, but it's required down the line
+        $host = parse_url(\App\Utils::serviceUrl('/'), \PHP_URL_HOST);
+        $_SERVER['HTTP_HOST'] = $host;
+
+        $user = $this->getTestUser('UsersControllerTest1@userscontroller.com');
+        $client = \App\Auth\PassportClient::find(\config('auth.sso.client_id'));
+
+        $post = [
+            'client_id' => $client->id,
+            'response_type' => 'code',
+            'scope' => 'openid email auth.token',
+            'state' => 'state',
+            'nonce' => 'nonce',
+            'ifSeen' => '1',
+        ];
+
+        $response = $this->actingAs($user)->post("api/oauth/approve", $post);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $claims = [
+            'email' => 'See your email address',
+            'auth.token' => 'Have read and write access to all your data',
+        ];
+
+        $this->assertSame('prompt', $json['status']);
+        $this->assertSame($client->name, $json['client']['name']);
+        $this->assertSame($client->redirect, $json['client']['url']);
+        $this->assertSame($claims, $json['client']['claims']);
+
+        // Approve the request
+        $post['ifSeen'] = 0;
+        $response = $this->actingAs($user)->post("api/oauth/approve", $post);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame('success', $json['status']);
+        $this->assertTrue(!empty($json['redirectUrl']));
+
+        // Second request with ifSeen=1 should succeed with the code
+        $post['ifSeen'] = 1;
+        $response = $this->actingAs($user)->post("api/oauth/approve", $post);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame('success', $json['status']);
+        $this->assertTrue(!empty($json['redirectUrl']));
+    }
+
+    /**
      * Test OpenID-Connect Authorization Code Flow
      */
     public function testOIDCAuthorizationCodeFlow(): void
     {
+        // HTTP_HOST is not set in tests for some reason, but it's required down the line
+        $host = parse_url(\App\Utils::serviceUrl('/'), \PHP_URL_HOST);
+        $_SERVER['HTTP_HOST'] = $host;
+
         $user = $this->getTestUser('john@kolab.org');
         $client = \App\Auth\PassportClient::find(\config('auth.sso.client_id'));
 

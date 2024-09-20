@@ -18,11 +18,14 @@ return [
     'throttle' => 'Too many login attempts. Please try again in :seconds seconds.',
     'logoutsuccess' => 'Successfully logged out.',
 
+    'claim.unknown' => "Unknown claim",
+    'claim.email' => "See your email address",
+    'claim.auth.token' => "Have read and write access to all your data",
+
     'error.password' => "Invalid password",
     'error.invalidrequest' => "Invalid authorization request.",
     'error.geolocation' => "Country code mismatch",
     'error.notfound' => "User not found",
     'error.2fa' => "Second factor failure",
     'error.2fa-generic' => "Second factor failure",
-
 ];
