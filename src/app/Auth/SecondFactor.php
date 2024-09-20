@@ -3,12 +3,13 @@
 namespace App\Auth;
 
 use Illuminate\Support\Facades\Auth;
-use Kolab2FA\Storage\Base;
+use Kolab2FA\Driver\Base as DriverBase;
+use Kolab2FA\Storage\Base as StorageBase;
 
 /**
  * A class to maintain 2-factor authentication
  */
-class SecondFactor extends Base
+class SecondFactor extends StorageBase
 {
     protected $user;
     protected $cache = [];
@@ -25,6 +26,7 @@ class SecondFactor extends Base
     public function __construct($user)
     {
         $this->user = $user;
+        $this->username = $this->user->email;
 
         parent::__construct();
     }
@@ -130,7 +132,7 @@ class SecondFactor extends Base
      *
      * @param string $factor Factor identifier (<method>:<id>)
      *
-     * @return \Kolab2FA\Driver\Base
+     * @return DriverBase
      */
     protected function getDriver(string $factor)
     {
@@ -138,13 +140,7 @@ class SecondFactor extends Base
 
         $config = \config('2fa.' . $method, []);
 
-        $driver = \Kolab2FA\Driver\Base::factory($factor, $config);
-
-        // configure driver
-        $driver->storage  = $this;
-        $driver->username = $this->user->email;
-
-        return $driver;
+        return DriverBase::factory($this, $factor, $config);
     }
 
     /**
@@ -161,6 +157,7 @@ class SecondFactor extends Base
                     'label' => 'Mobile app (TOTP)',
                     'created' => 1584573552,
                     'secret' => 'UAF477LDHZNWVLNA',
+                    'digest' => 'sha1',
                     'active' => true,
                 ],
                 // 'dummy:dummy' => [
@@ -189,6 +186,8 @@ class SecondFactor extends Base
     public static function code(string $email): string
     {
         $sf = new self(\App\User::where('email', $email)->first());
+
+        /** @var \Kolab2FA\Driver\TOTP $driver */
         $driver = $sf->getDriver('totp:8132a46b1f741f88de25f47e');
 
         return (string) $driver->get_code();
@@ -304,6 +303,7 @@ class SecondFactor extends Base
         }
 
         $prefs = array_merge($old_prefs, $prefs);
+        $prefs = array_filter($prefs, fn($v) => !is_null($v));
 
         $this->dbh()->table('users')
             ->where('username', strtolower($this->user->email))

@@ -27,12 +27,13 @@ class TOTP extends Base
 {
     public $method = 'totp';
 
-    protected $config = array(
+    protected $config = [
         'digits'   => 6,
         'interval' => 30,
         'digest'   => 'sha1',
-    );
+    ];
 
+    protected $config_keys = ['digits', 'digest'];
     protected $backend;
 
     /**
@@ -42,21 +43,37 @@ class TOTP extends Base
     {
         parent::init($config);
 
-        $this->user_settings += array(
-            'secret' => array(
+        $this->user_settings += [
+            'secret' => [
                 'type'      => 'text',
                 'private'   => true,
                 'label'     => 'secret',
                 'generator' => 'generate_secret',
-            ),
-        );
+            ],
+        ];
+
+        if (!in_array($this->config['digest'], ['md5', 'sha1', 'sha256', 'sha512'])) {
+            throw new \Exception("'{$this->config['digest']}' digest is not supported.");
+        }
+
+        if (!is_numeric($this->config['digits']) || $this->config['digits'] < 1) {
+            throw new \Exception('Digits must be at least 1.');
+        }
+
+        if (!is_numeric($this->config['interval']) || $this->config['interval'] < 1) {
+            throw new \Exception('Interval must be at least 1.');
+        }
+
+        if ($this->hasSemicolon($this->config['issuer'])) {
+            throw new \Exception('Issuer must not contain a semi-colon.');
+        }
 
         // copy config options
         $this->backend = \OTPHP\TOTP::create(
-            null,
-            $this->config['interval'],
-            $this->config['digest'],
-            $this->config['digits']
+            null, //secret
+            $this->config['interval'], // period
+            $this->config['digest'], // digest
+            $this->config['digits'] // digits
         );
 
         $this->backend->setIssuer($this->config['issuer']);
@@ -72,16 +89,15 @@ class TOTP extends Base
         $secret = $this->get('secret');
 
         if (!strlen($secret)) {
-            // LOG: "no secret set for user $this->username"
-            // rcube::console("VERIFY TOTP: no secret set for user $this->username");
             return false;
         }
 
-        $this->backend->setLabel($this->username);
-        $this->backend->setParameter('secret', $secret);
+        $this->backend->setLabel($this->get('username'));
+        $this->backend->setSecret($secret);
 
-        // Pass a window to indicate the maximum timeslip between client (device) and server.
-        $pass = $this->backend->verify((string) $code, $timestamp, 150);
+        // Pass a window to indicate the maximum timeslip between client (mobile
+        // device) and server.
+        $pass = $this->backend->verify($code, (int) $timestamp, 150);
 
         // try all codes from $timestamp till now
         if (!$pass && $timestamp) {
@@ -92,8 +108,27 @@ class TOTP extends Base
             }
         }
 
-        // rcube::console('VERIFY TOTP', $this->username, $secret, $code, $timestamp, $pass);
         return $pass;
+    }
+
+    /**
+     * Get the provisioning URI.
+     */
+    public function get_provisioning_uri()
+    {
+        if (!$this->get('secret')) {
+            // generate new secret and store it
+            $this->set('secret', $this->get('secret', true));
+            $this->set('created', $this->get('created', true));
+            $this->commit();
+        }
+
+        // TODO: deny call if already active?
+
+        $this->backend->setLabel($this->get('username'));
+        $this->backend->setSecret($this->get('secret'));
+
+        return $this->backend->getProvisioningUri();
     }
 
     /**
@@ -108,31 +143,9 @@ class TOTP extends Base
             return;
         }
 
-        $this->backend->setLabel($this->username);
+        $this->backend->setLabel($this->get('username'));
         $this->backend->setParameter('secret', $secret);
 
         return $this->backend->at(time());
-    }
-
-    /**
-     *
-     */
-    public function get_provisioning_uri()
-    {
-        // rcube::console('PROV', $this->secret);
-        if (!$this->secret) {
-            // generate new secret and store it
-            $this->set('secret', $this->get('secret', true));
-            $this->set('created', $this->get('created', true));
-            // rcube::console('PROV2', $this->secret);
-            $this->commit();
-        }
-
-        // TODO: deny call if already active?
-
-        $this->backend->setLabel($this->username);
-        $this->backend->setParameter('secret', $secret);
-
-        return $this->backend->getProvisioningUri();
     }
 }

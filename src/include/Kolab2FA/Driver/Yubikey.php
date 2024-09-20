@@ -36,13 +36,13 @@ class Yubikey extends Base
     {
         parent::init($config);
 
-        $this->user_settings += array(
-            'yubikeyid' => array(
+        $this->user_settings += [
+            'yubikeyid' => [
                 'type'     => 'text',
                 'editable' => true,
                 'label'    => 'secret',
-            ),
-        );
+            ],
+        ];
 
         // initialize validator
         $this->backend = new \Yubikey\Validate($this->config['apikey'], $this->config['clientid']);
@@ -67,7 +67,6 @@ class Yubikey extends Base
         $pass  = false;
 
         if (!strlen($keyid)) {
-            // LOG: "no key registered for user $this->username"
             return false;
         }
 
@@ -76,20 +75,18 @@ class Yubikey extends Base
             try {
                 $response = $this->backend->check($code);
                 $pass     = $response->success() === true;
-            }
-            catch (\Exception $e) {
+            } catch (\Exception $e) {
                 // TODO: log exception
             }
         }
 
-        // rcube::console('VERIFY Yubikey', $this->username, $keyid, $code, $pass);
         return $pass;
     }
 
     /**
      * @override
      */
-    public function set($key, $value)
+    public function set($key, $value, $persistent = true)
     {
         if ($key == 'yubikeyid' && strlen($value) > 12) {
             // verify the submitted code
@@ -99,16 +96,19 @@ class Yubikey extends Base
                     // TODO: report error
                     return false;
                 }
-            }
-            catch (\Exception $e) {
+            } catch (\Exception $e) {
                 return false;
             }
 
             // truncate the submitted yubikey code to 12 characters
             $value = substr($value, 0, 12);
         }
+        // invalid or no yubikey token provided
+        elseif ($key == 'yubikeyid') {
+            return false;
+        }
 
-        return parent::set($key, $value);
+        return parent::set($key, $value, $persistent);
     }
 
     /**
