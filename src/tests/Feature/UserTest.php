@@ -618,9 +618,14 @@ class UserTest extends TestCase
 
         $result = $user->setConfig(['limit_geo' => ['US', 'ru']]);
 
+        $err = 'Specified configuration is invalid. Missing country of the current connection (CH).';
+        $this->assertSame(['limit_geo' => $err], $result);
+
+        $result = $user->setConfig(['limit_geo' => ['US', 'ch']]);
+
         $this->assertSame([], $result);
-        $this->assertSame(['US', 'RU'], $user->getConfig()['limit_geo']);
-        $this->assertSame('["US","RU"]', $user->getSetting('limit_geo'));
+        $this->assertSame(['US', 'CH'], $user->getConfig()['limit_geo']);
+        $this->assertSame('["US","CH"]', $user->getSetting('limit_geo'));
     }
 
     /**

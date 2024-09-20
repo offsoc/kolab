@@ -169,6 +169,7 @@ return [
     'nameinvalid' => 'The specified name is invalid.',
     'password-policy-error' => 'Specified password does not comply with the policy.',
     'invalid-limit-geo' => 'Specified configuration is invalid. Expected a list of two-letter country codes.',
+    'invalid-limit-geo-missing-current' => 'Specified configuration is invalid. Missing country of the current connection (:code).',
     'invalid-password-policy' => 'Specified password policy is invalid.',
     'password-policy-min-len-error' => 'Minimum password length cannot be less than :min.',
     'password-policy-max-len-error' => 'Maximum password length cannot be more than :max.',

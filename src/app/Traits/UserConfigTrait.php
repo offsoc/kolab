@@ -47,22 +47,9 @@ trait UserConfigTrait
             } elseif ($key == 'guam_enabled') {
                 $this->setSetting($key, $value ? 'true' : null);
             } elseif ($key == 'limit_geo') {
-                if (!is_array($value)) {
-                    $errors[$key] = \trans('validation.invalid-limit-geo');
+                if ($error = $this->validateLimitGeo($value)) {
+                    $errors[$key] = $error;
                     continue;
-                }
-
-                foreach ($value as $idx => $country) {
-                    if (!preg_match('/^[a-zA-Z]{2}$/', $country)) {
-                        $errors[$key] = \trans('validation.invalid-limit-geo');
-                        continue 2;
-                    }
-
-                    $value[$idx] = \strtoupper($country);
-                }
-
-                if (count($value) > 250) {
-                    $errors[$key] = \trans('validation.invalid-limit-geo');
                 }
 
                 $this->setSetting($key, !empty($value) ? json_encode($value) : null);
@@ -135,6 +122,41 @@ trait UserConfigTrait
             $value = trim(substr($rule, 5));
             if ($value < $systemPolicy['last']) {
                 return \trans('validation.password-policy-last-error', ['last' => $systemPolicy['last']]);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Validates limit_geo value
+     *
+     * @param mixed $value Geo-lock input
+     *
+     * @return ?string An error message on error, Null otherwise
+     */
+    protected function validateLimitGeo(&$value): ?string
+    {
+        if (!is_array($value)) {
+            return \trans('validation.invalid-limit-geo');
+        }
+
+        foreach ($value as $idx => $country) {
+            if (!preg_match('/^[a-zA-Z]{2}$/', $country)) {
+                return \trans('validation.invalid-limit-geo');
+            }
+
+            $value[$idx] = \strtoupper($country);
+        }
+
+        if (count($value) > 250) {
+            return \trans('validation.invalid-limit-geo');
+        } elseif (count($value)) {
+            // There MUST be country of the current connection included
+            $currentCountry = \App\Utils::countryForRequest();
+
+            if (!in_array($currentCountry, $value)) {
+                return \trans('validation.invalid-limit-geo-missing-current', ['code' => $currentCountry]);
             }
         }
 

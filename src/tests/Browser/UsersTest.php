@@ -444,14 +444,14 @@ class UsersTest extends TestCaseDusk
                         ->assertSeeIn('div.row:nth-child(3) label', 'Geo-lockin')
                         ->with(new CountrySelect('#limit_geo'), function ($browser) {
                             $browser->assertCountries([])
-                                ->setCountries(['DE', 'PL'])
-                                ->assertCountries(['DE', 'PL']);
+                                ->setCountries(['CH', 'PL'])
+                                ->assertCountries(['CH', 'PL']);
                         })
                         ->click('div.row:nth-child(2) input')
                         ->click('button[type=submit]')
                         ->assertToast(Toast::TYPE_SUCCESS, 'User settings updated successfully.');
 
-                    $this->assertSame('["DE","PL"]', $john->getSetting('limit_geo'));
+                    $this->assertSame('["CH","PL"]', $john->getSetting('limit_geo'));
                     $this->assertSame('true', $john->getSetting('guam_enabled'));
 
                     $browser
