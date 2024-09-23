@@ -477,13 +477,13 @@ kolab__logs() {
 
 # Mysql shell
 kolab__db() {
-    POD=dev
-    $PODMAN exec -ti $POD-mariadb /bin/bash -c "mysql -h 127.0.0.1 -u kolabdev --password=simple123 kolabdev"
+    POD=${POD:-dev}
+    $PODMAN exec -ti $POD-mariadb /bin/bash -c "mysql -h 127.0.0.1 -u kolabdev --password=simple123 --auto-rehash kolabdev"
 }
 
 kolab__rcdb() {
-    POD=dev
-    $PODMAN exec -ti $POD-mariadb /bin/bash -c "mysql -h 127.0.0.1 -u roundcube --password=simple123 roundcube"
+    POD=${POD:-dev}
+    $PODMAN exec -ti $POD-mariadb /bin/bash -c "mysql -h 127.0.0.1 -u roundcube --password=simple123 --auto-rehash roundcube"
 }
 
 kolab__help() {
