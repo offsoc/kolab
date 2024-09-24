@@ -5,7 +5,7 @@ set -e
 sed -i -r \
     -e "s|IMAP_ADMIN_LOGIN|$IMAP_ADMIN_LOGIN|g" \
     -e "s|IMAP_ADMIN_PASSWORD|$IMAP_ADMIN_PASSWORD|g" \
-    -e "s|MUPDATE|$MUPDATE|g" \
+    -e "s|MUPDATE_SERVER|$MUPDATE|g" \
     -e "s|SERVERLIST|$SERVERLIST|g" \
     -e "s|SERVERNAME|$SERVERNAME|g" \
     -e "s|MAXLOGINS_PER_USER|$MAXLOGINS_PER_USER|g" \
