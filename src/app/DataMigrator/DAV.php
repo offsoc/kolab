@@ -342,19 +342,22 @@ class DAV implements ExporterInterface, ImporterInterface
             return $this->folderPaths[$cache_key];
         }
 
-        $folders = $this->client->listFolders($this->type2DAV($folder->type));
+        for ($i = 0; $i < 5; $i++) {
+            $folders = $this->client->listFolders($this->type2DAV($folder->type));
 
-        if ($folders === false) {
-            throw new \Exception("Failed to list folders on the DAV server");
-        }
-
-        // Note: iRony flattens the list by modifying the folder name
-        // This is not going to work with Cyrus DAV, but anyway folder
-        // hierarchies support is not full in Kolab 4.
-        foreach ($folders as $dav_folder) {
-            if (str_replace(' » ', '/', $dav_folder->name) === $folder->fullname) {
-                return $this->folderPaths[$cache_key] = rtrim($dav_folder->href, '/');
+            if ($folders === false) {
+                throw new \Exception("Failed to list folders on the DAV server");
             }
+
+            // Note: iRony flattens the list by modifying the folder name
+            // This is not going to work with Cyrus DAV, but anyway folder
+            // hierarchies support is not full in Kolab 4.
+            foreach ($folders as $dav_folder) {
+                if (str_replace(' » ', '/', $dav_folder->name) === $folder->fullname) {
+                    return $this->folderPaths[$cache_key] = rtrim($dav_folder->href, '/');
+                }
+            }
+            sleep(1);
         }
 
         throw new \Exception("Folder not found: {$folder->fullname}");
