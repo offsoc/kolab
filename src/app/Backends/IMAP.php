@@ -421,6 +421,55 @@ class IMAP
     }
 
     /**
+     * Rename a folder.
+     *
+     * @param string $sourceMailbox Source Mailbox
+     * @param string $targetMailbox Target Mailbox
+     *
+     * @return bool True if the mailbox was renamed successfully, False otherwise
+     * @throws \Exception
+     */
+    public static function renameMailbox($sourceMailbox, $targetMailbox): bool
+    {
+        $config = self::getConfig();
+        $imap = self::initIMAP($config);
+
+        $sourceMailbox = self::toUTF7($sourceMailbox);
+        $targetMailbox = self::toUTF7($targetMailbox);
+
+        // Rename the mailbox (only possible if we have the old folder)
+        if (!empty($targetMailbox) && $targetMailbox != $sourceMailbox) {
+            if (!$imap->renameFolder($sourceMailbox, $targetMailbox)) {
+                \Log::error("Failed to rename mailbox {$sourceMailbox} to {$targetMailbox}");
+                $imap->closeConnection();
+                return false;
+            }
+        }
+
+        $imap->closeConnection();
+
+        return true;
+    }
+
+    public static function userMailbox(string $user, string $mailbox): string
+    {
+        [$localpart, $domain] = explode('@', $user, 2);
+        return "user/{$localpart}/{$mailbox}@{$domain}";
+    }
+
+    public static function listMailboxes(string $user): array
+    {
+        $config = self::getConfig();
+        $imap = self::initIMAP($config);
+
+        $result = $imap->listMailboxes('', self::userMailbox($user, "*"));
+
+        $imap->closeConnection();
+
+        return $result;
+    }
+
+    /**
      * Convert UTF8 string to UTF7-IMAP encoding
      */
     public static function toUTF7(string $string): string
