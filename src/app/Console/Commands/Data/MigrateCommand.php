@@ -30,7 +30,8 @@ class MigrateCommand extends Command
                                 {dst : Destination account}
                                 {--type= : Object type(s)}
                                 {--sync : Execute migration synchronously}
-                                {--force : Force existing queue removal}';
+                                {--force : Force existing queue removal}
+                                {--folder-mapping=* : Folder mapping in the form "source:target"}';
 //                                {--export-only : Only export data}
 //                                {--import-only : Only import previously exported data}';
 
@@ -50,10 +51,18 @@ class MigrateCommand extends Command
     {
         $src = new DataMigrator\Account($this->argument('src'));
         $dst = new DataMigrator\Account($this->argument('dst'));
+
+        $folderMapping = [];
+        foreach ($this->option('folder-mapping') as $mapping) {
+            $arr = explode(":", $mapping);
+            $folderMapping[$arr[0]] = $arr[1];
+        }
+
         $options = [
             'type' => $this->option('type'),
             'force' => $this->option('force'),
             'sync' => $this->option('sync'),
+            'folderMapping' => $folderMapping,
             'stdout' => true,
         ];
 

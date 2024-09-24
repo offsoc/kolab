@@ -72,18 +72,18 @@ class IMAP implements ExporterInterface, ImporterInterface
             throw new \Exception("IMAP does not support folder of type {$folder->type}");
         }
 
-        if ($folder->fullname == 'INBOX') {
+        if ($folder->targetname == 'INBOX') {
             // INBOX always exists
             return;
         }
 
-        if (!$this->imap->createFolder($folder->fullname)) {
+        if (!$this->imap->createFolder($folder->targetname)) {
             \Log::warning("Failed to create the folder: {$this->imap->error}");
 
             if (str_contains($this->imap->error, "Mailbox already exists")) {
                 // Not an error
             } else {
-                throw new \Exception("Failed to create an IMAP folder {$folder->fullname}");
+                throw new \Exception("Failed to create an IMAP folder {$folder->targetname}");
             }
         }
 
@@ -99,7 +99,7 @@ class IMAP implements ExporterInterface, ImporterInterface
      */
     public function createItem(Item $item): void
     {
-        $mailbox = $item->folder->fullname;
+        $mailbox = $item->folder->targetname;
 
         if (strlen($item->content)) {
             $result = $this->imap->append(

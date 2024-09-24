@@ -105,12 +105,19 @@ class Engine
         $folders = $this->exporter->getFolders($types);
         $count = 0;
         $async = empty($options['sync']);
+        $folderMapping = $this->options['folderMapping'];
 
         foreach ($folders as $folder) {
             $this->debug("Processing folder {$folder->fullname}...");
 
             $folder->queueId = $queue_id;
             $folder->location = $location;
+
+            if (array_key_exists($folder->fullname, $folderMapping)) {
+                $folder->targetname = $folderMapping[$folder->fullname];
+            } else {
+                $folder->targetname = $folder->fullname;
+            }
 
             if ($async) {
                 // Dispatch the job (for async execution)

@@ -27,6 +27,9 @@ class Folder
     /** @var string Folder name with path */
     public $fullname;
 
+    /** @var string Target folder name with path */
+    public $targetname;
+
     /** @var string Storage location (for temporary data) */
     public $location;
 
