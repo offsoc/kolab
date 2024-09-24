@@ -69,6 +69,7 @@ class EWS implements Interface\ExporterInterface
         'Kalendarz/Polska — dni wolne od pracy', // pl
         'Ulubione', // pl
         'Moje kontakty', // pl
+        'Aufgabensuche', // de
     ];
 
     /** @var array Map of EWS folder types to Kolab types */
