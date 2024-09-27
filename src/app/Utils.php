@@ -91,9 +91,10 @@ class Utils
      */
     public static function defaultView()
     {
-        // Return 404 for requests to the API end-points that do not exist
-        if (strpos(request()->path(), 'api/') === 0) {
-            return \App\Http\Controllers\Controller::errorResponse(404);
+        // Return standard empty 404 response for non-existing resources and API routes
+        // TODO: Is there a better way? we'd need access to the vue-router routes here.
+        if (preg_match('~^(api|themes|js|vendor)/~', request()->path())) {
+            return response('', 404);
         }
 
         $env = self::uiEnv();

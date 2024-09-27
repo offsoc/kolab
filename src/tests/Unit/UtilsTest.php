@@ -49,6 +49,22 @@ class UtilsTest extends TestCase
     }
 
     /**
+     * Test for Utils::defaultView()
+     */
+    public function testDefaultView(): void
+    {
+        // Non existing resources or api routes
+        $this->get('js/test.js')->assertNotFound()->assertContent('');
+        $this->get('vendor/test.js')->assertNotFound()->assertContent('');
+        $this->get('themes/unknown/app.css')->assertNotFound()->assertContent('');
+        $this->get('api/unknown')->assertNotFound()->assertContent('');
+
+        // Expect a view
+        $this->get('dashboard')->assertOk()->assertViewIs('root')->assertViewHas('env');
+        $this->get('unknown')->assertOk()->assertViewIs('root')->assertViewHas('env');
+    }
+
+    /**
      * Test for Utils::emailToLower()
      */
     public function testEmailToLower(): void
