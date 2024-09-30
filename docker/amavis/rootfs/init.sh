@@ -40,9 +40,9 @@ amavisd -c $CONFIG showkeys
 if $CLAMD; then
     echo "Updating clamav db"
     # If we run this too frequently we'll be rate-limited via HTTP 429
-    /usr/bin/freshclam --datadir=/var/lib/clamav
+    /usr/bin/freshclam --datadir=/var/lib/clamav || :
     # Update once per day via daemon
-    /usr/bin/freshclam -d -c 1
+    /usr/bin/freshclam -d -c 1 || :
 fi
 
 # Update the spam db every 30h
