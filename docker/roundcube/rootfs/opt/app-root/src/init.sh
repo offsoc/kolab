@@ -96,6 +96,12 @@ if [ "$1" == "syncroton" ]; then
     sed -i -r -e "s/config\['activesync_multifolder_blacklist_contact'\] =.*$/config['activesync_multifolder_blacklist_contact'] = array('windowsoutlook');/g" roundcubemail/config/kolab_syncroton.inc.php
 
     pushd syncroton
+
+    for user in $DEBUG_USERS; do
+        mkdir logs/$user
+        chmod 777 logs/$user
+    done
+
     php -S localhost:8001 &
     pushd tests
 
