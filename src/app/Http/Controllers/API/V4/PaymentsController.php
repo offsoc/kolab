@@ -392,7 +392,7 @@ class PaymentsController extends Controller
         $mandate = (array) $provider->getMandate($wallet);
 
         if (empty($mandate['isValid'])) {
-            \Log::debug("Top-up for wallet {$wallet->id}: mandate invalid");
+            \Log::warning("Top-up for wallet {$wallet->id}: mandate invalid");
             return false;
         }
 
@@ -400,6 +400,7 @@ class PaymentsController extends Controller
         // Disable auto-payment and notify the user
         if ($wallet->balance + $amount < 0) {
             // Disable (not remove) the mandate
+            \Log::warning("Top-up for wallet {$wallet->id}: mandate too little");
             $wallet->setSetting('mandate_disabled', '1');
             \App\Jobs\PaymentMandateDisabledEmail::dispatch($wallet);
             return false;

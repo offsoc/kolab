@@ -62,6 +62,9 @@ class WalletCheck implements ShouldQueue
 
         // Sanity check (owner deleted in meantime)
         if (!$this->wallet || !$this->wallet->owner) {
+            \Log::warning(
+                "[WalletCheck] The wallet has been deleted in the meantime or doesn't have an owner {$this->walletId}."
+            );
             return null;
         }
 
