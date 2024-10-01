@@ -87,7 +87,10 @@ class IMAP implements ExporterInterface, ImporterInterface
             }
         }
 
-        // TODO: Migrate folder subscription state
+        // TODO: Migrate folder subscription state. For now we just subscribe.
+        if (!$this->imap->subscribe(self::toUTF7($folder->targetname))) {
+            \Log::warning("Failed to subscribe to the folder: {$this->imap->error}");
+        }
     }
 
     /**
