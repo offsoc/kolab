@@ -183,6 +183,9 @@ class DAV implements ExporterInterface, ImporterInterface
         $dav_type = $this->type2DAV($folder->type);
         $location = $this->getFolderPath($folder);
         $search = new DAVSearch($dav_type, false);
+        // FIXME this avoids a crash of iRony on empty collections?
+        // It does not request items on subfolders in iRony (I tried), but maybe that's just an iRony defect?
+        $search->depth = "infinity";
 
         // TODO: We request only properties relevant to incremental migration,
         // i.e. to find that something exists and its last update time.
@@ -256,6 +259,9 @@ class DAV implements ExporterInterface, ImporterInterface
         $location = $this->getFolderPath($folder);
 
         $search = new DAVSearch($dav_type);
+        // FIXME this avoids a crash of iRony on empty collections?
+        // It does not request items on subfolders in iRony (I tried), but maybe that's just an iRony defect?
+        $search->depth = "infinity";
 
         // TODO: We request only properties relevant to incremental migration,
         // i.e. to find that something exists and its last update time.

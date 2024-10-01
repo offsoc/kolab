@@ -61,6 +61,8 @@ class EWS implements Interface\ExporterInterface
         'XrmCompanySearch',
         'XrmDealSearch',
         'XrmSearch',
+        'MS-OLK-AllCalendarItems',
+        'MS-OLK-AllContactItems',
         // TODO: These are different depending on a user locale and it's not possible
         // to switch to English other than changing the user locale in OWA/Exchange.
         'Calendar/United States holidays',
