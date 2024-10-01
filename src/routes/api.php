@@ -164,7 +164,6 @@ Route::group(
         Route::post('users/{id}/config', [API\V4\UsersController::class, 'setConfig']);
         Route::get('users/{id}/skus', [API\V4\UsersController::class, 'skus']);
         Route::get('users/{id}/status', [API\V4\UsersController::class, 'status']);
-        Route::get('users/{id}/licenses/{type}', [API\V4\UsersController::class, 'licenses']);
 
 
         Route::apiResource('wallets', API\V4\WalletsController::class);
@@ -198,6 +197,7 @@ Route::group(
             ->middleware(['api']);
 
         Route::get('vpn/token', [API\V4\VPNController::class, 'token']);
+        Route::get('license/{type}', [API\V4\LicenseController::class, 'license']);
     }
 );
 
