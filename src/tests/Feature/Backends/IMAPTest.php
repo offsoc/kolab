@@ -353,11 +353,44 @@ class IMAPTest extends TestCase
     }
 
     /**
+     * Test userMailbox
+     *
+     * @group imap
+     */
+    public function testUserMailbox(): void
+    {
+        $this->assertSame(IMAP::userMailbox("john@kolab.org", "INBOX"), "user/john@kolab.org");
+        $this->assertSame(IMAP::userMailbox("john@kolab.org", "test"), "user/john/test@kolab.org");
+    }
+
+    /**
+     * Test clearMailbox
+     *
+     * @group imap
+     */
+    public function testClearMailbox(): void
+    {
+        $imap = $this->getImap("john@kolab.org");
+        $message = "From: me@example.com\r\n"
+                   . "To: you@example.com\r\n"
+                   . "Subject: test\r\n"
+                   . "\r\n"
+                   . "this is a test message, please ignore\r\n";
+        $result = $imap->append("INBOX", $message);
+        $this->assertNotFalse($result);
+
+        $result = IMAP::clearMailbox(IMAP::userMailbox("john@kolab.org", "INBOX"));
+        $this->assertTrue($result);
+
+        $this->assertSame($imap->countMessages("INBOX"), 0);
+    }
+
+    /**
      * Get configured/initialized rcube_imap_generic instance
      */
-    private function getImap()
+    private function getImap($loginAs = null)
     {
-        if ($this->imap) {
+        if ($this->imap && !$loginAs) {
             return $this->imap;
         }
 
@@ -369,6 +402,9 @@ class IMAPTest extends TestCase
 
         $config = $config->invoke(null);
 
+        if ($loginAs) {
+            return $init->invokeArgs(null, [$config, $loginAs]);
+        }
         return $this->imap = $init->invokeArgs(null, [$config]);
     }
 }

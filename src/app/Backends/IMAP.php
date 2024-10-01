@@ -144,7 +144,7 @@ class IMAP
      *
      * @param string $mailbox Folder name
      */
-    protected static function deleteMailbox($mailbox): bool
+    public static function deleteMailbox($mailbox): bool
     {
         $config = self::getConfig();
         $imap = self::initIMAP($config);
@@ -163,6 +163,26 @@ class IMAP
             // Delete the mailbox (no need to delete subfolders?)
             $result = $imap->deleteFolder($mailbox);
         }
+
+        $imap->closeConnection();
+
+        return $result;
+    }
+
+    /**
+     * Empty a mailbox
+     *
+     * @param string $mailbox Folder name
+     */
+    public static function clearMailbox($mailbox): bool
+    {
+        $config = self::getConfig();
+        $imap = self::initIMAP($config);
+
+        // The cyrus user needs permissions to count and delete messages
+        // TODO: maybe we should use proxy authentication instead?
+        $result = $imap->setACL($mailbox, $config['user'], 'ldr');
+        $result = $imap->clearFolder($mailbox);
 
         $imap->closeConnection();
 
@@ -454,6 +474,9 @@ class IMAP
     public static function userMailbox(string $user, string $mailbox): string
     {
         [$localpart, $domain] = explode('@', $user, 2);
+        if ($mailbox == "INBOX") {
+            return "user/{$localpart}@{$domain}";
+        }
         return "user/{$localpart}/{$mailbox}@{$domain}";
     }
 
