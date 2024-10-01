@@ -52,11 +52,7 @@ class ChargeCommand extends Command
                 })
                 ->whereNull('users.deleted_at')
                 ->whereRaw('wallets.balance < (wallet_settings.value * 100)')
-                ->whereNot(
-                    'users.status',
-                    '&',
-                    \App\User::STATUS_DEGRADED | \App\User::STATUS_SUSPENDED | \App\User::STATUS_DELETED
-                )
+                ->whereNot('users.status', '&', \App\User::STATUS_DEGRADED | \App\User::STATUS_SUSPENDED)
                 ->cursor();
         } else {
             // Get all wallets, excluding deleted accounts
