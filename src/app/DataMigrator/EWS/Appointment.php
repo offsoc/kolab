@@ -34,7 +34,7 @@ class Appointment extends Item
     /**
      * Process event object
      */
-    protected function convertItem(Type $item)
+    protected function convertItem(Type $item, $targetItem)
     {
         // Initialize $this->itemId (for some unit tests)
         $this->getUID($item);

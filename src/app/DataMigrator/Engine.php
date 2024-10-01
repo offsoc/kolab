@@ -105,7 +105,7 @@ class Engine
         $folders = $this->exporter->getFolders($types);
         $count = 0;
         $async = empty($options['sync']);
-        $folderMapping = $this->options['folderMapping'];
+        $folderMapping = $this->options['folderMapping'] ?? [];
 
         foreach ($folders as $folder) {
             $this->debug("Processing folder {$folder->fullname}...");
@@ -113,10 +113,18 @@ class Engine
             $folder->queueId = $queue_id;
             $folder->location = $location;
 
-            if (array_key_exists($folder->fullname, $folderMapping)) {
-                $folder->targetname = $folderMapping[$folder->fullname];
-            } else {
-                $folder->targetname = $folder->fullname;
+            // Apply name replacements
+            $folder->targetname = $folder->fullname;
+            foreach ($folderMapping as $key => $value) {
+                //TODO we should have a syntax for exact or prefix matching.
+                // There are at least two usecases:
+                // * Match a specific folder exactly
+                // * Match a parent folder in a hierarchy: "Posteingang/Foo" => "INBOX/Foo"
+                if (str_contains($folder->targetname, $key)) {
+                    $folder->targetname = str_replace($key, $value, $folder->targetname);
+                    $this->debug("Replacing {$folder->fullname} with {$folder->targetname}");
+                    break;
+                }
             }
 
             if ($async) {

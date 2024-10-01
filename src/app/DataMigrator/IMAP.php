@@ -77,7 +77,7 @@ class IMAP implements ExporterInterface, ImporterInterface
             return;
         }
 
-        if (!$this->imap->createFolder($folder->targetname)) {
+        if (!$this->imap->createFolder(self::toUTF7($folder->targetname))) {
             \Log::warning("Failed to create the folder: {$this->imap->error}");
 
             if (str_contains($this->imap->error, "Mailbox already exists")) {
@@ -91,6 +91,14 @@ class IMAP implements ExporterInterface, ImporterInterface
     }
 
     /**
+     * Convert UTF8 string to UTF7-IMAP encoding
+     */
+    private static function toUTF7(string $string): string
+    {
+        return \mb_convert_encoding($string, 'UTF7-IMAP', 'UTF8');
+    }
+
+    /**
      * Create an item in a folder.
      *
      * @param Item $item Item to import
@@ -99,14 +107,14 @@ class IMAP implements ExporterInterface, ImporterInterface
      */
     public function createItem(Item $item): void
     {
-        $mailbox = $item->folder->targetname;
+        $mailbox = self::toUTF7($item->folder->targetname);
 
         if (strlen($item->content)) {
             $result = $this->imap->append(
                 $mailbox,
                 $item->content,
-                $item->data['flags'],
-                $item->data['internaldate'],
+                $item->data['flags'] ?? [],
+                $item->data['internaldate'] ?? null,
                 true
             );
 
@@ -118,8 +126,8 @@ class IMAP implements ExporterInterface, ImporterInterface
                 $mailbox,
                 $item->filename,
                 null,
-                $item->data['flags'],
-                $item->data['internaldate'],
+                $item->data['flags'] ?? [],
+                $item->data['internaldate'] ?? null,
                 true
             );
 
@@ -317,7 +325,11 @@ class IMAP implements ExporterInterface, ImporterInterface
      */
     public function getItems(Folder $folder): array
     {
-        $mailbox = $folder->fullname;
+        if ($folder->targetname) {
+            $mailbox = self::toUTF7($folder->targetname);
+        } else {
+            $mailbox = $folder->fullname;
+        }
 
         // TODO: We should probably first use SEARCH/SORT to skip messages marked as \Deleted
         // TODO: fetchHeaders() fetches too many headers, we should slim-down, here we need

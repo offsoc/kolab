@@ -29,7 +29,7 @@ class Contact extends Item
     /**
      * Process contact object
      */
-    protected function convertItem(Type $item)
+    protected function convertItem(Type $item, $targetItem)
     {
         // Decode MIME content
         $vcard = base64_decode((string) $item->getMimeContent());

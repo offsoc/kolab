@@ -79,7 +79,7 @@ abstract class Item
         \Log::debug("[EWS] Saving item {$uid}...");
 
         // Apply type-specific format converters
-        $content = $this->convertItem($ewsItem);
+        $content = $this->convertItem($ewsItem, $item);
 
         if (!is_string($content)) {
             throw new \Exception("Failed to fetch EWS item {$this->itemId}");
@@ -104,7 +104,7 @@ abstract class Item
     /**
      * Item conversion code
      */
-    abstract protected function convertItem(Type $item);
+    abstract protected function convertItem(Type $item, $targetItem);
 
     /**
      * Get GetItem request parameters

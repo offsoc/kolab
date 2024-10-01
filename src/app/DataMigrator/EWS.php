@@ -25,6 +25,7 @@ class EWS implements Interface\ExporterInterface
         EWS\Appointment::FOLDER_TYPE,
         EWS\Contact::FOLDER_TYPE,
         EWS\Task::FOLDER_TYPE,
+        EWS\Email::FOLDER_TYPE,
         // TODO: mail and sticky notes are exported as eml files.
         //       We could use imapsync to synchronize mail, but for notes
         //       the only option will be to convert them to Kolab format here
@@ -63,6 +64,7 @@ class EWS implements Interface\ExporterInterface
         'XrmSearch',
         'MS-OLK-AllCalendarItems',
         'MS-OLK-AllContactItems',
+        'MS-OLK-AllMailItems',
         // TODO: These are different depending on a user locale and it's not possible
         // to switch to English other than changing the user locale in OWA/Exchange.
         'Calendar/United States holidays',
@@ -72,6 +74,7 @@ class EWS implements Interface\ExporterInterface
         'Ulubione', // pl
         'Moje kontakty', // pl
         'Aufgabensuche', // de
+        'Postausgang', // de
     ];
 
     /** @var array Map of EWS folder types to Kolab types */
@@ -79,6 +82,7 @@ class EWS implements Interface\ExporterInterface
         EWS\Appointment::FOLDER_TYPE => Engine::TYPE_EVENT,
         EWS\Contact::FOLDER_TYPE => Engine::TYPE_CONTACT,
         EWS\Task::FOLDER_TYPE => Engine::TYPE_TASK,
+        EWS\Email::FOLDER_TYPE => Engine::TYPE_MAIL,
     ];
 
     /** @var Account Account to operate on */
@@ -332,6 +336,8 @@ class EWS implements Interface\ExporterInterface
                     $item['changeKey'] = $changeKey;
                     $existingIndex[$id] = $idx;
                     unset($item['x-ms-id']);
+                } else {
+                    $existingIndex[$idx] = $idx;
                 }
             }
         );
@@ -347,6 +353,7 @@ class EWS implements Interface\ExporterInterface
                     'FieldURI' => [
                         ['FieldURI' => 'item:ItemClass'],
                         // ['FieldURI' => 'item:Size'],
+                        ['FieldURI' => 'message:InternetMessageId'], //For mail only?
                     ],
                 ],
             ],
@@ -445,10 +452,25 @@ class EWS implements Interface\ExporterInterface
             $idx = $existingIndex[$id['Id']];
 
             if ($existing[$idx]['changeKey'] == $id['ChangeKey']) {
+                \Log::debug("[EWS] Skipping over already existing message $idx...");
                 return null;
             }
 
             $exists = $existing[$idx]['href'];
+        } else {
+            $msgid = null;
+            try {
+                $msgid = $item->getInternetMessageId();
+            } catch (\Exception $e) {
+                //Ignore
+            }
+            if (isset($existingIndex[$msgid])) {
+                // If the messageid already exists, we assume it's the same email.
+                // Flag/size changes are ignored for now.
+                // Otherwise we should set uid/size/flags on exists, so the IMAP implementation can pick it up.
+                \Log::debug("[EWS] Skipping over already existing message $msgid...");
+                return null;
+            }
         }
 
         if (!EWS\Item::isValidItem($item)) {

@@ -29,7 +29,7 @@ class Task extends Item
     /**
      * Process task object
      */
-    protected function convertItem(Type $item)
+    protected function convertItem(Type $item, $targetItem)
     {
         // Tasks are exported as Email messages in useless format
         // (does not contain all relevant properties)

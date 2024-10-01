@@ -32,9 +32,24 @@ class Note extends Item
     /**
      * Process contact object
      */
-    protected function convertItem(Type $item)
+    protected function convertItem(Type $item, $targetItem)
     {
         $email = base64_decode((string) $item->getMimeContent());
+
+        $flags = [];
+        if ($item->getIsRead()) {
+            $flags[] = 'SEEN';
+        }
+
+        $internaldate = null;
+        if ($internaldate = $item->getDateTimeReceived()) {
+            $internaldate = (new \DateTime($internaldate))->format('d-M-Y H:i:s O');
+        }
+
+        $targetItem->data = [
+            'flags' => $flags,
+            'internaldate' => $internaldate,
+        ];
 
         return $email;
     }

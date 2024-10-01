@@ -7,6 +7,7 @@ use App\DataMigrator\Account;
 use App\DataMigrator\Engine;
 use App\DataMigrator\EWS;
 use App\DataMigrator\Interface\Folder;
+use App\DataMigrator\Interface\Item;
 use garethp\ews\API\Type;
 use Tests\TestCase;
 
@@ -21,6 +22,7 @@ class AppointmentTest extends TestCase
         $engine = new Engine();
         $ews = new EWS($account, $engine);
         $folder = Folder::fromArray(['id' => 'test']);
+        $targetItem = Item::fromArray(['id' => 'test']);
         $appointment = new EWS\Appointment($ews, $folder);
 
         $ical = file_get_contents(__DIR__ . '/../../../data/ews/event/1.ics');
@@ -78,7 +80,7 @@ class AppointmentTest extends TestCase
         ]);
 
         // Convert the Exchange item into iCalendar
-        $ical = $this->invokeMethod($appointment, 'convertItem', [$item]);
+        $ical = $this->invokeMethod($appointment, 'convertItem', [$item, $targetItem]);
 
         // Parse the iCalendar output
         $event = new Vevent();

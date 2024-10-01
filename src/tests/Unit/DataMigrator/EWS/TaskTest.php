@@ -7,6 +7,7 @@ use App\DataMigrator\Account;
 use App\DataMigrator\Engine;
 use App\DataMigrator\EWS;
 use App\DataMigrator\Interface\Folder;
+use App\DataMigrator\Interface\Item;
 use garethp\ews\API\Type;
 use Tests\TestCase;
 
@@ -24,6 +25,7 @@ class TaskTest extends TestCase
         $engine->destination = $destination;
         $ews = new EWS($source, $engine);
         $folder = Folder::fromArray(['id' => 'test']);
+        $targetItem = Item::fromArray(['id' => 'test']);
         $task = new EWS\Task($ews, $folder);
 
         // FIXME: I haven't found a way to convert xml content into a Type instance
@@ -118,7 +120,7 @@ class TaskTest extends TestCase
         ]);
 
         // Convert the Exchange item into iCalendar
-        $ical = $this->invokeMethod($task, 'convertItem', [$item]);
+        $ical = $this->invokeMethod($task, 'convertItem', [$item, $targetItem]);
 
         // Parse the iCalendar output
         $task = new Vtodo();

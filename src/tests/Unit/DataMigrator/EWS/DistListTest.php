@@ -7,6 +7,7 @@ use App\DataMigrator\Account;
 use App\DataMigrator\Engine;
 use App\DataMigrator\EWS;
 use App\DataMigrator\Interface\Folder;
+use App\DataMigrator\Interface\Item;
 use garethp\ews\API\Type;
 use Tests\TestCase;
 
@@ -21,6 +22,7 @@ class DistListTest extends TestCase
         $engine = new Engine();
         $ews = new EWS($account, $engine);
         $folder = Folder::fromArray(['id' => 'test']);
+        $targetItem = Item::fromArray(['id' => 'test']);
         $distlist = new EWS\DistList($ews, $folder);
 
         // FIXME: I haven't found a way to convert xml content into a Type instance
@@ -72,7 +74,7 @@ class DistListTest extends TestCase
         ]);
 
         // Convert the Exchange item into vCard
-        $vcard = $this->invokeMethod($distlist, 'convertItem', [$item]);
+        $vcard = $this->invokeMethod($distlist, 'convertItem', [$item, $targetItem]);
 
         // Parse the vCard
         $distlist = new Vcard();
