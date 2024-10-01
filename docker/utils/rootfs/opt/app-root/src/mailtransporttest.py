@@ -15,48 +15,15 @@ import time
 
 mailtemplate = '''
 MIME-Version: 1.0
-Content-Type: multipart/mixed;
- boundary="=_291b8e96564265636432c6d494e02322"
 Date: {date}
 From: {sender}
 To: {to}
 Subject: {subject}
 Message-ID: {messageid}
-
---=_291b8e96564265636432c6d494e02322
-Content-Type: multipart/alternative;
- boundary="=_ceff0fd19756f45ed1295ee2069ff8e0"
-
---=_ceff0fd19756f45ed1295ee2069ff8e0
 Content-Transfer-Encoding: 7bit
 Content-Type: text/plain; charset=US-ASCII
 
-sdlkjsdjf
---=_ceff0fd19756f45ed1295ee2069ff8e0
-Content-Transfer-Encoding: quoted-printable
-Content-Type: text/html; charset=UTF-8
-
-<html><head><meta http-equiv=3D"Content-Type" content=3D"text/html; charset=
-=3DUTF-8" /></head><body style=3D'font-size: 10pt; font-family: Verdana,Gen=
-eva,sans-serif'>
-<p>sdlkjsdjf</p>
-
-</body></html>
-
---=_ceff0fd19756f45ed1295ee2069ff8e0--
-
---=_291b8e96564265636432c6d494e02322
-Content-Transfer-Encoding: base64
-Content-Type: text/plain;
- name=xorg.conf
-Content-Disposition: attachment;
- filename=xorg.conf;
- size=211
-
-U2VjdGlvbiAiRGV2aWNlIgogICAgSWRlbnRpZmllciAgICAgIkRldmljZTAiCiAgICBEcml2ZXIg
-{attachment}ICAgIEJvYXJkTmFtZSAgICAgICJOVlMgNDIwME0iCiAgICBPcHRpb24gIk5vTG9nbyIgInRydWUi
-CiAgICBPcHRpb24gIlVzZUVESUQiICJ0cnVlIgpFbmRTZWN0aW9uCg==
---=_291b8e96564265636432c6d494e02322--
+{body}
 '''.strip()
 
 
@@ -71,15 +38,26 @@ class SendTest:
         self.sender_username = options.sender_username
         self.sender_password = options.sender_password
 
+        self.target_address = options.target_address
+
+        self.body = options.body
+        self.verbose = options.verbose
+
         self.uuid = str(uuid.uuid4())
         self.subject = f"Delivery Check {self.uuid}"
 
     def check_for_mail(self):
         print(f"Checking for uuid {self.uuid}")
         imap = imaplib.IMAP4_SSL(host=self.recipient_host, port=993)
+        if self.verbose:
+            imap.debug = 4
         imap.login(self.recipient_username, self.recipient_password)
         imap.select("INBOX")
-        typ, data = imap.search(None, 'SUBJECT', '"' + self.subject + '"')
+        # FIXME This seems to find emails that are not there
+        if self.body:
+            typ, data = imap.search(None, 'BODY', self.uuid)
+        else:
+            typ, data = imap.search(None, 'SUBJECT', self.uuid)
         for num in data[0].split():
             print(f"Found the mail with uid {num}")
             imap.store(num, '+FLAGS', '\\Deleted')
@@ -89,13 +67,21 @@ class SendTest:
 
     def send_mail(self, starttls):
         dtstamp = datetime.utcnow()
+
+        if self.target_address:
+            to = self.target_address
+        else:
+            to = self.recipient_username
+
+        print(f"Sending email to {to}")
+
         msg = mailtemplate.format(
             messageid="<{}@deliverycheck.org>".format(self.uuid),
             subject=self.subject,
             sender=self.sender_username,
-            to=self.recipient_username,
+            to=to,
             date=dtstamp.strftime("%a, %d %b %Y %H:%M:%S %z"),
-            attachment='ICAgIEJvYXJkTmFtZSAgICAgICJOVlMgNDIwME0iCiAgICBPcHRpb24gIk5vTG9nbyIgInRydWUi\n'
+            body=self.body,
         )
         if starttls:
             with smtplib.SMTP(host=self.sender_host, port=587) as smtp:
@@ -103,13 +89,13 @@ class SendTest:
                 smtp.ehlo()
                 smtp.login(self.sender_username, self.sender_password)
                 smtp.noop()
-                smtp.sendmail(self.sender_username, self.recipient_username, msg)
+                smtp.sendmail(self.sender_username, to, msg)
                 print(f"Email with uuid {self.uuid} sent")
         else:
             with smtplib.SMTP_SSL(host=self.sender_host, port=465) as smtp:
                 smtp.login(self.sender_username, self.sender_password)
                 smtp.noop()
-                smtp.sendmail(self.sender_username, self.recipient_username, msg)
+                smtp.sendmail(self.sender_username, to, msg)
                 print(f"Email with uuid {self.uuid} sent")
 
 
@@ -122,6 +108,9 @@ parser.add_argument('--recipient-password', help='The IMAP recipient password')
 parser.add_argument('--recipient-host', help='The IMAP recipient host')
 parser.add_argument('--timeout', help='Timeout in minutes', type=int, default=10)
 parser.add_argument("--starttls", action='store_true', help="Use starttls over 587")
+parser.add_argument("--verbose", action='store_true', help="Use starttls over 587")
+parser.add_argument("--target-address", help="Target address instead of the recipient username")
+parser.add_argument("--body", help="Body text to include")
 
 args = parser.parse_args()
 
