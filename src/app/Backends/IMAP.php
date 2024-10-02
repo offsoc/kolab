@@ -153,7 +153,8 @@ class IMAP
         $result = $imap->setACL($mailbox, $config['user'], 'c');
 
         // Ignore the error if the folder doesn't exist (maybe it was removed already).
-        if ($result === false && $imap->errornum == $imap::ERROR_NO
+        if (
+            $result === false && $imap->errornum == $imap::ERROR_NO
             && strpos($imap->error, 'Mailbox does not exist') !== false
         ) {
             \Log::info("The mailbox to delete was already removed: $mailbox");
