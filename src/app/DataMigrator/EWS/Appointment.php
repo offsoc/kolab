@@ -57,6 +57,14 @@ class Appointment extends Item
             //        That's why we'll just remove all ATTACH:CID:... occurrences
             //        and inject attachments to the main event
             $ical = preg_replace('/\r\nATTACH:CID:[^\r]+\r\n(\r\n [^\r\n]*)?/', '', $ical);
+            // We seem to get some weird ATTACH parts as part of ORGANIZER sometimes.
+            // Looks like this (when printing $ical to console):
+            // ORGANIZER;CN="Doe, John":MAILTO:John.Doe@example.comATTACH:CID:2388A81D6CB99E09E72ACF2D192043D418FD86B8@example.com
+            // DESCRIPTION;LANGUAGE=de-DE:@ ...
+            //
+            // FIXME: Investigate the previous preg-replace again, to make sure that doesn't introduce the problem.
+            // It might be if there are two consecutive ATTACH:CID properties?
+            $ical = preg_replace('/ATTACH:CID:[^\r]+\r\n/', "\r\n", $ical);
 
             foreach ((array) $item->getAttachments()->getFileAttachment() as $attachment) {
                 $_attachment = $this->getAttachment($attachment);
