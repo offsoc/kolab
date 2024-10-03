@@ -63,6 +63,7 @@ class Appointment extends Item
 
                 $ctype = $_attachment->getContentType();
                 $body = $_attachment->getContent();
+                $name = $_attachment->getName();
 
                 // It looks like Exchange may have an issue with plain text files.
                 // We'll skip empty files
@@ -78,7 +79,7 @@ class Appointment extends Item
 
                 // Inject the attachment at the end of the first VEVENT block
                 // TODO: We should not do it in memory to not exceed the memory limit
-                $append = "ATTACH;VALUE=BINARY;ENCODING=BASE64;FMTTYPE={$ctype}:\r\n {$body}";
+                $append = "ATTACH;VALUE=BINARY;ENCODING=BASE64;X-LABEL={$name};FMTTYPE={$ctype}:\r\n {$body}";
                 $pos = strpos($ical, "\r\nEND:VEVENT");
                 $ical = substr_replace($ical, $append, $pos + 2, 0);
             }
