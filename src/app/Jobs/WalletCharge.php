@@ -43,7 +43,7 @@ class WalletCharge implements ShouldQueue
      */
     public function backoff(): array
     {
-        return [10, 30, 60, 120];
+        return [10, 30, 60, 120, 300];
     }
 
     /**
