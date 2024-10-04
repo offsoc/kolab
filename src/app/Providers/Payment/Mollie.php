@@ -34,11 +34,11 @@ class Mollie extends \App\Providers\PaymentProvider
     }
 
     /**
-    * Validates that mollie available.
-    *
-    * @throws \Mollie\Api\Exceptions\ApiException on failure
-    * @return bool true on success
-    */
+     * Validates that mollie available.
+     *
+     * @throws ApiException on failure
+     * @return bool true on success
+     */
     public static function healthcheck()
     {
         mollie()->methods()->allActive();
@@ -87,7 +87,12 @@ class Mollie extends \App\Providers\PaymentProvider
         ];
 
         // Create the payment in Mollie
-        $response = mollie()->payments()->create($request);
+        try {
+            $response = mollie()->payments()->create($request);
+        } catch (ApiException $e) {
+            self::logRequestError($request, $e, "Failed to create mandate");
+            throw $e;
+        }
 
         if ($response->mandateId) {
             $wallet->setSetting('mollie_mandate_id', $response->mandateId);
@@ -219,7 +224,12 @@ class Mollie extends \App\Providers\PaymentProvider
         //   billingAddress (it is a structured field not just text)
 
         // Create the payment in Mollie
-        $response = mollie()->payments()->create($request);
+        try {
+            $response = mollie()->payments()->create($request);
+        } catch (ApiException $e) {
+            self::logRequestError($request, $e, "Failed to create payment");
+            throw $e;
+        }
 
         // Store the payment reference in database
         $payment['status'] = $response->status;
@@ -266,7 +276,7 @@ class Mollie extends \App\Providers\PaymentProvider
         // Check if there's a valid mandate
         $mandate = self::mollieMandate($wallet);
 
-        if (empty($mandate) || !$mandate->isValid() || $mandate->isPending()) {
+        if (empty($mandate) || !$mandate->isValid()) {
             \Log::debug("Recurring payment for {$wallet->id}: no valid Mollie mandate");
             return null;
         }
@@ -295,7 +305,12 @@ class Mollie extends \App\Providers\PaymentProvider
         \Log::debug("Recurring payment for {$wallet->id}: " . json_encode($request));
 
         // Create the payment in Mollie
-        $response = mollie()->payments()->create($request);
+        try {
+            $response = mollie()->payments()->create($request);
+        } catch (ApiException $e) {
+            self::logRequestError($request, $e, "Failed to create payment");
+            throw $e;
+        }
 
         // Store the payment reference in database
         $payment['status'] = $response->status;
@@ -443,8 +458,8 @@ class Mollie extends \App\Providers\PaymentProvider
             if (!empty($notify)) {
                 \App\Jobs\PaymentEmail::dispatch($payment);
             }
-        } catch (\Mollie\Api\Exceptions\ApiException $e) {
-            \Log::warning(sprintf('Mollie api call failed (%s)', $e->getMessage()));
+        } catch (ApiException $e) {
+            \Log::error(sprintf('Mollie API call failed (%s)', $e->getMessage()));
         }
 
         return 200;
@@ -499,6 +514,7 @@ class Mollie extends \App\Providers\PaymentProvider
 
                 // TODO: Maybe we shouldn't always throw? It make sense in the job
                 //       but for example when we're just fetching wallet info...
+                self::logRequestError($settings['mollie_mandate_id'], $e, "Failed to get mandate");
                 throw $e;
             }
         }
@@ -626,5 +642,19 @@ class Mollie extends \App\Providers\PaymentProvider
             'isCancelable' => $payment->isCancelable,
             'checkoutUrl' => $payment->getCheckoutUrl()
         ];
+    }
+
+    /**
+     * Log an error on API request exception
+     */
+    protected static function logRequestError($request, $exception, $msg)
+    {
+        \Log::error(sprintf("%s. [%d] %s (%s). Request: %s",
+            $msg,
+            $exception->getCode(),
+            $exception->getMessage(),
+            $exception->getField() ?? '',
+            json_encode($request),
+        ));
     }
 }
