@@ -15,9 +15,6 @@ class WalletCharge implements ShouldQueue
     use InteractsWithQueue;
     use Queueable;
 
-    /** @var int The number of seconds to wait before retrying the job. */
-    public $backoff = 10;
-
     /** @var int How many times retry the job if it fails. */
     public $tries = 5;
 
@@ -37,6 +34,16 @@ class WalletCharge implements ShouldQueue
     public function __construct(string $walletId)
     {
         $this->walletId = $walletId;
+    }
+
+    /**
+     * Number of seconds to wait before retrying the job.
+     *
+     * @return array<int, int>
+     */
+    public function backoff(): array
+    {
+        return [10, 30, 60, 120];
     }
 
     /**

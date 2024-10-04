@@ -23,9 +23,6 @@ class WalletCheck implements ShouldQueue
     public const THRESHOLD_BEFORE_REMINDER = 'before-reminder';
     public const THRESHOLD_INITIAL = 'initial';
 
-    /** @var int The number of seconds to wait before retrying the job. */
-    public $backoff = 10;
-
     /** @var int How many times retry the job if it fails. */
     public $tries = 5;
 
@@ -49,6 +46,16 @@ class WalletCheck implements ShouldQueue
     public function __construct(string $walletId)
     {
         $this->walletId = $walletId;
+    }
+
+    /**
+     * Number of seconds to wait before retrying the job.
+     *
+     * @return array<int, int>
+     */
+    public function backoff(): array
+    {
+        return [10, 30, 60, 120, 300];
     }
 
     /**
