@@ -55,7 +55,7 @@ class DAV
             . '</d:propfind>';
 
         // Note: Cyrus CardDAV service requires Depth:1 (CalDAV works without it)
-        $response = $this->request('/', 'PROPFIND', $body, ['Depth' => 1, 'Prefer' => 'return-minimal']);
+        $response = $this->request('', 'PROPFIND', $body, ['Depth' => 1, 'Prefer' => 'return-minimal']);
 
         if (empty($response)) {
             \Log::error("Failed to get current-user-principal from the DAV server.");
