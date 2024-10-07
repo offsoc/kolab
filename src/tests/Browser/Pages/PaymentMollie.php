@@ -25,7 +25,7 @@ class PaymentMollie extends Page
      */
     public function assert($browser)
     {
-        $browser->waitFor('form#body table, form#body iframe', 10);
+        $browser->waitFor('form');
     }
 
     /**
@@ -53,23 +53,28 @@ class PaymentMollie extends Page
     {
         // https://docs.mollie.com/overview/testing
         // https://docs.mollie.com/components/testing
-        if ($browser->element('form#body iframe')) {
-            $browser->withinFrame('#card-number iframe', function ($browser) {
-                $browser->type('#cardNumber', '2223 0000 1047 9399'); // Mastercard
+        $browser
+            ->withinFrame('#card-number iframe', function ($browser) {
+                $browser->waitFor('#cardNumber')
+                    ->type('#cardNumber', '2223 0000 1047 9399'); // Mastercard
             })
             ->withinFrame('#card-holder-name iframe', function ($browser) {
-                $browser->type('#cardHolder', 'Test');
+                $browser->waitFor('#cardHolder')
+                    ->type('#cardHolder', 'Test');
             })
+            ->click('#expiry-date iframe')
             ->withinFrame('#expiry-date iframe', function ($browser) {
-                $browser->type('#expiryDate', '12/' . (date('y') + 1));
+                $browser->waitFor('#expiryDate')
+                    ->type('#expiryDate', '12/' . (date('y') + 1));
             })
+            ->click('#cvv iframe')
             ->withinFrame('#cvv iframe', function ($browser) {
-                $browser->click('#verificationCode')->type('#verificationCode', '123');
+                $browser->waitFor('#verificationCode')
+                    ->click('#verificationCode')
+                    ->type('#verificationCode', '123');
             })
-            ->click('#submit-button');
-        }
-
-        $browser->waitFor('input[value="' . $status . '"]')
+            ->click('#submit-button')
+            ->waitFor('input[value="' . $status . '"]')
             ->click('input[value="' . $status . '"]')
             ->click('button.form__button');
     }

@@ -11,13 +11,11 @@ use App\Utils;
 use GuzzleHttp\Psr7\Response;
 use Illuminate\Support\Facades\Bus;
 use Tests\TestCase;
-use Tests\BrowserAddonTrait;
 use Tests\CoinbaseMocksTrait;
 
 class PaymentsCoinbaseTest extends TestCase
 {
     use CoinbaseMocksTrait;
-    use BrowserAddonTrait;
 
     /**
      * {@inheritDoc}

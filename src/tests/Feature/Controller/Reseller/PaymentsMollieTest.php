@@ -61,6 +61,7 @@ class PaymentsMollieTest extends TestCase
      * Test creating/updating/deleting an outo-payment mandate
      *
      * @group mollie
+     * @group slow
      */
     public function testMandates(): void
     {
@@ -80,14 +81,9 @@ class PaymentsMollieTest extends TestCase
         $wallet->save();
 
         // Test creating a mandate (valid input)
-        $post = ['amount' => 20.10, 'balance' => 0];
-        $response = $this->actingAs($reseller)->post("api/v4/payments/mandate", $post);
-        $response->assertStatus(200);
+        $json = $this->createMollieMandate($wallet, ['amount' => 20.10, 'balance' => 0]);
 
-        $json = $response->json();
-
-        $this->assertSame('success', $json['status']);
-        $this->assertMatchesRegularExpression('|^https://www.mollie.com|', $json['redirectUrl']);
+        $mandate_id = $json['mandateId'];
 
         // Assert the proper payment amount has been used
         $payment = Payment::where('id', $json['id'])->first();
@@ -105,30 +101,10 @@ class PaymentsMollieTest extends TestCase
 
         $this->assertEquals(20.10, $json['amount']);
         $this->assertEquals(0, $json['balance']);
-        $this->assertEquals('Credit Card', $json['method']);
-        $this->assertSame(true, $json['isPending']);
-        $this->assertSame(false, $json['isValid']);
+        $this->assertTrue(in_array($json['method'], ['Mastercard (**** **** **** 9399)', 'Credit Card']));
+        $this->assertSame(false, $json['isPending']);
+        $this->assertSame(true, $json['isValid']);
         $this->assertSame(false, $json['isDisabled']);
-
-        $mandate_id = $json['id'];
-
-        // We would have to invoke a browser to accept the "first payment" to make
-        // the mandate validated/completed. Instead, we'll mock the mandate object.
-        $mollie_response = [
-            'resource' => 'mandate',
-            'id' => $mandate_id,
-            'status' => 'valid',
-            'method' => 'creditcard',
-            'details' => [
-                'cardNumber' => '4242',
-                'cardLabel' => 'Visa',
-            ],
-            'customerId' => 'cst_GMfxGPt7Gj',
-            'createdAt' => '2020-04-28T11:09:47+00:00',
-        ];
-
-        $responseStack = $this->mockMollie();
-        $responseStack->append(new Response(200, [], json_encode($mollie_response)));
 
         $wallet = $reseller->wallets()->first();
         $wallet->setSetting('mandate_disabled', 1);
@@ -140,7 +116,7 @@ class PaymentsMollieTest extends TestCase
 
         $this->assertEquals(20.10, $json['amount']);
         $this->assertEquals(0, $json['balance']);
-        $this->assertEquals('Visa (**** **** **** 4242)', $json['method']);
+        $this->assertTrue(in_array($json['method'], ['Mastercard (**** **** **** 9399)', 'Credit Card']));
         $this->assertSame(false, $json['isPending']);
         $this->assertSame(true, $json['isValid']);
         $this->assertSame(true, $json['isDisabled']);
@@ -151,8 +127,6 @@ class PaymentsMollieTest extends TestCase
         $wallet->save();
 
         // Test updating a mandate (valid input)
-        $responseStack->append(new Response(200, [], json_encode($mollie_response)));
-
         $post = ['amount' => 30.10, 'balance' => 10];
         $response = $this->actingAs($reseller)->put("api/v4/payments/mandate", $post);
         $response->assertStatus(200);
