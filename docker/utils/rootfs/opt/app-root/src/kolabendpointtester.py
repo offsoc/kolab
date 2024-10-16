@@ -22,6 +22,7 @@ from imaplib import IMAP4_SSL
 from smtplib import SMTP
 from smtplib import SMTP_SSL
 import dns.resolver
+import re
 
 # print('\033[31m' + 'some red text')
 
@@ -395,7 +396,7 @@ def test_dns(host, verbose = False):
             print("  ERROR on record", record)
 
     if not success:
-        print_error(f"Dns entires on {host} not available")
+        print_error(f"Dns entries on {host} not available")
 
     return success
 
@@ -420,10 +421,96 @@ def test_email_dns(host, verbose = False):
             print("  ERROR on record", record)
 
     if not success:
-        print_error(f"Dns entires on {host} not available")
+        print_error(f"Dns entries on {host} not available")
 
     return success
 
+def test_dmarc_dns(host, verbose = False):
+    success = True
+
+    try:
+        answers = dns.resolver.resolve(f"_dmarc.{host}", 'TXT')
+        for rdata in answers:
+            print("  _dmarc TXT", rdata)
+    except dns.resolver.NXDOMAIN:
+        success = False
+        print("  ERROR on _dmarc TXT")
+    except dns.resolver.NoAnswer:
+        success = False
+        print("  ERROR on _dmarc TXT")
+
+    if not success:
+        print_error(f"DMARC dns  entries on {host} not available")
+
+    return success
+
+def validate_spf_record(rdata):
+    # Something like "v=spf1 mx a:kolab.klab.cc mx:kolab.klab.cc -all"
+    data = str(rdata)
+    if not data.startswith('"v=spf1'):
+        return False
+
+    if not data.endswith('-all"'):
+        return False
+
+    return True
+
+def test_spf_dns(host, verbose = False):
+    success = False
+
+    try:
+        answers = dns.resolver.resolve(f"{host}", 'TXT')
+        for rdata in answers:
+            if validate_spf_record(rdata):
+                print("  SPF TXT", rdata)
+                success = True
+                break
+            else:
+                print(f"  ERROR while validating spf record {data}")
+
+    except dns.resolver.NXDOMAIN:
+        success = False
+        print("  ERROR on SPF TXT")
+    except dns.resolver.NoAnswer:
+        success = False
+        print("  ERROR on SPF TXT")
+
+    if not success:
+        print_error(f"SPF dns entry on {host} not available")
+
+    return success
+
+def validate_dkim_record(rdata):
+    data = str(rdata)
+    # Re-assemble the quoted string
+    data = "".join(re.findall('"([^"]*)"', data))
+    print(data)
+    if not data.startswith("v=DKIM1;"):
+        return False
+    return True
+
+def test_dkim_dns(host, selector, verbose = False):
+    success = False
+
+    try:
+        answers = dns.resolver.resolve(f"{selector}._domainkey.{host}", 'TXT')
+        for rdata in answers:
+            print(f"  DKIM {selector}", rdata)
+            if validate_dkim_record(rdata):
+                success = True
+            else:
+                print(f"  ERROR while validating dkim key {data}")
+    except dns.resolver.NXDOMAIN:
+        success = False
+        print("  ERROR on DKIM TXT")
+    except dns.resolver.NoAnswer:
+        success = False
+        print("  ERROR on DKIM TXT")
+
+    if not success:
+        print_error(f"DKIM dns entries on {host} not available")
+
+    return success
 
 def test_imap(host, user, password, verbose):
     success = True
@@ -604,6 +691,7 @@ def main():
     parser.add_argument("--meet", help="MEET URI")
     parser.add_argument("--autoconfig", help="Check autoconfig")
     parser.add_argument("--dns", action='store_true', help="Check dns")
+    parser.add_argument("--dkim", help="Check DKIM dns record")
     parser.add_argument("--activesync", help="ActiveSync URI")
     parser.add_argument("--certificates", action='store_true', help="Check Certificates")
     parser.add_argument("--fb", help="Freebusy url as displayed in roundcube")
@@ -612,6 +700,10 @@ def main():
     options = parser.parse_args()
 
     error = False
+
+    # Maybe structure it like this.
+    # Then print report, and upload results to prometheus
+    # [testName, testEnabled, testLambda] => [testName, testResult]
 
     if options.default:
         options.host = options.username.split('@')[1]
@@ -664,13 +756,29 @@ def main():
 
     if options.dns:
         if test_dns(options.host, options.verbose):
-            print(f"=> DNS entries on {options.host} available")
+            print_success(f"DNS entries on {options.host} available")
+        else:
+            error = True
+
+        if test_dmarc_dns(options.host, options.verbose):
+            print_success(f"DMARC DNS entries on {options.host} available")
+        else:
+            error = True
+
+        if test_spf_dns(options.host, options.verbose):
+            print_success(f"SPF DNS entries on {options.host} available")
         else:
             error = True
 
         userhost = options.username.split('@')[1]
         if test_email_dns(userhost, options.verbose):
-            print(f"=> DNS entries on {userhost} available")
+            print_success(f"User DNS entries on {userhost} available")
+        else:
+            error = True
+
+    if options.dkim:
+        if test_dkim_dns(options.host, options.dkim, options.verbose):
+            print_success(f"DKIM DNS entries on {options.host} available")
         else:
             error = True
 
@@ -697,6 +805,8 @@ def main():
             print_success("Meet is available")
         else:
             error = True
+
+    # Push result to prometheus
 
     if error:
         print_error("At least one check failed")

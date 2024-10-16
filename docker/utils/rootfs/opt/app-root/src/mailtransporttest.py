@@ -2,7 +2,7 @@
 """
     Send an email via SMTP and then look for it via IMAP.
 
-    ./mailtransporttest.py --sender-username test1@kolab.org --sender-password foobar --sender-host smtp.kolabnow.com --recipient-username test2@kolab.org --recipient-password foobar --recipient-host imap.kolabnow.com
+    ./mailtransporttest.py --sender-username test1@kolab.org --sender-password foobar --sender-host smtp.kolabnow.com --recipient-username test2@kolab.org --recipient-password foobar --recipient-host imap.kolabnow.com --validate
 """
 from datetime import datetime
 import argparse
@@ -44,9 +44,43 @@ class SendTest:
 
         self.body = options.body
         self.verbose = options.verbose
+        self.validate = options.validate
 
         self.uuid = str(uuid.uuid4())
         self.subject = f"Delivery Check {self.uuid}"
+
+    def validate_message(self, message):
+        import email.parser
+        import email.policy
+        msg = email.parser.BytesParser(policy=email.policy.default).parsebytes(message)
+        # print(msg)
+
+        if msg['DKIM-Signature']:
+            print("There is a DKIM-Signature.")
+
+        # DKIM validation status
+        # Authentication-Results: kolab.klab.cc (amavis); dkim=pass (2048-bit key)
+        #  reason="pass (just generated, assumed good)" header.d=kolab.klab.cc
+        if "dkim=pass" not in (msg['Authentication-Results'] or ""):
+            print("Failed to validate Authentication-Results header:")
+            print(msg['Authentication-Results'])
+            return False
+
+        if "NO" not in (msg['X-Spam-Flag'] or ""):
+            print("Test email is flagged as spam or header is missing")
+            print("Existing header: " + str(msg['X-Spam-Flag']))
+            return False
+
+        if "NO" not in (msg['X-Virus-Scanned'] or ""):
+            print("Message was virus scanned: " + msg['X-Virus-Scanned'])
+
+        # Ensure SPF record matches a received line?
+        # Suggest SPF record ip (sender ip)
+        # Validate DKIM-Signature according to DNS entry
+        # Calculate delay using Date header?
+        # These could all be statistics for prometheus
+
+        return True
 
     def check_for_mail(self):
         print(f"Checking for uuid {self.uuid}")
@@ -60,8 +94,20 @@ class SendTest:
             typ, data = imap.search(None, 'BODY', self.uuid)
         else:
             typ, data = imap.search(None, 'SUBJECT', self.uuid)
+
+
         for num in data[0].split():
             print(f"Found the mail with uid {num}")
+
+            if self.validate:
+                typ, data = imap.fetch(num, "(RFC822)")
+                message = data[0][1]
+                if not self.validate_message(message):
+                    print("Failed to validate the message.")
+                    print(message.decode())
+                    sys.exit(1)
+
+
             imap.store(num, '+FLAGS', '\\Deleted')
             imap.expunge()
             return True
@@ -105,16 +151,17 @@ parser = argparse.ArgumentParser(description='Mail transport tests.')
 parser.add_argument('--sender-username', help='The SMTP sender username')
 parser.add_argument('--sender-password', help='The SMTP sender password')
 parser.add_argument('--sender-host', help='The SMTP sender host')
-parser.add_argument('--sender-port', help='The SMTP sender port', default=993)
+parser.add_argument('--sender-port', help='The SMTP sender port (defaults to 465/587)')
 parser.add_argument('--recipient-username', help='The IMAP recipient username')
 parser.add_argument('--recipient-password', help='The IMAP recipient password')
 parser.add_argument('--recipient-host', help='The IMAP recipient host')
-parser.add_argument('--recipient-port', help='The IMAP recipient port (defaults to 465/587)')
+parser.add_argument('--recipient-port', help='The IMAP recipient port', default=993)
 parser.add_argument('--timeout', help='Timeout in minutes', type=int, default=10)
-parser.add_argument("--starttls", action='store_true', help="Use starttls over 587")
-parser.add_argument("--verbose", action='store_true', help="Use starttls over 587")
+parser.add_argument("--starttls", action='store_true', help="Use SMTP starttls over 587")
+parser.add_argument("--verbose", action='store_true', help="Verbose mode")
 parser.add_argument("--target-address", help="Target address instead of the recipient username")
 parser.add_argument("--body", help="Body text to include")
+parser.add_argument("--validate", action='store_true', help="Validate the received message")
 
 args = parser.parse_args()
 
@@ -126,10 +173,12 @@ timeout = 10
 for i in range(1, round(args.timeout * 60 / timeout) + 1):
     if obj.check_for_mail():
         print("Success!")
+        # TODO print statistics? Push statistics directly someplace?
         sys.exit(0)
     print(f"waiting for {timeout}")
     time.sleep(timeout)
 
+# TODO print statistics? Push statistics directly someplace?
 
 print("Failed to find the mail")
 sys.exit(1)
