@@ -480,6 +480,14 @@ class IMAP
         return "user/{$localpart}/{$mailbox}@{$domain}";
     }
 
+    /**
+     * List user mailboxes.
+     *
+     * @param string $user The user
+     *
+     * @return array List of mailboxes
+     * @throws \Exception
+     */
     public static function listMailboxes(string $user): array
     {
         $config = self::getConfig();

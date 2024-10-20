@@ -386,6 +386,38 @@ class IMAPTest extends TestCase
     }
 
     /**
+     * Test listMailboxes
+     *
+     * @group imap
+     */
+    public function testListMailboxes(): void
+    {
+        $result = IMAP::listMailboxes("john@kolab.org");
+        $this->assertTrue(!empty($result));
+    }
+
+    /**
+     * Test renameMailbox
+     *
+     * @group imap
+     */
+    public function testRenameMailbox(): void
+    {
+        $imap = $this->getImap("john@kolab.org");
+        $imap->createFolder("renametest1");
+        $imap->deleteFolder("renametest2");
+
+        $result = IMAP::renameMailbox(
+            IMAP::userMailbox("john@kolab.org", "renametest1"),
+            IMAP::userMailbox("john@kolab.org", "renametest2")
+        );
+
+        $result = IMAP::listMailboxes("john@kolab.org");
+        $this->assertTrue(in_array(IMAP::userMailbox("john@kolab.org", "renametest2"), $result));
+        $this->assertFalse(in_array(IMAP::userMailbox("john@kolab.org", "renametest1"), $result));
+    }
+
+    /**
      * Get configured/initialized rcube_imap_generic instance
      */
     private function getImap($loginAs = null)
