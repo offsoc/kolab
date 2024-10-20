@@ -373,6 +373,16 @@ kolab__validate() {
     fi
 }
 
+kolab__mailtransporttest() {
+    POD=${POD:-dev}
+
+    if $PODMAN run --rm -ti --pod=$POD kolab-utils:latest ./mailtransporttest.py --timeout 1 --sender-username admin@kolab.local --sender-password simple123 --sender-host localhost --sender-port 6465 --recipient-username noreply@kolab.local --recipient-password simple123 --recipient-host localhost --recipient-port 6993 --validate; then
+        echo "Success"
+    else
+        exit 1
+    fi
+}
+
 # Deploy a test deployment in the "dev" pod
 kolab__deploy() {
     export POD=dev

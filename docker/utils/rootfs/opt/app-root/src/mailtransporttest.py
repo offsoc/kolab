@@ -31,10 +31,12 @@ Content-Type: text/plain; charset=US-ASCII
 class SendTest:
     def __init__(self, options):
         self.recipient_host = options.recipient_host
+        self.recipient_port = options.recipient_port
         self.recipient_username = options.recipient_username
         self.recipient_password = options.recipient_password
 
         self.sender_host = options.sender_host
+        self.sender_port = options.sender_port
         self.sender_username = options.sender_username
         self.sender_password = options.sender_password
 
@@ -48,7 +50,7 @@ class SendTest:
 
     def check_for_mail(self):
         print(f"Checking for uuid {self.uuid}")
-        imap = imaplib.IMAP4_SSL(host=self.recipient_host, port=993)
+        imap = imaplib.IMAP4_SSL(host=self.recipient_host, port=self.recipient_port)
         if self.verbose:
             imap.debug = 4
         imap.login(self.recipient_username, self.recipient_password)
@@ -84,7 +86,7 @@ class SendTest:
             body=self.body,
         )
         if starttls:
-            with smtplib.SMTP(host=self.sender_host, port=587) as smtp:
+            with smtplib.SMTP(host=self.sender_host, port=self.sender_port or 587) as smtp:
                 smtp.starttls()
                 smtp.ehlo()
                 smtp.login(self.sender_username, self.sender_password)
@@ -92,7 +94,7 @@ class SendTest:
                 smtp.sendmail(self.sender_username, to, msg)
                 print(f"Email with uuid {self.uuid} sent")
         else:
-            with smtplib.SMTP_SSL(host=self.sender_host, port=465) as smtp:
+            with smtplib.SMTP_SSL(host=self.sender_host, port=self.sender_port or 465) as smtp:
                 smtp.login(self.sender_username, self.sender_password)
                 smtp.noop()
                 smtp.sendmail(self.sender_username, to, msg)
@@ -103,9 +105,11 @@ parser = argparse.ArgumentParser(description='Mail transport tests.')
 parser.add_argument('--sender-username', help='The SMTP sender username')
 parser.add_argument('--sender-password', help='The SMTP sender password')
 parser.add_argument('--sender-host', help='The SMTP sender host')
+parser.add_argument('--sender-port', help='The SMTP sender port', default=993)
 parser.add_argument('--recipient-username', help='The IMAP recipient username')
 parser.add_argument('--recipient-password', help='The IMAP recipient password')
 parser.add_argument('--recipient-host', help='The IMAP recipient host')
+parser.add_argument('--recipient-port', help='The IMAP recipient port (defaults to 465/587)')
 parser.add_argument('--timeout', help='Timeout in minutes', type=int, default=10)
 parser.add_argument("--starttls", action='store_true', help="Use starttls over 587")
 parser.add_argument("--verbose", action='store_true', help="Use starttls over 587")
