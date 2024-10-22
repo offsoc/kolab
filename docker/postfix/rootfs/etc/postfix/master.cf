@@ -9,6 +9,8 @@
 postlog             unix-dgram  n       -       n       -       1       postlogd
 # Inbound, port 25, no tls
 10025               inet        n       -       n       -       -       smtpd
+    -o content_filter=smtp-amavis:[AMAVIS_HOST]:13024
+    -o cleanup_service_name=cleanup_inbound
 # Internal Submission, no tls, no starttls
 10587          inet        n       -       -       -       -       smtpd
     -o syslog_name=postfix/submission
@@ -23,8 +25,44 @@ postlog             unix-dgram  n       -       n       -       1       postlogd
     -o smtpd_helo_restrictions=$submission_helo_restrictions
     -o smtpd_helo_required=yes
     -o smtpd_peername_lookup=no
+
+# External submission, starttls
+0.0.0.0:11587     inet        n       -       n       -       -       smtpd
+    -o cleanup_service_name=cleanup_submission
+    -o syslog_name=postfix/submission
+    -o content_filter=smtp-amavis:[AMAVIS_HOST]:13026
+    #-o smtpd_tls_security_level=encrypt
+    -o smtpd_sasl_auth_enable=yes
+    -o smtpd_sasl_authenticated_header=yes
+    -o smtpd_client_restrictions=permit_sasl_authenticated,reject
+    -o smtpd_data_restrictions=$submission_data_restrictions
+    -o smtpd_recipient_restrictions=$submission_recipient_restrictions
+    -o smtpd_sender_restrictions=$submission_sender_restrictions
+
+# External submission, ssl
+0.0.0.0:11465     inet        n       -       n       -       -       smtpd
+    -o cleanup_service_name=cleanup_submission
+    -o rewrite_service_name=rewrite_submission
+    -o syslog_name=postfix/smtps
+    -o content_filter=smtp-amavis:[AMAVIS_HOST]:13026
+    -o mydestination=
+    -o local_recipient_maps=
+    -o relay_domains=
+    -o relay_recipient_maps=
+    -o smtpd_tls_security_level=encrypt
+    -o smtpd_tls_wrappermode=yes
+    -o smtpd_sasl_auth_enable=yes
+    -o smtpd_sasl_authenticated_header=yes
+    -o smtpd_client_restrictions=permit_sasl_authenticated,reject
+    -o smtpd_sender_restrictions=$submission_sender_restrictions
+    -o smtpd_recipient_restrictions=$submission_recipient_restrictions
+    -o smtpd_data_restrictions=$submission_data_restrictions
+
 pickup              fifo        n       -       n       60      1       pickup
+    # This avoids that we have an endless loop after our script content filter
+    -o content_filter=
 cleanup             unix        n       -       n       -       0       cleanup
+cleanup_inbound     unix        n       -       n       -       0       cleanup
     -o header_checks=regexp:/etc/postfix/header_checks.inbound
     -o mime_header_checks=regexp:/etc/postfix/header_checks.inbound
 cleanup_submission  unix        n       -       n       -       0       cleanup
@@ -68,7 +106,9 @@ smtp-amavis         unix        -       -       n       -       3       smtp
     -o cleanup_service_name=cleanup_internal
     -o local_recipient_maps=
     -o relay_recipient_maps=
-    -o content_filter=
+    # To disable the kolab content filter, set an empty content filter here.
+    -o content_filter=policy_mailfilter:dummy
+    # -o content_filter=
     -o smtpd_restriction_classes=
     -o smtpd_client_restrictions=
     -o smtpd_helo_restrictions=
@@ -139,34 +179,8 @@ policy_greylist     unix        -       n       n       -       -       spawn
 policy_spf          unix        -       n       n       -       -       spawn
     user=nobody argv=/usr/libexec/postfix/kolab_policy_spf
 
-# External submission, starttls
-0.0.0.0:11587     inet        n       -       n       -       -       smtpd
-    -o cleanup_service_name=cleanup_submission
-    -o syslog_name=postfix/submission
-    -o content_filter=smtp-amavis:[AMAVIS_HOST]:13026
-    #-o smtpd_tls_security_level=encrypt
-    -o smtpd_sasl_auth_enable=yes
-    -o smtpd_sasl_authenticated_header=yes
-    -o smtpd_client_restrictions=permit_sasl_authenticated,reject
-    -o smtpd_data_restrictions=$submission_data_restrictions
-    -o smtpd_recipient_restrictions=$submission_recipient_restrictions
-    -o smtpd_sender_restrictions=$submission_sender_restrictions
+# Mailfilter via commandline, to be reinjected via sendmail.
+policy_mailfilter    unix  -       n       n       -       10      pipe
+    flags=Rq user=nobody null_sender=
+    argv=/usr/libexec/postfix/kolab_contentfilter_cli.py -f ${sender} -- ${recipient}
 
-# External submission, ssl
-0.0.0.0:11465     inet        n       -       n       -       -       smtpd
-    -o cleanup_service_name=cleanup_submission
-    -o rewrite_service_name=rewrite_submission
-    -o syslog_name=postfix/smtps
-    -o content_filter=smtp-amavis:[AMAVIS_HOST]:13026
-    -o mydestination=
-    -o local_recipient_maps=
-    -o relay_domains=
-    -o relay_recipient_maps=
-    -o smtpd_tls_security_level=encrypt
-    -o smtpd_tls_wrappermode=yes
-    -o smtpd_sasl_auth_enable=yes
-    -o smtpd_sasl_authenticated_header=yes
-    -o smtpd_client_restrictions=permit_sasl_authenticated,reject
-    -o smtpd_sender_restrictions=$submission_sender_restrictions
-    -o smtpd_recipient_restrictions=$submission_recipient_restrictions
-    -o smtpd_data_restrictions=$submission_data_restrictions
