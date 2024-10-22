@@ -450,6 +450,10 @@ kolab__deploy() {
 # Re-run a container in the dev pod
 kolab__run() {
     POD=dev
+    if [ "$1" == "--build" ]; then
+        shift
+        kolab__build $1
+    fi
     podman__run_$1
 }
 
