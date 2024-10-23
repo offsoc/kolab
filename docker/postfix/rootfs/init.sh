@@ -43,6 +43,10 @@ sed -i -r \
     /usr/libexec/postfix/kolab_policy*
 
 sed -i -r \
+    -e "s|SERVICES_HOST|http://$APP_SERVICES_DOMAIN:$SERVICES_PORT|g" \
+    /usr/libexec/postfix/kolab_contentfilter*
+
+sed -i -r \
     -e "s|DB_HOST|${DB_HOST:?"env required"}|g" \
     -e "s|DB_USERNAME|${DB_USERNAME:?"env required"}|g" \
     -e "s|DB_PASSWORD|${DB_PASSWORD:?"env required"}|g" \
