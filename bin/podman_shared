@@ -315,6 +315,7 @@ podman__run_postfix() {
         -e DB_PASSWORD \
         -e DB_DATABASE \
         -e LMTP_DESTINATION="localhost:11024" \
+        -e WITH_CONTENTFILTER \
         --health-cmd "test -e /run/saslauthd/mux && kill -0 \$(cat /var/spool/postfix/pid/master.pid)" \
         kolab-postfix:latest $@
 }

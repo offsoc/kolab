@@ -38,6 +38,14 @@ sed -i -r \
     -e "s|AMAVIS_HOST|${AMAVIS_HOST:?"env requried"}|g" \
     /etc/postfix/master.cf
 
+
+if [ "$WITH_CONTENTFILTER" != "true" ]; then
+    echo "Disabling kolab content filter"
+    sed -i -r \
+        -e "s|content_filter=policy_mailfilter:dummy|content_filter=|g" \
+        /etc/postfix/master.cf
+fi
+
 sed -i -r \
     -e "s|SERVICES_HOST|http://$APP_SERVICES_DOMAIN:$SERVICES_PORT|g" \
     /usr/libexec/postfix/kolab_policy*
