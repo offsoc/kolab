@@ -86,6 +86,8 @@ echo "Done, starting httpd..."
 
 if [ "$1" == "syncroton" ]; then
     ./update-from-source.sh || :
+    roundcubemail/bin/initdb.sh --dir syncroton/docs/SQL/ || :
+    roundcubemail/bin/updatedb.sh --dir syncroton/docs/SQL/ --package syncroton
 
     sed -i "s/?>/\$config['activesync_test_username'] = 'john@kolab.org';\n?>/" roundcubemail/config/config.inc.php
     sed -i "s/?>/\$config['activesync_test_password'] = 'simple123';\n?>/" roundcubemail/config/config.inc.php
