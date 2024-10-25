@@ -40,6 +40,9 @@ class Kernel extends ConsoleKernel
 
         // This removes passport expired/revoked tokens and auth codes from the database
         $schedule->command('passport:purge')->dailyAt('06:30');
+
+        // Keep the database size under control (every Monday)
+        $schedule->command('db:expunge')->weeklyOn(1, '04:00');
     }
 
     /**
