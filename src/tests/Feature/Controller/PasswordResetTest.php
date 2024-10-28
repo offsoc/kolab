@@ -142,7 +142,7 @@ class PasswordResetTest extends TestCase
         Queue::fake();
 
         $user = $this->getTestUser('passwordresettest@' . \config('app.domain'));
-        $user->setConfig(['limit_geo' => ['US']]);
+        $user->setSetting('limit_geo', json_encode(['US']));
         $user->setSetting('external_email', 'ext@email.com');
 
         $headers['X-Client-IP'] = '127.0.0.2';

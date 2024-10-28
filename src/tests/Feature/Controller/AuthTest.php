@@ -206,7 +206,7 @@ class AuthTest extends TestCase
     public function testLoginGeoLock(): void
     {
         $user = $this->getTestUser('john@kolab.org');
-        $user->setConfig(['limit_geo' => ['US']]);
+        $user->setSetting('limit_geo', json_encode(['US']));
 
         $headers['X-Client-IP'] = '127.0.0.2';
         $post = ['email' => 'john@kolab.org', 'password' => 'simple123'];
