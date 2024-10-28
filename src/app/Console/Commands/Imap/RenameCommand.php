@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands\Imap;
 
+use App\Backends\IMAP;
 use App\Console\Command;
 
 class RenameCommand extends Command
@@ -31,9 +32,9 @@ class RenameCommand extends Command
         $sourceMailbox = $this->argument('sourceMailbox');
         $targetMailbox = $this->argument('targetMailbox');
 
-        \App\Backends\IMAP::renameMailbox(
-            self::userMailbox($user, $sourceMailbox),
-            self::userMailbox($user, $targetMailbox)
+        IMAP::renameMailbox(
+            IMAP::userMailbox($user, $sourceMailbox),
+            IMAP::userMailbox($user, $targetMailbox)
         );
     }
 }

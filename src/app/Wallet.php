@@ -31,7 +31,7 @@ class Wallet extends Model
     /** @var bool Indicates that the model should be timestamped or not */
     public $timestamps = false;
 
-    /** @var array The attributes' default values */
+    /** @var array<string, mixed> The attributes' default values */
     protected $attributes = [
         'balance' => 0,
     ];

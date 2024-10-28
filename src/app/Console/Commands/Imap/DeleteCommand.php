@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands\Imap;
 
+use App\Backends\IMAP;
 use App\Console\Command;
 
 class DeleteCommand extends Command
@@ -31,20 +32,20 @@ class DeleteCommand extends Command
         $mailbox = $this->argument('mailbox');
         if ($mailbox == "*") {
             // Reverse so subfolders are deleted before parent folders
-            foreach (array_reverse(\App\Backends\IMAP::listMailboxes($user)) as $mailbox) {
+            foreach (array_reverse(IMAP::listMailboxes($user)) as $mailbox) {
                 if ($this->option('clear')) {
-                    \App\Backends\IMAP::clearMailbox($mailbox);
+                    IMAP::clearMailbox($mailbox);
                 } else {
-                    \App\Backends\IMAP::deleteMailbox($mailbox);
+                    IMAP::deleteMailbox($mailbox);
                 }
             }
             // Can't delete INBOX
-            \App\Backends\IMAP::clearMailbox(\App\Backends\IMAP::userMailbox($user, "INBOX"));
+            IMAP::clearMailbox(IMAP::userMailbox($user, "INBOX"));
         } else {
             if ($this->option('clear')) {
-                \App\Backends\IMAP::clearMailbox(\App\Backends\IMAP::userMailbox($user, $mailbox));
+                IMAP::clearMailbox(IMAP::userMailbox($user, $mailbox));
             } else {
-                \App\Backends\IMAP::deleteMailbox(\App\Backends\IMAP::userMailbox($user, $mailbox));
+                IMAP::deleteMailbox(IMAP::userMailbox($user, $mailbox));
             }
         }
     }

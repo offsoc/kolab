@@ -73,13 +73,13 @@ class MetricsController extends Controller
     /**
      * Expose kolab metrics
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return \Illuminate\Http\Response The response
      */
     public function metrics()
     {
         $appDomain = \config('app.domain');
         $tenantId = \config('app.tenant_id');
-        //TODO just get this from the stats table instead?
+        // TODO: just get this from the stats table instead?
         $numberOfPayingUsers = $this->collectPayersCount();
 
         $numberOfUsers = User::count();
