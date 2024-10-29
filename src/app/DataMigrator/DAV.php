@@ -36,8 +36,7 @@ class DAV implements ExporterInterface, ImporterInterface
     public function __construct(Account $account, Engine $engine)
     {
         $username = $account->username . ($account->loginas ? "**{$account->loginas}" : '');
-        $baseUri = rtrim($account->uri, '/');
-        $baseUri = preg_replace('|^dav|', 'http', $baseUri);
+        $baseUri = preg_replace('|^dav|', 'http', $account->uri);
 
         $this->client = new DAVClient($username, $account->password, $baseUri);
         $this->engine = $engine;
