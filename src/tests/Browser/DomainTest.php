@@ -115,6 +115,7 @@ class DomainTest extends TestCaseDusk
                 ->whenAvailable('@confirm', function ($browser) use ($domain) {
                     $browser->assertSeeIn('pre', $domain->namespace)
                         ->assertSeeIn('pre', $domain->hash())
+                        ->scrollTo('button')->pause(500)
                         ->click('button')
                         ->assertToast(Toast::TYPE_SUCCESS, 'Domain ownership confirmed successfully.');
 

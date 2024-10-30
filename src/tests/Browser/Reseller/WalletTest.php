@@ -172,17 +172,10 @@ class WalletTest extends TestCaseDusk
                         ->assertSeeIn('table tbody tr:nth-child(2) td.datetime', $receipts[0]);
 
                     // Download a receipt file
-                    $browser->click('table tbody tr:nth-child(2) td.selection button')
-                        ->waitUntilMissing('.app-loader')
-                        ->click('button')
-                        ->pause(2000);
+                    $browser->click('table tbody tr:nth-child(2) td.buttons button')
+                        ->waitUntilMissing('.app-loader');
 
-                    $files = glob(__DIR__ . '/../downloads/*.pdf');
-
-                    $filename = pathinfo($files[0], PATHINFO_BASENAME);
-                    $this->assertTrue(strpos($filename, $receipts[0]) !== false);
-
-                    $content = $browser->readDownloadedFile($filename, 0);
+                    $content = $browser->readDownloadedFile($filename = "Kolab Receipt for {$receipts[0]}.pdf");
                     $this->assertStringStartsWith("%PDF-1.", $content);
 
                     $browser->removeDownloadedFile($filename);

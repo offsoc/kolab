@@ -204,6 +204,7 @@ class SettingsTest extends TestCaseDusk
                     $browser
                         ->type('input#password', '12345678')
                         ->type('input#password_confirmation', '12345678')
+                        ->scrollTo('button[type=submit]')->pause(500)
                         ->click('button[type=submit]');
                 })
                 ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');

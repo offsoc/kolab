@@ -214,13 +214,18 @@ class Browser extends \Laravel\Dusk\Browser
         $filename = __DIR__ . "/Browser/downloads/$filename";
 
         // Give the browser a chance to finish download
-        if (!file_exists($filename) && $sleep) {
+        // Note: For unknown reason Chromium would create files with added underscore
+        if (!file_exists($filename) && !file_exists("{$filename}_") && $sleep) {
             sleep($sleep);
         }
 
-        Assert::assertFileExists($filename);
+        if (file_exists($filename)) {
+            return file_get_contents($filename);
+        } elseif (file_exists("{$filename}_")) {
+            return file_get_contents("{$filename}_");
+        }
 
-        return file_get_contents($filename);
+        Assert::assertFileExists($filename);
     }
 
     /**
@@ -229,6 +234,7 @@ class Browser extends \Laravel\Dusk\Browser
     public function removeDownloadedFile($filename)
     {
         @unlink(__DIR__ . "/Browser/downloads/$filename");
+        @unlink(__DIR__ . "/Browser/downloads/{$filename}_"); // see readDownloadedFile() method
 
         return $this;
     }

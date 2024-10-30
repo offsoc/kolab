@@ -184,7 +184,7 @@
                 let scope = this.scope
                 let id = this.$route.params[scope]
 
-                if (scope == 'dashboard') {
+                if (scope == 'dashboard' || scope == 'settings') {
                     id = this.$root.authInfo.id
                     scope = 'user'
                 } else if (scope =='distlist') {
@@ -197,7 +197,7 @@
                 return '/api/v4/' + scope + 's/' + id + '/status'
             },
             scopeLabel() {
-                return this.scope == 'dashboard' ? 'account' : this.scope
+                return this.scope == 'dashboard' || this.scope == 'settings' ? 'account' : this.scope
             }
         }
     }

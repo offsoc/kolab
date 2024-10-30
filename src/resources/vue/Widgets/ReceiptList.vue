@@ -10,10 +10,10 @@
             </thead>
             <tbody>
                 <tr v-for="receipt in receipts" :id="'log' + receipt.id" :key="receipt.id">
-                    <td class="datetime">{{ receipt.period }}</td>
+                    <td class="datetime w-100">{{ receipt.period }}</td>
                     <td :class="'price ' + className(receipt)">{{ amount(receipt) }}</td>
-                    <td class="selection">
-                        <btn class="btn-secondary float-end" @click="receiptDownload(receipt.period)" icon="download">{{ $t('btn.download') }}</btn>
+                    <td class="buttons">
+                        <btn class="btn btn-link p-0 ms-1" @click="receiptDownload(receipt.period)" icon="download" :title="$t('btn.download')"></btn>
                     </td>
                 </tr>
             </tbody>
@@ -22,7 +22,6 @@
         <list-more v-if="hasMore" :on-click="loadMore"></list-more>
     </div>
 </template>
-
 
 <script>
     import ListTools from './ListTools'

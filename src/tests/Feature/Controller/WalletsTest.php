@@ -125,7 +125,7 @@ class WalletsTest extends TestCase
         // Valid receipt id
         $year = intval(date('Y')) - 1;
         $receiptId = "$year-12";
-        $filename = \config('app.name') . " Receipt for $year-12";
+        $filename = \config('app.name') . " Receipt for $year-12.pdf";
 
         $response = $this->actingAs($user)->get("api/v4/wallets/{$wallet->id}/receipts/{$receiptId}");
 

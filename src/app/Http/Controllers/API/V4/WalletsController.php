@@ -81,7 +81,7 @@ class WalletsController extends ResourceController
             'site' => \config('app.name')
         ];
 
-        $filename = self::trans('documents.receipt-filename', $params);
+        $filename = self::trans('documents.receipt-filename', $params) . '.pdf';
 
         $receipt = new \App\Documents\Receipt($wallet, (int) $year, (int) $month);
 

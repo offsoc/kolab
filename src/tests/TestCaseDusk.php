@@ -53,12 +53,15 @@ abstract class TestCaseDusk extends BaseTestCase
      */
     protected function driver()
     {
+        $download_dir = __DIR__ . '/Browser/downloads';
+
         $options = (new ChromeOptions())->addArguments([
             '--lang=en_US',
             '--disable-gpu',
-            '--headless',
+            '--headless=new',
             '--no-sandbox',
             '--disable-dev-shm-usage',
+            '--disable-web-security',
             '--use-fake-ui-for-media-stream',
             '--use-fake-device-for-media-stream',
             '--enable-usermedia-screen-capturing',
@@ -70,7 +73,9 @@ abstract class TestCaseDusk extends BaseTestCase
         // For file download handling
         $prefs = [
             'profile.default_content_settings.popups' => 0,
-            'download.default_directory' => __DIR__ . '/Browser/downloads',
+            'download.default_directory' => $download_dir,
+            // 'download.prompt_for_download' => false,
+            // 'download.directory_upgrade' => true,
         ];
 
         $options->setExperimentalOption('prefs', $prefs);
@@ -92,21 +97,27 @@ abstract class TestCaseDusk extends BaseTestCase
         }
 
         // Make sure downloads dir exists and is empty
-        if (!file_exists(__DIR__ . '/Browser/downloads')) {
-            mkdir(__DIR__ . '/Browser/downloads', 0777, true);
+        if (!file_exists($download_dir)) {
+            mkdir($download_dir, 0777, true);
         } else {
-            foreach (glob(__DIR__ . '/Browser/downloads/*') as $file) {
+            foreach (glob("{$download_dir}/*") as $file) {
                 @unlink($file);
             }
         }
 
-        return RemoteWebDriver::create(
+        $driver = RemoteWebDriver::create(
             'http://localhost:9515',
-            DesiredCapabilities::chrome()->setCapability(
-                ChromeOptions::CAPABILITY,
-                $options
-            )
+            DesiredCapabilities::chrome()->setCapability(ChromeOptions::CAPABILITY, $options)
         );
+
+        // Note: Looks like this is the only way to set the downloads directory, options above do not work anymore
+        $result = $driver->executeCustomCommand(
+            '/session/:sessionId/chromium/send_command',
+            'POST',
+            ['cmd' => 'Page.setDownloadBehavior', 'params' => ['behavior' => 'allow', 'downloadPath' => $download_dir]]
+        );
+
+        return $driver;
     }
 
     /**
