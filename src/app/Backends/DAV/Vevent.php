@@ -17,11 +17,14 @@ class Vevent extends CommonObject
     public $class;
     public $comment;
     public $description;
+    public $exceptions = [];
     public $exdate = [];
     public $location;
+    public $method;
     public $organizer;
     public $priority;
     public $prodid;
+    public $recurrenceId;
     public $rdate = [];
     public $rrule = [];
     public $sequence;
@@ -78,10 +81,22 @@ class Vevent extends CommonObject
             $this->prodid = (string) $this->vobject->PRODID;
         }
 
+        if (!empty($this->vobject->METHOD)) {
+            $this->method = (string) $this->vobject->METHOD;
+        }
+
+        $hasMaster = null;
+
         foreach ($this->vobject->getComponents() as $component) {
             if ($component->name == $selfType) {
-                $this->fromVObject($component);
-                return;
+                if (empty($hasMaster) && empty($component->{'RECURRENCE-ID'})) {
+                    $this->fromVObject($component);
+                    $hasMaster = true;
+                } elseif ($this->uid && $this->uid == $component->uid && !empty($component->{'RECURRENCE-ID'})) {
+                    $exception = new static(); // @phpstan-ignore-line
+                    $exception->fromVObject($component);
+                    $this->exceptions[] = $exception;
+                }
             }
         }
     }
@@ -91,7 +106,7 @@ class Vevent extends CommonObject
      *
      * @param Component $vobject Sabre/VObject component
      */
-    protected function fromVObject(Component $vobject): void
+    public function fromVObject(Component $vobject): void
     {
         $string_properties = [
             'CLASS',
@@ -99,6 +114,7 @@ class Vevent extends CommonObject
             'DESCRIPTION',
             'LOCATION',
             'PRIORITY',
+            'RECURRENCE-ID',
             'SEQUENCE',
             'STATUS',
             'SUMMARY',
@@ -153,8 +169,7 @@ class Vevent extends CommonObject
                 case 'EXDATE':
                 case 'RDATE':
                     $key = strtolower($prop->name);
-
-                    // TODO
+                    $this->{$key}[] = $prop;
                     break;
 
                 case 'ATTENDEE':

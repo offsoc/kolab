@@ -4,11 +4,13 @@ node_modules/
 package-lock.json
 public/css/*.css
 public/hot
-public/js/*.js
+public/js/
 public/storage/
+public/themes/
 storage/*.key
 storage/*.log
 storage/*-????-??-??*
+storage/ews/
 storage/export/
 tests/report/
 vendor

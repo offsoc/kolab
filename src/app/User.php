@@ -13,6 +13,7 @@ use App\Traits\SettingsTrait;
 use App\Traits\StatusPropertyTrait;
 use Dyrynda\Database\Support\NullableFields;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -37,6 +38,7 @@ class User extends Authenticatable
     use EntitleableTrait;
     use EmailPropertyTrait;
     use HasApiTokens;
+    use Notifiable;
     use NullableFields;
     use UserConfigTrait;
     use UuidIntKeyTrait;

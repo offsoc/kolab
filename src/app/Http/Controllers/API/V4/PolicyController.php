@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\V4;
 
 use App\Http\Controllers\Controller;
+use App\Policy\Mailfilter\RequestHandler as Mailfilter;
 use App\Policy\RateLimit;
 use App\Policy\RateLimitWhitelist;
 use Illuminate\Http\Request;
@@ -39,6 +40,18 @@ class PolicyController extends Controller
         ];
 
         return response()->json($result, 200);
+    }
+
+    /**
+     * SMTP Content Filter
+     *
+     * @param Request $request The API request.
+     *
+     * @return \Illuminate\Http\Response The response
+     */
+    public function mailfilter(Request $request)
+    {
+        return Mailfilter::handle($request);
     }
 
     /*

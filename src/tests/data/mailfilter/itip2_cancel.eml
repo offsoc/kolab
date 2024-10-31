@@ -1,0 +1,70 @@
+MIME-Version: 1.0
+From: Jack <jack@kolab.org>
+Date: Tue, 09 Jul 2024 14:43:04 +0200
+Message-ID: <fe9deee5182804694372696db14c90f2@kolab.org>
+To: john@kolab.org
+Subject: The meeting has been cancelled
+Content-Type: multipart/alternative;
+ boundary="=_f77327deb61c6eccadcf01b3f6f854cb"
+
+--=_f77327deb61c6eccadcf01b3f6f854cb
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=UTF-8
+
+An even occurence cancelled by the organizer.
+
+This is what happens if you remove a single occurrence (also if an exception does not exist yet)
+using Kolab Webmail.
+
+--=_f77327deb61c6eccadcf01b3f6f854cb
+Content-Transfer-Encoding: 8bit
+Content-Type: text/calendar; charset=UTF-8; method=CANCEL;
+ name=event.ics
+
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Roundcube 1.5-git//Sabre VObject 4.5.4//EN
+METHOD:CANCEL
+CALSCALE:GREGORIAN
+BEGIN:VTIMEZONE
+TZID:Europe/Berlin
+BEGIN:STANDARD
+DTSTART:20231029T010000
+TZOFFSETFROM:+0200
+TZOFFSETTO:+0100
+TZNAME:CET
+END:STANDARD
+BEGIN:STANDARD
+DTSTART:20241027T010000
+TZOFFSETFROM:+0200
+TZOFFSETTO:+0100
+TZNAME:CET
+END:STANDARD
+BEGIN:DAYLIGHT
+DTSTART:20240331T010000
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0200
+TZNAME:CEST
+END:DAYLIGHT
+END:VTIMEZONE
+BEGIN:VEVENT
+UID:5463F1DDF6DA264A3FC70E7924B729A5-222222
+RECURRENCE-ID;TZID=Europe/Berlin:20240717T123000
+DTSTAMP:20240709T124304Z
+CREATED:20240709T124304Z
+LAST-MODIFIED:20240709T124304Z
+DTSTART;TZID=Europe/Berlin:20240717T123000
+DTEND;TZID=Europe/Berlin:20240717T133000
+SUMMARY:Test Meeting
+LOCATION:Berlin
+SEQUENCE:0
+TRANSP:OPAQUE
+STATUS:CANCELLED
+ATTENDEE;CN=John;PARTSTAT=NEEDS-ACTION;ROLE=REQ-PARTICIPANT;CUTYPE=INDI
+ VIDUAL;RSVP=TRUE:mailto:john@kolab.org
+ATTENDEE;CN=Ned;PARTSTAT=NEEDS-ACTION;ROLE=REQ-PARTICIPANT;CUTYPE=IND
+ IVIDUAL;RSVP=TRUE:mailto:ned@kolab.org
+ORGANIZER;CN=Jack:mailto:jack@kolab.org
+END:VEVENT
+END:VCALENDAR
+--=_f77327deb61c6eccadcf01b3f6f854cb--

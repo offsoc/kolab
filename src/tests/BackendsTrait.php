@@ -49,6 +49,7 @@ trait BackendsTrait
             $location = rtrim($folder->href, '/') . '/' . $uid . '.' . pathinfo($filename, \PATHINFO_EXTENSION);
 
             $content = new DAV\Opaque($content);
+            $content->uid = $uid;
             $content->href = $location;
             $content->contentType = $type == Engine::TYPE_CONTACT
                 ? 'text/vcard; charset=utf-8'

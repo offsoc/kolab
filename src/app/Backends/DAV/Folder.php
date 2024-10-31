@@ -22,6 +22,9 @@ class Folder
     /** @var ?string Folder color (calendar-color property) */
     public $color;
 
+    /** @var ?string Folder owner (email) */
+    public $owner;
+
 
     /**
      * Create Folder object from a DOMElement element
@@ -66,6 +69,15 @@ class Folder
                     $_type = explode(':', $node->nodeName);
                     $types[] = count($_type) > 1 ? $_type[1] : $_type[0];
                 }
+            }
+        }
+
+        if ($owner = $element->getElementsByTagName('owner')->item(0)) {
+            if ($owner->firstChild) {
+                $href = $owner->firstChild->nodeValue; // owner principal href
+                $href = explode('/', trim($href, '/'));
+
+                $folder->owner = urldecode(end($href));
             }
         }
 

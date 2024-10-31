@@ -230,7 +230,14 @@ return [
     'swoole' => [
         'options' => [
             'log_file' => storage_path('logs/swoole_http.log'),
+
+            // Max input size, this does not apply to file uploads
             'package_max_length' => env('SWOOLE_PACKAGE_MAX_LENGTH', 10 * 1024 * 1024),
+
+            // This defines max. size of a file uploaded using multipart/form-data method
+            // Swoole will handle the content with a temp. file.
+            'upload_max_filesize' => env('SWOOLE_UPLOAD_MAX_FILESIZE', 10 * 1024 * 1024),
+
             'enable_coroutine' => false,
             //FIXME the daemonize option does not work
             // 'daemonize' => env('OCTANE_DAEMONIZE', true),

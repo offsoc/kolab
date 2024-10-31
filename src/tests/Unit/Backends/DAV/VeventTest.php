@@ -24,17 +24,23 @@ class VeventTest extends TestCase
         <c:calendar-data><![CDATA[BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//Test//EN
+METHOD:PUBLISH
 CALSCALE:GREGORIAN
 BEGIN:VEVENT
 UID:$uid
 DTSTAMP:20221016T103238Z
 DTSTART;VALUE=DATE:20221013
 DTEND;VALUE=DATE:20221014
+SEQUENCE:1
 SUMMARY:My summary
 DESCRIPTION:desc
 RRULE:FREQ=WEEKLY
 TRANSP:OPAQUE
 ORGANIZER:mailto:organizer@test.com
+ATTENDEE;CN=John;PARTSTAT=ACCEPTED;ROLE=REQ-PARTICIPANT;CUTYPE=INDI
+ VIDUAL:mailto:john@kolab.org
+ATTENDEE;CN=Ned;PARTSTAT=NEEDS-ACTION;ROLE=REQ-PARTICIPANT;CUTYPE=IND
+ IVIDUAL;RSVP=TRUE:mailto:ned@kolab.org
 END:VEVENT
 END:VCALENDAR
 ]]></c:calendar-data>
@@ -57,6 +63,9 @@ XML;
         $this->assertSame('My summary', $event->summary);
         $this->assertSame('desc', $event->description);
         $this->assertSame('OPAQUE', $event->transp);
+        $this->assertSame('1', $event->sequence);
+        $this->assertSame('PUBLISH', $event->method);
+        $this->assertSame('-//Test//EN', $event->prodid);
 
         // TODO: Should we make these Sabre\VObject\Property\ICalendar\DateTime properties
         $this->assertSame('20221016T103238Z', (string) $event->dtstamp);
@@ -69,6 +78,19 @@ XML;
             'partstat' => 'ACCEPTED',
         ];
         $this->assertSame($organizer, $event->organizer);
+
+        $this->assertSame(false, $event->attendees[0]['rsvp']);
+        $this->assertSame('john@kolab.org', $event->attendees[0]['email']);
+        $this->assertSame('John', $event->attendees[0]['cn']);
+        $this->assertSame('ACCEPTED', $event->attendees[0]['partstat']);
+        $this->assertSame('REQ-PARTICIPANT', $event->attendees[0]['role']);
+        $this->assertSame('INDIVIDUAL', $event->attendees[0]['cutype']);
+        $this->assertSame(true, $event->attendees[1]['rsvp']);
+        $this->assertSame('ned@kolab.org', $event->attendees[1]['email']);
+        $this->assertSame('Ned', $event->attendees[1]['cn']);
+        $this->assertSame('NEEDS-ACTION', $event->attendees[1]['partstat']);
+        $this->assertSame('REQ-PARTICIPANT', $event->attendees[1]['role']);
+        $this->assertSame('INDIVIDUAL', $event->attendees[1]['cutype']);
 
         $recurrence = [
             'freq' => 'WEEKLY',

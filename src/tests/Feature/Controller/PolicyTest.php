@@ -94,4 +94,26 @@ class PolicyTest extends TestCase
         $this->assertEquals('DUNNO', $json['response']);
         $this->assertMatchesRegularExpression('/^Received-Greylist: greylisted from/', $json['prepend'][0]);
     }
+
+    /**
+     * Test mail filter (POST /api/webhooks/policy/mail/filter)
+     */
+    public function testMailfilter()
+    {
+        // Note: Only basic tests here. More detailed policy handler tests are in another place
+
+        $headers = ['CONTENT_TYPE' => 'message/rfc822'];
+        $post = file_get_contents(__DIR__ . '/../../data/mail/1.eml');
+        $post = str_replace("\n", "\r\n", $post);
+
+        $url = '/api/webhooks/policy/mail/filter?recipient=john@kolab.org';
+        $response = $this->call('POST', $url, [], [], [], $headers, $post)
+            ->assertStatus(201);
+
+        // TODO: Test multipart/form-data request
+        // TODO: test returning (modified) mail content
+        // TODO: test rejecting mail
+        // TODO: Test running multiple modules
+        $this->markTestIncomplete();
+    }
 }

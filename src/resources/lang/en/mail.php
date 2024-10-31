@@ -27,6 +27,26 @@ return [
     'degradedaccountreminder-body4' => "You can also delete your account there, making sure your data disappears from our systems.",
     'degradedaccountreminder-body5' => "Thank you for your consideration!",
 
+    'itip-cancel-subject' => "\":summary\" has been canceled",
+    'itip-cancel-body' => "The event \":summary\" at :start has been canceled by the organizer."
+        . " The copy in your calendar has been removed accordingly.",
+
+    'itip-reply-subject' => "\":summary\" has been updated",
+    'itip-reply-body' => "The event \":summary\" at :start has been updated in your calendar.",
+
+    'itip-request-subject' => "\":summary\" has been updated",
+    'itip-request-body' => "The event \":summary\" at :start has been updated in your calendar.",
+    'itip-request-changes' => "Changes submitted by :sender have been automatically applied.",
+
+    'itip-attendee-accepted' => ":sender accepted the invitation.",
+    'itip-attendee-declined' => ":sender declined the invitation.",
+    'itip-attendee-tentative' => ":sender accepted the invitation tentatively.",
+    'itip-attendee-delegated' => ":sender delegated the invitation to :delegatee.",
+
+    'itip-recurrence-note' => "NOTE: This only refers to this single occurrence!",
+    'itip-footer' => "This is an automated message. Please do not reply.",
+    'itip-comment' => ":sender provided comment: :comment",
+
     'negativebalance-subject' => ":site Payment Required",
     'negativebalance-body' => "This is a notification to let you know that your :email account balance has run into the negative and requires your attention. "
         . "Consider setting up an automatic payment to avoid messages like this in the future.",

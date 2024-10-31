@@ -16,7 +16,7 @@ class Vtodo extends Vevent
      *
      * @param Component $vobject Sabre/VObject component
      */
-    protected function fromVObject(Component $vobject): void
+    public function fromVObject(Component $vobject): void
     {
         // Handle common properties with VEVENT
         parent::fromVObject($vobject);

@@ -16,11 +16,13 @@ class Search
 
     public $withContent = false;
 
+    public $filters = [];
 
-    public function __construct($component, $withContent = false)
+    public function __construct($component, $withContent = false, $filters = [])
     {
         $this->component = $component;
         $this->withContent = $withContent;
+        $this->filters = $filters;
     }
 
     /**
@@ -67,16 +69,15 @@ class Search
         }
 
         // Search filter
-        $filter = '';
+        $filters = $this->filters;
         if ($this->component == DAV::TYPE_VCARD) {
             $query = 'addressbook-query';
         } else {
             $query = 'calendar-query';
-            $filter = '<c:filter>'
-                . '<c:comp-filter name="VCALENDAR">'
-                . '<c:comp-filter name="' . $this->component . '" /></c:comp-filter>'
-                . '</c:filter>';
+            array_unshift($filters, new SearchCompFilter('VCALENDAR', [new SearchCompFilter($this->component)]));
         }
+
+        $filter = new SearchFilter($filters);
 
         if (empty($props)) {
             $props = '<d:allprop/>';

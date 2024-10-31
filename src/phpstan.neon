@@ -3,6 +3,7 @@ includes:
 parameters:
     ignoreErrors:
         - '#Access to an undefined property [a-zA-Z\\]+::\$pivot#'
+        - '#Access to an undefined property Sabre\\VObject\\(Component|Document)::#'
         - '#Call to an undefined method Tests\\Browser::#'
         - '#Call to an undefined method garethp\\ews\\API\\Type::#'
     level: 5

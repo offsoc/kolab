@@ -186,6 +186,7 @@ class DAV
                 . '<d:prop>'
                     . '<d:resourcetype />'
                     . '<d:displayname />'
+                    . '<d:owner/>'
                     . '<cs:getctag />'
                     . $props
                 . '</d:prop>'
@@ -425,10 +426,11 @@ class DAV
      * @param string     $location  Folder location
      * @param DAV\Search $search    Search request parameters
      * @param callable   $callback  A callback to execute on every item
+     * @param bool       $opaque    Return objects as instances of DAV\Opaque
      *
      * @return false|array List of objects on success, False on error
      */
-    public function search(string $location, DAV\Search $search, $callback = null)
+    public function search(string $location, DAV\Search $search, $callback = null, $opaque = false)
     {
         $headers = ['Depth' => $search->depth, 'Prefer' => 'return-minimal'];
 
@@ -442,7 +444,11 @@ class DAV
         $objects = [];
 
         foreach ($response->getElementsByTagName('response') as $element) {
-            $object = $this->objectFromElement($element, $search->component);
+            if ($opaque) {
+                $object = DAV\Opaque::fromDomElement($element);
+            } else {
+                $object = $this->objectFromElement($element, $search->component);
+            }
 
             if ($callback) {
                 $object = $callback($object);
@@ -598,15 +604,21 @@ class DAV
     protected function request($path, $method, $body = '', $headers = [])
     {
         $debug = \config('app.debug');
-        $url = $this->url;
+        $url = trim($this->url, '/');
 
         $this->responseHeaders = [];
 
-        if ($path && ($rootPath = parse_url($url, PHP_URL_PATH)) && str_starts_with($path, $rootPath)) {
-            $path = substr($path, strlen($rootPath));
-        }
+        // Remove the duplicate path prefix
+        if ($path) {
+            $rootPath = parse_url($url, PHP_URL_PATH);
+            $path = '/' . ltrim($path, '/');
 
-        $url .= $path;
+            if ($rootPath && str_starts_with($path, $rootPath)) {
+                $path = substr($path, strlen($rootPath));
+            }
+
+            $url .= $path;
+        }
 
         $client = Http::withBasicAuth($this->user, $this->password)
             // ->withToken($token) // Bearer token
