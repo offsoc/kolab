@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\DB;
 
 class MetricsController extends Controller
 {
-
     private function addTenantContext($query)
     {
         if ($tenantId = \config('app.tenant_id')) {
@@ -88,6 +87,7 @@ class MetricsController extends Controller
         $numberOfRestrictedUsers = User::where('status', '&', User::STATUS_RESTRICTED)->count();
         $numberOfWalletsWithBalanceBelowManadate = $this->numberOfWalletsWithBalanceBelowManadate();
 
+        // phpcs:disable
         $text = <<<EOF
         # HELP kolab_users_count Total number of users
         # TYPE kolab_users_count gauge
@@ -109,6 +109,7 @@ class MetricsController extends Controller
         kolab_wallets_balance_below_mandate_amount{instance="$appDomain", tenant="$tenantId"} $numberOfWalletsWithBalanceBelowManadate
         \n
         EOF;
+        // phpcs:enable
 
         return response(
             $text,

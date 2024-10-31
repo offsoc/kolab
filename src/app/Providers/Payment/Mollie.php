@@ -649,12 +649,15 @@ class Mollie extends \App\Providers\PaymentProvider
      */
     protected static function logRequestError($request, $exception, $msg)
     {
-        \Log::error(sprintf("%s. [%d] %s (%s). Request: %s",
+        $error = sprintf(
+            "%s. [%d] %s (%s). Request: %s",
             $msg,
             $exception->getCode(),
             $exception->getMessage(),
             $exception->getField() ?? '',
             json_encode($request),
-        ));
+        );
+
+        \Log::error($error);
     }
 }
