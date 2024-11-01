@@ -358,6 +358,10 @@ def test_dns(host, verbose = False):
         success = False
         print("  ERROR on MX record")
 
+    if not test_reverse_lookup(host, verbose):
+        success = False
+        print("  ERROR on Reverse lookup")
+
     try:
         answers = dns.resolver.resolve(f"autodiscover.{host}", 'CNAME')
         for rdata in answers:
@@ -401,8 +405,32 @@ def test_dns(host, verbose = False):
     return success
 
 
+def test_reverse_lookup(host, verbose=False):
+    success = True
+    try:
+        for address in dns.resolver.resolve_name(host).addresses():
+            print(f"  {host} resolves to", address)
+            reverseLookupResult = list(map(lambda x: str(x), dns.resolver.resolve_address(address)))
+            print(f"  Reverse lookup result", reverseLookupResult)
+            if f"{host}." not in reverseLookupResult:
+                success = False
+                print('  Reverse lookup failed (Missing PTR entry?)')
+    except dns.resolver.NXDOMAIN:
+        success = False
+        print("  ERROR on dns resolution")
+    except dns.resolver.NoAnswer:
+        success = False
+        print("  ERROR on dns resolution")
+
+    return success
+
+
 def test_email_dns(host, verbose = False):
     success = True
+
+    if not test_reverse_lookup(host, verbose):
+        success = False
+        print("  ERROR on Reverse lookup")
 
     srv_records = [
         f"_autodiscover._tcp.{host}"
