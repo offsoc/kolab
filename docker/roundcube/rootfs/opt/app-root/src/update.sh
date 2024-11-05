@@ -97,22 +97,6 @@ for skin in $(ls -1d skins/* | grep -vE '(classic|elastic|larry)'); do
     bin/updatecss.sh --dir "skins/$skin"
 done
 
-## Configs
-
-# Install plugin configs
-for plugin in $(find plugins/ -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | sort); do
-    if [ -f "plugins/${plugin}/config.inc.php.dist" ]; then
-        pushd plugins/${plugin}
-        mv config.inc.php.dist ../../config/${plugin}.inc.php
-        rm -f config.inc.php
-        ln -s ../../config/${plugin}.inc.php config.inc.php
-        popd
-    fi
-done
-
-# Copy our configs over the default ones
-cp /opt/app-root/src/roundcubemail-config-templates/* config/
-
 # Update plugins
 pushd /opt/app-root/src/roundcubemail-plugins-kolab/plugins
 for plugin in $(ls -1d)
@@ -127,6 +111,27 @@ do
 done
 popd
 
+## Configs
+
+# Install plugin configs
+for plugin in $(find plugins/ -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | sort); do
+    if [ -f "plugins/${plugin}/config.inc.php.dist" ]; then
+        mv "plugins/${plugin}/config.inc.php.dist" config/${plugin}.inc.php
+    fi
+done
+
+# Copy our configs over the default ones
+cp /opt/app-root/src/roundcubemail-config-templates/* config/
+
+# Symlink plugin configs
+for plugin in $(find plugins/ -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | sort); do
+    if [ -f "config/${plugin}.inc.php" ]; then
+        pushd plugins/${plugin}
+        rm -f config.inc.php
+        ln -s ../../config/${plugin}.inc.php config.inc.php
+        popd
+    fi
+done
 
 # Fix permissions
 chmod 777 -R logs
