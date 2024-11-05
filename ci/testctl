@@ -345,6 +345,24 @@ kolab__rctest() {
     podman__run_roundcube ./init.sh $@
 }
 
+# Run some webserver configuration checks
+kolab__rcwebservertest() {
+    export POD=dev
+    set -e
+    if $PODMAN exec $POD-roundcube curl -s -I -H 'Accept-Encoding: br,gzip,deflate' http://127.0.0.1:8080/roundcubemail/program/js/app.js | grep "Content-Encoding: gzip"; then
+        echo "deflate enabled"
+    else
+        echo "deflate not enabled"
+        exit 1
+    fi
+    if $PODMAN exec $POD-roundcube curl -s -I http://127.0.0.1:8080/roundcubemail/ | grep "Content-Security-Policy"; then
+        echo "serving a Content-Security-Policy"
+    else
+        echo "Content-Security-Policy is missing"
+        exit 1
+    fi
+}
+
 # Get a shell inside the roundcube test container to run/debug tests
 kolab__rcshell() {
     export POD=tests
