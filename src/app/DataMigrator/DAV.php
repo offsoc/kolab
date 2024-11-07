@@ -12,6 +12,7 @@ use App\DataMigrator\Interface\ImporterInterface;
 use App\DataMigrator\Interface\Item;
 use App\DataMigrator\Interface\ItemSet;
 use App\Utils;
+use Illuminate\Http\Client\RequestException;
 
 class DAV implements ExporterInterface, ImporterInterface
 {
@@ -182,9 +183,6 @@ class DAV implements ExporterInterface, ImporterInterface
         $dav_type = $this->type2DAV($folder->type);
         $location = $this->getFolderPath($folder);
         $search = new DAVSearch($dav_type, false);
-        // FIXME this avoids a crash of iRony on empty collections?
-        // It does not request items on subfolders in iRony (I tried), but maybe that's just an iRony defect?
-        $search->depth = "infinity";
 
         // TODO: We request only properties relevant to incremental migration,
         // i.e. to find that something exists and its last update time.
@@ -195,43 +193,52 @@ class DAV implements ExporterInterface, ImporterInterface
 
         $set = new ItemSet();
 
-        $result = $this->client->search(
-            $location,
-            $search,
-            function ($item) use (&$set, $dav_type, $folder, $existing, $callback) {
-                // Skip an item that exists and did not change
-                $exists = null;
-                if (!empty($existing[$item->uid])) {
-                    $exists = $existing[$item->uid]['href'];
-                    switch ($dav_type) {
-                        case DAVClient::TYPE_VCARD:
-                            if ($existing[$item->uid]['rev'] == $item->rev) {
-                                return null;
-                            }
-                            break;
-                        case DAVClient::TYPE_VEVENT:
-                        case DAVClient::TYPE_VTODO:
-                            if ($existing[$item->uid]['dtstamp'] == (string) $item->dtstamp) {
-                                return null;
-                            }
-                            break;
+        try {
+            $result = $this->client->search(
+                $location,
+                $search,
+                function ($item) use (&$set, $dav_type, $folder, $existing, $callback) {
+                    // Skip an item that exists and did not change
+                    $exists = null;
+                    if (!empty($existing[$item->uid])) {
+                        $exists = $existing[$item->uid]['href'];
+                        switch ($dav_type) {
+                            case DAVClient::TYPE_VCARD:
+                                if ($existing[$item->uid]['rev'] == $item->rev) {
+                                    return null;
+                                }
+                                break;
+                            case DAVClient::TYPE_VEVENT:
+                            case DAVClient::TYPE_VTODO:
+                                if ($existing[$item->uid]['dtstamp'] == (string) $item->dtstamp) {
+                                    return null;
+                                }
+                                break;
+                        }
                     }
+
+                    $set->items[] = Item::fromArray([
+                        'id' => $item->href,
+                        'folder' => $folder,
+                        'existing' => $exists,
+                    ]);
+
+                    if (count($set->items) == self::CHUNK_SIZE) {
+                        $callback($set);
+                        $set = new ItemSet();
+                    }
+
+                    return null;
                 }
+            );
+        } catch (RequestException $e) {
+            // iRony can go out of memory and return a 500 error on large collections.
+            // We just pretend there is nothing in the target collection, which will cause us to reupload all events.
+            // This is not normally a problem, since we upload by UID and thus overwrite what's existing.
+            \Log::warning("Exception while fetching item list. Pretending the target collection is empty: " . $e->getMessage());
+        }
 
-                $set->items[] = Item::fromArray([
-                    'id' => $item->href,
-                    'folder' => $folder,
-                    'existing' => $exists,
-                ]);
 
-                if (count($set->items) == self::CHUNK_SIZE) {
-                    $callback($set);
-                    $set = new ItemSet();
-                }
-
-                return null;
-            }
-        );
 
         if (count($set->items)) {
             $callback($set);
@@ -258,9 +265,6 @@ class DAV implements ExporterInterface, ImporterInterface
         $location = $this->getFolderPath($folder);
 
         $search = new DAVSearch($dav_type);
-        // FIXME this avoids a crash of iRony on empty collections?
-        // It does not request items on subfolders in iRony (I tried), but maybe that's just an iRony defect?
-        $search->depth = "infinity";
 
         // TODO: We request only properties relevant to incremental migration,
         // i.e. to find that something exists and its last update time.
@@ -269,33 +273,41 @@ class DAV implements ExporterInterface, ImporterInterface
         // Also, this list should be controlled by the exporter.
         $search->dataProperties = ['UID', 'X-MS-ID', 'REV', 'DTSTAMP'];
 
-        $items = $this->client->search(
-            $location,
-            $search,
-            function ($item) use ($dav_type) {
-                // Slim down the result to properties we might need
-                $object = [
-                    'href' => $item->href,
-                    'uid' => $item->uid,
-                ];
+        try {
+            $items = $this->client->search(
+                $location,
+                $search,
+                function ($item) use ($dav_type) {
+                    // Slim down the result to properties we might need
+                    $object = [
+                        'href' => $item->href,
+                        'uid' => $item->uid,
+                    ];
 
-                if (!empty($item->custom['X-MS-ID'])) {
-                    $object['x-ms-id'] = $item->custom['X-MS-ID'];
+                    if (!empty($item->custom['X-MS-ID'])) {
+                        $object['x-ms-id'] = $item->custom['X-MS-ID'];
+                    }
+
+                    switch ($dav_type) {
+                        case DAVClient::TYPE_VCARD:
+                            $object['rev'] = $item->rev;
+                            break;
+                        case DAVClient::TYPE_VEVENT:
+                        case DAVClient::TYPE_VTODO:
+                            $object['dtstamp'] = (string) $item->dtstamp;
+                            break;
+                    }
+
+                    return [$item->uid, $object];
                 }
-
-                switch ($dav_type) {
-                    case DAVClient::TYPE_VCARD:
-                        $object['rev'] = $item->rev;
-                        break;
-                    case DAVClient::TYPE_VEVENT:
-                    case DAVClient::TYPE_VTODO:
-                        $object['dtstamp'] = (string) $item->dtstamp;
-                        break;
-                }
-
-                return [$item->uid, $object];
-            }
-        );
+            );
+        } catch (RequestException $e) {
+            // iRony can go out of memory and return a 500 error on large collections.
+            // We just pretend there is nothing in the target collection, which will cause us to reupload all events.
+            // This is not normally a problem, since we upload by UID and thus overwrite what's existing.
+            \Log::warning("Exception while fetching item list. Pretending the target collection is empty: " . $e->getMessage());
+            $items = [];
+        }
 
         if ($items === false) {
             throw new \Exception("Failed to get items from a DAV folder {$location}");
