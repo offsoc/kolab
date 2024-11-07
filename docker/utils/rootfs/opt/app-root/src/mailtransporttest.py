@@ -53,7 +53,8 @@ class SendTest:
         import email.parser
         import email.policy
         msg = email.parser.BytesParser(policy=email.policy.default).parsebytes(message)
-        # print(msg)
+        if self.verbose:
+            print(msg)
 
         if msg['DKIM-Signature']:
             print("There is a DKIM-Signature.")
@@ -61,10 +62,10 @@ class SendTest:
         # DKIM validation status
         # Authentication-Results: kolab.klab.cc (amavis); dkim=pass (2048-bit key)
         #  reason="pass (just generated, assumed good)" header.d=kolab.klab.cc
-        if "dkim=pass" not in (msg['Authentication-Results'] or ""):
-            print("Failed to validate Authentication-Results header:")
-            print(msg['Authentication-Results'])
-            return False
+        for header in msg.get_all('Authentication-Results', ["No header available"]):
+            if "dkim=pass" not in header:
+                print("Failed to validate Authentication-Results header:", header)
+                return False
 
         if "NO" not in (msg['X-Spam-Flag'] or ""):
             print("Test email is flagged as spam or header is missing")
@@ -72,7 +73,13 @@ class SendTest:
             return False
 
         if "NO" not in (msg['X-Virus-Scanned'] or ""):
-            print("Message was virus scanned: " + msg['X-Virus-Scanned'])
+            print("Message was virus scanned: " + str(msg['X-Virus-Scanned']))
+
+        if msg['Received-Greylist']:
+            print("Message was greylisted: " + str(msg['Received-Greylist']))
+
+        if "Pass" not in (msg['Received-SPF'] or ""):
+            print("SPF did not pass: " + str(msg['Received-SPF']))
 
         # Ensure SPF record matches a received line?
         # Suggest SPF record ip (sender ip)
