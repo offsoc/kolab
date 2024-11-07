@@ -78,11 +78,11 @@ class IMAP implements ExporterInterface, ImporterInterface
         }
 
         if (!$this->imap->createFolder(self::toUTF7($folder->targetname))) {
-            \Log::warning("Failed to create the folder: {$this->imap->error}");
-
             if (str_contains($this->imap->error, "Mailbox already exists")) {
                 // Not an error
+                \Log::debug("Folder already exists: {$folder->targetname}");
             } else {
+                \Log::warning("Failed to create the folder: {$this->imap->error}");
                 throw new \Exception("Failed to create an IMAP folder {$folder->targetname}");
             }
         }

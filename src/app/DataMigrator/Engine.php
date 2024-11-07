@@ -108,7 +108,7 @@ class Engine
         $folderMapping = $this->options['folderMapping'] ?? [];
 
         foreach ($folders as $folder) {
-            $this->debug("Processing folder {$folder->fullname}...");
+            $this->debug("Processing folder {$folder->fullname} of type {$folder->type}...");
 
             $folder->queueId = $queue_id;
             $folder->location = $location;
