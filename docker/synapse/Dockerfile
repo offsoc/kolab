@@ -2,7 +2,7 @@ FROM apheleia/almalinux9
 
 ENV HOME=/opt/app-root/src
 
-
+# Synapse is currently crashing with twisted 24.10
 RUN dnf -y install \
         --setopt=install_weak_deps=False \
         --setopt 'tsflags=nodocs' \
@@ -20,7 +20,7 @@ RUN dnf -y install \
         openssl-devel \
         sed \
         wget && \
-        pip3 install matrix-synapse authlib && \
+        pip3 install matrix-synapse authlib "twisted<24.10"  && \
     dnf clean all
 
 COPY /rootfs /
