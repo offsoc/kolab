@@ -27,6 +27,8 @@ class CreateJob extends UserJob
      */
     public function handle()
     {
+        $this->logJobStart($this->userEmail);
+
         $user = $this->getUser();
 
         if (!$user) {

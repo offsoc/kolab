@@ -4,17 +4,9 @@ namespace App\Jobs;
 
 use App\Wallet;
 use App\Http\Controllers\API\V4\PaymentsController;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
 
-class WalletCharge implements ShouldQueue
+class WalletCharge extends CommonJob
 {
-    use Dispatchable;
-    use InteractsWithQueue;
-    use Queueable;
-
     /** @var int How many times retry the job if it fails. */
     public $tries = 5;
 
@@ -53,6 +45,8 @@ class WalletCharge implements ShouldQueue
      */
     public function handle()
     {
+        $this->logJobStart($this->walletId);
+
         if ($wallet = Wallet::find($this->walletId)) {
             PaymentsController::topUpWallet($wallet);
         }

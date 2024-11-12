@@ -138,4 +138,12 @@ abstract class CommonJob implements ShouldQueue
     {
         return $this->isReleased;
     }
+
+    /**
+     * Log human-readable job title (at least contains job class name)
+     */
+    public function logJobStart($ident = null): void
+    {
+        \Log::info('Starting ' . $this::class . ($ident ? " for {$ident}" : ''));
+    }
 }

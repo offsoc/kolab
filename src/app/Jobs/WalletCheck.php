@@ -5,17 +5,9 @@ namespace App\Jobs;
 use App\Http\Controllers\API\V4\PaymentsController;
 use App\Wallet;
 use Carbon\Carbon;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
 
-class WalletCheck implements ShouldQueue
+class WalletCheck extends CommonJob
 {
-    use Dispatchable;
-    use InteractsWithQueue;
-    use Queueable;
-
     public const THRESHOLD_DEGRADE = 'degrade';
     public const THRESHOLD_DEGRADE_REMINDER = 'degrade-reminder';
     public const THRESHOLD_BEFORE_DEGRADE = 'before-degrade';
@@ -65,6 +57,8 @@ class WalletCheck implements ShouldQueue
      */
     public function handle()
     {
+        $this->logJobStart($this->walletId);
+
         $this->wallet = Wallet::find($this->walletId);
 
         // Sanity check (owner deleted in meantime)

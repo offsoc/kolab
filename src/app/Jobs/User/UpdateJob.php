@@ -20,6 +20,8 @@ class UpdateJob extends UserJob implements ShouldBeUniqueUntilProcessing
      */
     public function handle()
     {
+        $this->logJobStart($this->userEmail);
+
         $user = $this->getUser();
 
         if (!$user) {
