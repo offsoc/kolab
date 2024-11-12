@@ -22,6 +22,8 @@ class Kernel extends ConsoleKernel
 
         // This applies wallet charges
         $schedule->command('wallet:charge')->everyFourHours();
+        // Top-up wallets that should have been topped-up but didn't for some reason
+        $schedule->command('wallet:charge --topup')->dailyAt('05:30');
 
         // This removes deleted storage files/file chunks from the filesystem
         $schedule->command('fs:expunge')->hourly();
