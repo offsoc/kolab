@@ -238,13 +238,11 @@ class DAV implements ExporterInterface, ImporterInterface
             \Log::warning("Exception while fetching item list. Pretending the target collection is empty: " . $e->getMessage());
         }
 
-
-
         if (count($set->items)) {
             $callback($set);
         }
 
-        if ($result === false) {
+        if (!isset($result) || $result === false) {
             throw new \Exception("Failed to get items from a DAV folder {$location}");
         }
 

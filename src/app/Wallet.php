@@ -101,7 +101,6 @@ class Wallet extends Model
 
         // Get all relevant entitlements...
         $entitlements = $this->entitlements()->withTrashed()
-            // @phpstan-ignore-next-line
             ->where(function (Builder $query) {
                 // existing entitlements created, or billed last less than a month ago
                 $query->where(function (Builder $query) {
