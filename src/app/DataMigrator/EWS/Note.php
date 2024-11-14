@@ -41,6 +41,14 @@ class Note extends Item
             $flags[] = 'SEEN';
         }
 
+        //low/normal/high are exist
+        if (strtolower($item->getImportance()) == "high") {
+            $flags[] = 'FLAGGED';
+        }
+
+        // Other things to potentially migrate (but we don't currently have that in imap)
+        // * Sensitivity: normal/company-confidential/confidential/private
+
         $internaldate = null;
         if ($internaldate = $item->getDateTimeReceived()) {
             $internaldate = (new \DateTime($internaldate))->format('d-M-Y H:i:s O');
