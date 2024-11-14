@@ -10,7 +10,7 @@ use garethp\ews\API\Type;
 class Task extends Item
 {
     public const FOLDER_TYPE = 'IPF.Task';
-    public const TYPE        = 'IPM.Task';
+    // public const TYPE        = 'IPM.Task';
     public const FILE_EXT    = 'ics';
 
     /**

@@ -10,7 +10,7 @@ use garethp\ews\API\Type;
 class DistList extends Item
 {
     public const FOLDER_TYPE = 'IPF.Contact';
-    public const TYPE        = 'IPM.DistList';
+    // public const TYPE        = 'IPM.DistList';
     public const FILE_EXT    = 'vcf';
 
     /**

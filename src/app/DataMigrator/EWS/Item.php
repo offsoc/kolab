@@ -38,18 +38,47 @@ abstract class Item
     }
 
     /**
+     * Lookup item handler by class
+     *
+     * Since classes are hierarchical it's possible to have more or less specific handlers, e.g.:
+     * * IPM.Note
+     * * IPM.Note.SMIME.MultipartSigned
+     *
+     * We fold reports into the same hierarchy, such as:
+     * * REPORT.IPM.Note.NDR
+     *
+     * See also:
+     * * https://learn.microsoft.com/en-us/openspecs/exchange_server_protocols/ms-asemail/51d84da6-a2da-41e9-8ca7-eb6c4e72c28d
+     * * https://learn.microsoft.com/en-us/office/vba/outlook/concepts/forms/item-types-and-message-classes
+     */
+    private static function lookupClassHandler(string $classname)
+    {
+        $itemClass = str_replace('REPORT.IPM.', '', $classname);
+        $itemClass = str_replace('IPM.', '', $itemClass);
+        $classParts = explode('.', $itemClass);
+
+        // Find the most specific handler
+        while (!empty($classParts)) {
+            $itemClass = implode('', $classParts);
+            $itemClass = "\App\DataMigrator\EWS\\{$itemClass}";
+            if (class_exists($itemClass)) {
+                return $itemClass;
+            }
+            array_pop($classParts);
+        }
+        return null;
+    }
+
+    /**
      * Factory method.
      * Returns object suitable to handle specified item type.
      */
     public static function factory(EWS $driver, ItemInterface $item)
     {
-        $item_class = str_replace('IPM.', '', $item->class);
-        $item_class = "\App\DataMigrator\EWS\\{$item_class}";
-
-        if (class_exists($item_class)) {
-            return new $item_class($driver, $item->folder);
+        if ($itemClass = self::lookupClassHandler($item->class)) {
+            return new $itemClass($driver, $item->folder);
         } else {
-            \Log::warning("Encountered unhandled item class {$item_class} ");
+            \Log::warning("Encountered unhandled item class {$item->class} ");
         }
     }
 
@@ -58,10 +87,7 @@ abstract class Item
      */
     public static function isValidItem(Type $item): bool
     {
-        $item_class = str_replace('IPM.', '', $item->getItemClass());
-        $item_class = "\App\DataMigrator\EWS\\{$item_class}";
-
-        return class_exists($item_class);
+        return self::lookupClassHandler($item->getItemClass()) != null;
     }
 
     /**

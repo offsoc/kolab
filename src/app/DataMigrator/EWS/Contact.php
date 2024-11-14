@@ -10,7 +10,7 @@ use garethp\ews\API\Type;
 class Contact extends Item
 {
     public const FOLDER_TYPE = 'IPF.Contact';
-    public const TYPE        = 'IPM.Contact';
+    // public const TYPE        = 'IPM.Contact';
     public const FILE_EXT    = 'vcf';
 
     /**

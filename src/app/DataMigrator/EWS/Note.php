@@ -10,7 +10,9 @@ use garethp\ews\API\Type;
 class Note extends Item
 {
     public const FOLDER_TYPE = 'IPF.Note';
-    public const TYPE        = 'IPM.Note';
+    // public const TYPE        = 'IPM.Note';
+    // public const TYPE        = 'IPM.Note.SMIME';
+    // public const TYPE        = 'IPM.Note.SMIME.MultipartSigned';
     public const FILE_EXT    = 'eml';
 
     /**

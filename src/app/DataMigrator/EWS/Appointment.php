@@ -11,7 +11,7 @@ use garethp\ews\API\Type;
 class Appointment extends Item
 {
     public const FOLDER_TYPE = 'IPF.Appointment';
-    public const TYPE        = 'IPM.Appointment';
+    // public const TYPE        = 'IPM.Appointment';
     public const FILE_EXT    = 'ics';
 
 
