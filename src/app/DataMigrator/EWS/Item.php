@@ -48,6 +48,8 @@ abstract class Item
 
         if (class_exists($item_class)) {
             return new $item_class($driver, $item->folder);
+        } else {
+            \Log::warning("Encountered unhandled item class {$item_class} ");
         }
     }
 

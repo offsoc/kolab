@@ -474,6 +474,7 @@ class EWS implements Interface\ExporterInterface
         }
 
         if (!EWS\Item::isValidItem($item)) {
+            \Log::warning("[EWS] Encountered unhandled item class {$item->getItemClass()}");
             return null;
         }
 
