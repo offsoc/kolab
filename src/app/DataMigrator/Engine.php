@@ -106,8 +106,13 @@ class Engine
         $count = 0;
         $async = empty($options['sync']);
         $folderMapping = $this->options['folderMapping'] ?? [];
+        $folderFilter = $this->options['folderFilter'] ?? [];
 
         foreach ($folders as $folder) {
+            if (!empty($folderFilter) && !in_array($folder->fullname, $folderFilter)) {
+                $this->debug("Skipping folder {$folder->fullname} of type {$folder->type} because of filter...");
+                continue;
+            }
             $this->debug("Processing folder {$folder->fullname} of type {$folder->type}...");
 
             $folder->queueId = $queue_id;
