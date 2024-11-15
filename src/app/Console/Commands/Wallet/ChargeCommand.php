@@ -67,6 +67,7 @@ class ChargeCommand extends Command
                 $this->info($wallet->id);
             } else {
                 if ($this->option('topup')) {
+                    $this->info("Dispatching wallet charge for {$wallet->id}");
                     \App\Jobs\WalletCharge::dispatch($wallet->id);
                 } else {
                     \App\Jobs\WalletCheck::dispatch($wallet->id);
