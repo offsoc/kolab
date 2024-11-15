@@ -163,7 +163,11 @@ class Engine
         }
 
         // Create the folder on the destination server
-        $this->importer->createFolder($folder);
+        if (!$this->options['dry']) {
+            $this->importer->createFolder($folder);
+        } else {
+            \Log::info("Dry run: Creating folder {$folder->targetname}");
+        }
 
         $count = 0;
         $async = empty($this->options['sync']);
@@ -211,7 +215,11 @@ class Engine
         }
 
         $this->exporter->fetchItem($item);
-        $this->importer->createItem($item);
+        if (!$this->options['dry']) {
+            $this->importer->createItem($item);
+        } else {
+            \Log::info("Dry run: Creating item {$item->filename}");
+        }
 
         if (!empty($item->filename) && str_starts_with($item->filename, storage_path('export/'))) {
             @unlink($item->filename);
