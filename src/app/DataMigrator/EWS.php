@@ -372,9 +372,11 @@ class EWS implements Interface\ExporterInterface
         $response = $this->api->getClient()->FindItem($request);
 
         $set = new ItemSet();
+        $itemCount = 0;
 
         // @phpstan-ignore-next-line
         foreach ($response->getItems() as $item) {
+            $itemCount++;
             if ($item = $this->toItem($item, $folder, $existing, $existingIndex)) {
                 $set->items[] = $item;
                 if (count($set->items) == self::CHUNK_SIZE) {
@@ -390,6 +392,7 @@ class EWS implements Interface\ExporterInterface
             $response = $this->api->getNextPage($response);
 
             foreach ($response->getItems() as $item) {
+                $itemCount++;
                 if ($item = $this->toItem($item, $folder, $existing, $existingIndex)) {
                     $set->items[] = $item;
                     if (count($set->items) == self::CHUNK_SIZE) {
@@ -403,6 +406,7 @@ class EWS implements Interface\ExporterInterface
         if (count($set->items)) {
             $callback($set);
         }
+        \Log::debug("[EWS] Processed $itemCount items");
 
         // TODO: Delete items that do not exist anymore?
     }

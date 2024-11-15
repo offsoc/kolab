@@ -170,12 +170,18 @@ class Engine
         }
 
         $count = 0;
+        $itemCount = 0;
         $async = empty($this->options['sync']);
 
         // Fetch items from the source
         $this->exporter->fetchItemList(
             $folder,
-            function ($item_or_set) use (&$count, $async) {
+            function ($item_or_set) use (&$count, &$itemCount, $async) {
+                if ($item_or_set instanceof ItemSet) {
+                    $itemCount += count($item_or_set->items);
+                } else {
+                    $itemCount++;
+                }
                 if ($async) {
                     // Dispatch the job (for async execution)
                     if ($item_or_set instanceof ItemSet) {
@@ -195,6 +201,7 @@ class Engine
             $this->importer
         );
 
+        $this->debug("Migrated $itemCount items");
         if ($count) {
             $this->queue->bumpJobsStarted($count);
         }
