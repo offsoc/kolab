@@ -235,7 +235,9 @@ class DAV implements ExporterInterface, ImporterInterface
             // iRony can go out of memory and return a 500 error on large collections.
             // We just pretend there is nothing in the target collection, which will cause us to reupload all events.
             // This is not normally a problem, since we upload by UID and thus overwrite what's existing.
-            \Log::warning("Exception while fetching item list. Pretending the target collection is empty: " . $e->getMessage());
+            \Log::warning(
+                "Exception while fetching item list. Pretending the target collection is empty: " . $e->getMessage()
+            );
         }
 
         if (count($set->items)) {
@@ -303,7 +305,9 @@ class DAV implements ExporterInterface, ImporterInterface
             // iRony can go out of memory and return a 500 error on large collections.
             // We just pretend there is nothing in the target collection, which will cause us to reupload all events.
             // This is not normally a problem, since we upload by UID and thus overwrite what's existing.
-            \Log::warning("Exception while fetching item list. Pretending the target collection is empty: " . $e->getMessage());
+            \Log::warning(
+                "Exception while fetching item list. Pretending the target collection is empty: " . $e->getMessage()
+            );
             $items = [];
         }
 

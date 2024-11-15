@@ -32,7 +32,7 @@ class MigrateCommand extends Command
                                 {--sync : Execute migration synchronously}
                                 {--force : Force existing queue removal}
                                 {--dry : Dry run}
-                                {--folder-filter=* : Only include folder names that match this filter (matches name before mapping)}
+                                {--folder-filter=* : Exact folder name match before mapping}
                                 {--folder-mapping=* : Folder mapping in the form "source:target"}';
 //                                {--export-only : Only export data}
 //                                {--import-only : Only import previously exported data}';

@@ -472,7 +472,9 @@ class EWS implements Interface\ExporterInterface
                 // If the messageid already exists, we assume it's the same email.
                 // Flag/size changes are ignored for now.
                 // Otherwise we should set uid/size/flags on exists, so the IMAP implementation can pick it up.
-                \Log::debug("[EWS] Skipping over already existing message $msgid with class {$item->getItemClass()}...");
+                \Log::debug(
+                    "[EWS] Skipping over already existing message $msgid with class {$item->getItemClass()}..."
+                );
                 return null;
             }
         }
