@@ -481,16 +481,17 @@ class UserTest extends TestCase
         ]);
 
         $domains = $user->domains()->pluck('namespace')->all();
-
         $this->assertContains($domain->namespace, $domains);
         $this->assertContains('kolab.org', $domains);
+
+        $domains = $user->domains(false, false)->pluck('namespace')->all();
+        $this->assertSame(['kolab.org'], $domains);
 
         // Jack is not the wallet controller, so for him the list should not
         // include John's domains, kolab.org specifically
         $user = $this->getTestUser('jack@kolab.org');
 
         $domains = $user->domains()->pluck('namespace')->all();
-
         $this->assertContains($domain->namespace, $domains);
         $this->assertNotContains('kolab.org', $domains);
 
@@ -500,8 +501,16 @@ class UserTest extends TestCase
         $domain->save();
 
         $domains = $user->domains()->pluck('namespace')->all();
-
         $this->assertNotContains($domain->namespace, $domains);
+
+        // An account in a public domain
+        $user = $this->getTestUser('user-test@' . \config('app.domain'));
+
+        $domains = $user->domains()->pluck('namespace')->all();
+        $this->assertContains(\config('app.domain'), $domains);
+
+        $domains = $user->domains(true, false)->pluck('namespace')->all();
+        $this->assertSame([], $domains);
     }
 
     /**

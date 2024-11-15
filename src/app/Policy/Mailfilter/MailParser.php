@@ -24,6 +24,7 @@ class MailParser
         'content-transfer-encoding',
         'content-type',
         'from',
+        'subject',
     ];
 
     /**
@@ -223,6 +224,8 @@ class MailParser
      *
      * @param string $body    Body content
      * @param ?int   $part_id Part identifier (NULL to replace the whole message body)
+     *
+     * @throws \Exception
      */
     public function replaceBody($body, $part_id = null): void
     {
@@ -258,6 +261,69 @@ class MailParser
         }
 
         $this->stream = $copy;
+
+        // Reset structure information, the message will need to be re-parsed (in some cases)
+        $this->parts = null;
+        $this->modified = true;
+    }
+
+    /**
+     * Set header value
+     *
+     * @param string  $header Header name
+     * @param ?string $value  Header value
+     *
+     * @throws \Exception
+     */
+    public function setHeader(string $header, ?string $value = null): void
+    {
+        // TODO: This method should work also on parts, but we'd have to reset all parents
+        if ($this->start > 0) {
+            throw new \Exception("Setting header supported on the message level only");
+        }
+
+        $header_name = strtolower($header);
+        $header_name_len = strlen($header);
+
+        // Create a new resource stream to copy the content into
+        $copy = fopen('php://temp', 'r+');
+
+        // Insert the new header on top
+        if (is_string($value)) {
+            fwrite($copy, "{$header}: {$value}\r\n");
+            $this->headers[$header_name] = $value;
+        } else {
+            unset($this->headers[$header_name]);
+        }
+
+        fseek($this->stream, $position = $this->start);
+
+        // Go throughout all headers and remove the one
+        $found = false;
+        while (($line = fgets($this->stream, 2048)) !== false) {
+            if ($line == "\n" || $line == "\r\n") {
+                break;
+            }
+
+            if ($line[0] == ' ' || $line[0] == "\t") {
+                if (!$found) {
+                    fwrite($copy, $line);
+                }
+            } elseif (strtolower(substr($line, 0, $header_name_len + 1)) == "{$header_name}:") {
+                $found = true;
+            } else {
+                fwrite($copy, $line);
+                $found = false;
+            }
+
+            $position += strlen($line);
+        }
+
+        // Copy the rest of the message
+        stream_copy_to_stream($this->stream, $copy, null, $position);
+
+        $this->stream = $copy;
+        $this->bodyPosition = $position + 2;
 
         // Reset structure information, the message will need to be re-parsed (in some cases)
         $this->parts = null;

@@ -60,11 +60,13 @@ class RequestHandler
         }
 
         // TODO: The list of modules and their config will come from somewhere
-        $modules = ['Itip' /*, 'Footer'*/];
+        $modules = [
+            'itip' => Modules\ItipModule::class,
+            'external-sender' => Modules\ExternalSenderModule::class,
+        ];
 
         foreach ($modules as $module) {
-            $class = "\\App\\Policy\\Mailfilter\\Modules\\{$module}Module";
-            $engine = new $class();
+            $engine = new $module();
 
             $result = $engine->handle($parser);
 
@@ -91,6 +93,7 @@ class RequestHandler
             $stream = $parser->getStream();
 
             $response->setCallback(function () use ($stream) {
+
                 fpassthru($stream);
                 fclose($stream);
             });
@@ -98,6 +101,6 @@ class RequestHandler
             return $response;
         }
 
-        return response('', 201);
+        return response('', 204);
     }
 }

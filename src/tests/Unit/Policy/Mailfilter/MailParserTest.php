@@ -20,7 +20,7 @@ class MailParserTest extends TestCase
         $this->assertSame('eeea', $body);
 
         // Multipart/alternative mail
-        $parser = $this->getParserForFile('mailfilter/itip1.eml');
+        $parser = $this->getParserForFile('mailfilter/itip1_request.eml');
 
         $body = $parser->getBody();
 
@@ -47,7 +47,7 @@ class MailParserTest extends TestCase
     public function testGetHeader(): void
     {
         // Multipart/alternative email
-        $parser = $this->getParserForFile('mailfilter/itip1.eml');
+        $parser = $this->getParserForFile('mailfilter/itip1_request.eml');
 
         $this->assertSame('Jack <jack@kolab.org>', $parser->getHeader('from'));
         $this->assertSame('Jack <jack@kolab.org>', $parser->getHeader('From'));
@@ -86,7 +86,7 @@ class MailParserTest extends TestCase
 
         // Replace text part in multipart/alternative mail
         // Note: The body is quoted-printable encoded
-        $parser = $this->getParserForFile('mailfilter/itip1.eml');
+        $parser = $this->getParserForFile('mailfilter/itip1_request.eml');
 
         $parser->replaceBody('aa=aa', 0);
         $part = $parser->getParts()[0];
@@ -107,9 +107,43 @@ class MailParserTest extends TestCase
     }
 
     /**
+     * Test setHeader()
+     */
+    public function testSetHeader(): void
+    {
+        // Test changing a header
+        $parser = self::getParserForFile('mail/1.eml');
+
+        $this->assertSame('test sync', $parser->getHeader('subject'));
+        $this->assertSame('eeea', $parser->getBody());
+        $this->assertSame('"Sync 1" <test@kolab.org>', $parser->getHeader('from'));
+
+        $parser->setHeader('Subject', 'new subject');
+
+        $this->assertTrue($parser->isModified());
+
+        $parser = new MailParser($parser->getStream());
+
+        $this->assertSame('new subject', $parser->getHeader('subject'));
+        $this->assertSame('eeea', $parser->getBody());
+        $this->assertSame('"Sync 1" <test@kolab.org>', $parser->getHeader('from'));
+
+        // Test removing a header
+        $parser->setHeader('Subject', null);
+
+        $this->assertTrue($parser->isModified());
+
+        $parser = new MailParser($parser->getStream());
+
+        $this->assertSame(null, $parser->getHeader('subject'));
+        $this->assertSame('eeea', $parser->getBody());
+        $this->assertSame('"Sync 1" <test@kolab.org>', $parser->getHeader('from'));
+    }
+
+    /**
      * Create mail parser instance for specified test message
      */
-    public static function getParserForFile(string $file, $recipient = null): MailParser
+    public static function getParserForFile(string $file, $recipient = null, $sender = null): MailParser
     {
         $mail = file_get_contents(__DIR__ . '/../../../data/' . $file);
         $mail = str_replace("\n", "\r\n", $mail);
@@ -122,6 +156,9 @@ class MailParserTest extends TestCase
 
         if ($recipient) {
             $parser->setRecipient($recipient);
+        }
+        if ($sender) {
+            $parser->setSender($sender);
         }
 
         return $parser;

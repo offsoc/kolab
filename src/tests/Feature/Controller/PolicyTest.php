@@ -106,14 +106,23 @@ class PolicyTest extends TestCase
         $post = file_get_contents(__DIR__ . '/../../data/mail/1.eml');
         $post = str_replace("\n", "\r\n", $post);
 
-        $url = '/api/webhooks/policy/mail/filter?recipient=john@kolab.org';
+        // Basic test, no changes to the mail content
+        $url = '/api/webhooks/policy/mail/filter?recipient=john@kolab.org&sender=jack@kolab.org';
         $response = $this->call('POST', $url, [], [], [], $headers, $post)
-            ->assertStatus(201);
+            ->assertNoContent(204);
+
+        // Test returning (modified) mail content
+        $url = '/api/webhooks/policy/mail/filter?recipient=john@kolab.org&sender=jack@external.tld';
+        $content = $this->call('POST', $url, [], [], [], $headers, $post)
+            ->assertStatus(200)
+            ->assertHeader('Content-Type', 'message/rfc822')
+            ->streamedContent();
+
+        $this->assertStringContainsString('Subject: [EXTERNAL] test sync', $content);
 
         // TODO: Test multipart/form-data request
-        // TODO: test returning (modified) mail content
-        // TODO: test rejecting mail
-        // TODO: Test running multiple modules
+        // TODO: Test rejecting mail
+        // TODO: Test two modules that both modify the mail content
         $this->markTestIncomplete();
     }
 }
