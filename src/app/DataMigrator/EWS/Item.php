@@ -97,7 +97,7 @@ abstract class Item
     {
         $itemId = ['Id' => $item->id];
 
-        \Log::debug("[EWS] Fetching item {$item->id}...");
+        \Log::debug("[EWS] Fetching item {$item->id} of class {$item->class}...");
 
         // Fetch the item
         $ewsItem = $this->driver->api->getItem($itemId, $this->getItemRequest());
