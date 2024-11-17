@@ -1,0 +1,93 @@
+#!/bin/bash
+
+function usage() {
+    echo "Usage: $0 [options]"
+    echo ""
+    echo "Options:"
+    echo ""
+    echo "--age <n>"
+    echo ""
+    echo "        Age in days. Anything older goes."
+    echo ""
+    echo "--dry-run"
+    echo ""
+    echo "        Report what would have been done, but don't actually do it."
+    echo ""
+    echo "--from <address>"
+    echo ""
+    echo "        Purge all mail from envelope sender address <address>."
+    echo ""
+    echo "--interval <seconds>"
+    echo ""
+    echo "        Sleep for \$(( \$RANDOM % <seconds> )) before hammering the"
+    echo "        filesystem(s). Useful for shared storage infrastructure."
+    echo ""
+    echo "--now"
+    echo ""
+    echo "        Skip the random wait interval."
+    exit 0
+}
+
+function sleep_random() {
+    seconds=$(( $RANDOM % $1 ))
+    echo "Sleeping for ${seconds}"
+    sleep ${seconds}
+}
+
+export PATH="/sbin:/usr/sbin:/bin:/usr/bin"
+
+max_age=0
+from_addr=0
+interval=0
+now=0
+postsuper="$(which postsuper 2>/dev/null) -d -"
+
+while [ $# -gt 0 ]; do
+    case $1 in
+        --age)
+                max_age=$2
+                shift; shift
+            ;;
+
+        --dry-run)
+                postsuper="xargs -n 1 echo postsuper -d"
+                shift
+            ;;
+
+        --from)
+                from_addr=$2
+                shift; shift
+            ;;
+
+        --interval)
+                interval=$2
+                shift; shift
+            ;;
+
+        --now)
+                now=1
+                shift
+            ;;
+
+        *)
+                usage
+            ;;
+
+    esac
+done
+
+if [ ${interval} -gt 0 -a ${now} -eq 0 ]; then
+    sleep_random ${interval}
+fi
+
+if [ ${max_age} -gt 0 ]; then
+    find /var/spool/postfix/hold/ -type f \
+        -mtime +${max_age} -exec basename {} \; | \
+        ${postsuper}
+elif [ "${from_addr}" != "0" ]; then
+    mailq | \
+        grep -E '^[0-9A-F]+!' | \
+        grep -E "[[:space:]]+${from_addr}$" | \
+        sed -r -e 's/^([0-9A-F]+)!.*$/\1/g' | \
+        ${postsuper}
+fi

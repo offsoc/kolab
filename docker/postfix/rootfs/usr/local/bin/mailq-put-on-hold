@@ -1,0 +1,14 @@
+#!/bin/bash
+
+mailq | \
+    grep -iE '^([0-9A-F]+).*\s+' | \
+    grep -vE '^([0-9A-F]+)!' | \
+    awk '{print $1,$7}' | \
+    while read queueid sender; do
+
+        grep -qiE "^${sender}" /etc/postfix/sender_access && \
+            echo "${queueid}"
+
+    done | \
+    sed -e 's/*//g' | \
+    postsuper -h -

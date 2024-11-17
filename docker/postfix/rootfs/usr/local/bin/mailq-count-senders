@@ -1,0 +1,27 @@
+#!/bin/bash
+
+echo ""
+echo "Not on hold"
+echo "==========="
+echo ""
+
+mailq | \
+    grep -E '^([0-9A-F]+)[^!]\s+' | \
+    awk '{print $7}' | \
+    sort | \
+    uniq -c | \
+    sort -n -r
+
+echo ""
+echo "On hold"
+echo "======="
+echo ""
+
+mailq | \
+    grep -E '^([0-9A-F]+)!\s+' | \
+    awk '{print $7}' | \
+    sort | \
+    uniq -c | \
+    sort -n -r
+
+echo ""

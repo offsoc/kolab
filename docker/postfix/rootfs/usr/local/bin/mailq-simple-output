@@ -1,0 +1,21 @@
+#!/bin/bash
+
+mailq | grep -EA 2 '^[0-9A-F]+(\*?)\s+' | while read line; do
+    if [ "${line}" == "--" ]; then
+        if [ "${queueid}" != "" ]; then
+            echo "${queueid} ${sender} ${recipient}"
+        fi
+
+        queueid=""
+        sender=""
+        recipient=""
+        continue
+    fi
+
+    if [ "${sender}" == "" ]; then
+        queueid=$(echo $line | awk '{print $1}')
+        sender=$(echo $line | awk '{print $7}')
+    else
+        recipient=$(echo ${line} | awk '{print $1}')
+    fi
+done
