@@ -119,7 +119,7 @@ if __name__ == "__main__":
         if not protocol_state == 'data':
             print("action=DUNNO\n")
             sys.stdout.flush()
-
+            sys.exit(0)
         else:
             RESPONSE = POLICY_REQUESTS[INSTANCE].check_rate()
 
