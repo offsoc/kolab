@@ -12,7 +12,7 @@ class ResyncCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'user:resync {user?} {--deleted-only} {--dry-run}';
+    protected $signature = 'user:resync {user?} {--deleted-only} {--dry-run} {--min-age=} {--limit=}';
 
     /**
      * The console command description.
@@ -31,6 +31,8 @@ class ResyncCommand extends Command
         $user = $this->argument('user');
         $deleted_only = $this->option('deleted-only');
         $dry_run = $this->option('dry-run');
+        $min_age = $this->option('min-age');
+        $limit = $this->option('limit');
         $with_ldap = \config('app.with_ldap');
 
         if (!empty($user)) {
@@ -51,14 +53,40 @@ class ResyncCommand extends Command
                     });
             }
 
+            if ($min_age) {
+                if (preg_match('/^([0-9]+)([mdy])$/i', $min_age, $matches)) {
+                    $count = (int) $matches[1];
+                    $period = strtolower($matches[2]);
+                    $date = \Carbon\Carbon::now();
+
+                    if ($period == 'y') {
+                        $date->subYearsWithoutOverflow($count);
+                    } elseif ($period == 'm') {
+                        $date->subMonthsWithoutOverflow($count);
+                    } else {
+                        $date->subDays($count);
+                    }
+                    $users = $users->where('deleted_at', '<=', $date);
+                } else {
+                    $this->error("Invalid --min-age.");
+                    return 1;
+                }
+            }
+
             $users = $users->orderBy('id')->cursor();
         }
 
         // TODO: Maybe we should also have account:resync, domain:resync, resource:resync and so on.
 
+        $count = 0;
         foreach ($users as $user) {
+            if ($limit > 0 && $count > $limit) {
+                $this->info("Reached limit of $limit");
+                break;
+            }
             if ($user->trashed()) {
                 if (($with_ldap && $user->isLdapReady()) || $user->isImapReady()) {
+                    $count++;
                     if ($dry_run) {
                         $this->info("{$user->email}: will be pushed");
                         continue;
@@ -83,6 +111,7 @@ class ResyncCommand extends Command
                 }
             } else {
                 if (!$user->isActive() || ($with_ldap && !$user->isLdapReady()) || !$user->isImapReady()) {
+                    $count++;
                     if ($dry_run) {
                         $this->info("{$user->email}: will be pushed");
                         continue;
@@ -92,6 +121,7 @@ class ResyncCommand extends Command
 
                     $this->info("{$user->email}: pushed");
                 } elseif (!empty($req_user)) {
+                    $count++;
                     if ($dry_run) {
                         $this->info("{$user->email}: will be pushed");
                         continue;
