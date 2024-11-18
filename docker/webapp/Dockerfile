@@ -25,6 +25,7 @@ RUN /build.sh && \
     chmod -R 777 /etc/pki/ca-trust/extracted/
 
 COPY init.sh /init.sh
+COPY reload.sh /reload.sh
 COPY update.sh /update.sh
 COPY update-source.sh /update-source.sh
 
