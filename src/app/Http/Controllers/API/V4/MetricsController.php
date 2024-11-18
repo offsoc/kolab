@@ -7,6 +7,9 @@ use App\Payment;
 use App\User;
 use App\Wallet;
 use Illuminate\Support\Facades\DB;
+use Laravel\Horizon\Contracts\JobRepository;
+use Laravel\Horizon\Contracts\MetricsRepository;
+use Laravel\Horizon\Contracts\WorkloadRepository;
 
 class MetricsController extends Controller
 {
@@ -69,6 +72,41 @@ class MetricsController extends Controller
         return $count->count();
     }
 
+    protected function horizonMetrics($appDomain, $tenantId): string
+    {
+        $recentJobs = app(JobRepository::class)->countRecent();
+        $recentFailedJobs = app(JobRepository::class)->countRecentlyFailed();
+        $jobsPerMinute = intval(app(MetricsRepository::class)->jobsProcessedPerMinute());
+
+        $text = <<<EOF
+        # HELP kolab_horizon_recent_jobs Number of jobs in past 7 days
+        # TYPE kolab_horizon_recent_jobs gauge
+        kolab_horizon_recent_jobs{instance="$appDomain", tenant="$tenantId"} $recentJobs
+        # HELP kolab_horizon_recent_failed_jobs Number of jobs failed in past 7 days
+        # TYPE kolab_horizon_recent_failed_jobs gauge
+        kolab_horizon_recent_failed_jobs{instance="$appDomain", tenant="$tenantId"} $recentFailedJobs
+        # HELP kolab_horizon_jobs_per_minute Number of jobs processed per minute
+        # TYPE kolab_horizon_jobs_per_minute gauge
+        kolab_horizon_jobs_per_minute{instance="$appDomain", tenant="$tenantId"} $jobsPerMinute
+
+        EOF;
+        foreach (app(WorkloadRepository::class)->get() as $workloadMetrics) {
+            $queueName = $workloadMetrics['name'] ?? 'unknown';
+            $queueSize = $workloadMetrics['length'] ?? 0;
+            $queueWaitTime = $workloadMetrics['wait'] ?? 0;
+            $text .= <<<EOF
+            # HELP kolab_horizon_queue_size Number of jobs in queue
+            # TYPE kolab_horizon_queue_size gauge
+            kolab_horizon_queue_size{instance="$appDomain", tenant="$tenantId", queue="$queueName"} $queueSize
+            # HELP kolab_horizon_queue_wait_seconds Time until queue is empty
+            # TYPE kolab_horizon_queue_wait_seconds gauge
+            kolab_horizon_queue_wait_seconds{instance="$appDomain", tenant="$tenantId", queue="$queueName"} $queueWaitTime
+
+            EOF;
+        }
+        return $text;
+    }
+
     /**
      * Expose kolab metrics
      *
@@ -106,6 +144,8 @@ class MetricsController extends Controller
         }
         $numberOfUserWithFailedInit = $numberOfUserWithFailedInit->count();
 
+        $horizon = $this->horizonMetrics($appDomain, $tenantId);
+
         // phpcs:disable
         $text = <<<EOF
         # HELP kolab_users_count Total number of users
@@ -132,6 +172,7 @@ class MetricsController extends Controller
         # HELP kolab_users_failed_init Number of users that are still imap/ldap ready
         # TYPE kolab_users_failed_init gauge
         kolab_users_failed_init{instance="$appDomain", tenant="$tenantId"} $numberOfUserWithFailedInit
+        $horizon
         \n
         EOF;
         // phpcs:enable
