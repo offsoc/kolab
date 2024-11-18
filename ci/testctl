@@ -329,7 +329,7 @@ kolab__testrun_complete() {
 # Get a shell inside the container. Without arguments his gives you a shell in the test container, with argument inside one of the containers in the dev pod.
 kolab__shell() {
     if [[ $1 != "" ]]; then
-        POD="dev"
+        POD=${POD:-dev}
         container=$1
         shift
         command podman exec -ti $POD-$container /bin/bash
