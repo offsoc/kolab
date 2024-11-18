@@ -93,6 +93,19 @@ class MetricsController extends Controller
                     ->orWhere('status', '&', User::STATUS_LDAP_READY);
             })->count();
 
+        $numberOfUserWithFailedInit = User::where('created_at' < \Carbon\Carbon::now()->subDays(1));
+        if (\config('app.with_ldap')) {
+            // We need all users that are either not imap-ready or not ldap-ready
+            // (Can also be written as "and (status & 48 != 48)")
+            $numberOfUserWithFailedInit->where(function ($query) {
+                $query->whereNot('status', '&', User::STATUS_IMAP_READY)
+                    ->orWhereNot('status', '&', User::STATUS_LDAP_READY);
+            });
+        } else {
+            $numberOfUserWithFailedInit = $numberOfUserWithFailedInit->whereNot('status', '&', User::STATUS_IMAP_READY);
+        }
+        $numberOfUserWithFailedInit = $numberOfUserWithFailedInit->count();
+
         // phpcs:disable
         $text = <<<EOF
         # HELP kolab_users_count Total number of users
@@ -116,6 +129,9 @@ class MetricsController extends Controller
         # HELP kolab_users_deleted_with_missing_cleanup Number of users that are still imap/ldap ready
         # TYPE kolab_users_deleted_with_missing_cleanup gauge
         kolab_users_deleted_with_missing_cleanup{instance="$appDomain", tenant="$tenantId"} $numberOfDeletedUserWithMissingCleanup
+        # HELP kolab_users_failed_init Number of users that are still imap/ldap ready
+        # TYPE kolab_users_failed_init gauge
+        kolab_users_failed_init{instance="$appDomain", tenant="$tenantId"} $numberOfUserWithFailedInit
         \n
         EOF;
         // phpcs:enable
