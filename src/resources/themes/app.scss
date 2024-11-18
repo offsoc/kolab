@@ -114,13 +114,21 @@ pre {
     font-weight: bold;
 }
 
+.empty-list-body {
+    background-color: #f8f8f8;
+    color: grey;
+    text-align: center;
+    height: 8em;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
 tfoot.table-fake-body {
     td {
-        background-color: #f8f8f8;
-        color: grey;
-        text-align: center;
-        vertical-align: middle;
-        height: 8em;
+        @extend .empty-list-body;
+
+        display: table-cell;
         border: 0;
     }
 

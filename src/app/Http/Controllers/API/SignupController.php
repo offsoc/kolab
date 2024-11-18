@@ -8,9 +8,11 @@ use App\Discount;
 use App\Domain;
 use App\Plan;
 use App\Providers\PaymentProvider;
+use App\ReferralCode;
 use App\Rules\SignupExternalEmail;
 use App\Rules\SignupToken as SignupTokenRule;
 use App\Rules\Password;
+use App\Rules\ReferralCode as ReferralCodeRule;
 use App\Rules\UserEmailDomain;
 use App\Rules\UserEmailLocal;
 use App\SignupCode;
@@ -98,6 +100,7 @@ class SignupController extends Controller
             $rules['token'] = ['required', 'string', new SignupTokenRule($plan)];
         } else {
             $rules['email'] = ['required', 'string', new SignupExternalEmail()];
+            $rules['referral'] = ['nullable', 'string', new ReferralCodeRule()];
         }
 
         // Check required fields, validate input
@@ -114,6 +117,7 @@ class SignupController extends Controller
                 'last_name' => $request->last_name,
                 'plan' => $plan->title,
                 'voucher' => $request->voucher,
+                'referral' => $request->referral,
         ]);
 
         $response = [
@@ -425,6 +429,24 @@ class SignupController extends Controller
             $request->code->deleted_at = \now();
             $request->code->timestamps = false;
             $request->code->save();
+        }
+
+        // Referral program
+        if (
+            $request->code
+            && $request->code->referral
+            && ($code = ReferralCode::find($request->code->referral))
+            && $code->program->active
+        ) {
+            // Keep the code-to-user relation
+            $code->referrals()->create(['user_id' => $user->id]);
+
+            // Use discount assigned to the referral program
+            if (!$request->discount && $code->program->discount && $code->program->discount->active) {
+                $wallet = $user->wallets()->first();
+                $wallet->discount()->associate($code->program->discount);
+                $wallet->save();
+            }
         }
 
         // Bump up counter on the signup token

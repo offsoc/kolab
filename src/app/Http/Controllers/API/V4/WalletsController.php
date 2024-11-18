@@ -3,12 +3,16 @@
 namespace App\Http\Controllers\API\V4;
 
 use App\Payment;
+use App\ReferralCode;
+use App\ReferralProgram;
 use App\Transaction;
 use App\Wallet;
 use App\Http\Controllers\ResourceController;
 use App\Providers\PaymentProvider;
 use Carbon\Carbon;
+use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 /**
  * API\WalletsController
@@ -151,6 +155,68 @@ class WalletsController extends ResourceController
                 'count' => count($result),
                 'hasMore' => $hasMore,
                 'page' => $page,
+        ]);
+    }
+
+    /**
+     * Fetch active referral programs list.
+     *
+     * @param string $id Wallet identifier
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function referralPrograms($id)
+    {
+        $wallet = Wallet::find($id);
+
+        if (empty($wallet) || !$this->checkTenant($wallet->owner)) {
+            return $this->errorResponse(404);
+        }
+
+        // Only owner (or admin) has access to the wallet
+        if (!$this->guard()->user()->canRead($wallet)) {
+            return $this->errorResponse(403);
+        }
+
+        $raw_count = DB::raw('(select count(*) from referrals where referrals.code = code) as refcount');
+        $codes = ReferralCode::where('user_id', $wallet->user_id)->select('code', 'program_id', $raw_count);
+
+        $result = ReferralProgram::withObjectTenantContext($wallet->owner)
+            ->where('active', true)
+            ->leftJoinSub($codes, 'codes', function (JoinClause $join) {
+                $join->on('referral_programs.id', '=', 'codes.program_id');
+            })
+            ->select('id', 'name', 'description', 'tenant_id', 'codes.code', 'codes.refcount')
+            ->get()
+            ->map(function ($program) use ($wallet) {
+                if (empty($program->code)) {
+                    // Register/Generate a code for the user if it does not exist yet
+                    $code = $program->codes()->create(['user_id' => $wallet->user_id]);
+
+                    $program->code = $code->code;
+                }
+
+                $code = new ReferralCode();
+                $code->code = $program->code;
+                $code->program = $program; // @phpstan-ignore-line
+
+                $entry = [
+                    'id' => $program->id,
+                    'name' => $program->name,
+                    'description' => $program->description,
+                    'refcount' => $program->refcount ?? 0,
+                    'url' => $code->signupUrl(),
+                    'qrCode' => $code->qrCode(true),
+                ];
+                return $entry;
+            });
+
+        return response()->json([
+                'status' => 'success',
+                'list' => $result,
+                'count' => count($result),
+                'hasMore' => false,
+                'page' => 1,
         ]);
     }
 

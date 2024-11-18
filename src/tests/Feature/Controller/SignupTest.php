@@ -8,6 +8,7 @@ use App\Domain;
 use App\IP4Net;
 use App\Plan;
 use App\Package;
+use App\ReferralProgram;
 use App\SignupCode;
 use App\SignupInvitation as SI;
 use App\SignupToken;
@@ -46,6 +47,7 @@ class SignupTest extends TestCase
         Plan::where('title', 'test')->delete();
         IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
         VatRate::query()->delete();
+        ReferralProgram::query()->delete();
     }
 
     /**
@@ -68,6 +70,7 @@ class SignupTest extends TestCase
         Plan::where('title', 'test')->delete();
         IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
         VatRate::query()->delete();
+        ReferralProgram::query()->delete();
 
         parent::tearDown();
     }
@@ -980,6 +983,67 @@ class SignupTest extends TestCase
 
         // Token's counter bumped up
         $this->assertSame(1, $plan->signupTokens()->first()->counter);
+    }
+
+    /**
+     * Test signup vith a referral program
+     */
+    public function testSignupWithReferralCode(): void
+    {
+        Queue::fake();
+
+        $referrer = $this->getTestUser('john@kolab.org');
+        $discount = Discount::where('code', 'TEST')->first();
+        $program = ReferralProgram::create([
+            'name' => "Test Referral",
+            'description' => "Test Referral Description",
+            'active' => true,
+            'discount_id' => $discount->id,
+        ]);
+        $referral_code = $program->codes()->create(['user_id' => $referrer->id]);
+
+        $post = [
+            'referral' => 'abc',
+            'first_name' => 'Signup',
+            'last_name' => 'User',
+            'email' => 'test@domain.ltd',
+            'login' => 'test-inv',
+            'domain' => 'kolabnow.com',
+            'password' => 'testtest',
+            'password_confirmation' => 'testtest',
+        ];
+
+        // Test invalid referral code
+        $response = $this->post('/api/auth/signup/init', $post);
+        $response->assertStatus(422);
+
+        $json = $response->json();
+
+        $this->assertSame('error', $json['status']);
+        $this->assertSame(['referral' => ["The referral program code is invalid."]], $json['errors']);
+
+        // Test valid code
+        $post['referral'] = $referral_code->code;
+        $response = $this->post('/api/auth/signup/init', $post);
+
+        $json = $response->json();
+
+        $signup_code = SignupCode::find($json['code']);
+        $post['code'] = $signup_code->code;
+        $post['short_code'] = $signup_code->short_code;
+
+        // Test final signup request
+        $response = $this->post('/api/auth/signup', $post);
+        $json = $response->json();
+
+        $response->assertStatus(200);
+        $this->assertSame('success', $json['status']);
+        $this->assertNotEmpty($json['access_token']);
+
+        // Check the reference to the code and discount
+        $user = User::where('email', $json['email'])->first();
+        $this->assertSame(1, $referral_code->referrals()->where('user_id', $user->id)->count());
+        $this->assertSame($discount->id, $user->wallets()->first()->discount_id);
     }
 
     /**

@@ -44,6 +44,7 @@ class Wallet extends Page
             '@nav' => 'ul.nav-tabs',
             '@history-tab' => '#history',
             '@receipts-tab' => '#receipts',
+            '@refprograms-tab' => '#refprograms',
             '@payments-tab' => '#payments',
         ];
     }

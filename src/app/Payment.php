@@ -138,6 +138,8 @@ class Payment extends Model
                 $owner->status |= User::STATUS_ACTIVE;
                 $owner->save();
             }
+
+            ReferralProgram::accounting($owner);
         }
     }
 

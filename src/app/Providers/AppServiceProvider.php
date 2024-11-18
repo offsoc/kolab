@@ -50,6 +50,7 @@ class AppServiceProvider extends ServiceProvider
         \App\Meet\Room::observe(\App\Observers\Meet\RoomObserver::class);
         \App\PackageSku::observe(\App\Observers\PackageSkuObserver::class);
         \App\PlanPackage::observe(\App\Observers\PlanPackageObserver::class);
+        \App\ReferralCode::observe(\App\Observers\ReferralCodeObserver::class);
         \App\Resource::observe(\App\Observers\ResourceObserver::class);
         \App\ResourceSetting::observe(\App\Observers\ResourceSettingObserver::class);
         \App\SharedFolder::observe(\App\Observers\SharedFolderObserver::class);

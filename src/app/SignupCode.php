@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property ?string        $last_name   Lastname
  * @property ?string        $local_part  Email local part
  * @property ?string        $plan        Plan title
+ * @property ?string        $referral    Referral code
  * @property string         $short_code  Short validation code
  * @property \Carbon\Carbon $updated_at  The update timestamp
  * @property string         $submit_ip_address IP address the final signup submit request came from
@@ -59,8 +60,9 @@ class SignupCode extends Model
         'first_name',
         'last_name',
         'plan',
+        'referral',
         'short_code',
-        'voucher'
+        'voucher',
     ];
 
     /** @var array<string, string> The attributes that should be cast */

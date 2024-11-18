@@ -80,6 +80,7 @@ abstract class ObjectCreateCommand extends ObjectCommand
             $this->info($object->{$object->getKeyName()});
         } catch (\Exception $e) {
             $this->error("Object could not be created.");
+            $this->line($e->getMessage());
             return 1;
         }
     }

@@ -175,6 +175,7 @@
                     phone: 'mobile-retro'
                 },
                 plans: [],
+                referral: '',
                 token: '',
                 voucher: ''
             }
@@ -215,6 +216,10 @@
             } else if (params.length === 2 && params[0] === 'voucher') {
                 // Voucher (discount) code
                 this.voucher = params[1]
+                this.displayForm(0)
+            } else if (params.length === 2 && params[0] === 'referral') {
+                // Referral code
+                this.referral = params[1]
                 this.displayForm(0)
             } else if (params.length === 1 && /^([A-Z0-9]+)-([a-zA-Z0-9]+)$/.test(params[0])) {
                  // Verification code provided, auto-submit Step 2
@@ -278,7 +283,7 @@
             submitStep1() {
                 this.$root.clearFormValidation($('#step1 form'))
 
-                const post = this.$root.pick(this, ['email', 'last_name', 'first_name', 'plan', 'token', 'voucher'])
+                const post = this.$root.pick(this, ['email', 'last_name', 'first_name', 'plan', 'token', 'voucher', 'referral'])
 
                 axios.post('/api/auth/signup/init', post)
                     .then(response => {

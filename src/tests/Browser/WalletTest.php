@@ -3,6 +3,7 @@
 namespace Tests\Browser;
 
 use App\Payment;
+use App\ReferralProgram;
 use App\Transaction;
 use App\Wallet;
 use Carbon\Carbon;
@@ -25,6 +26,7 @@ class WalletTest extends TestCaseDusk
 
         $john = $this->getTestUser('john@kolab.org');
         Wallet::where('user_id', $john->id)->update(['balance' => -1234, 'currency' => 'CHF']);
+        ReferralProgram::query()->delete();
     }
 
     /**
@@ -36,6 +38,7 @@ class WalletTest extends TestCaseDusk
 
         $john = $this->getTestUser('john@kolab.org');
         Wallet::where('user_id', $john->id)->update(['balance' => 0]);
+        ReferralProgram::query()->delete();
 
         parent::tearDown();
     }
@@ -173,6 +176,62 @@ class WalletTest extends TestCaseDusk
                     $this->assertStringStartsWith("%PDF-1.", $content);
 
                     $browser->removeDownloadedFile($filename);
+                });
+        });
+    }
+
+    /**
+     * Test Referral Programs tab
+     */
+    public function testReferralPrograms(): void
+    {
+        $user = $this->getTestUser('wallets-controller@kolabnow.com', ['password' => 'simple123']);
+        $wallet = $user->wallets()->first();
+
+        // Log out and log-in the test user
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/logout')
+                ->waitForLocation('/login')
+                ->on(new Home())
+                ->submitLogon('wallets-controller@kolabnow.com', 'simple123', true);
+        });
+
+        // Assert Referral Programs tab content when there's no programs available
+        $this->browse(function (Browser $browser) {
+            $browser->on(new Dashboard())
+                ->click('@links .link-wallet')
+                ->on(new WalletPage())
+                ->assertSeeIn('@nav #tab-refprograms', 'Referral Programs')
+                ->click('@nav #tab-refprograms')
+                ->whenAvailable('@refprograms-tab', function (Browser $browser) {
+                    $browser->waitUntilMissing('.app-loader')
+                        ->assertSeeIn('div', 'There are no active referral programs at this moment.')
+                        ->assertMissing('ul');
+                });
+        });
+
+        // Create sample program
+        $program = ReferralProgram::create([
+            'name' => "Test Referral",
+            'description' => "Test Referral Description",
+            'active' => true,
+        ]);
+
+        // Assert Referral Programs tab with programs available
+        $this->browse(function (Browser $browser) use ($program, $user) {
+            $browser->refresh()
+                ->on(new WalletPage())
+                ->click('@nav #tab-refprograms')
+                ->whenAvailable('@refprograms-tab', function (Browser $browser) use ($program, $user) {
+                    $code = $program->codes()->where('user_id', $user->id)->first();
+
+                    $browser->waitFor('ul')
+                        ->assertElementsCount('ul > li', 1)
+                        ->assertVisible('li:nth-child(1) img')
+                        ->assertSeeIn('li:nth-child(1) p.name', $program->name)
+                        ->assertSeeIn('li:nth-child(1) p.description', $program->description)
+                        ->assertSeeIn('li:nth-child(1) p.info', 'Signup URL: ' . $code->signupUrl())
+                        ->assertSeeIn('li:nth-child(1) p.info', 'Accounts: 0');
                 });
         });
     }

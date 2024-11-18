@@ -5,6 +5,7 @@ namespace Tests\Browser;
 use App\Discount;
 use App\Domain;
 use App\Plan;
+use App\ReferralProgram;
 use App\SignupCode;
 use App\SignupInvitation;
 use App\SignupToken;
@@ -34,6 +35,7 @@ class SignupTest extends TestCaseDusk
 
         Plan::whereNot('mode', Plan::MODE_EMAIL)->update(['mode' => Plan::MODE_EMAIL]);
         SignupToken::truncate();
+        ReferralProgram::query()->delete();
     }
 
     /**
@@ -49,6 +51,7 @@ class SignupTest extends TestCaseDusk
         Plan::whereNot('mode', Plan::MODE_EMAIL)->update(['mode' => Plan::MODE_EMAIL]);
         Discount::where('discount', 100)->update(['code' => null]);
         SignupToken::truncate();
+        ReferralProgram::query()->delete();
 
         parent::tearDown();
     }
@@ -832,6 +835,56 @@ class SignupTest extends TestCaseDusk
         $user = $this->getTestUser('signuptestdusk@' . \config('app.domain'));
         $discount = Discount::where('code', 'TEST')->first();
         $this->assertSame($discount->id, $user->wallets()->first()->discount_id);
+    }
+
+    /**
+     * Test signup with a referral code
+     */
+    public function testSignupReferralCode(): void
+    {
+        $referrer = $this->getTestUser('john@kolab.org');
+        $program = ReferralProgram::create([
+            'name' => "Test Referral",
+            'description' => "Test Referral Description",
+            'active' => true,
+        ]);
+        $referral_code = $program->codes()->create(['user_id' => $referrer->id]);
+
+        $this->browse(function (Browser $browser) use ($referral_code) {
+            $browser->visit('/signup/referral/' . $referral_code->code)
+                ->onWithoutAssert(new Signup())
+                ->waitUntilMissing('.app-loader')
+                ->waitFor('@step0')
+                ->click('.plan-individual button')
+                ->whenAvailable('@step1', function (Browser $browser) {
+                    $browser->type('#signup_first_name', 'Test')
+                        ->type('#signup_last_name', 'User')
+                        ->type('#signup_email', 'BrowserSignupTestUser1@kolab.org')
+                        ->click('[type=submit]');
+                })
+                ->whenAvailable('@step2', function (Browser $browser) {
+                    $code = SignupCode::orderBy('created_at', 'desc')->first();
+                    $browser->type('#signup_short_code', $code->short_code)
+                        ->click('[type=submit]');
+                })
+                ->whenAvailable('@step3', function (Browser $browser) {
+                    $browser->type('#signup_login', 'signuptestdusk')
+                        ->type('#signup_password', '123456789')
+                        ->type('#signup_password_confirmation', '123456789')
+                        ->click('[type=submit]');
+                })
+                ->waitUntilMissing('@step3')
+                ->waitUntilMissing('.app-loader')
+                ->on(new Dashboard())
+                ->assertUser('signuptestdusk@' . \config('app.domain'))
+                // Logout the user
+                ->within(new Menu(), function ($browser) {
+                    $browser->clickMenuItem('logout');
+                });
+        });
+
+        $user = $this->getTestUser('signuptestdusk@' . \config('app.domain'));
+        $this->assertSame(1, $referral_code->referrals()->where('user_id', $user->id)->count());
     }
 
     /**

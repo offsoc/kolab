@@ -170,6 +170,7 @@ Route::group(
         Route::get('wallets/{id}/transactions', [API\V4\WalletsController::class, 'transactions']);
         Route::get('wallets/{id}/receipts', [API\V4\WalletsController::class, 'receipts']);
         Route::get('wallets/{id}/receipts/{receipt}', [API\V4\WalletsController::class, 'receiptDownload']);
+        Route::get('wallets/{id}/referral-programs', [API\V4\WalletsController::class, 'referralPrograms']);
 
         Route::get('password-policy', [API\PasswordPolicyController::class, 'index']);
         Route::post('password-reset/code', [API\PasswordResetController::class, 'codeCreate']);

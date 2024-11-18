@@ -174,6 +174,7 @@ return [
     'password-policy-min-len-error' => 'Minimum password length cannot be less than :min.',
     'password-policy-max-len-error' => 'Maximum password length cannot be more than :max.',
     'password-policy-last-error' => 'The minimum value for last N passwords is :last.',
+    'referralcodeinvalid' => 'The referral program code is invalid.',
     'signuptokeninvalid' => 'The signup token is invalid.',
 
     /*

@@ -59,6 +59,11 @@
                     <payment-log v-if="walletId && loadPayments" class="card-text" :wallet-id="walletId"></payment-log>
                 </div>
             </div>
+            <div class="tab-pane" id="refprograms" role="tabpanel" aria-labelledby="tab-refprograms">
+                <div class="card-body">
+                    <referral-programs v-if="walletId && loadReferrals" class="card-text" :wallet-id="walletId"></referral-programs>
+                </div>
+            </div>
         </div>
 
         <modal-dialog id="payment-dialog" ref="paymentDialog" :title="paymentDialogTitle" @click="payment" :buttons="dialogButtons">
@@ -142,6 +147,7 @@
     import TransactionLog from './Widgets/TransactionLog'
     import PaymentLog from './Widgets/PaymentLog'
     import ReceiptList from './Widgets/ReceiptList'
+    import ReferralPrograms from './Widgets/ReferralPrograms'
     import { paymentCheckout } from '../js/utils'
 
     import { library } from '@fortawesome/fontawesome-svg-core'
@@ -159,7 +165,8 @@
             ModalDialog,
             TransactionLog,
             PaymentLog,
-            ReceiptList
+            ReceiptList,
+            ReferralPrograms
         },
         data() {
             return {
@@ -172,6 +179,7 @@
                 loadTransactions: false,
                 loadPayments: false,
                 loadReceipts: true,
+                loadReferrals: false,
                 showPendingPayments: false,
                 wallet: {},
                 walletId: null,
@@ -200,7 +208,7 @@
                 return [ button ]
             },
             tabs() {
-                let tabs = [ 'wallet.receipts', 'wallet.history' ]
+                let tabs = [ 'wallet.receipts', 'wallet.history', 'wallet.refprograms' ]
                 if (this.showPendingPayments) {
                     tabs.push('wallet.pending-payments')
                 }
@@ -233,6 +241,7 @@
             this.$refs.tabs.clickHandler('history', () => { this.loadTransactions = true })
             this.$refs.tabs.clickHandler('payments', () => { this.loadPayments = true })
             this.$refs.tabs.clickHandler('receipts', () => { this.loadReceipts = true })
+            this.$refs.tabs.clickHandler('refprograms', () => { this.loadReferrals = true })
         },
         methods: {
             loadMandate() {
