@@ -86,6 +86,12 @@ class MetricsController extends Controller
         $numberOfSuspendedUsers = User::where('status', '&', User::STATUS_SUSPENDED)->count();
         $numberOfRestrictedUsers = User::where('status', '&', User::STATUS_RESTRICTED)->count();
         $numberOfWalletsWithBalanceBelowManadate = $this->numberOfWalletsWithBalanceBelowManadate();
+        // Should be ~0 (otherwise a cleanup job failed)
+        $numberOfDeletedUserWithMissingCleanup = User::withTrashed()->whereNotNull('deleted_at')
+            ->where(function ($query) {
+                $query->where('status', '&', User::STATUS_IMAP_READY)
+                    ->orWhere('status', '&', User::STATUS_LDAP_READY);
+            })->count();
 
         // phpcs:disable
         $text = <<<EOF
@@ -107,6 +113,9 @@ class MetricsController extends Controller
         # HELP kolab_wallets_balance_below_mandate_amount_count Number of wallets requiring topup
         # TYPE kolab_wallets_balance_below_mandate_amount_count gauge
         kolab_wallets_balance_below_mandate_amount{instance="$appDomain", tenant="$tenantId"} $numberOfWalletsWithBalanceBelowManadate
+        # HELP kolab_users_deleted_with_missing_cleanup Number of users that are still imap/ldap ready
+        # TYPE kolab_users_deleted_with_missing_cleanup gauge
+        kolab_users_deleted_with_missing_cleanup{instance="$appDomain", tenant="$tenantId"} $numberOfDeletedUserWithMissingCleanup
         \n
         EOF;
         // phpcs:enable
