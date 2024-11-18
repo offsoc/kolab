@@ -107,9 +107,14 @@ class Engine
         $async = empty($options['sync']);
         $folderMapping = $this->options['folderMapping'] ?? [];
         $folderFilter = $this->options['folderFilter'] ?? [];
+        $skipFolder = $this->options['skipFolder'] ?? [];
 
         foreach ($folders as $folder) {
             if (!empty($folderFilter) && !in_array($folder->fullname, $folderFilter)) {
+                $this->debug("Skipping folder {$folder->fullname} of type {$folder->type} because of filter...");
+                continue;
+            }
+            if (!empty($skipFolder) && in_array($folder->fullname, $skipFolder)) {
                 $this->debug("Skipping folder {$folder->fullname} of type {$folder->type} because of filter...");
                 continue;
             }

@@ -33,6 +33,7 @@ class MigrateCommand extends Command
                                 {--force : Force existing queue removal}
                                 {--dry : Dry run}
                                 {--folder-filter=* : Exact folder name match before mapping}
+                                {--skip-folder=* : Exact folder name match before mapping}
                                 {--folder-mapping=* : Folder mapping in the form "source:target"}';
 //                                {--export-only : Only export data}
 //                                {--import-only : Only import previously exported data}';
@@ -67,6 +68,7 @@ class MigrateCommand extends Command
             'sync' => $this->option('sync'),
             'folderMapping' => $folderMapping,
             'folderFilter' => $this->option('folder-filter'),
+            'skipFolder' => $this->option('skip-folder'),
             'stdout' => true,
         ];
 
