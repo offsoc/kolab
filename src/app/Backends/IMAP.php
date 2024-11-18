@@ -825,6 +825,8 @@ class IMAP
             'options' => [
                 'port' => !empty($uri['port']) ? $uri['port'] : $default_port,
                 'ssl_mode' => $ssl_mode,
+                // Should be lower than the horizon worker timeout
+                'timeout' => 30,
                 'socket_options' => [
                     'ssl' => [
                         'verify_peer' => \config('services.imap.verify_peer'),
