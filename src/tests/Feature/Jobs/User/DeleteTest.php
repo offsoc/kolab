@@ -71,9 +71,13 @@ class DeleteTest extends TestCase
 
         // Test success delete from LDAP, IMAP and Roundcube
         $user->status ^= User::STATUS_DELETED;
-        $user->save();
+        $user->deleted_at = \now();
+        $user->saveQuietly();
 
         $this->assertFalse($user->isDeleted());
+        $this->assertTrue($user->trashed());
+
+        Queue::fake();
 
         $job = new \App\Jobs\User\DeleteJob($user->id);
         $job->handle();
@@ -85,6 +89,8 @@ class DeleteTest extends TestCase
         $this->assertFalse($user->isImapReady());
         $this->assertTrue($user->isDeleted());
         $this->assertNull($rcdb->table('users')->where('username', $user->email)->first());
+
+        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 0);
 
         /*
         if (\config('app.with_imap')) {

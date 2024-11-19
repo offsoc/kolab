@@ -156,11 +156,7 @@ class ResourceTest extends TestCase
         $this->assertSame(0, $entitlements->count());
         $this->assertSame(1, $entitlements->withTrashed()->count());
 
-        $resource->forceDelete();
-
-        $this->assertSame(0, $entitlements->withTrashed()->count());
-        $this->assertCount(0, Resource::withTrashed()->where('id', $resource->id)->get());
-
+        Queue::assertPushed(\App\Jobs\Resource\UpdateJob::class, 0);
         Queue::assertPushed(\App\Jobs\Resource\DeleteJob::class, 1);
         Queue::assertPushed(
             \App\Jobs\Resource\DeleteJob::class,
@@ -172,6 +168,16 @@ class ResourceTest extends TestCase
                     && $resourceId === $resource->id;
             }
         );
+
+        Queue::fake();
+
+        $resource->forceDelete();
+
+        $this->assertSame(0, $entitlements->withTrashed()->count());
+        $this->assertCount(0, Resource::withTrashed()->where('id', $resource->id)->get());
+
+        Queue::assertPushed(\App\Jobs\Resource\UpdateJob::class, 0);
+        Queue::assertPushed(\App\Jobs\Resource\DeleteJob::class, 0);
     }
 
     /**

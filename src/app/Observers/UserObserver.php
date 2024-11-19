@@ -163,7 +163,9 @@ class UserObserver
      */
     public function updated(User $user)
     {
-        \App\Jobs\User\UpdateJob::dispatch($user->id);
+        if (!$user->trashed()) {
+            \App\Jobs\User\UpdateJob::dispatch($user->id);
+        }
 
         $oldStatus = $user->getOriginal('status');
         $newStatus = $user->status;

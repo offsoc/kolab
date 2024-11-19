@@ -74,7 +74,9 @@ class ResourceObserver
      */
     public function updated(Resource $resource)
     {
-        \App\Jobs\Resource\UpdateJob::dispatch($resource->id);
+        if (!$resource->trashed()) {
+            \App\Jobs\Resource\UpdateJob::dispatch($resource->id);
+        }
 
         // Update the folder property if name changed
         if ($resource->name != $resource->getOriginal('name')) {

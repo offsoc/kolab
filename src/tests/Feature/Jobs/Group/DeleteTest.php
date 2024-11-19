@@ -49,6 +49,9 @@ class DeleteTest extends TestCase
             $this->assertFalse($group->isLdapReady());
         }
 
+        $group->deleted_at = \now();
+        $group->saveQuietly();
+
         Queue::fake();
 
         $job = new \App\Jobs\Group\DeleteJob($group->id);
@@ -58,6 +61,8 @@ class DeleteTest extends TestCase
 
         $this->assertFalse($group->isLdapReady());
         $this->assertTrue($group->isDeleted());
+
+        Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 0);
 /*
         Queue::assertPushed(\App\Jobs\IMAP\AclCleanupJob::class, 1);
         Queue::assertPushed(

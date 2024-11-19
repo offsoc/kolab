@@ -255,15 +255,23 @@ class DomainTest extends TestCase
         $this->assertTrue($domain->fresh()->trashed());
         $this->assertFalse($domain->fresh()->isDeleted());
 
+        Queue::assertPushed(\App\Jobs\Domain\DeleteJob::class, 1);
+        Queue::assertPushed(\App\Jobs\Domain\UpdateJob::class, 0);
+
         // Delete the domain for real
         $job = new \App\Jobs\Domain\DeleteJob($domain->id);
         $job->handle();
 
         $this->assertTrue(Domain::withTrashed()->where('id', $domain->id)->first()->isDeleted());
 
+        Queue::fake();
+
         $domain->forceDelete();
 
         $this->assertCount(0, Domain::withTrashed()->where('id', $domain->id)->get());
+
+        Queue::assertPushed(\App\Jobs\Domain\DeleteJob::class, 0);
+        Queue::assertPushed(\App\Jobs\Domain\UpdateJob::class, 0);
     }
 
     /**

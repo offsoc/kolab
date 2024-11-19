@@ -748,11 +748,16 @@ class UserTest extends TestCase
 
         $this->assertCount(7, $user->entitlements()->get());
 
+        Queue::fake();
+
         $user->delete();
 
         $this->assertCount(0, $user->entitlements()->get());
         $this->assertTrue($user->fresh()->trashed());
         $this->assertFalse($user->fresh()->isDeleted());
+
+        Queue::assertPushed(\App\Jobs\User\DeleteJob::class, 1);
+        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 0);
 
         // Delete the user for real
         $job = new \App\Jobs\User\DeleteJob($id);
@@ -760,9 +765,14 @@ class UserTest extends TestCase
 
         $this->assertTrue(User::withTrashed()->where('id', $id)->first()->isDeleted());
 
+        Queue::fake();
+
         $user->forceDelete();
 
         $this->assertCount(0, User::withTrashed()->where('id', $id)->get());
+
+        Queue::assertPushed(\App\Jobs\User\DeleteJob::class, 0);
+        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 0);
 
         // Test an account with users, domain, and group, and resource
         $userA = $this->getTestUser('UserAccountA@UserAccount.com');

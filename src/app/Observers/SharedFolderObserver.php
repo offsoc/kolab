@@ -78,7 +78,9 @@ class SharedFolderObserver
      */
     public function updated(SharedFolder $folder)
     {
-        \App\Jobs\SharedFolder\UpdateJob::dispatch($folder->id);
+        if (!$folder->trashed()) {
+            \App\Jobs\SharedFolder\UpdateJob::dispatch($folder->id);
+        }
 
         // Update the folder property if name changed
         if ($folder->name != $folder->getOriginal('name')) {

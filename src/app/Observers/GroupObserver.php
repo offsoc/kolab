@@ -63,7 +63,9 @@ class GroupObserver
      */
     public function updated(Group $group)
     {
-        \App\Jobs\Group\UpdateJob::dispatch($group->id);
+        if (!$group->trashed()) {
+            \App\Jobs\Group\UpdateJob::dispatch($group->id);
+        }
     }
 
     /**

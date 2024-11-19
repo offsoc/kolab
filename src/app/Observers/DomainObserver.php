@@ -80,7 +80,9 @@ class DomainObserver
      */
     public function updated(Domain $domain)
     {
-        \App\Jobs\Domain\UpdateJob::dispatch($domain->id);
+        if (!$domain->trashed()) {
+            \App\Jobs\Domain\UpdateJob::dispatch($domain->id);
+        }
     }
 
     /**

@@ -56,6 +56,10 @@ class DeleteTest extends TestCase
         $this->assertTrue($resource->isImapReady());
         $this->assertFalse($resource->isDeleted());
 
+        $resource->deleted_at = \now();
+        $resource->saveQuietly();
+        Queue::fake();
+
         // Test successful deletion
         $job = new \App\Jobs\Resource\DeleteJob($resource->id);
         $job->handle();
@@ -65,6 +69,8 @@ class DeleteTest extends TestCase
         $this->assertFalse($resource->isLdapReady());
         $this->assertFalse($resource->isImapReady());
         $this->assertTrue($resource->isDeleted());
+
+        Queue::assertPushed(\App\Jobs\Resource\UpdateJob::class, 0);
 
         // Test deleting already deleted resource
         $job = new \App\Jobs\Resource\DeleteJob($resource->id);

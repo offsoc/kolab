@@ -115,11 +115,7 @@ class GroupTest extends TestCase
         $this->assertSame(0, $entitlements->count());
         $this->assertSame(1, $entitlements->withTrashed()->count());
 
-        $group->forceDelete();
-
-        $this->assertSame(0, $entitlements->withTrashed()->count());
-        $this->assertCount(0, Group::withTrashed()->where('id', $group->id)->get());
-
+        Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 0);
         Queue::assertPushed(\App\Jobs\Group\DeleteJob::class, 1);
         Queue::assertPushed(
             \App\Jobs\Group\DeleteJob::class,
@@ -131,6 +127,16 @@ class GroupTest extends TestCase
                     && $groupId === $group->id;
             }
         );
+
+        Queue::fake();
+
+        $group->forceDelete();
+
+        $this->assertSame(0, $entitlements->withTrashed()->count());
+        $this->assertCount(0, Group::withTrashed()->where('id', $group->id)->get());
+
+        Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 0);
+        Queue::assertPushed(\App\Jobs\Group\DeleteJob::class, 0);
     }
 
     /**

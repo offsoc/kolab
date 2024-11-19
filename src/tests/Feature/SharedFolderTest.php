@@ -220,11 +220,7 @@ class SharedFolderTest extends TestCase
         $this->assertSame(0, $entitlements->count());
         $this->assertSame(1, $entitlements->withTrashed()->count());
 
-        $folder->forceDelete();
-
-        $this->assertSame(0, $entitlements->withTrashed()->count());
-        $this->assertCount(0, SharedFolder::withTrashed()->where('id', $folder->id)->get());
-
+        Queue::assertPushed(\App\Jobs\SharedFolder\UpdateJob::class, 0);
         Queue::assertPushed(\App\Jobs\SharedFolder\DeleteJob::class, 1);
         Queue::assertPushed(
             \App\Jobs\SharedFolder\DeleteJob::class,
@@ -236,6 +232,16 @@ class SharedFolderTest extends TestCase
                     && $folderId === $folder->id;
             }
         );
+
+        Queue::fake();
+
+        $folder->forceDelete();
+
+        $this->assertSame(0, $entitlements->withTrashed()->count());
+        $this->assertCount(0, SharedFolder::withTrashed()->where('id', $folder->id)->get());
+
+        Queue::assertPushed(\App\Jobs\SharedFolder\UpdateJob::class, 0);
+        Queue::assertPushed(\App\Jobs\SharedFolder\DeleteJob::class, 0);
     }
 
     /**
