@@ -168,7 +168,7 @@ class Engine
         }
 
         // Create the folder on the destination server
-        if (!$this->options['dry']) {
+        if (empty($this->options['dry'])) {
             $this->importer->createFolder($folder);
         } else {
             \Log::info("Dry run: Creating folder {$folder->targetname}");
@@ -227,7 +227,7 @@ class Engine
         }
 
         $this->exporter->fetchItem($item);
-        if (!$this->options['dry']) {
+        if (empty($this->options['dry'])) {
             $this->importer->createItem($item);
         } else {
             \Log::info("Dry run: Creating item {$item->filename}");
