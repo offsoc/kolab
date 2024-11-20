@@ -540,6 +540,37 @@ def test_dkim_dns(host, selector, verbose = False):
 
     return success
 
+
+def test_mta_sts(host, verbose = False):
+    success = False
+
+    # lookup https://mta-sts.kolabnow.com/.well-known/mta-sts.txt
+    try:
+        answers = dns.resolver.resolve(f"_mta_sts.{host}", 'TXT')
+        for rdata in answers:
+            print("  MTA-STS ", rdata)
+            if rdata.startswith("v=STSv1;"):
+                success = True
+            else:
+                print(f"  ERROR while validating dkim key {rdata}")
+    except dns.resolver.NXDOMAIN:
+        success = False
+        print("  ERROR on MTA-STS TXT")
+    except dns.resolver.NoAnswer:
+        success = False
+        print("  ERROR on MTA-STS TXT")
+
+    if not try_get(f"https://mta-sts.{host}/.well-known/mta-sts.txt"):
+        success = False
+        print("  Failed to get the mta-sts policy")
+    # TODO validate policy and potentially cross check with spf policy?
+
+    if not success:
+        print_error(f"MTA-STS dns entries on {host} not available")
+
+    return success
+
+
 def test_imap(host, user, password, verbose):
     success = True
 
@@ -721,6 +752,7 @@ def main():
     parser.add_argument("--autoconfig", help="Check autoconfig")
     parser.add_argument("--dns", action='store_true', help="Check dns")
     parser.add_argument("--dkim", help="Check DKIM dns record")
+    parser.add_argument("--mtasts", help="Check mta-sts")
     parser.add_argument("--activesync", help="ActiveSync URI")
     parser.add_argument("--certificates", action='store_true', help="Check Certificates")
     parser.add_argument("--fb", help="Freebusy url as displayed in roundcube")
@@ -808,6 +840,12 @@ def main():
     if options.dkim:
         if test_dkim_dns(options.host, options.dkim, options.verbose):
             print_success(f"DKIM DNS entries on {options.host} available")
+        else:
+            error = True
+
+    if options.mtasts:
+        if test_mta_sts(options.host, options.verbose):
+            print_success(f"MTA-STS on {options.host} available")
         else:
             error = True
 
