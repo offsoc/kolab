@@ -69,16 +69,12 @@ class WalletCheck extends CommonJob
             return null;
         }
 
-        if ($this->wallet->chargeEntitlements() > 0) {
-            // We make a payment when there's a charge. If for some reason the
-            // payment failed we can't just throw here, as another execution of this job
-            // will not re-try the payment. So, we attempt a payment in a separate job.
-            try {
-                $this->topUpWallet();
-            } catch (\Exception $e) {
-                \Log::error("Failed to top-up wallet {$this->walletId}: " . $e->getMessage());
-                WalletCharge::dispatch($this->wallet->id);
-            }
+        $this->wallet->chargeEntitlements();
+        try {
+            $this->topUpWallet();
+        } catch (\Exception $e) {
+            \Log::error("Failed to top-up wallet {$this->walletId}: " . $e->getMessage());
+            // Notification emails should be sent even if the top-up fails
         }
 
         if ($this->wallet->balance >= 0) {
