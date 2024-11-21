@@ -123,6 +123,7 @@ class MetricsController extends Controller
         $numberOfDeletedUsers = User::withTrashed()->whereNotNull('deleted_at')->count();
         $numberOfSuspendedUsers = User::where('status', '&', User::STATUS_SUSPENDED)->count();
         $numberOfRestrictedUsers = User::where('status', '&', User::STATUS_RESTRICTED)->count();
+        $numberOfDegradedUsers = User::where('status', '&', User::STATUS_DEGRADED)->count();
         $numberOfWalletsWithBalanceBelowManadate = $this->numberOfWalletsWithBalanceBelowManadate();
         // Should be ~0 (otherwise a cleanup job failed)
         $numberOfDeletedUserWithMissingCleanup = User::withTrashed()->whereNotNull('deleted_at')
@@ -160,6 +161,9 @@ class MetricsController extends Controller
         # HELP kolab_users_restricted_count Number of restricted users
         # TYPE kolab_users_restricted_count gauge
         kolab_users_restricted_count{instance="$appDomain", tenant="$tenantId"} $numberOfRestrictedUsers
+        # HELP kolab_users_degraded_count Number of degraded users
+        # TYPE kolab_users_degraded_count gauge
+        kolab_users_degraded_count{instance="$appDomain", tenant="$tenantId"} $numberOfDegradedUsers
         # HELP kolab_users_paying_count Number of paying users
         # TYPE kolab_users_paying_count gauge
         kolab_users_paying_count{instance="$appDomain", tenant="$tenantId"} $numberOfPayingUsers
