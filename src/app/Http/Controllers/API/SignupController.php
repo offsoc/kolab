@@ -380,11 +380,12 @@ class SignupController extends Controller
         $domain = null;
         $user_status = User::STATUS_RESTRICTED;
 
-        if (
-            $request->discount && $request->discount->discount == 100
-            && $request->plan->mode == Plan::MODE_MANDATE
-        ) {
-            $user_status = User::STATUS_ACTIVE;
+        if ($request->discount && $request->discount->discount == 100) {
+            if ($request->plan->mode == Plan::MODE_MANDATE) {
+                $user_status = User::STATUS_ACTIVE;
+            } else {
+                $user_status = User::STATUS_NEW;
+            }
         }
 
         DB::beginTransaction();

@@ -659,11 +659,9 @@ class SignupTest extends TestCase
         $code->refresh();
 
         // Check if the user has been created
-        $user = User::where('email', $identity)->first();
-
-        $this->assertNotEmpty($user);
-        $this->assertSame($identity, $user->email);
+        $user = User::where('email', $identity)->firstOrFail();
         $this->assertTrue($user->isRestricted());
+        $this->assertTrue($user->isNew());
 
         // Check if the code has been updated and soft-deleted
         $this->assertTrue($code->trashed());
@@ -681,9 +679,25 @@ class SignupTest extends TestCase
         $discount = Discount::where('code', 'TEST')->first();
         $this->assertSame($discount->id, $user->wallets()->first()->discount_id);
 
-        // TODO: Check SKUs/Plan
+        // Test signup with 100% discount
+        $code->deleted_at = null;
+        $code->user_id = null;
+        $code->voucher = 'FREE';
+        $code->timestamps = false;
+        $code->save();
+        $user->forceDeleteQuietly();
+        $data['voucher'] = 'FREE';
 
-        // TODO: Check if the access token works
+        // FIXME: For some reason this request becomes http://localhost and returns 405 for that reason
+        $this->useRegularUrl(); // this fixes the issue
+        $this->post('/api/auth/signup', $data)->assertStatus(200);
+
+        $user = User::where('email', $identity)->firstOrFail();
+        $this->assertFalse($user->isRestricted());
+        $this->assertTrue($user->isNew());
+
+        $discount = Discount::where('code', 'FREE')->first();
+        $this->assertSame($discount->id, $user->wallets()->first()->discount_id);
     }
 
     /**

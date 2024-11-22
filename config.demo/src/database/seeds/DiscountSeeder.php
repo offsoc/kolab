@@ -19,6 +19,7 @@ class DiscountSeeder extends Seeder
                 'description' => 'Free Account',
                 'discount' => 100,
                 'active' => true,
+                'code' => 'FREE',
             ]
         );
 
