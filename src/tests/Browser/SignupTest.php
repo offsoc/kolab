@@ -49,7 +49,6 @@ class SignupTest extends TestCaseDusk
         SignupInvitation::truncate();
 
         Plan::whereNot('mode', Plan::MODE_EMAIL)->update(['mode' => Plan::MODE_EMAIL]);
-        Discount::where('discount', 100)->update(['code' => null]);
         SignupToken::truncate();
         ReferralProgram::query()->delete();
 
@@ -633,10 +632,6 @@ class SignupTest extends TestCaseDusk
         $plan->mode = Plan::MODE_MANDATE;
         $plan->save();
 
-        $discount = Discount::where('discount', 100)->first();
-        $discount->code = 'FREE';
-        $discount->save();
-
         $this->browse(function (Browser $browser) {
             $browser->visit(new Signup())
                 ->waitFor('@step0 .plan-individual button')
@@ -664,6 +659,7 @@ class SignupTest extends TestCaseDusk
         });
 
         $user = User::where('email', 'signuptestdusk@' . \config('app.domain'))->first();
+        $discount = Discount::where('discount', 100)->first();
 
         $this->assertSame($plan->id, $user->getSetting('plan_id'));
         $this->assertTrue($user->isActive());
