@@ -93,7 +93,7 @@ class MetricsController extends Controller
                     ->orWhere('status', '&', User::STATUS_LDAP_READY);
             })->count();
 
-        $numberOfUserWithFailedInit = User::where('created_at' < \Carbon\Carbon::now()->subDays(1));
+        $numberOfUserWithFailedInit = User::where('created_at', '<', \Carbon\Carbon::now()->subDays(1));
         if (\config('app.with_ldap')) {
             // We need all users that are either not imap-ready or not ldap-ready
             // (Can also be written as "and (status & 48 != 48)")
