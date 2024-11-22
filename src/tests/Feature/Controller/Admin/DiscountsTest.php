@@ -56,7 +56,7 @@ class DiscountsTest extends TestCase
         $this->assertSame($discount_free->discount, $json['list'][2]['discount']);
         $this->assertSame($discount_free->code, $json['list'][2]['code']);
         $this->assertSame($discount_free->description, $json['list'][2]['description']);
-        $this->assertSame('100% - Free Account', $json['list'][2]['label']);
+        $this->assertSame('100% - Free Account [FREE]', $json['list'][2]['label']);
 
         // A user in another tenant
         $user = $this->getTestUser('user@sample-tenant.dev-local');
