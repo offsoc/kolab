@@ -44,6 +44,7 @@ class ImapCli < Thor
   class_option :host
   class_option :port
   class_option :username
+  class_option :login_as
   class_option :password
   class_option :ssl, :type => :boolean
   class_option :debug, :type => :boolean
@@ -61,7 +62,11 @@ class ImapCli < Thor
         if options[:debug]
           IMAP.debug = true
         end
-        @imap.login(options[:username], options[:password])
+        if  options[:login_as]
+          @imap.authenticate("PLAIN", options[:username], options[:password], authzid: options[:login_as])
+        else
+          @imap.authenticate("PLAIN", options[:username], options[:password])
+        end
       end
       @imap
     end
