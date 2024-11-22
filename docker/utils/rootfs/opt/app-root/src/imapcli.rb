@@ -82,6 +82,12 @@ class ImapCli < Thor
     p imap.list("", folder)
   end
 
+  desc "search", "Search."
+  def search(folder, query, location="BODY")
+    p imap.select(folder)
+    imap.search([location, query])
+  end
+
   desc "lsub", "List subscriptions."
   def lsub(folder = "**")
     p imap.lsub("", folder)
@@ -134,9 +140,21 @@ class ImapCli < Thor
     p imap.getacl(folder)
   end
 
+  desc "setacl", "setacl."
+  def setacl(folder, user, rights)
+    p imap.setacl(folder, user, rights)
+  end
+
   desc "setmetadata", "Setmetadata."
   def setmetadata(folder, entry, value)
     p imap.setmetadata(folder, entry, value)
+  end
+
+  desc "append", "APPEND."
+  def append(folder, filepath)
+    file = File.open(filepath)
+    file_data = file.read
+    p imap.append(folder, file_data)
   end
 
   desc "download", "Download."
