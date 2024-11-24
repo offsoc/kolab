@@ -588,13 +588,13 @@ def test_imap(host, user, password, verbose):
     return success
 
 
-def test_smtp(host, user, password, verbose):
+def test_smtp(host, user, password, verbose, testSMTPS=True):
     success = True
 
-    hosts = [
-        (host, 465, True, False),
-        (host, 587, False, True),
-    ]
+    hosts = []
+    if testSMTPS:
+        hosts.append((host, 465, True, False))
+    hosts.append((host, 587, False, True))
 
     for hosttuple in hosts:
         if verbose:
@@ -715,6 +715,7 @@ def main():
     parser.add_argument("--password", help="User password")
     parser.add_argument("--imap", help="IMAP URI")
     parser.add_argument("--smtp", help="SMTP URI")
+    parser.add_argument("--nosmtps", action='store_true', help="Boolean to disable the smtps check")
     parser.add_argument("--dav", help="DAV URI")
     parser.add_argument("--meet", help="MEET URI")
     parser.add_argument("--autoconfig", help="Check autoconfig")
@@ -823,7 +824,7 @@ def main():
             error = True
 
     if options.smtp:
-        if test_smtp(options.smtp, options.username, options.password, options.verbose):
+        if test_smtp(options.smtp, options.username, options.password, options.verbose, not options.nosmtps):
             print_success("SMTP is available")
         else:
             error = True
