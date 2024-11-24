@@ -218,6 +218,10 @@ elif [ "$1" == "phpstan" ]; then
 elif [ "$1" == "shell" ]; then
     exec /bin/bash
 else
+    sed -i \
+        -e "s|CALDAV_WELLKNOWN_REDIRECT_PATH|$CALDAV_WELLKNOWN_REDIRECT_PATH|" \
+        -e "s|CARDDAV_WELLKNOWN_REDIRECT_PATH|$CARDDAV_WELLKNOWN_REDIRECT_PATH|" \
+        /etc/httpd/conf.d/well-known.conf
     /usr/sbin/php-fpm
     exec httpd -DFOREGROUND
 fi
