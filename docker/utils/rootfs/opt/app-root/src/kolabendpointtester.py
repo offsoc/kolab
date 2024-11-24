@@ -159,7 +159,7 @@ def discover_principal(url, username, password, verbose):
 
     success = response.status == 207
     if not success:
-        print_error(f"Caldav is not available at {url} (status != 207)")
+        print_error(f"Caldav is not available at {url} ({response.status} != 207)")
 
     if verbose or not success:
         print("  ", "Status", response.status)
