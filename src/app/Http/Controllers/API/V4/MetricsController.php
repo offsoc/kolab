@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Payment;
 use App\User;
 use App\Wallet;
+use App\Transaction;
 use Illuminate\Support\Facades\DB;
 use Laravel\Horizon\Contracts\JobRepository;
 use Laravel\Horizon\Contracts\MetricsRepository;
@@ -120,6 +121,10 @@ class MetricsController extends Controller
         // TODO: just get this from the stats table instead?
         $numberOfPayingUsers = $this->collectPayersCount();
 
+        $numberOfBilledTransactions = Transaction::where('type', Transaction::ENTITLEMENT_BILLED)->count();
+        $numberOfRefundTransactions = Transaction::where('type', Transaction::WALLET_REFUND)->count();
+        $numberOfChargebackTransactions = Transaction::where('type', Transaction::WALLET_CHARGEBACK)->count();
+
         $numberOfUsers = User::count();
         $numberOfDeletedUsers = User::withTrashed()->whereNotNull('deleted_at')->count();
         $numberOfSuspendedUsers = User::where('status', '&', User::STATUS_SUSPENDED)->count();
@@ -148,6 +153,12 @@ class MetricsController extends Controller
 
         $horizon = $this->horizonMetrics($appDomain, $tenantId);
 
+        $numberOfBilledTransactions = Transaction::where('type', Transaction::ENTITLEMENT_BILLED)->count();
+        $numberOfRefundTransactions = Transaction::where('type', Transaction::WALLET_REFUND)->count();
+        $numberOfChargebackTransactions = Transaction::where('type', Transaction::WALLET_CHARGEBACK)->count();
+
+        $numberOfPaidPayments = Payment::where('status', Payment::STATUS_PAID)->count();
+        $numberOfFailedPayments = Payment::where('status', Payment::STATUS_FAILED)->count();
         // phpcs:disable
         $text = <<<EOF
         # HELP kolab_users_count Total number of users
@@ -177,6 +188,15 @@ class MetricsController extends Controller
         # HELP kolab_users_failed_init Number of users that are still imap/ldap ready
         # TYPE kolab_users_failed_init gauge
         kolab_users_failed_init{instance="$appDomain", tenant="$tenantId"} $numberOfUserWithFailedInit
+        # HELP kolab_transactions_count Number of transactions
+        # TYPE kolab_transactions_count gauge
+        kolab_transactions_count{instance="$appDomain", tenant="$tenantId", type="billed"} $numberOfBilledTransactions
+        kolab_transactions_count{instance="$appDomain", tenant="$tenantId", type="refund"} $numberOfRefundTransactions
+        kolab_transactions_count{instance="$appDomain", tenant="$tenantId", type="chargeback"} $numberOfChargebackTransactions
+        # HELP kolab_payments_paid_count Number of paid payments
+        # TYPE kolab_payments_paid_count gauge
+        kolab_payments_count{instance="$appDomain", tenant="$tenantId", status="paid"} $numberOfPaidPayments
+        kolab_payments_count{instance="$appDomain", tenant="$tenantId", status="failed"} $numberOfFailedPayments
         $horizon
         \n
         EOF;
