@@ -116,6 +116,7 @@ class MetricsController extends Controller
     {
         $appDomain = \config('app.domain');
         $tenantId = \config('app.tenant_id');
+        $with_ldap = \config('app.with_ldap');
         // TODO: just get this from the stats table instead?
         $numberOfPayingUsers = $this->collectPayersCount();
 
@@ -126,23 +127,23 @@ class MetricsController extends Controller
         $numberOfDegradedUsers = User::where('status', '&', User::STATUS_DEGRADED)->count();
         $numberOfWalletsWithBalanceBelowManadate = $this->numberOfWalletsWithBalanceBelowManadate();
         // Should be ~0 (otherwise a cleanup job failed)
-        $numberOfDeletedUserWithMissingCleanup = User::withTrashed()->whereNotNull('deleted_at')
-            ->where(function ($query) {
-                $query->where('status', '&', User::STATUS_IMAP_READY)
-                    ->orWhere('status', '&', User::STATUS_LDAP_READY);
+        $numberOfDeletedUserWithMissingCleanup = User::onlyTrashed()
+            ->where('deleted_at', '<', \Carbon\Carbon::now()->subDays(1))
+            ->where(function ($query) use ($with_ldap) {
+                $query = $query->where('status', '&', User::STATUS_IMAP_READY);
+                if ($with_ldap) {
+                    $query->orWhere('status', '&', User::STATUS_LDAP_READY);
+                }
             })->count();
 
         $numberOfUserWithFailedInit = User::where('created_at', '<', \Carbon\Carbon::now()->subDays(1));
-        if (\config('app.with_ldap')) {
-            // We need all users that are either not imap-ready or not ldap-ready
-            // (Can also be written as "and (status & 48 != 48)")
-            $numberOfUserWithFailedInit->where(function ($query) {
-                $query->whereNot('status', '&', User::STATUS_IMAP_READY)
-                    ->orWhereNot('status', '&', User::STATUS_LDAP_READY);
-            });
-        } else {
-            $numberOfUserWithFailedInit = $numberOfUserWithFailedInit->whereNot('status', '&', User::STATUS_IMAP_READY);
-        }
+        $numberOfUserWithFailedInit->where(function ($query) use ($with_ldap) {
+            $query = $query->whereNot('status', '&', User::STATUS_IMAP_READY)
+                ->orWhereNot('status', '&', User::STATUS_ACTIVE);
+            if ($with_ldap) {
+                $query->orWhereNot('status', '&', User::STATUS_LDAP_READY);
+            }
+        });
         $numberOfUserWithFailedInit = $numberOfUserWithFailedInit->count();
 
         $horizon = $this->horizonMetrics($appDomain, $tenantId);
