@@ -16,6 +16,7 @@ class ResyncTest extends TestCase
         parent::setUp();
 
         $this->deleteTestUser('user@force-delete.com');
+        $this->deleteTestUser('user@incomplete.com');
     }
 
     /**
@@ -24,6 +25,7 @@ class ResyncTest extends TestCase
     public function tearDown(): void
     {
         $this->deleteTestUser('user@force-delete.com');
+        $this->deleteTestUser('user@incomplete.com');
 
         parent::tearDown();
     }
@@ -63,7 +65,7 @@ class ResyncTest extends TestCase
         $output = trim(\Artisan::output());
 
         $this->assertSame(0, $code);
-        $this->assertSame("{$user->email}: pushed", $output);
+        $this->assertSame("{$user->email}: pushed (delete)", $output);
         $user->refresh();
         $this->assertFalse($user->isDeleted());
         $this->assertTrue($user->isImapReady());
@@ -83,6 +85,7 @@ class ResyncTest extends TestCase
 
         $this->assertSame(0, $code);
         $this->assertSame("{$user->email}: in-sync", $output);
+
         Queue::assertNothingPushed();
 
         Queue::fake();
@@ -98,7 +101,7 @@ class ResyncTest extends TestCase
         $output = trim(\Artisan::output());
 
         $this->assertSame(0, $code);
-        $this->assertSame("{$user->email}: pushed", $output);
+        $this->assertSame("{$user->email}: pushed (delete)", $output);
     }
 
     /**
@@ -117,7 +120,7 @@ class ResyncTest extends TestCase
         $output = trim(\Artisan::output());
 
         $this->assertSame(0, $code);
-        $this->assertSame("{$user->email}: pushed", $output);
+        $this->assertSame("{$user->email}: pushed (resync)", $output);
 
         Queue::assertPushed(\App\Jobs\User\ResyncJob::class, 1);
         Queue::assertPushed(\App\Jobs\User\ResyncJob::class, function ($job) use ($user) {
@@ -125,6 +128,15 @@ class ResyncTest extends TestCase
             return $job_user_id === $user->id;
         });
 
+        // Test a user that is not IMAP_READY
+        $user = $this->getTestUser('user@incomplete.com', [
+            'status' => User::STATUS_LDAP_READY | User::STATUS_ACTIVE,
+        ]);
+        $code = \Artisan::call("user:resync --created-only");
+        $output = trim(\Artisan::output());
+
+        $this->assertSame(0, $code);
+        $this->assertStringContainsString("{$user->email}: pushed (create)", $output);
         // TODO: Test other cases
     }
 }
