@@ -118,8 +118,14 @@ class MetricsController extends Controller
         $appDomain = \config('app.domain');
         $tenantId = \config('app.tenant_id');
         $with_ldap = \config('app.with_ldap');
-        // TODO: just get this from the stats table instead?
+
         $numberOfPayingUsers = $this->collectPayersCount();
+
+        $numberOfPayers = Payment::where('status', Payment::STATUS_PAID)
+            ->distinct()->count('wallet_id');
+        $numberOfActivePayers = Payment::where('status', Payment::STATUS_PAID)
+            ->where('created_at', '>', \Carbon\Carbon::now()->subMonths(1))
+            ->distinct()->count('wallet_id');
 
         $numberOfBilledTransactions = Transaction::where('type', Transaction::ENTITLEMENT_BILLED)->count();
         $numberOfRefundTransactions = Transaction::where('type', Transaction::WALLET_REFUND)->count();
@@ -197,6 +203,12 @@ class MetricsController extends Controller
         # TYPE kolab_payments_paid_count gauge
         kolab_payments_count{instance="$appDomain", tenant="$tenantId", status="paid"} $numberOfPaidPayments
         kolab_payments_count{instance="$appDomain", tenant="$tenantId", status="failed"} $numberOfFailedPayments
+        # HELP kolab_payers_count Number of distinct wallets with payments
+        # TYPE kolab_payers_count gauge
+        kolab_payers_count{instance="$appDomain", tenant="$tenantId"} $numberOfPayers
+        # HELP kolab_payers_active_count Number of distinct wallets with payments in past month
+        # TYPE kolab_payers_active_count gauge
+        kolab_payers_active_count{instance="$appDomain", tenant="$tenantId"} $numberOfActivePayers
         $horizon
         \n
         EOF;
