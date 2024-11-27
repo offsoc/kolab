@@ -132,10 +132,14 @@ class MetricsController extends Controller
         $numberOfChargebackTransactions = Transaction::where('type', Transaction::WALLET_CHARGEBACK)->count();
 
         $numberOfUsers = User::count();
-        $numberOfDeletedUsers = User::withTrashed()->whereNotNull('deleted_at')->count();
+        $numberOfDeletedUsers = User::onlyTrashed()->count();
+        $numberOfActiveUsers = User::where('status', '&', User::STATUS_ACTIVE)
+            ->whereNot('status', '&', User::STATUS_SUSPENDED)->count();
         $numberOfSuspendedUsers = User::where('status', '&', User::STATUS_SUSPENDED)->count();
-        $numberOfRestrictedUsers = User::where('status', '&', User::STATUS_RESTRICTED)->count();
-        $numberOfDegradedUsers = User::where('status', '&', User::STATUS_DEGRADED)->count();
+        $numberOfRestrictedUsers = User::where('status', '&', User::STATUS_RESTRICTED)
+            ->whereNot('status', '&', User::STATUS_SUSPENDED)->count();
+        $numberOfDegradedUsers = User::where('status', '&', User::STATUS_ACTIVE | User::STATUS_DEGRADED)
+            ->whereNot('status', '&', User::STATUS_SUSPENDED)->count();
         $numberOfWalletsWithBalanceBelowManadate = $this->numberOfWalletsWithBalanceBelowManadate();
         // Should be ~0 (otherwise a cleanup job failed)
         $numberOfDeletedUserWithMissingCleanup = User::onlyTrashed()
@@ -167,21 +171,14 @@ class MetricsController extends Controller
         $numberOfFailedPayments = Payment::where('status', Payment::STATUS_FAILED)->count();
         // phpcs:disable
         $text = <<<EOF
-        # HELP kolab_users_count Total number of users
+        # HELP kolab_users_count Number of users with a certain state
         # TYPE kolab_users_count gauge
-        kolab_users_count{instance="$appDomain", tenant="$tenantId"} $numberOfUsers
-        # HELP kolab_users_deleted_count Number of deleted users
-        # TYPE kolab_users_deleted_count gauge
-        kolab_users_deleted_count{instance="$appDomain", tenant="$tenantId"} $numberOfDeletedUsers
-        # HELP kolab_users_suspended_count Number of suspended users
-        # TYPE kolab_users_suspended_count gauge
-        kolab_users_suspended_count{instance="$appDomain", tenant="$tenantId"} $numberOfSuspendedUsers
-        # HELP kolab_users_restricted_count Number of restricted users
-        # TYPE kolab_users_restricted_count gauge
-        kolab_users_restricted_count{instance="$appDomain", tenant="$tenantId"} $numberOfRestrictedUsers
-        # HELP kolab_users_degraded_count Number of degraded users
-        # TYPE kolab_users_degraded_count gauge
-        kolab_users_degraded_count{instance="$appDomain", tenant="$tenantId"} $numberOfDegradedUsers
+        kolab_users_count{instance="$appDomain", tenant="$tenantId", state="existing"} $numberOfUsers
+        kolab_users_count{instance="$appDomain", tenant="$tenantId", state="active"} $numberOfActiveUsers
+        kolab_users_count{instance="$appDomain", tenant="$tenantId", state="trashed"} $numberOfDeletedUsers
+        kolab_users_count{instance="$appDomain", tenant="$tenantId", state="suspended"} $numberOfSuspendedUsers
+        kolab_users_count{instance="$appDomain", tenant="$tenantId", state="restricted"} $numberOfRestrictedUsers
+        kolab_users_count{instance="$appDomain", tenant="$tenantId", state="degraded"} $numberOfDegradedUsers
         # HELP kolab_users_paying_count Number of paying users
         # TYPE kolab_users_paying_count gauge
         kolab_users_paying_count{instance="$appDomain", tenant="$tenantId"} $numberOfPayingUsers
