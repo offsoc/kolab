@@ -18,7 +18,7 @@ if ! [ -f $DKIMKEYFILE ]; then
 fi
 
 sed -i -r \
-    -e "s|DKIM_IDENTIFIER|$DKIM_IDENTIFIER|g" \
+    -e "s|DKIM_SELECTOR|$DKIM_IDENTIFIER|g" \
     $CONFIG
 
 # We use these to check if the process has started, so ensure we aren't dealing wiht leftover files
