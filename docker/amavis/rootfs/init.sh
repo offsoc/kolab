@@ -64,12 +64,5 @@ else
     sed -i "s/\['ClamAV-clamd'/#\['ClamAV-clamd'/" $CONFIG
 fi
 
-# This allows to kill amavis to reload the config or code in a running container
-if $DEBUG; then
-    echo "Starting amavis in debug mode"
-    while true; do
-        amavisd -c $CONFIG foreground
-    done
-fi
 echo "Starting amavis"
 exec amavisd -c $CONFIG foreground

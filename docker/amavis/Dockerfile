@@ -32,7 +32,6 @@ VOLUME [ "/var/dkim" ]
 
 ENV POSTFIX_HOST=postfix
 ENV DKIM_IDENTIFIER=dkim20240318
-ENV DEBUG=false
 ENV CLAMD=false
 
 CMD ["/init.sh"]
