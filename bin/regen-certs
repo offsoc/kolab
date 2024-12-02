@@ -7,6 +7,17 @@ if [ ! -d "${cert_dir}" ]; then
     mkdir -p ${cert_dir}
 fi
 
+if [ -f "${cert_dir}/ca.key" ]; then
+    if openssl x509 -checkend 86400 -noout -in "${cert_dir}/ca.cert"
+    then
+        echo "Certificate is good for another day!"
+    else
+        echo "Certificate has expired or will do so within 24 hours! Removing to generate a new one"
+        rm "${cert_dir}/ca.key"
+        rm "${cert_dir}/ca.cert"
+    fi
+fi
+
 if [ ! -f "${cert_dir}/ca.key" ]; then
     openssl genrsa -out ${cert_dir}/ca.key 4096
 
