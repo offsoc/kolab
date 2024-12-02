@@ -1,10 +1,8 @@
 <?php
-    $config['managesieve_port'] = 4190;
-    $config['managesieve_host'] = str_replace("ssl://", "", getenv('IMAP_HOST'));
+    $config['managesieve_host'] = str_replace("ssl://", "", getenv('IMAP_HOST')) . ':4190';
     $config['managesieve_auth_type'] = 'PLAIN';
     $config['managesieve_auth_cid'] = null;
     $config['managesieve_auth_pw'] = null;
-    $config['managesieve_usetls'] = false;
     $config['managesieve_default'] = '/etc/dovecot/sieve/global';
     $config['managesieve_mbox_encoding'] = 'UTF-8';
     $config['managesieve_replace_delimiter'] = '';

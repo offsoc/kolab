@@ -28,8 +28,8 @@ if (!function_exists("getenvlist")) {
     $config['mail_domain'] = '';
 
     // IMAP Server Settings
-    $config['default_host'] = (getenv('IMAP_TLS') == "true" ? "ssl://" : "") . getenv('IMAP_HOST');
-    $config['default_port'] = getenv('IMAP_PORT');
+    $config['imap_host'] = (getenv('IMAP_TLS') == "true" ? "ssl://" : "") . getenv('IMAP_HOST') . ':' . getenv('IMAP_PORT');
+    
     $config['imap_delimiter'] = '/';
     $config['imap_force_lsub'] = true;
     if (getenv('IMAP_TLS') == "true") {
@@ -54,11 +54,11 @@ if (!function_exists("getenvlist")) {
 
     // SMTP Server Settings
     if (getenv('SUBMISSION_ENCRYPTION') == "starttls") {
-        $config['smtp_server'] = "tls://" . getenv('SUBMISSION_HOST');
+        $config['smtp_host'] = "tls://" . getenv('SUBMISSION_HOST') . ':' . getenv('SUBMISSION_PORT');
     } else {
-        $config['smtp_server'] = getenv('SUBMISSION_HOST');
+        $config['smtp_host'] = getenv('SUBMISSION_HOST') . ':' . getenv('SUBMISSION_PORT');
     }
-    $config['smtp_port'] = getenv('SUBMISSION_PORT');
+    
     $config['smtp_user'] = '%u';
     $config['smtp_pass'] = '%p';
     $config['smtp_helo_host'] = $_SERVER["HTTP_HOST"] ?? null;

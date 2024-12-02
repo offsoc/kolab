@@ -48,7 +48,7 @@ COPY rootfs/opt/app-root/src/update.sh /opt/app-root/src/
 COPY rootfs/opt/app-root/src/composer.json /opt/app-root/src/
 COPY rootfs/opt/app-root/src/roundcubemail-config-templates /opt/app-root/src/roundcubemail-config-templates
 
-ARG GIT_REF_ROUNDCUBEMAIL=dev/kolab-1.5
+ARG GIT_REF_ROUNDCUBEMAIL=dev/kolab-1.6
 ARG GIT_REMOTE_ROUNDCUBEMAIL=https://git.kolab.org/source/roundcubemail.git
 ARG GIT_REF_ROUNDCUBEMAIL_PLUGINS=master
 ARG GIT_REMOTE_ROUNDCUBEMAIL_PLUGINS=https://git.kolab.org/diffusion/RPK/roundcubemail-plugins-kolab.git

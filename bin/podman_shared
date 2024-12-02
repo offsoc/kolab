@@ -389,7 +389,7 @@ pin_git_refs() {
     export KOLAB_GIT_REF=$(pin_commit "$KOLAB_GIT_REMOTE" "master")
 
     export GIT_REMOTE_ROUNDCUBEMAIL=https://git.kolab.org/source/roundcubemail.git
-    export GIT_REF_ROUNDCUBEMAIL=$(pin_commit "$GIT_REMOTE_ROUNDCUBEMAIL" "dev/kolab-1.5")
+    export GIT_REF_ROUNDCUBEMAIL=$(pin_commit "$GIT_REMOTE_ROUNDCUBEMAIL" "dev/kolab-1.6")
 
     export GIT_REMOTE_ROUNDCUBEMAIL_PLUGINS=https://git.kolab.org/diffusion/RPK/roundcubemail-plugins-kolab.git
     export GIT_REF_ROUNDCUBEMAIL_PLUGINS=$(pin_commit "$GIT_REMOTE_ROUNDCUBEMAIL_PLUGINS" "master")
