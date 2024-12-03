@@ -141,6 +141,10 @@ podman__build_tests() {
     podman__build docker/tests kolab-tests --ulimit nofile=65535:65535
 }
 
+kolab__certs() {
+    env CERT_DIR=ci/certs APP_DOMAIN=$HOST bin/regen-certs
+}
+
 # Build all containers required for testing
 kolab__build() {
     pin_git_refs
@@ -163,7 +167,7 @@ kolab__build() {
         podman__build docker/element element
         podman__build_roundcube
         podman__build_tests
-        env CERT_DIR=ci/certs APP_DOMAIN=$HOST bin/regen-certs
+        kolab__certs
     fi
 }
 
