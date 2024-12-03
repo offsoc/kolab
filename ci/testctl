@@ -87,6 +87,7 @@ export IMAP_ADMIN_PASSWORD=simple123
 export MAIL_HOST=localhost
 export MAIL_PORT=10587
 export IMAP_DEBUG=true
+export SQL_DEBUG=true
 export DAV_URI=http://localhost:11080/dav/
 export FILEAPI_WOPI_OFFICE=https://$HOST
 export CALENDAR_CALDAV_SERVER=http://localhost:11080/dav
