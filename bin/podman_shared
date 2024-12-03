@@ -201,6 +201,11 @@ podman__run_roundcube() {
         -e KOLAB_ADDRESSBOOK_CARDDAV_SERVER=http://localhost:11080/dav \
         -e CALENDAR_CALDAV_SERVER=http://localhost:11080/dav \
         -e TASKLIST_CALDAV_SERVER=http://localhost:11080/dav \
+        -e PASSPORT_WEBMAIL_SSO_CLIENT_ID \
+        -e PASSPORT_WEBMAIL_SSO_CLIENT_SECRET \
+        -e OAUTH_TOKEN_URI=http://localhost:8000/oauth/token/ \
+        -e OAUTH_REDIRECT_URI="https://${HOST}${WEBMAIL_URL}index.php/login/oauth" \
+        -e WEBMAIL_PATH="${WEBMAIL_URL}" \
         -e REDIS_HOST=localhost \
         -e REDIS_PASSWORD="${REDIS_PASSWORD:?"missing env variable"}" \
         roundcube:latest $@

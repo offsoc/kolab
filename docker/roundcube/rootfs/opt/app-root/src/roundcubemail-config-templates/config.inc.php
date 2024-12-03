@@ -223,6 +223,17 @@ if (!function_exists("getenvlist")) {
             'ssl_verify_peer' => false,
         );
 
+    $config['oauth_provider'] = 'generic';
+    $config['oauth_provider_name'] = 'Kolab';
+    $config['oauth_client_id'] = getenv('PASSPORT_WEBMAIL_SSO_CLIENT_ID');
+    $config['oauth_client_secret'] = getenv('PASSPORT_WEBMAIL_SSO_CLIENT_SECRET');
+    $config['oauth_auth_uri'] = getenv('OAUTH_AUTH_URI') ?: 'https://' . ($_SERVER['HTTP_HOST'] ?? null) . '/oauth/authorize';
+    $config['oauth_token_uri'] = getenv('OAUTH_TOKEN_URI') ?: 'http://localhost:8000/oauth/token';
+    $config['oauth_redirect_uri'] = getenv('OAUTH_REDIRECT_URI') ?: 'https://' . ($_SERVER['HTTP_HOST'] ?? null) . '/roundcubemail/index.php/login/oauth';
+
+    $config['oauth_scope'] = 'email openid auth.token';
+    $config['oauth_password_claim'] = 'auth.token';
+
     @include('kolab_syncroton.inc.php');
     @include('chwala.inc.php');
 

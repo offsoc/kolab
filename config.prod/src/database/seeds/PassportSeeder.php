@@ -31,6 +31,21 @@ class PassportSeeder extends Seeder
         $client->id = \config('auth.proxy.client_id');
         $client->save();
 
+        // Create a client for Webmail SSO
+        $client = Passport::client()->forceFill([
+            'user_id' => null,
+            'name' => 'Webmail SSO client',
+            'secret' => \config('auth.sso.client_secret'),
+            'provider' => 'users',
+            'redirect' => (str_starts_with(\config('app.webmail_url'), 'http') ?  '' : 'https://' . \config('app.website_domain')) . \config('app.webmail_url') . 'index.php/login/oauth',
+            'personal_access_client' => 0,
+            'password_client' => 0,
+            'revoked' => false,
+            'allowed_scopes' => ['email', 'auth.token'],
+        ]);
+        $client->id = \config('auth.sso.client_id');
+        $client->save();
+
         // Create a client for synapse oauth
         $client = Passport::client()->forceFill([
             'user_id' => null,

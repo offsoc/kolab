@@ -37,7 +37,7 @@ class PassportSeeder extends Seeder
             'name' => 'Webmail SSO client',
             'secret' => \config('auth.sso.client_secret'),
             'provider' => 'users',
-            'redirect' => 'https://' . \config('app.website_domain') . '/roundcubemail/index.php/login/oauth',
+            'redirect' => (str_starts_with(\config('app.webmail_url'), 'http') ?  '' : 'https://' . \config('app.website_domain')) . \config('app.webmail_url') . 'index.php/login/oauth',
             'personal_access_client' => 0,
             'password_client' => 0,
             'revoked' => false,
