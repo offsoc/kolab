@@ -61,7 +61,9 @@ if $CLAMD; then
     clamd --config-file=/etc/clamd.d/amavisd.conf
 else
     echo "Configured without clamd"
+    sed -i "s/# @bypass_virus_checks_maps/@bypass_virus_checks_maps/" $CONFIG
     sed -i "s/\['ClamAV-clamd'/#\['ClamAV-clamd'/" $CONFIG
+    sed -i "s/\['ClamAV-clamscan'/#\['ClamAV-clamscan'/" $CONFIG
 fi
 
 echo "Starting amavis"
