@@ -233,6 +233,7 @@ if (!function_exists("getenvlist")) {
 
     $config['oauth_scope'] = 'email openid auth.token';
     $config['oauth_password_claim'] = 'auth.token';
+    $config['oauth_login_redirect'] = true;
 
     @include('kolab_syncroton.inc.php');
     @include('chwala.inc.php');
