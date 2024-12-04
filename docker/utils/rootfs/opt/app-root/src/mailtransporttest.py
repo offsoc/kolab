@@ -56,6 +56,8 @@ class SendTest:
         if self.verbose:
             print(msg)
 
+        email_domain = self.sender_username.split('@')[1]
+
         if msg['DKIM-Signature']:
             print("There is a DKIM-Signature.")
 
@@ -65,6 +67,9 @@ class SendTest:
         for header in msg.get_all('Authentication-Results', ["No header available"]):
             if "dkim=pass" not in header:
                 print("Failed to validate Authentication-Results header:", header)
+                return False
+            if f"header.d={email_domain}" not in header:
+                print("DKIM signature is not aligned", header)
                 return False
 
         if "NO" not in (msg['X-Spam-Flag'] or ""):
