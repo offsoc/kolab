@@ -11,6 +11,7 @@ FROM apheleia/almalinux9
 
 RUN dnf -y install \
     amavis \
+    perl-DBD-MySQL \
     spamassassin \
     clamav \
     clamav-update && \
@@ -33,6 +34,10 @@ VOLUME [ "/var/dkim" ]
 ENV POSTFIX_HOST=postfix
 ENV DKIM_IDENTIFIER=dkim20240318
 ENV CLAMD=false
+# ENV DB_HOST=
+# ENV DB_DATABASE=
+# ENV DB_USERNAME=
+# ENV DB_PASSWORD=
 
 CMD ["/init.sh"]
 

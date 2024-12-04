@@ -19,6 +19,10 @@ fi
 
 sed -i -r \
     -e "s|DKIM_SELECTOR|$DKIM_IDENTIFIER|g" \
+    -e "s|DB_HOST|$DB_HOST|g" \
+    -e "s|DB_DATABASE|$DB_DATABASE|g" \
+    -e "s|DB_USERNAME|$DB_USERNAME|g" \
+    -e "s|DB_PASSWORD|$DB_PASSWORD|g" \
     $CONFIG
 
 # We use these to check if the process has started, so ensure we aren't dealing wiht leftover files
