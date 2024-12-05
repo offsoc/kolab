@@ -11,7 +11,9 @@ else
 fi
 
 if [[ -v MEMORY_LIMIT ]]; then
-    echo "maxmemory $(env | grep MEMORY | sed 's/MEMORY_LIMIT=//')" >> /etc/redis/redis.conf
+    # Add a 10% margin between the configured limit, and the kubernetes maximum memory limit
+    MAX_MEMORY="$(env | grep MEMORY | sed 's/MEMORY_LIMIT=//' | awk '{$0=int($1 * 0.9);print $0}')"
+    echo "maxmemory $MAX_MEMORY" >> /etc/redis/redis.conf
     echo "maxmemory-policy allkeys-lru" >> /etc/redis/redis.conf
 else
   echo 'WARNING: setting MEMORY_LIMIT is recommended'
