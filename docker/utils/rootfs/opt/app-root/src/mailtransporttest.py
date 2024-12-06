@@ -58,6 +58,15 @@ class SendTest:
 
         email_domain = self.sender_username.split('@')[1]
 
+        for header in msg.get_all('Received'):
+            # Detect final delivery via lmtp
+            if "lmtp" in header:
+                sent = datetime.strptime(msg.get('Date'), "%a, %d %b %Y %H:%M:%S %z")
+                received = datetime.strptime(header.split(';')[1].strip(), "%a, %d %b %Y %H:%M:%S %z")
+                delay = (sent-received).total_seconds()
+                print(f"Delivery delay: {delay}s")
+
+
         if msg['DKIM-Signature']:
             print("There is a DKIM-Signature.")
 
@@ -89,7 +98,6 @@ class SendTest:
         # Ensure SPF record matches a received line?
         # Suggest SPF record ip (sender ip)
         # Validate DKIM-Signature according to DNS entry
-        # Calculate delay using Date header?
         # These could all be statistics for prometheus
 
         return True
