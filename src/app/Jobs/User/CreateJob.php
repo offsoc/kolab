@@ -80,7 +80,7 @@ class CreateJob extends UserJob
             $code = \Artisan::call("user:abuse-check {$this->userId}");
             if ($code == 2) {
                 \Log::info("Suspending user due to suspected abuse: {$this->userId} {$user->email}");
-                \App\EventLog::createFor($user, \App\EventLog::TYPE_SUSPENDED, "Suspected spammer");
+                \App\EventLog::createFor($user, \App\EventLog::TYPE_SUSPENDED, "Abuse check detected suspected spammer");
 
                 $user->status |= \App\User::STATUS_SUSPENDED;
             }
