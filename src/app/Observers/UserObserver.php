@@ -36,6 +36,10 @@ class UserObserver
      */
     public function created(User $user)
     {
+        if ($user->role == \App\User::ROLE_SERVICE) {
+            return;
+        }
+
         $settings = [
             'country' => \App\Utils::countryForRequest(),
             'currency' => \config('app.currency'),
@@ -80,6 +84,10 @@ class UserObserver
      */
     public function deleted(User $user)
     {
+        if ($user->role == \App\User::ROLE_SERVICE) {
+            return;
+        }
+
         // Remove the user from existing groups
         $wallet = $user->wallet();
         if ($wallet && $wallet->owner) {
@@ -104,6 +112,10 @@ class UserObserver
      */
     public function deleting(User $user)
     {
+        if ($user->role == \App\User::ROLE_SERVICE) {
+            return;
+        }
+
         // Remove owned users/domains/groups/resources/etc
         self::removeRelatedObjects($user, $user->isForceDeleting());
 
@@ -140,6 +152,10 @@ class UserObserver
      */
     public function restored(User $user)
     {
+        if ($user->role == \App\User::ROLE_SERVICE) {
+            return;
+        }
+
         // We need at least the user domain so it can be created in ldap.
         // FIXME: What if the domain is owned by someone else?
         $domain = $user->domain();
@@ -163,6 +179,10 @@ class UserObserver
      */
     public function updated(User $user)
     {
+        if ($user->role == \App\User::ROLE_SERVICE) {
+            return;
+        }
+
         if (!$user->trashed()) {
             \App\Jobs\User\UpdateJob::dispatch($user->id);
         }

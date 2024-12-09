@@ -16,11 +16,10 @@ class ImapAdminSeeder extends Seeder
      */
     public function run()
     {
-        User::create(
-            [
-                'email' => \config('services.imap.admin_login'),
-                'password' => \config('services.imap.admin_password')
-            ]
-        );
+        $user = new \App\User();
+        $user->email = \config('services.imap.admin_login');
+        $user->password = \config('services.imap.admin_password');
+        $user->role = \App\User::ROLE_SERVICE;
+        $user->save();
     }
 }

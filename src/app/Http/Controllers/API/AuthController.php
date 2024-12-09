@@ -88,6 +88,11 @@ class AuthController extends Controller
             return response()->json(['status' => 'error', 'message' => self::trans('auth.failed')], 401);
         }
 
+        if ($user->role == \App\User::ROLE_SERVICE) {
+            \Log::debug("[Auth] Login with service account not allowed: {$request->email}");
+            return response()->json(['status' => 'error', 'message' => self::trans('auth.failed')], 401);
+        }
+
         return self::logonResponse($user, $request->password, $request->secondfactor);
     }
 

@@ -201,6 +201,27 @@ class AuthTest extends TestCase
     }
 
     /**
+     * Test service account login attempt
+     */
+    public function testLoginServiceAccount(): void
+    {
+        $user = $this->getTestUser('cyrus-admin');
+        $user->role = \App\User::ROLE_SERVICE;
+        $user->password = 'simple123';
+        $user->save();
+
+        // Request with service account
+        $post = ['email' => 'cyrus-admin', 'password' => 'simple123'];
+        $response = $this->post("api/auth/login", $post);
+        $response->assertStatus(401);
+
+        $json = $response->json();
+
+        $this->assertSame('error', $json['status']);
+        $this->assertSame('Invalid username or password.', $json['message']);
+    }
+
+    /**
      * Test /api/auth/login with geo-lockin
      */
     public function testLoginGeoLock(): void

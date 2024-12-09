@@ -44,7 +44,7 @@ class CreateCommand extends \App\Console\Command
         $existingDeletedUser = null;
         $packagesToAssign = [];
 
-        if ($role === User::ROLE_ADMIN || $role === User::ROLE_RESELLER) {
+        if ($role === User::ROLE_ADMIN || $role === User::ROLE_RESELLER || $role === User::ROLE_SERVICE) {
             if ($error = $this->validateUserWithRole($email)) {
                 $this->error($error);
                 return 1;

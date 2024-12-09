@@ -38,13 +38,6 @@ class SetRoleCommand extends Command
         if ($role === 'null') {
             $this->info("Removing role.");
             $role = null;
-        } else {
-            if ($role === User::ROLE_ADMIN || $role === User::ROLE_RESELLER) {
-                $this->info("Setting role {$role}.");
-            } else {
-                $this->error("Invalid role {$role}.");
-                return 1;
-            }
         }
         $user->role = $role;
         $user->save();

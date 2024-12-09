@@ -65,6 +65,7 @@ class User extends Authenticatable
 
     public const ROLE_ADMIN = 'admin';
     public const ROLE_RESELLER = 'reseller';
+    public const ROLE_SERVICE = 'service';
 
     /** @var int The allowed states for this object used in StatusPropertyTrait */
     private int $allowed_states = self::STATUS_NEW |
@@ -196,7 +197,7 @@ class User extends Authenticatable
      */
     public function canRead($object): bool
     {
-        if ($this->role == 'admin') {
+        if ($this->role == self::ROLE_ADMIN) {
             return true;
         }
 
@@ -204,8 +205,8 @@ class User extends Authenticatable
             return true;
         }
 
-        if ($this->role == 'reseller') {
-            if ($object instanceof User && $object->role == 'admin') {
+        if ($this->role == self::ROLE_RESELLER) {
+            if ($object instanceof User && $object->role == self::ROLE_ADMIN) {
                 return false;
             }
 
@@ -242,12 +243,12 @@ class User extends Authenticatable
             return true;
         }
 
-        if ($this->role == 'admin') {
+        if ($this->role == self::ROLE_ADMIN) {
             return true;
         }
 
-        if ($this->role == 'reseller') {
-            if ($object instanceof User && $object->role == 'admin') {
+        if ($this->role == self::ROLE_RESELLER) {
+            if ($object instanceof User && $object->role == self::ROLE_ADMIN) {
                 return false;
             }
 
@@ -678,7 +679,7 @@ class User extends Authenticatable
      */
     public function setRoleAttribute($role)
     {
-        if ($role !== null && !in_array($role, [self::ROLE_ADMIN, self::ROLE_RESELLER])) {
+        if ($role !== null && !in_array($role, [self::ROLE_ADMIN, self::ROLE_RESELLER, self::ROLE_SERVICE])) {
             throw new \Exception("Invalid role: {$role}");
         }
 
