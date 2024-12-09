@@ -90,10 +90,10 @@ class CalDAV:
         else:
             self.href = None
 
-    def send_request(self, url, method, body = None):
+    def send_request(self, url, method, body = None, depth="infinity"):
         headers = {
             "Content-Type": "application/xml; charset=utf-8",
-            "Depth": "infinity",
+            "Depth": depth,
             **basic_auth_headers(self.username, self.password)
         }
 
@@ -139,6 +139,40 @@ class CalDAV:
             f"https://{self.host}{href}",
             "REPORT",
             body
+        )
+
+        assert response.status == 207
+
+        result = response.read().decode()
+
+        root = ET.fromstring(result)
+        print(minidom.parseString(ET.tostring(root)).toprettyxml(indent="   "))
+
+    def search(self, href):
+        body = """
+        <c:calendar-query xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav" xmlns:cs="https://calendarserver.org/ns/">
+            <c:calendar-data>
+                <c:comp name="VCALENDAR">
+                    <c:prop name="VERSION"/>
+                    <c:prop name="PRODID"/>
+                    <c:comp name="VEVENT">
+                        <c:prop name="UID"/>
+                    </c:comp>
+                </c:comp>
+            </c:calendar-data>
+            <c:filter>
+                <c:comp-filter name="VCALENDAR">
+                    <c:comp-filter name="VEVENT"/>
+                </c:comp-filter>
+            </c:filter>
+        </c:calendar-query>
+        """.replace('    ', '').replace('\n', '').format(href=href)
+
+        response = self.send_request(
+            f"https://{self.host}{href}",
+            "REPORT",
+            body,
+            "1"
         )
 
         assert response.status == 207
@@ -212,6 +246,10 @@ def main():
     parser_list = subparsers.add_parser('show')
     parser_list.add_argument("--href", help="Match by href")
     parser_list.set_defaults(func=lambda args: CalDAV(args).show(args.href))
+
+    parser_search = subparsers.add_parser('search')
+    parser_search.add_argument("--href", help="Match by href")
+    parser_search.set_defaults(func=lambda args: CalDAV(args).search(args.href))
 
     parser_check = subparsers.add_parser('check')
     parser_check.set_defaults(func=lambda args: CalDAV(args).check())
