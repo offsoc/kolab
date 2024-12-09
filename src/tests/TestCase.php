@@ -105,4 +105,15 @@ abstract class TestCase extends BaseTestCase
         \config(['app.url' => str_replace('//', '//services.', \config('app.url'))]);
         url()->forceRootUrl(config('app.url'));
     }
+
+
+    /**
+     * The test equivalent of Http::withBody, which is not available for tests.
+     *
+     * Required to test request handlers that use Request::getContent
+     */
+    protected function postWithBody($url, $content)
+    {
+        return $this->call('POST', $url, [], [], [], [], $content);
+    }
 }

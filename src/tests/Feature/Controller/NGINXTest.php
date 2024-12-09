@@ -314,6 +314,33 @@ class NGINXTest extends TestCase
      */
     public function testCyrusSaslHook(): void
     {
-        $this->markTestIncomplete();
+        $pass = \App\Utils::generatePassphrase();
+
+        // Pass
+        $response = $this->postWithBody("api/webhooks/cyrus-sasl", "john kolab.org $pass");
+        $response->assertStatus(200);
+
+        // Pass without realm
+        $response = $this->postWithBody("api/webhooks/cyrus-sasl", "john@kolab.org  $pass");
+        $response->assertStatus(200);
+
+        // Invalid password
+        $response = $this->postWithBody("api/webhooks/cyrus-sasl", "john kolab.org fail");
+        $response->assertStatus(403);
+
+        $cyrusAdmin = \config('services.imap.admin_login');
+        $pass = \config('services.imap.admin_password');
+
+        // cyrus-admin Pass
+        $response = $this->postWithBody("api/webhooks/cyrus-sasl", "$cyrusAdmin  $pass");
+        $response->assertStatus(200);
+
+        // cyrus-admin fail
+        $response = $this->postWithBody("api/webhooks/cyrus-sasl", "$cyrusAdmin  fail");
+        $response->assertStatus(403);
+
+        // unknown user fail
+        $response = $this->postWithBody("api/webhooks/cyrus-sasl", "missing@kolab.org  $pass");
+        $response->assertStatus(403);
     }
 }
