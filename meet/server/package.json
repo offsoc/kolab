@@ -18,7 +18,7 @@
         "colors": "^1.4.0",
         "compression": "^1.7.4",
         "debug": "^4.1.1",
-        "express": "^4.21.1",
+        "express": "^4.21.2",
         "helmet": "^3.21.2",
         "mediasoup": "~3.14.0",
         "pidusage": "^2.0.17",
