@@ -29,7 +29,7 @@
     "laravel-mix": "^6.0.43",
     "linkify-string": "^4.0.0",
     "mediasoup-client": "^3.7.8",
-    "postcss": "^8.4.40",
+    "postcss": "^8.4.41",
     "resolve-url-loader": "^5.0.0",
     "sass": "^1.50.1",
     "sass-loader": "^8.0.0",
