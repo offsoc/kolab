@@ -10,14 +10,14 @@ return [
     'entitlement-deleted-short' => 'Supprimé :sku_title pour :object',
 
     'wallet-award' => 'bonus de :amount attribué à :wallet; :description',
-    'wallet-chargeback' => ':amount été refacturé par :wallet',
+    'wallet-chback' => ':amount été refacturé par :wallet',
     'wallet-credit' => ':amount a été ajouté au solde de :wallet',
     'wallet-debit' => ':amount a été déduit du solde de :wallet',
     'wallet-penalty' => 'Le solde de :wallet été réduit de :amount; :description',
     'wallet-refund' => ':amount a été remboursé sur le solde de :wallet',
 
     'wallet-award-short' => 'Prime: :description',
-    'wallet-chargeback-short' => 'Rétrofacturation',
+    'wallet-chback-short' => 'Rétrofacturation',
     'wallet-credit-short' => 'Paiement',
     'wallet-debit-short' => 'Déduction',
     'wallet-penalty-short' => 'Charger: :description',
