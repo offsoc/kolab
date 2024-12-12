@@ -44,7 +44,9 @@ class CreateCommand extends \App\Console\Command
         $existingDeletedUser = null;
         $packagesToAssign = [];
 
-        if ($role === User::ROLE_ADMIN || $role === User::ROLE_RESELLER || $role === User::ROLE_SERVICE) {
+        if ($role === User::ROLE_SERVICE) {
+            // No validation for service accounts
+        } elseif ($role === User::ROLE_ADMIN || $role === User::ROLE_RESELLER) {
             if ($error = $this->validateUserWithRole($email)) {
                 $this->error($error);
                 return 1;
@@ -94,7 +96,7 @@ class CreateCommand extends \App\Console\Command
             $owner = $user;
         }
 
-        if ($role != User::ROLE_ADMIN && $role != User::ROLE_RESELLER) {
+        if ($role != User::ROLE_ADMIN && $role != User::ROLE_RESELLER && $role != User::ROLE_SERVICE) {
             // Validate email address
             if ($error = UsersController::validateEmail($email, $owner, $existingDeletedUser)) {
                 $this->error("{$email}: {$error}");
