@@ -233,6 +233,12 @@ class AppServiceProvider extends ServiceProvider
             return Http::getFacadeRoot();
         });
 
+        // Use strict RFC compliant redirects which maintain the HTTP Method.
+        // Otherwise the redirect will always use a GET request.
+        Http::globalOptions([
+            'allow_redirects' => ['strict' => true],
+        ]);
+
         $this->applyOverrideConfig();
     }
 }
