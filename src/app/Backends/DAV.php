@@ -87,7 +87,9 @@ class DAV
             . '</d:propfind>';
 
         // Note: Cyrus CardDAV service requires Depth:1 (CalDAV works without it)
-        $response = $this->request('', 'PROPFIND', $body, ['Depth' => 1, 'Prefer' => 'return-minimal']);
+        // Note: iRony requires '/' instead of '' because otherwise a 301 redirect is returned,
+        // and our http client forgets the method after the redirect and sends a GET instead of PROPFIND.
+        $response = $this->request('/', 'PROPFIND', $body, ['Depth' => 1, 'Prefer' => 'return-minimal']);
 
         if (empty($response)) {
             \Log::error("Failed to get current-user-principal from the DAV server.");
