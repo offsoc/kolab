@@ -97,6 +97,9 @@ class CalDAV:
             **basic_auth_headers(self.username, self.password)
         }
 
+        if "://" not in url:
+            url = "https://" + url
+
         return http_request(
             url,
             method,
@@ -109,7 +112,7 @@ class CalDAV:
         body = '<d:propfind xmlns:d="DAV:" xmlns:cs="https://calendarserver.org/ns/"><d:prop><d:resourcetype /><d:displayname /></d:prop></d:propfind>'
 
         response = self.send_request(
-            f"https://{self.host}/principals/{self.username}/",
+            f"{self.host}/principals/{self.username}/",
             "PROPFIND",
             body
         )
@@ -136,7 +139,7 @@ class CalDAV:
         """.replace('    ', '').replace('\n', '').format(href=href)
 
         response = self.send_request(
-            f"https://{self.host}{href}",
+            f"{self.host}{href}",
             "REPORT",
             body
         )
@@ -169,7 +172,7 @@ class CalDAV:
         """.replace('    ', '').replace('\n', '').format(href=href)
 
         response = self.send_request(
-            f"https://{self.host}{href}",
+            f"{self.host}{href}",
             "REPORT",
             body,
             "1"
@@ -183,7 +186,7 @@ class CalDAV:
         print(minidom.parseString(ET.tostring(root)).toprettyxml(indent="   "))
 
     def fetch(self, href):
-        parsed_url = urllib.parse.urlparse(f"https://{self.host}")
+        parsed_url = urllib.parse.urlparse(f"{self.host}")
         response = self.send_request(
             urllib.parse.urlunparse(parsed_url._replace(path=href)),
             "PROPFIND"
@@ -201,7 +204,7 @@ class CalDAV:
         body = '<d:propfind xmlns:d="DAV:" xmlns:cs="https://calendarserver.org/ns/"><d:prop><d:resourcetype /><d:displayname /></d:prop></d:propfind>'
 
         response = self.send_request(
-            f"https://{self.host}/calendars/{self.username}/",
+            f"{self.host}/calendars/{self.username}/",
             "PROPFIND",
             body
         )
