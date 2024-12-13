@@ -21,7 +21,7 @@
         "dyrynda/laravel-nullable-fields": "^4.3.0",
         "garethp/php-ews": "dev-master",
         "guzzlehttp/guzzle": "^7.8.0",
-        "jeremy379/laravel-openid-connect": "^2.4",
+        "jeremy379/laravel-openid-connect": "~2.4.0",
         "kolab/net_ldap3": "dev-master",
         "laravel/framework": "^10.15.0",
         "laravel/horizon": "^5.9",
