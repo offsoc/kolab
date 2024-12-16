@@ -423,16 +423,20 @@ class DAV
     /**
      * Search DAV objects in a folder.
      *
-     * @param string     $location  Folder location
-     * @param DAV\Search $search    Search request parameters
-     * @param callable   $callback  A callback to execute on every item
-     * @param bool       $opaque    Return objects as instances of DAV\Opaque
+     * @param string     $location     Folder location
+     * @param DAV\Search $search       Search request parameters
+     * @param callable   $callback     A callback to execute on every item
+     * @param bool       $opaque       Return objects as instances of DAV\Opaque
+     * @param array      $extraHeaders Extra headers for the REPORT request
      *
      * @return false|array List of objects on success, False on error
      */
-    public function search(string $location, DAV\Search $search, $callback = null, $opaque = false)
+    public function search(string $location, DAV\Search $search, $callback = null, $opaque = false, $extraHeaders = [])
     {
-        $headers = ['Depth' => $search->depth, 'Prefer' => 'return-minimal'];
+        $headers = array_merge(
+            ['Depth' => $search->depth, 'Prefer' => 'return-minimal'],
+            $extraHeaders
+        );
 
         $response = $this->request($location, 'REPORT', $search, $headers);
 

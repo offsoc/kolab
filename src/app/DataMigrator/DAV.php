@@ -229,7 +229,11 @@ class DAV implements ExporterInterface, ImporterInterface
                     }
 
                     return null;
-                }
+                },
+                false,
+                // iRony specific workaround for iRony not to go OOM:
+                // iRony does not fetch attachments for the Lightning user-agent, so we exploit that.
+                ['User-Agent' => 'Lightning/1']
             );
         } catch (RequestException $e) {
             // iRony can go out of memory and return a 500 error on large collections.
@@ -299,7 +303,11 @@ class DAV implements ExporterInterface, ImporterInterface
                     }
 
                     return [$item->uid, $object];
-                }
+                },
+                false,
+                // iRony specific workaround for iRony not to go OOM:
+                // iRony does not fetch attachments for the Lightning user-agent, so we exploit that.
+                ['User-Agent' => 'Lightning/1']
             );
         } catch (RequestException $e) {
             // iRony can go out of memory and return a 500 error on large collections.
