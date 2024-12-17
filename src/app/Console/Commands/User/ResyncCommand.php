@@ -58,24 +58,32 @@ class ResyncCommand extends Command
         }
 
         if ($deletedUsers) {
-            $deletedUsers = $deletedUsers->where(function ($query) use ($with_ldap) {
-                $query = $query->where('role', '!=', User::ROLE_SERVICE)
-                    ->where('status', '&', User::STATUS_IMAP_READY);
-                if ($with_ldap) {
-                    $query->orWhere('status', '&', User::STATUS_LDAP_READY);
-                }
-            });
+            $deletedUsers = $deletedUsers
+                ->where(function ($query) {
+                    $query->whereNull('role')
+                    ->orWhere('role', '!=', User::ROLE_SERVICE);
+                })
+                ->where(function ($query) use ($with_ldap) {
+                    $query = $query->where('status', '&', User::STATUS_IMAP_READY);
+                    if ($with_ldap) {
+                        $query->orWhere('status', '&', User::STATUS_LDAP_READY);
+                    }
+                });
         }
 
         if ($createdUsers) {
-            $createdUsers = $createdUsers->where(function ($query) use ($with_ldap) {
-                $query = $query->where('role', '!=', User::ROLE_SERVICE)
-                    ->whereNot('status', '&', User::STATUS_IMAP_READY)
-                    ->orWhereNot('status', '&', User::STATUS_ACTIVE);
-                if ($with_ldap) {
-                    $query->orWhereNot('status', '&', User::STATUS_LDAP_READY);
-                }
-            });
+            $createdUsers = $createdUsers
+                ->where(function ($query) {
+                    $query->whereNull('role')
+                    ->orWhere('role', '!=', User::ROLE_SERVICE);
+                })
+                ->where(function ($query) use ($with_ldap) {
+                    $query = $query->whereNot('status', '&', User::STATUS_IMAP_READY)
+                        ->orWhereNot('status', '&', User::STATUS_ACTIVE);
+                    if ($with_ldap) {
+                        $query->orWhereNot('status', '&', User::STATUS_LDAP_READY);
+                    }
+                });
         }
 
         if ($min_age) {
