@@ -41,7 +41,7 @@ mkdir -p storage/framework/{sessions,views,cache}
 mkdir -p database/seeds
 
 php -dmemory_limit=-1 $(command -v composer) install
-npm -g install npm
+npm -g install npm@10.5
 /usr/local/bin/npm install
 ./artisan storage:link
 ./artisan clear-compiled
