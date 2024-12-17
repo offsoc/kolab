@@ -11,6 +11,9 @@
     "lint": "eslint --ext .js,.vue resources && stylelint \"resources/themes/*.scss\"",
     "jslint": "eslint --ext .js,.vue resources"
   },
+  "engines": {
+    "npm": "~10.5.0"
+  },
   "devDependencies": {
     "@babel/eslint-parser": "^7.17.0",
     "@fortawesome/fontawesome-svg-core": "^1.2.35",
