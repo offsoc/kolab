@@ -386,6 +386,13 @@ kolab__rcshell() {
     podman__run_roundcube ./init.sh $@
 }
 
+# Get a shell inside the webapp container to test e.g. build issues
+kolab__webappshell() {
+    export POD=tests
+    DEBUG_ARGS="-ti --rm --pod tests --name debug-$1"
+    podman__run_webapp /bin/bash
+}
+
 # Validate a deployment, currently only used for test pod
 kolab__validate() {
     POD=$1
