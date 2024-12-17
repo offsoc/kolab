@@ -14,12 +14,9 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $this->call([
-            Seeds\PassportSeeder::class,
             Seeds\PowerDNSSeeder::class,
             Seeds\TenantSeeder::class,
             Seeds\AdminSeeder::class,
-            Seeds\ImapAdminSeeder::class,
-            Seeds\NoreplySeeder::class,
         ]);
     }
 }
