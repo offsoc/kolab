@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Data;
 
 use App\Console\Command;
 use App\User;
@@ -53,7 +53,7 @@ class InitCommand extends Command
     private function createNoreplyUser()
     {
         if (!empty(\config('mail.mailers.smtp.username'))) {
-            $user = User::where(['email' => \config('services.mailers.smtp.username')])->first();
+            $user = User::where(['email' => \config('mail.mailers.smtp.username')])->first();
             if (!$user) {
                 $user = new \App\User();
                 $user->email = \config('mail.mailers.smtp.username');
