@@ -318,12 +318,12 @@ const app = new Vue({
                 return this.$t('status.deleted')
             }
 
-            if (obj.isDegraded || obj.isAccountDegraded) {
-                return this.$t('status.degraded')
-            }
-
             if (obj.isSuspended) {
                 return this.$t('status.suspended')
+            }
+
+            if (obj.isDegraded || obj.isAccountDegraded) {
+                return this.$t('status.degraded')
             }
 
             if (!obj.isReady) {
