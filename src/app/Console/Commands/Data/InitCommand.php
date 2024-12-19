@@ -20,7 +20,7 @@ class InitCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Initialization command, making sure some expected db entries exist. Rerunnable to apply latest config changes.';
+    protected $description = 'Initialization for some expected db entries. Rerunnable to apply latest config changes.';
 
     /**
      * Execute the console command.
@@ -42,12 +42,11 @@ class InitCommand extends Command
             $user->email = \config('services.imap.admin_login');
             $user->password = \config('services.imap.admin_password');
             $user->role = \App\User::ROLE_SERVICE;
-            $user->save();
         } else {
             $user->password = \config('services.imap.admin_password');
             $user->role = \App\User::ROLE_SERVICE;
-            $user->update();
         }
+        $user->save();
     }
 
     private function createNoreplyUser()
@@ -59,12 +58,11 @@ class InitCommand extends Command
                 $user->email = \config('mail.mailers.smtp.username');
                 $user->password = \config('mail.mailers.smtp.password');
                 $user->role = \App\User::ROLE_SERVICE;
-                $user->save();
             } else {
                 $user->password = \config('mail.mailers.smtp.password');
                 $user->role = \App\User::ROLE_SERVICE;
-                $user->update();
             }
+            $user->save();
         }
     }
 
@@ -75,7 +73,9 @@ class InitCommand extends Command
      */
     private function createPassportClients()
     {
-        //Create a password grant client for the webapp
+        $domain = \config('app.website_domain');
+
+        // Create a password grant client for the webapp
         if (
             !empty(\config('auth.proxy.client_secret')) &&
             !Passport::client()->where('name', 'Kolab Password Grant Client')->whereNull('user_id')->exists()
@@ -85,7 +85,7 @@ class InitCommand extends Command
                 'name' => "Kolab Password Grant Client",
                 'secret' => \config('auth.proxy.client_secret'),
                 'provider' => 'users',
-                'redirect' => 'https://' . \config('app.website_domain'),
+                'redirect' => "https://{$domain}",
                 'personal_access_client' => 0,
                 'password_client' => 1,
                 'revoked' => false,
@@ -104,7 +104,8 @@ class InitCommand extends Command
                 'name' => 'Webmail SSO client',
                 'secret' => \config('auth.sso.client_secret'),
                 'provider' => 'users',
-                'redirect' => (str_starts_with(\config('app.webmail_url'), 'http') ?  '' : 'https://' . \config('app.website_domain')) . \config('app.webmail_url') . 'index.php/login/oauth',
+                'redirect' => (str_starts_with(\config('app.webmail_url'), 'http') ?  '' : 'https://' . $domain)
+                    . \config('app.webmail_url') . 'index.php/login/oauth',
                 'personal_access_client' => 0,
                 'password_client' => 0,
                 'revoked' => false,
@@ -124,7 +125,7 @@ class InitCommand extends Command
                 'name' => "Synapse oauth client",
                 'secret' => \config('auth.synapse.client_secret'),
                 'provider' => 'users',
-                'redirect' => 'https://' . \config('app.website_domain') . "/_synapse/client/oidc/callback",
+                'redirect' => "https://{$domain}/_synapse/client/oidc/callback",
                 'personal_access_client' => 0,
                 'password_client' => 0,
                 'revoked' => false,

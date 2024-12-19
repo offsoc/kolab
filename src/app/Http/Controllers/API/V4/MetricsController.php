@@ -91,6 +91,8 @@ class MetricsController extends Controller
         kolab_horizon_jobs_per_minute{instance="$appDomain", tenant="$tenantId"} $jobsPerMinute
 
         EOF;
+
+        // phpcs:disable
         foreach (app(WorkloadRepository::class)->get() as $workloadMetrics) {
             $queueName = $workloadMetrics['name'] ?? 'unknown';
             $queueSize = $workloadMetrics['length'] ?? 0;
@@ -105,6 +107,8 @@ class MetricsController extends Controller
 
             EOF;
         }
+        // phpcs:enable
+
         return $text;
     }
 

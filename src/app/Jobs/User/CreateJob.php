@@ -80,8 +80,9 @@ class CreateJob extends UserJob
         if (\config('abuse.suspend_enabled') && !$user->isSuspended()) {
             $code = \Artisan::call("user:abuse-check {$this->userId}");
             if ($code == 2) {
-                \Log::info("Suspending user due to suspected abuse: {$this->userId} {$user->email}");
-                \App\EventLog::createFor($user, \App\EventLog::TYPE_SUSPENDED, "Abuse check detected suspected spammer");
+                $msg = "Abuse check detected suspected spammer";
+                \Log::info("{$msg}: {$this->userId} {$user->email}");
+                \App\EventLog::createFor($user, \App\EventLog::TYPE_SUSPENDED, $msg);
 
                 $user->status |= \App\User::STATUS_SUSPENDED;
             }
