@@ -20,6 +20,11 @@ class DeleteJob extends GroupJob
         }
 
         // sanity checks
+        if (!$group->trashed()) {
+            $this->fail(new \Exception("Group {$this->groupId} is not deleted."));
+            return;
+        }
+
         if ($group->isDeleted()) {
             $this->fail(new \Exception("Group {$this->groupId} is already marked as deleted."));
             return;

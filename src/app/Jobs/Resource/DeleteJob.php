@@ -20,6 +20,11 @@ class DeleteJob extends ResourceJob
         }
 
         // sanity checks
+        if (!$resource->trashed()) {
+            $this->fail(new \Exception("Resource {$this->resourceId} is not deleted."));
+            return;
+        }
+
         if ($resource->isDeleted()) {
             $this->fail(new \Exception("Resource {$this->resourceId} is already marked as deleted."));
             return;

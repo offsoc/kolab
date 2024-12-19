@@ -59,9 +59,17 @@ class DeleteTest extends TestCase
         $this->assertFalse($user->isDeleted());
         $this->assertNotNull($rcdb->table('users')->where('username', $user->email)->first());
 
+        // Test job failure (user not yet deleted)
+        $job = new \App\Jobs\User\DeleteJob($user->id);
+        $job->handle();
+
+        $this->assertTrue($job->hasFailed());
+        $this->assertSame("User {$user->id} is not deleted.", $job->failureMessage);
+
         // Test job failure (user already deleted)
         $user->status |= User::STATUS_DELETED;
-        $user->save();
+        $user->deleted_at = \now();
+        $user->saveQuietly();
 
         $job = new \App\Jobs\User\DeleteJob($user->id);
         $job->handle();
@@ -71,7 +79,6 @@ class DeleteTest extends TestCase
 
         // Test success delete from LDAP, IMAP and Roundcube
         $user->status ^= User::STATUS_DELETED;
-        $user->deleted_at = \now();
         $user->saveQuietly();
 
         $this->assertFalse($user->isDeleted());

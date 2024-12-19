@@ -20,6 +20,11 @@ class DeleteJob extends SharedFolderJob
         }
 
         // sanity checks
+        if (!$folder->trashed()) {
+            $this->fail(new \Exception("Shared folder {$this->folderId} is not deleted."));
+            return;
+        }
+
         if ($folder->isDeleted()) {
             $this->fail(new \Exception("Shared folder {$this->folderId} is already marked as deleted."));
             return;

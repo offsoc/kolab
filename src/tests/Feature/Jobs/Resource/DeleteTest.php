@@ -56,6 +56,13 @@ class DeleteTest extends TestCase
         $this->assertTrue($resource->isImapReady());
         $this->assertFalse($resource->isDeleted());
 
+        // Test deleting not deleted resource
+        $job = new \App\Jobs\Resource\DeleteJob($resource->id);
+        $job->handle();
+
+        $this->assertTrue($job->hasFailed());
+        $this->assertSame("Resource {$resource->id} is not deleted.", $job->failureMessage);
+
         $resource->deleted_at = \now();
         $resource->saveQuietly();
         Queue::fake();

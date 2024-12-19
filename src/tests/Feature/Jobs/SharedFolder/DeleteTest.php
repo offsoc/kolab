@@ -60,6 +60,13 @@ class DeleteTest extends TestCase
         $this->assertTrue($folder->isImapReady());
         $this->assertFalse($folder->isDeleted());
 
+        // Test deleting not deleted folder
+        $job = new \App\Jobs\SharedFolder\DeleteJob($folder->id);
+        $job->handle();
+
+        $this->assertTrue($job->hasFailed());
+        $this->assertSame("Shared folder {$folder->id} is not deleted.", $job->failureMessage);
+
         $folder->deleted_at = \now();
         $folder->saveQuietly();
         Queue::fake();

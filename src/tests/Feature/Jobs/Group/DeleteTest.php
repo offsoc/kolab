@@ -49,6 +49,13 @@ class DeleteTest extends TestCase
             $this->assertFalse($group->isLdapReady());
         }
 
+        // Test group that is not deleted yet
+        $job = new \App\Jobs\Group\DeleteJob($group->id);
+        $job->handle();
+
+        $this->assertTrue($job->hasFailed());
+        $this->assertSame("Group {$group->id} is not deleted.", $job->failureMessage);
+
         $group->deleted_at = \now();
         $group->saveQuietly();
 
