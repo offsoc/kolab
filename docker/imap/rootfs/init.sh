@@ -40,6 +40,18 @@ if [[ "$WITH_TLS" == "true" ]]; then
         -e "s|# WITH_TLS ||g" \
         /etc/cyrus.conf
 fi
+
+
+if [[ "$WITH_TAGS" == "true" ]]; then
+    sed -i \
+        -e "s|# WITH_TAGS ||g" \
+        /etc/imapd.conf
+else
+    sed -i \
+        -e "s|# WITHOUT_TAGS ||g" \
+        /etc/imapd.conf
+fi
+
 if [[ "$ROLE" == "frontend" ]]; then
     sed -i \
         -e "s|# WITH_MUPDATE ||g" \

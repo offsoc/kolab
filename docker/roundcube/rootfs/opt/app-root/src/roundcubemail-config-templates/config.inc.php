@@ -91,6 +91,7 @@ if (!function_exists("getenvlist")) {
         'kolab_activesync',
         'kolab_addressbook',
         'kolab_files',
+        'kolab_tags',
         'managesieve',
         'newmail_notifier',
         'odfviewer',
@@ -104,7 +105,6 @@ if (!function_exists("getenvlist")) {
         $plugins[] = 'kolab_config';
         $plugins[] = 'kolab_folders';
         $plugins[] = 'kolab_notes';
-        $plugins[] = 'kolab_tags';
 
         // These require ldap
         // $plugins[] = 'kolab_auth';

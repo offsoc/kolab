@@ -298,6 +298,7 @@ podman__run_imap() {
         -e SERVICES_PORT=8000 \
         -e IMAP_ADMIN_LOGIN \
         -e IMAP_ADMIN_PASSWORD \
+        -e WITH_TAGS \
         --health-cmd "test -e /run/saslauthd/mux && kill -0 \$(cat /var/run/master.pid)" \
         kolab-imap:latest $@
 }
