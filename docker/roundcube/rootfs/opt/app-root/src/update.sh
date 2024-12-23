@@ -101,7 +101,7 @@ done
 pushd /opt/app-root/src/roundcubemail-plugins-kolab/plugins
 for plugin in $(ls -1d)
 do
-    if [ -d plugins/${plugin}/ ]; then
+    if [ -d ${plugin}/ ]; then
         rsync -av \
             --exclude=vendor \
             --exclude=composer.json \
