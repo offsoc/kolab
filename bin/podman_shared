@@ -296,6 +296,7 @@ podman__run_webapp() {
 
 podman__run_imap() {
     podman__run imap \
+        -v ~/src/cyrus-imapd:/src.orig/cyrus-imapd:ro \
         $IMAP_SPOOL_STORAGE \
         $IMAP_LIB_STORAGE \
         -e APP_SERVICES_DOMAIN="localhost" \

@@ -51,9 +51,9 @@ VOLUME [ "/var/lib/imap" ]
 RUN id default || (groupadd -g 1001 default && useradd -d /opt/app-root/ -u 1001 -g 1001 default)
 
 RUN mkdir -p /opt/app-root/src
-RUN PATHS=(/run /run/saslauthd /var/run /var/lib/imap /var/spool/imap /etc/pki/cyrus-imapd /opt/app-root) && \
+RUN PATHS=(/run /run/saslauthd /var/run /var/lib/imap /var/spool/imap /etc/pki/cyrus-imapd /opt/app-root /usr/) && \
     mkdir -p ${PATHS[@]} && \
-    chmod 777 ${PATHS[@]} && \
+    chmod -R 777 ${PATHS[@]} && \
     chown -R 1001:0 ${PATHS[@]} && \
     chmod -R g=u ${PATHS[@]}
 
