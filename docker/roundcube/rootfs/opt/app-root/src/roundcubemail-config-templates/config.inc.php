@@ -178,7 +178,7 @@ if (!function_exists("getenvlist")) {
     $config['debug_level'] = 1;
     $config['devel_mode'] = false;
     $config['log_driver'] = getenv('LOG_DRIVER');
-    $config['per_user_logging'] = true;
+    $config['per_user_logging'] = (getenv('PER_USER_LOGGING') == "true");
     $config['log_date_format'] = 'd-M-Y H:i:s,u O';
     $config['smtp_log'] = false;
     $config['log_logins'] = true;

@@ -358,7 +358,7 @@ kolab__shell() {
 # Run the roundcube testsuite
 kolab__rctest() {
     export POD=tests
-    DEBUG_ARGS="-ti --rm --pod tests --name debug-$1 -e KOLABOBJECTS_COMPAT_MODE=true -e DEBUG_USERS=john@kolab.org"
+    DEBUG_ARGS="-ti --rm --pod tests --name debug-$1 -e KOLABOBJECTS_COMPAT_MODE=true -e DEBUG_USERS=john@kolab.org -e ACTIVESYNC_DEBUG=true -e PER_USER_LOGGING=false"
     podman__run_roundcube ./init.sh $@
 }
 
