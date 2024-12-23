@@ -37,6 +37,10 @@ class IMAP < Net::IMAP
       data = '(' + entry + ' ' + '"' + IMAP.encode_utf7(value) + '"' + ')'
       send_command("SETMETADATA", mailbox, RawData.new(data))
     end
+
+    def tag(uids, tagname)
+        send_command("UID STORE", uids, RawData.new("ANNOTATION (/vendor/kolab/tag/v1/#{tagname} (value.priv \"1\"))"))
+    end
 end
 
 
@@ -148,6 +152,12 @@ class ImapCli < Thor
   desc "setmetadata", "Setmetadata."
   def setmetadata(folder, entry, value)
     p imap.setmetadata(folder, entry, value)
+  end
+
+  desc "tag", "Tag."
+  def tag(folder, entry, value)
+    imap.select(folder)
+    p imap.tag(entry, value)
   end
 
   desc "append", "APPEND."
