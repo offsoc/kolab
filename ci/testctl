@@ -533,7 +533,17 @@ kolab__imapcli() {
 
 # Generate mail in the admin inbox
 kolab__generate_mail() {
-    $PODMAN run --pod=dev -t --rm kolab-utils:latest ./generatemail.py --maxAttachmentSize=3 --type=mail --count 100 --username admin@kolab.local --password simple123 --host localhost --port 11143 INBOX
+    POD=${POD:-dev}
+    $PODMAN run --pod=$POD -t --rm kolab-utils:latest ./generatemail.py --clear --maxAttachmentSize=0 --type=mail --count $1 --username admin@kolab.local --password simple123 --host localhost --port 11143 INBOX
+}
+
+kolab__reset_mailbox() {
+    POD=${POD:-dev}
+    $PODMAN exec $POD-imap bash -c 'echo "setaclmailbox user/admin@kolab.local cyrus-admin all" | cyradm --auth PLAIN -u cyrus-admin -w simple123 --port 11143 localhost'
+    $PODMAN exec $POD-imap bash -c 'echo "dm user/admin@kolab.local" | cyradm --auth PLAIN -u cyrus-admin -w simple123 --port 11143 localhost'
+    $PODMAN exec -t $POD-imap cyr_expire -D 0 -X 0 -u admin@kolab.local
+    $PODMAN exec $POD-imap bash -c 'echo "cm user/admin@kolab.local" | cyradm --auth PLAIN -u cyrus-admin -w simple123 --port 11143 localhost'
+    $PODMAN exec $POD-imap bash -c 'echo "lm user/admin@kolab.local" | cyradm --auth PLAIN -u cyrus-admin -w simple123 --port 11143 localhost'
 }
 
 # Trigger an activesync sync on the admin inbox
