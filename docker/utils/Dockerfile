@@ -6,7 +6,9 @@ ENV HOME=/opt/app-root/src
 # FIXME not available under ppc64le
         # chromium \
         # chromedriver \
-RUN dnf -y install \
+RUN dnf module -y enable ruby:3.1 && \
+    dnf module -y enable php:8.2 && \
+    dnf -y install \
         --setopt 'tsflags=nodocs' \
         bind-utils \
         bzip2 \
@@ -39,6 +41,7 @@ RUN dnf -y install \
         wget \
         jq \
         ruby \
+        ruby-devel \
         zlib-devel && \
     dnf clean all
 
@@ -59,7 +62,7 @@ RUN git clone https://github.com/libwbxml/libwbxml.git && \
      git+https://github.com/Apheleia-IT/python-wbxml#egg=wbxml
 
 # imapcli deps
-RUN gem install thor
+RUN gem install thor net-imap
 
 RUN id default || (groupadd -g 1001 default && useradd -d /opt/app-root/src/ -u 1001 -g 1001 default)
 

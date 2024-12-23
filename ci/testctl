@@ -519,6 +519,18 @@ kolab__add_ca_trust() {
     sudo update-ca-trust
 }
 
+
+# Run imapcli commands
+# ci/testctl imapcli fetch --debug INBOX 1001
+# ci/testctl imapcli tag INBOX 1000..2000 foobar
+# ci/testctl imapcli getacl INBOX
+kolab__imapcli() {
+    POD=${POD:-dev}
+    CMD=$1
+    shift
+    $PODMAN run --pod=$POD -t --rm kolab-utils:latest ./imapcli.rb "$CMD" --host localhost --port 11143 --username admin@kolab.local  --password "simple123" "$@"
+}
+
 # Generate mail in the admin inbox
 kolab__generate_mail() {
     $PODMAN run --pod=dev -t --rm kolab-utils:latest ./generatemail.py --maxAttachmentSize=3 --type=mail --count 100 --username admin@kolab.local --password simple123 --host localhost --port 11143 INBOX
