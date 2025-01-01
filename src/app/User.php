@@ -3,6 +3,7 @@
 namespace App;
 
 use App\AuthAttempt;
+use App\Auth\Utils as AuthUtils;
 use App\Traits\AliasesTrait;
 use App\Traits\BelongsToTenantTrait;
 use App\Traits\EntitleableTrait;
@@ -815,11 +816,19 @@ class User extends Authenticatable
 
         if (!$user) {
             $error = AuthAttempt::REASON_NOTFOUND;
-        }
-
-        // Check user password
-        if (!$error && !$user->validateCredentials($username, $password)) {
-            $error = AuthAttempt::REASON_PASSWORD;
+        } else {
+            if ($userid = AuthUtils::tokenValidate($password)) {
+                if ($user->id == $userid) {
+                    $verifyMFA = false;
+                } else {
+                    $error = AuthAttempt::REASON_PASSWORD;
+                }
+            } else {
+                // Check user password
+                if (!$user->validateCredentials($username, $password)) {
+                    $error = AuthAttempt::REASON_PASSWORD;
+                }
+            }
         }
 
         if ($verifyMFA) {

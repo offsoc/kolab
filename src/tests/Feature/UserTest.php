@@ -9,6 +9,7 @@ use App\Package;
 use App\PackageSku;
 use App\Sku;
 use App\User;
+use App\Auth\Utils as AuthUtils;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
@@ -1575,4 +1576,21 @@ class UserTest extends TestCase
         $this->assertCount(1, $ned->wallets);
         $this->assertInstanceOf(\App\Wallet::class, $ned->wallets->first());
     }
+
+    /**
+     * Tests for User::findAndAuthenticate()
+     */
+    public function testFindAndAuthenticate(): void
+    {
+        $user = $this->getTestUser('john@kolab.org');
+
+        // Ensure we validate a token for the user:
+        $token = AuthUtils::tokenCreate($user->id);
+        $this->assertTrue(isset(User::findAndAuthenticate($user->email, $token)['user']));
+
+        // Ensure we don't validate a token for another user:
+        $token = AuthUtils::tokenCreate($this->getTestUser('ned@kolab.org')->id);
+        $this->assertFalse(isset(User::findAndAuthenticate($user->email, $token)['user']));
+    }
+
 }

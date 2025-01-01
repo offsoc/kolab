@@ -76,15 +76,6 @@ class NGINXController extends Controller
             throw new \Exception("No client ip");
         }
 
-        if ($userid = AuthUtils::tokenValidate($password)) {
-            $user = User::find($userid);
-            if ($user && $user->email == $login) {
-                return $user;
-            }
-
-            throw new \Exception("Password mismatch");
-        }
-
         $result = User::findAndAuthenticate($login, $password, $clientIP);
 
         if (empty($result['user'])) {
