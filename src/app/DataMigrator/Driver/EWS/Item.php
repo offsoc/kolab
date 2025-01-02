@@ -60,7 +60,8 @@ abstract class Item
         // Find the most specific handler
         while (!empty($classParts)) {
             $itemClass = implode('', $classParts);
-            $itemClass = "\App\DataMigrator\EWS\\{$itemClass}";
+            $itemClass = preg_replace('/[a-z]+$/i', $itemClass, self::class);
+
             if (class_exists($itemClass)) {
                 return $itemClass;
             }
