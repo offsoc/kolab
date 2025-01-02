@@ -21,6 +21,8 @@ class Engine
     public const TYPE_MAIL = 'mail';
     public const TYPE_NOTE = 'note';
     public const TYPE_TASK = 'task';
+    public const TYPE_CONFIGURATION = 'configuration';
+    public const TYPE_FILE = 'file';
 
     /** @const int Max item size to handle in-memory, bigger will be handled with temp files */
     public const MAX_ITEM_SIZE = 20 * 1024 * 1024;
@@ -364,23 +366,27 @@ class Engine
     {
         switch ($account->scheme) {
             case 'ews':
-                $driver = new EWS($account, $this);
+                $driver = new Driver\EWS($account, $this);
                 break;
 
             case 'dav':
             case 'davs':
-                $driver = new DAV($account, $this);
+                $driver = new Driver\DAV($account, $this);
                 break;
 
             case 'imap':
             case 'imaps':
             case 'tls':
             case 'ssl':
-                $driver = new IMAP($account, $this);
+                $driver = new Driver\IMAP($account, $this);
+                break;
+
+            case 'kolab':
+                $driver = new Driver\Kolab($account, $this);
                 break;
 
             case 'test':
-                $driver = new Test($account, $this);
+                $driver = new Driver\Test($account, $this);
                 break;
 
             default:

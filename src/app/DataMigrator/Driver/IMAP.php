@@ -1,7 +1,9 @@
 <?php
 
-namespace App\DataMigrator;
+namespace App\DataMigrator\Driver;
 
+use App\DataMigrator\Account;
+use App\DataMigrator\Engine;
 use App\DataMigrator\Interface\Folder;
 use App\DataMigrator\Interface\ExporterInterface;
 use App\DataMigrator\Interface\ImporterInterface;
@@ -366,7 +368,7 @@ class IMAP implements ExporterInterface, ImporterInterface
     /**
      * Initialize IMAP connection and authenticate the user
      */
-    private static function initIMAP(array $config): \rcube_imap_generic
+    protected static function initIMAP(array $config): \rcube_imap_generic
     {
         $imap = new \rcube_imap_generic();
 
@@ -390,7 +392,7 @@ class IMAP implements ExporterInterface, ImporterInterface
     /**
      * Get IMAP configuration
      */
-    private static function getConfig(Account $account): array
+    protected static function getConfig(Account $account): array
     {
         $uri = \parse_url($account->uri);
         $default_port = 143;
@@ -439,7 +441,7 @@ class IMAP implements ExporterInterface, ImporterInterface
     /**
      * Limit IMAP flags to these that can be migrated
      */
-    private function filterImapFlags($flags)
+    protected function filterImapFlags($flags)
     {
         // TODO: Support custom flags migration
 
@@ -454,7 +456,7 @@ class IMAP implements ExporterInterface, ImporterInterface
     /**
      * Check if the folder should not be migrated
      */
-    private function shouldSkip($folder): bool
+    protected function shouldSkip($folder): bool
     {
         // TODO: This should probably use NAMESPACE information
 
@@ -468,7 +470,7 @@ class IMAP implements ExporterInterface, ImporterInterface
     /**
      * Return Message-Id, generate unique identifier if Message-Id does not exist
      */
-    private function getMessageId($message, $folder): string
+    protected function getMessageId($message, $folder): string
     {
         if (!empty($message->messageID)) {
             return $message->messageID;

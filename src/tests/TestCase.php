@@ -11,6 +11,8 @@ abstract class TestCase extends BaseTestCase
 {
     use TestCaseTrait;
 
+    public const BASE_DIR = __DIR__;
+
     /**
      * {@inheritDoc}
      */

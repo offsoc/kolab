@@ -1,10 +1,15 @@
 <?php
 
-namespace App\DataMigrator;
+namespace App\DataMigrator\Driver;
 
+use App\DataMigrator\Account;
+use App\DataMigrator\Engine;
+use App\DataMigrator\Interface\ExporterInterface;
+use App\DataMigrator\Interface\ImporterInterface;
 use App\DataMigrator\Interface\Folder;
 use App\DataMigrator\Interface\Item;
 use App\DataMigrator\Interface\ItemSet;
+use App\DataMigrator\Queue;
 use garethp\ews\API;
 use garethp\ews\API\Type;
 use Illuminate\Support\Facades\Http;
@@ -12,7 +17,7 @@ use Illuminate\Support\Facades\Http;
 /**
  * Data migration from Exchange (EWS)
  */
-class EWS implements Interface\ExporterInterface
+class EWS implements ExporterInterface
 {
     /** @const int Max number of items to migrate in one go */
     protected const CHUNK_SIZE = 20;
@@ -307,7 +312,7 @@ class EWS implements Interface\ExporterInterface
     /**
      * Fetch a list of folder items
      */
-    public function fetchItemList(Folder $folder, $callback, Interface\ImporterInterface $importer): void
+    public function fetchItemList(Folder $folder, $callback, ImporterInterface $importer): void
     {
         // Job processing - initialize environment
         $this->initEnv($this->engine->queue);

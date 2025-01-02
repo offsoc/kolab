@@ -1,11 +1,11 @@
 <?php
 
-namespace Tests\Unit\DataMigrator\EWS;
+namespace Tests\Unit\DataMigrator\Driver\EWS;
 
 use App\Backends\DAV\Vcard;
 use App\DataMigrator\Account;
+use App\DataMigrator\Driver\EWS;
 use App\DataMigrator\Engine;
-use App\DataMigrator\EWS;
 use App\DataMigrator\Interface\Folder;
 use App\DataMigrator\Interface\Item;
 use garethp\ews\API\Type;

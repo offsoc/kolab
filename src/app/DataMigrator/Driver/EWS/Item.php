@@ -1,8 +1,8 @@
 <?php
 
-namespace App\DataMigrator\EWS;
+namespace App\DataMigrator\Driver\EWS;
 
-use App\DataMigrator\EWS;
+use App\DataMigrator\Driver\EWS;
 use App\DataMigrator\Engine;
 use App\DataMigrator\Interface\Folder as FolderInterface;
 use App\DataMigrator\Interface\Item as ItemInterface;

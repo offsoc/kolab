@@ -1,11 +1,11 @@
 <?php
 
-namespace Tests\Unit\DataMigrator\EWS;
+namespace Tests\Unit\DataMigrator\Driver\EWS;
 
 use App\Backends\DAV\Vevent;
 use App\DataMigrator\Account;
+use App\DataMigrator\Driver\EWS;
 use App\DataMigrator\Engine;
-use App\DataMigrator\EWS;
 use App\DataMigrator\Interface\Folder;
 use App\DataMigrator\Interface\Item;
 use garethp\ews\API\Type;
@@ -25,7 +25,7 @@ class AppointmentTest extends TestCase
         $targetItem = Item::fromArray(['id' => 'test']);
         $appointment = new EWS\Appointment($ews, $folder);
 
-        $ical = file_get_contents(__DIR__ . '/../../../data/ews/event/1.ics');
+        $ical = file_get_contents(self::BASE_DIR . '/data/ews/event/1.ics');
         $ical = preg_replace('/\r?\n/', "\r\n", $ical);
 
         // FIXME: I haven't found a way to convert xml content into a Type instance

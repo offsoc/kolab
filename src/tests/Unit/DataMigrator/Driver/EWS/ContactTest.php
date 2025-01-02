@@ -1,11 +1,11 @@
 <?php
 
-namespace Tests\Unit\DataMigrator\EWS;
+namespace Tests\Unit\DataMigrator\Driver\EWS;
 
 use App\Backends\DAV\Vcard;
 use App\DataMigrator\Account;
+use App\DataMigrator\Driver\EWS;
 use App\DataMigrator\Engine;
-use App\DataMigrator\EWS;
 use App\DataMigrator\Interface\Folder;
 use App\DataMigrator\Interface\Item;
 use garethp\ews\API\Type;
@@ -25,7 +25,7 @@ class ContactTest extends TestCase
         $targetItem = Item::fromArray(['id' => 'test']);
         $contact = new EWS\Contact($ews, $folder);
 
-        $vcard = file_get_contents(__DIR__ . '/../../../data/ews/contact/1.vcf');
+        $vcard = file_get_contents(self::BASE_DIR . '/data/ews/contact/1.vcf');
         $vcard = preg_replace('/\r?\n/', "\r\n", $vcard);
 
         // FIXME: I haven't found a way to convert xml content into a Type instance

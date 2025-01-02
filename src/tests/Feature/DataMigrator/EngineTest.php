@@ -7,7 +7,7 @@ use App\DataMigrator\Engine;
 use App\DataMigrator\Jobs\FolderJob;
 use App\DataMigrator\Jobs\ItemJob;
 use App\DataMigrator\Queue as MigratorQueue;
-use App\DataMigrator\Test;
+use App\DataMigrator\Driver\Test;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 

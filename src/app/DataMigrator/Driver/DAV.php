@@ -1,11 +1,13 @@
 <?php
 
-namespace App\DataMigrator;
+namespace App\DataMigrator\Driver;
 
 use App\Backends\DAV as DAVClient;
 use App\Backends\DAV\Opaque as DAVOpaque;
 use App\Backends\DAV\Folder as DAVFolder;
 use App\Backends\DAV\Search as DAVSearch;
+use App\DataMigrator\Account;
+use App\DataMigrator\Engine;
 use App\DataMigrator\Interface\Folder;
 use App\DataMigrator\Interface\ExporterInterface;
 use App\DataMigrator\Interface\ImporterInterface;
@@ -433,7 +435,7 @@ class DAV implements ExporterInterface, ImporterInterface
     {
         // When dealing with iRony DAV other user folders names have distinct names
         // there's no other way to recognize them than by the name pattern.
-        // ;et's hope that users do not have personal folders with names starting with a bracket.
+        // Let's hope that users do not have personal folders with names starting with a bracket.
 
         if (preg_match('~\(.*\) .*~', $folder->name)) {
             return true;

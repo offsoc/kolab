@@ -1,6 +1,6 @@
 <?php
 
-namespace App\DataMigrator\EWS;
+namespace App\DataMigrator\Driver\EWS;
 
 use garethp\ews\API;
 use garethp\ews\API\Type;

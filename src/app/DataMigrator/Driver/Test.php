@@ -1,7 +1,9 @@
 <?php
 
-namespace App\DataMigrator;
+namespace App\DataMigrator\Driver;
 
+use App\DataMigrator\Account;
+use App\DataMigrator\Engine;
 use App\DataMigrator\Interface\Folder;
 use App\DataMigrator\Interface\ExporterInterface;
 use App\DataMigrator\Interface\ImporterInterface;
