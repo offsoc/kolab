@@ -438,6 +438,7 @@ kolab__build() {
         podman__build_postfix
         podman__build_amavis
         podman__build_collabora
+        podman__build_vector
         env CERT_DIR=docker/certs APP_DOMAIN=$HOST bin/regen-certs
     fi
 }
