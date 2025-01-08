@@ -393,7 +393,7 @@ class PaymentsController extends Controller
 
         if (empty($mandate['isValid'])) {
             \Log::warning("Top-up for wallet {$wallet->id}: mandate invalid");
-            if ($mandate['isPending'] !== true) {
+            if (empty($mandate['isPending'])) {
                 \Log::warning("Disabling mandate");
                 $wallet->setSetting('mandate_disabled', '1');
             }
