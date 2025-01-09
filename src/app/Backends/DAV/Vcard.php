@@ -18,6 +18,7 @@ class Vcard extends CommonObject
     public $kind;
     public $note;
     public $member = [];
+    public $photo;
     public $prodid;
     public $rev;
     public $version;
@@ -65,6 +66,7 @@ class Vcard extends CommonObject
             'FN',
             'KIND',
             'NOTE',
+            'PHOTO',
             'PRODID',
             'REV',
             'UID',

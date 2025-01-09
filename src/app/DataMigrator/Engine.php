@@ -385,6 +385,10 @@ class Engine
                 $driver = new Driver\Kolab($account, $this);
                 break;
 
+            case 'takeout':
+                $driver = new Driver\Takeout($account, $this);
+                break;
+
             case 'test':
                 $driver = new Driver\Test($account, $this);
                 break;

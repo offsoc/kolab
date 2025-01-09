@@ -608,7 +608,7 @@ class DAV
     protected function request($path, $method, $body = '', $headers = [])
     {
         $debug = \config('app.debug');
-        $url = trim($this->url, '/');
+        $url = $this->url;
 
         $this->responseHeaders = [];
 

@@ -13,10 +13,10 @@ use Illuminate\Console\Command;
  * ```
  * php artisan data:migrate \
  *   "ews://$user@$server?client_id=$client_id&client_secret=$client_secret&tenant_id=$tenant_id" \
- *   "dav://$dest_user:$dest_pass@$dest_server"
+ *   "kolab://$dest_user:$dest_pass@$dest_server"
  * ```
  *
- * Supported account types: ews, dav (davs), imap (tls, ssl, imaps)
+ * For supported migration driver names look into DataMigrator\Engine::initDriver()
  */
 class MigrateCommand extends Command
 {

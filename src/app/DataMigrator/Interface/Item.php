@@ -19,6 +19,7 @@ class Item
     /**
      * Identifier/Location of the item if exists in the destination folder.
      * And/or some metadata on the existing item. This information is driver specific.
+     * @TODO: Unify this to be always an array (or object) for easier cross-driver interop.
      *
      * @var string|array|null
      */

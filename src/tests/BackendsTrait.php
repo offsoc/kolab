@@ -22,7 +22,7 @@ trait BackendsTrait
     /**
      * Append an DAV object to a DAV folder
      */
-    protected function davAppend(Account $account, $foldername, $filenames, $type): void
+    protected function davAppend(Account $account, $foldername, $filenames, $type, $replace = []): void
     {
         $dav = $this->getDavClient($account);
 
@@ -40,7 +40,12 @@ trait BackendsTrait
             }
 
             $content = file_get_contents($path);
-            $uid = preg_match('/\nUID:(?:urn:uuid:)?([a-z0-9-]+)/', $content, $m) ? $m[1] : null;
+
+            foreach ($replace as $from => $to) {
+                $content = preg_replace($from, $to, $content);
+            }
+
+            $uid = preg_match('/\nUID:(?:urn:uuid:)?(\S+)/', $content, $m) ? $m[1] : null;
 
             if (empty($uid)) {
                 throw new \Exception("Filed to find UID in {$path}");

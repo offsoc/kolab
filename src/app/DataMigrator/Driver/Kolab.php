@@ -32,8 +32,7 @@ class Kolab extends IMAP
     {
         // TODO: Right now we require IMAP server and DAV host names, but for Kolab we should be able
         // to detect IMAP and DAV locations, e.g. so we can just provide "kolabnow.com" as an input
-        // Note: E.g. KolabNow uses different hostname for DAV, pass it as a query parameter
-        // 'dav_host' and 'dav_path'.
+        // Note: E.g. KolabNow uses different hostname for DAV, pass it as a query parameter 'dav_host'.
 
         // Setup IMAP connection
         $uri = (string) $account;
@@ -43,11 +42,10 @@ class Kolab extends IMAP
 
         // Setup DAV connection
         $uri = sprintf(
-            'davs://%s:%s@%s/%s',
+            'davs://%s:%s@%s',
             urlencode($account->username),
             urlencode($account->password),
             $account->params['dav_host'] ?? $account->host,
-            $account->params['dav_path'] ?? '', // e.g. 'dav'
         );
 
         $this->davDriver = new DAV(new Account($uri), $engine);

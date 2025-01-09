@@ -48,6 +48,8 @@ class Account
      */
     public function __construct(string $input)
     {
+        $this->input = $input;
+
         if (!preg_match('|^[a-z]+://.*|', $input)) {
             throw new \Exception("Invalid URI specified");
         }
@@ -56,6 +58,11 @@ class Account
 
         // Not valid URI
         if (!is_array($url) || empty($url)) {
+            if (preg_match('|^[a-z]+:///.*|', $input)) {
+                $this->parseFileUri($input);
+                return;
+            }
+
             throw new \Exception("Invalid URI specified");
         }
 
@@ -95,8 +102,6 @@ class Account
         } elseif (strpos($this->username, '@')) {
             $this->email = $this->username;
         }
-
-        $this->input = $input;
     }
 
     /**
@@ -108,5 +113,38 @@ class Account
     public function __toString(): string
     {
         return $this->input;
+    }
+
+    /**
+     * Parse file URI
+     */
+    protected function parseFileUri($input)
+    {
+        if (!preg_match('|^[a-z]+://(/[^?]+)|', $input, $matches)) {
+            throw new \Exception("Invalid URI specified");
+        }
+
+        // Replace file+path with a fake host name so the URI can be parsed
+        $input = str_replace($matches[1], 'fake.host', $input);
+        $url = parse_url($input);
+
+        // Not valid URI
+        if (!is_array($url) || empty($url)) {
+            throw new \Exception("Invalid URI specified");
+        }
+
+        $this->uri = $matches[1];
+
+        if (isset($url['scheme'])) {
+            $this->scheme = strtolower($url['scheme']);
+        }
+
+        if (!empty($url['query'])) {
+            parse_str($url['query'], $this->params);
+        }
+
+        if (!empty($this->params['user']) && strpos($this->params['user'], '@')) {
+            $this->email = $this->params['user'];
+        }
     }
 }

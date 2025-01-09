@@ -149,6 +149,8 @@ class IMAP implements ExporterInterface, ImporterInterface
                 $this->imap->expunge($mailbox, $item->existing['uid']);
             } else {
                 // Update flags
+                // TODO: Here we may produce more STORE commands than necessary, we could improve this
+                // if we make flag()/unflag() methods to accept multiple flags
                 foreach ($item->existing['flags'] as $flag) {
                     if (!in_array($flag, $item->data['flags'])) {
                         $this->imap->unflag($mailbox, $item->existing['uid'], $flag);
@@ -188,8 +190,8 @@ class IMAP implements ExporterInterface, ImporterInterface
         // So, we compare size and INTERNALDATE timestamp.
         if (
             !$item->existing
-            || $header->timestamp != $item->existing['timestamp']
             || $header->size != $item->existing['size']
+            || \rcube_utils::strtotime($header->internaldate) != \rcube_utils::strtotime($item->existing['date'])
         ) {
             // Handle message content in memory (up to 20MB), bigger messages will use a temp file
             if ($header->size > Engine::MAX_ITEM_SIZE) {
@@ -261,18 +263,15 @@ class IMAP implements ExporterInterface, ImporterInterface
             $id = $this->getMessageId($message, $mailbox);
 
             // Skip message that exists and did not change
-            $exists = null;
-            if (isset($existing[$id])) {
-                $flags = $this->filterImapFlags(array_keys($message->flags));
+            $exists = $existing[$id] ?? null;
+            if ($exists) {
                 if (
-                    $flags == $existing[$id]['flags']
-                    && $message->timestamp == $existing[$id]['timestamp']
-                    && $message->size == $existing[$id]['size']
+                    $message->size == $exists['size']
+                    && \rcube_utils::strtotime($message->internaldate) == \rcube_utils::strtotime($exists['date'])
+                    && $this->filterImapFlags(array_keys($message->flags)) == $exists['flags']
                 ) {
                     continue;
                 }
-
-                $exists = $existing[$id];
             }
 
             $set->items[] = Item::fromArray([
@@ -358,7 +357,7 @@ class IMAP implements ExporterInterface, ImporterInterface
                 'uid' => $message->uid,
                 'flags' => $flags,
                 'size' => $message->size,
-                'timestamp' => $message->timestamp,
+                'date' => $message->internaldate,
             ];
         }
 
@@ -476,6 +475,6 @@ class IMAP implements ExporterInterface, ImporterInterface
             return $message->messageID;
         }
 
-        return md5($folder . $message->from . ($message->date ?: $message->timestamp));
+        return md5($folder . $message->from . $message->timestamp);
     }
 }

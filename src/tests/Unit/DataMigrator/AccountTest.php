@@ -29,5 +29,16 @@ class AccountTest extends TestCase
         // Invalid input
         $this->expectException(\Exception::class);
         $account = new Account(str_replace('imap://', '', $uri));
+
+        // Local file URI
+        $uri = 'takeout://' . ($file = self::BASE_DIR . '/data/takeout.zip');
+        $account = new Account($uri);
+
+        $this->assertSame($uri, (string) $account);
+        $this->assertSame('takeout', $account->scheme);
+        $this->assertSame($file, $account->uri);
+        $this->assertNull($account->username);
+        $this->assertNull($account->password);
+        $this->assertNull($account->host);
     }
 }
