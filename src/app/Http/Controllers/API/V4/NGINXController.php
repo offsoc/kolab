@@ -2,11 +2,9 @@
 
 namespace App\Http\Controllers\API\V4;
 
-use App\Auth\Utils as AuthUtils;
 use App\Http\Controllers\Controller;
 use App\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 
 class NGINXController extends Controller
 {
@@ -30,25 +28,13 @@ class NGINXController extends Controller
             throw new \Exception("Empty password");
         }
 
-        if ($userid = AuthUtils::tokenValidate($password)) {
-            $user = User::find($userid);
-            if ($user && $user->email == $login) {
-                return $user;
-            }
+        $result = User::findAndAuthenticate($login, $password, null, false);
 
-            throw new \Exception("Password mismatch");
+        if (empty($result['user'])) {
+            throw new \Exception($result['errorMessage'] ?? "Unknown error");
         }
 
-        $user = User::where('email', $login)->first();
-        if (!$user) {
-            throw new \Exception("User not found");
-        }
-
-        if (!Hash::check($password, $user->password)) {
-            throw new \Exception("Password mismatch");
-        }
-
-        return $user;
+        return $result['user'];
     }
 
     /**

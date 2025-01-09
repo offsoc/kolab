@@ -1578,6 +1578,52 @@ class UserTest extends TestCase
     }
 
     /**
+     * Test User password validation
+     */
+    public function testValidatePassword(): void
+    {
+        Queue::fake();
+
+        $user = $this->getTestUser('user-test@' . \config('app.domain'), ['password' => 'test']);
+        $hash = $user->password;
+        $ldap = "{SSHA512}7iaw3Ur350mqGo7jwQrpkj9hiYB3Lkc/iBml1JQODbJ6wYX4oOHV+E+IvIh/1nsUNzLDBMxfqa2Ob1f1ACio/w==";
+        $attrs = $user->getAttributes();
+
+        // Note: A User has two password properties, on a successful validation missing password should get updated
+
+        // Wrong password
+        $user->setRawAttributes(array_merge($attrs, ['password_ldap' => null]));
+        $this->assertFalse($user->validatePassword('wrong'));
+        $this->assertTrue($user->password_ldap === null);
+
+        // Valid password (in 'password_ldap' only)
+        $user->setRawAttributes(array_merge($attrs, ['password_ldap' => $ldap, 'password' => null]));
+        $user->save();
+        $user->refresh();
+        $this->assertTrue($user->password === null);
+        $this->assertTrue($user->validatePassword('test'));
+        $this->assertTrue($user->password_ldap == $ldap);
+        $this->assertTrue(strlen($user->password) == strlen($hash)); // @phpstan-ignore-line
+        $user->refresh();
+        $this->assertTrue($user->password_ldap == $ldap);
+        $this->assertTrue(strlen($user->password) == strlen($hash)); // @phpstan-ignore-line
+
+        // Valid password (in 'password' only)
+        $user->setRawAttributes(array_merge($attrs, ['password_ldap' => null, 'password' => $hash]));
+        $user->save();
+        $user->refresh();
+        $this->assertTrue($user->password_ldap === null);
+        $this->assertTrue($user->validatePassword('test'));
+        $this->assertTrue(strlen($user->password_ldap) == strlen($ldap)); // @phpstan-ignore-line
+        $this->assertTrue(strlen($user->password) == strlen($hash));
+        $user->refresh();
+        $this->assertTrue($user->password_ldap == $ldap);
+        $this->assertTrue(strlen($user->password) == strlen($hash));
+
+        // TODO: sha1 passwords in password_ldap (or remove this code)
+    }
+
+    /**
      * Tests for User::findAndAuthenticate()
      */
     public function testFindAndAuthenticate(): void
@@ -1592,5 +1638,4 @@ class UserTest extends TestCase
         $token = AuthUtils::tokenCreate($this->getTestUser('ned@kolab.org')->id);
         $this->assertFalse(isset(User::findAndAuthenticate($user->email, $token)['user']));
     }
-
 }

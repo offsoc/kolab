@@ -417,6 +417,18 @@ class User extends Authenticatable
     }
 
     /**
+     * Check if multi factor authentication is enabled
+     *
+     * @return bool
+     */
+    public function isMFAEnabled(): bool
+    {
+        return \App\CompanionApp::where('user_id', $this->id)
+            ->where('mfa_enabled', true)
+            ->exists();
+    }
+
+    /**
      * Returns whether this user is restricted.
      *
      * @return bool
@@ -712,51 +724,32 @@ class User extends Authenticatable
     /**
      * Validate the user credentials
      *
-     * @param string $username       The username.
-     * @param string $password       The password in plain text.
-     * @param bool   $updatePassword Store the password if currently empty
-     *
-     * @return bool true on success
+     * @param string $password The password in plain text.
      */
-    public function validateCredentials(string $username, string $password, bool $updatePassword = true): bool
+    public function validatePassword(string $password): bool
     {
         $authenticated = false;
 
-        if ($this->email === \strtolower($username)) {
-            if (!empty($this->password)) {
-                if (Hash::check($password, $this->password)) {
-                    $authenticated = true;
-                }
-            } elseif (!empty($this->password_ldap)) {
-                if (substr($this->password_ldap, 0, 6) == "{SSHA}") {
-                    $salt = substr(base64_decode(substr($this->password_ldap, 6)), 20);
+        if (!empty($this->password)) {
+            $authenticated = Hash::check($password, $this->password);
+        } elseif (!empty($this->password_ldap)) {
+            if (substr($this->password_ldap, 0, 6) == "{SSHA}") {
+                $salt = substr(base64_decode(substr($this->password_ldap, 6)), 20);
+                $hash = '{SSHA}' . base64_encode(sha1($password . $salt, true) . $salt);
 
-                    $hash = '{SSHA}' . base64_encode(
-                        sha1($password . $salt, true) . $salt
-                    );
+                $authenticated = $hash === $this->password_ldap;
+            } elseif (substr($this->password_ldap, 0, 9) == "{SSHA512}") {
+                $salt = substr(base64_decode(substr($this->password_ldap, 9)), 64);
+                $hash = '{SSHA512}' . base64_encode(pack('H*', hash('sha512', $password . $salt)) . $salt);
 
-                    if ($hash == $this->password_ldap) {
-                        $authenticated = true;
-                    }
-                } elseif (substr($this->password_ldap, 0, 9) == "{SSHA512}") {
-                    $salt = substr(base64_decode(substr($this->password_ldap, 9)), 64);
-
-                    $hash = '{SSHA512}' . base64_encode(
-                        pack('H*', hash('sha512', $password . $salt)) . $salt
-                    );
-
-                    if ($hash == $this->password_ldap) {
-                        $authenticated = true;
-                    }
-                }
-            } else {
-                \Log::error("Incomplete credentials for {$this->email}");
+                $authenticated = $hash === $this->password_ldap;
             }
+        } else {
+            \Log::error("Missing password for {$this->email}");
         }
 
         if ($authenticated) {
-            // TODO: update last login time
-            if ($updatePassword && (empty($this->password) || empty($this->password_ldap))) {
+            if (empty($this->password) || empty($this->password_ldap)) {
                 $this->password = $password;
                 $this->save();
             }
@@ -781,18 +774,6 @@ class User extends Authenticatable
         }
 
         return in_array(\App\Utils::countryForIP($ip), $countryCodes);
-    }
-
-    /**
-     * Check if multi factor verification is enabled
-     *
-     * @return bool
-     */
-    public function mfaEnabled(): bool
-    {
-        return \App\CompanionApp::where('user_id', $this->id)
-            ->where('mfa_enabled', true)
-            ->exists();
     }
 
     /**
@@ -824,8 +805,7 @@ class User extends Authenticatable
                     $error = AuthAttempt::REASON_PASSWORD;
                 }
             } else {
-                // Check user password
-                if (!$user->validateCredentials($username, $password)) {
+                if (!$user->validatePassword($password)) {
                     $error = AuthAttempt::REASON_PASSWORD;
                 }
             }
@@ -848,7 +828,7 @@ class User extends Authenticatable
             }
 
             // Check 2FA - Companion App
-            if (!$error && $user->mfaEnabled()) {
+            if (!$error && $user->isMFAEnabled()) {
                 $attempt = AuthAttempt::recordAuthAttempt($user, $clientIP);
                 if (!$attempt->waitFor2FA()) {
                     $error = AuthAttempt::REASON_2FA;
