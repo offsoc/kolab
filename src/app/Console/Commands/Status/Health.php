@@ -27,7 +27,7 @@ class Health extends Command
      * @var string
      */
     protected $signature = 'status:health
-        {--check=* : One of DB, Redis, IMAP, LDAP, Roundcube, Meet, DAV, Mollie, OpenExchangeRates, Storage, Auth}
+        {--check=* : One of DB, Redis, IMAP, LDAP, Roundcube, Meet, DAV, Mollie, OpenExchangeRates, Storage, Auth, SMTP}
         {--user= : Test user (for Auth test)}
         {--password= : Password of test user}';
 
@@ -41,7 +41,7 @@ class Health extends Command
     private function checkDB()
     {
         try {
-            $result = DB::select("SELECT 1");
+            DB::select("SELECT 1");
             return true;
         } catch (\Exception $exception) {
             $this->line($exception);
@@ -95,6 +95,21 @@ class Health extends Command
     {
         try {
             IMAP::healthcheck();
+            return true;
+        } catch (\Exception $exception) {
+            $this->line($exception);
+            return false;
+        }
+    }
+
+    private function checkSMTP()
+    {
+        try {
+            \App\Mail\Helper::sendMail(
+                new \App\Mail\Test(),
+                null,
+                ["to" => [$this->option('user')]]
+            );
             return true;
         } catch (\Exception $exception) {
             $this->line($exception);
@@ -185,6 +200,7 @@ class Health extends Command
             ];
             if (!empty($this->option('user'))) {
                 array_unshift($steps, 'Auth');
+                array_unshift($steps, 'SMTP');
             }
             if (\config('app.with_ldap')) {
                 array_unshift($steps, 'LDAP');
