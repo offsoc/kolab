@@ -14,6 +14,11 @@ fi
 echo "----> Waiting for db"
 ./artisan db:ping --wait
 
+while ! ./artisan status:health --check Redis; do
+    sleep 1
+    echo "."
+done
+
 # Import the service ca on openshift
 update-ca-trust
 
