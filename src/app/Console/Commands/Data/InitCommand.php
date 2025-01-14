@@ -78,7 +78,7 @@ class InitCommand extends Command
         // Create a password grant client for the webapp
         if (
             !empty(\config('auth.proxy.client_secret')) &&
-            !Passport::client()->where('name', 'Kolab Password Grant Client')->whereNull('user_id')->exists()
+            !Passport::client()->where('id', \config('auth.proxy.client_id'))->exists()
         ) {
             $client = Passport::client()->forceFill([
                 'user_id' => null,
@@ -97,7 +97,7 @@ class InitCommand extends Command
         // Create a client for Webmail SSO
         if (
             !empty(\config('auth.sso.client_secret')) &&
-            !Passport::client()->where('name', 'Webmail SSO client')->whereNull('user_id')->exists()
+            !Passport::client()->where('id', \config('auth.sso.client_id'))->exists()
         ) {
             $client = Passport::client()->forceFill([
                 'user_id' => null,
@@ -118,7 +118,7 @@ class InitCommand extends Command
         // Create a client for synapse oauth
         if (
             !empty(\config('auth.synapse.client_secret')) &&
-            !Passport::client()->where('name', 'Synapse oauth client')->whereNull('user_id')->exists()
+            !Passport::client()->where('id', \config('auth.synapse.client_id'))->exists()
         ) {
             $client = Passport::client()->forceFill([
                 'user_id' => null,
