@@ -38,13 +38,6 @@ elif [ "$1" == "testsuite" ]; then
         vendor/bin/phpunit \
         --exclude-group "$EXCLUDE_GROUPS" \
         --verbose \
-        --testsuite Functional
-
-    php \
-        -dmemory_limit=-1 \
-        vendor/bin/phpunit \
-        --exclude-group "$EXCLUDE_GROUPS" \
-        --verbose \
         --testsuite Feature
 elif [ "$1" == "quicktest" ]; then
     php \
@@ -56,16 +49,6 @@ elif [ "$1" == "quicktest" ]; then
         --stop-on-error \
         --stop-on-failure \
         --testsuite Unit
-
-    php \
-        -dmemory_limit=-1 \
-        vendor/bin/phpunit \
-        --exclude-group "$EXCLUDE_GROUPS" \
-        --verbose \
-        --stop-on-defect \
-        --stop-on-error \
-        --stop-on-failure \
-        --testsuite Functional
 
     php \
         -dmemory_limit=-1 \

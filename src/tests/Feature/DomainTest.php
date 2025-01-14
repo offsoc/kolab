@@ -419,6 +419,72 @@ class DomainTest extends TestCase
     }
 
     /**
+     * Test domain suspending/unsuspending
+     */
+    public function testSuspendAndUnsuspend()
+    {
+        Queue::fake();
+
+        $domain = $this->getTestDomain('gmail.com', ['type' => Domain::TYPE_EXTERNAL]);
+
+        // Verify we can suspend an active domain
+        $domain->status = Domain::STATUS_CONFIRMED | Domain::STATUS_VERIFIED | Domain::STATUS_ACTIVE;
+
+        $this->assertFalse($domain->isSuspended());
+        $this->assertTrue($domain->isActive());
+
+        $domain->suspend();
+
+        $this->assertTrue($domain->isSuspended());
+        $this->assertFalse($domain->isActive());
+
+        // Verify we can unsuspend a suspended domain
+        $domain->status = Domain::STATUS_CONFIRMED | Domain::STATUS_VERIFIED | Domain::STATUS_SUSPENDED;
+
+        $this->assertTrue($domain->isSuspended());
+        $this->assertFalse($domain->isActive());
+
+        $domain->unsuspend();
+
+        $this->assertFalse($domain->isSuspended());
+        $this->assertTrue($domain->isActive());
+
+        // Verify we can unsuspend a suspended domain that wasn't confirmed
+        $domain->status = Domain::STATUS_NEW | Domain::STATUS_SUSPENDED;
+
+        $this->assertTrue($domain->isNew());
+        $this->assertTrue($domain->isSuspended());
+        $this->assertFalse($domain->isActive());
+        $this->assertFalse($domain->isConfirmed());
+        $this->assertFalse($domain->isVerified());
+
+        $domain->unsuspend();
+
+        $this->assertTrue($domain->isNew());
+        $this->assertFalse($domain->isSuspended());
+        $this->assertFalse($domain->isActive());
+        $this->assertFalse($domain->isConfirmed());
+        $this->assertFalse($domain->isVerified());
+
+        // Verify we can unsuspend a suspended domain that was verified but not confirmed
+        $domain->status = Domain::STATUS_NEW | Domain::STATUS_SUSPENDED | Domain::STATUS_VERIFIED;
+
+        $this->assertTrue($domain->isNew());
+        $this->assertTrue($domain->isSuspended());
+        $this->assertFalse($domain->isActive());
+        $this->assertFalse($domain->isConfirmed());
+        $this->assertTrue($domain->isVerified());
+
+        $domain->unsuspend();
+
+        $this->assertTrue($domain->isNew());
+        $this->assertFalse($domain->isSuspended());
+        $this->assertFalse($domain->isActive());
+        $this->assertFalse($domain->isConfirmed());
+        $this->assertTrue($domain->isVerified());
+    }
+
+    /**
      * Tests for Domain::walletOwner() (from EntitleableTrait)
      */
     public function testWalletOwner(): void
