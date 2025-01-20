@@ -52,6 +52,16 @@ else
         /etc/imapd.conf
 fi
 
+if [[ "$SYNC_HOST" != "" ]]; then
+    sed -i \
+        -e "s|# WITH_SYNC_TARGET ||g" \
+        -e "s|SYNC_HOST|$SYNC_HOST|g" \
+        /etc/imapd.conf
+    sed -i \
+        -e "s|# WITH_SYNC_TARGET ||g" \
+        /etc/cyrus.conf
+fi
+
 if [[ "$ROLE" == "frontend" ]]; then
     sed -i \
         -e "s|# WITH_MUPDATE ||g" \

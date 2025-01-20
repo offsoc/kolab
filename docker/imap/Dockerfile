@@ -78,6 +78,7 @@ ENV LD_LIBRARY_PATH=/usr/lib/
 # ENV ROLE
 # ENV WITH_TLS
 # ENV WITH_TAGS
+# ENV SYNC_HOST
 
 CMD ["/init.sh"]
 
