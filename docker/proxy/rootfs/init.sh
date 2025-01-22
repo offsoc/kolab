@@ -169,9 +169,6 @@ cat <<EOF >> /etc/nginx/nginx.conf
         }
 
         location /Microsoft-Server-ActiveSync {
-            auth_request     /auth;
-            #auth_request_set \$auth_status \$upstream_status;
-
             proxy_pass       $ROUNDCUBE_BACKEND;
             proxy_set_header Host \$host;
             proxy_set_header X-Real-IP \$remote_addr;
@@ -205,8 +202,6 @@ cat <<EOF >> /etc/nginx/nginx.conf
         }
 
         location /dav {
-            #auth_request_set \$auth_status \$upstream_status;
-
             proxy_pass       $DAV_BACKEND$DAV_PATH;
             proxy_set_header Host \$host;
             proxy_set_header X-Real-IP \$remote_addr;
