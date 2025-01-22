@@ -72,6 +72,10 @@ class Kolab extends IMAP
      */
     public function createFolder(Folder $folder): void
     {
+        if ($this->account->scheme == 'kolab3') {
+            throw new \Exception("Kolab v3 destination not supported");
+        }
+
         // IMAP
         if ($folder->type == Engine::TYPE_MAIL) {
             parent::createFolder($folder);
@@ -94,6 +98,11 @@ class Kolab extends IMAP
      */
     public function createItem(Item $item): void
     {
+        // Destination server is always Kolab4, we don't support migration into Kolab3
+        if ($this->account->scheme == 'kolab3') {
+            throw new \Exception("Kolab v3 destination not supported");
+        }
+
         // IMAP
         if ($item->folder->type == Engine::TYPE_MAIL) {
             parent::createItem($item);
@@ -106,7 +115,11 @@ class Kolab extends IMAP
             return;
         }
 
-        // TODO: Configuration (v3 tags)
+        // Configuration (v3 tags)
+        if ($item->folder->type == Engine::TYPE_CONFIGURATION) {
+            Kolab\Tags::migrateKolab3Tag($this->imap, $item);
+            return;
+        }
     }
 
     /**
@@ -114,6 +127,11 @@ class Kolab extends IMAP
      */
     public function fetchItem(Item $item): void
     {
+        // No support for migration from Kolab4 yet
+        if ($this->account->scheme != 'kolab3') {
+            throw new \Exception("Kolab v4 source not supported");
+        }
+
         // IMAP
         if ($item->folder->type == Engine::TYPE_MAIL) {
             parent::fetchItem($item);
@@ -126,14 +144,23 @@ class Kolab extends IMAP
             return;
         }
 
-        // TODO: Configuration (v3 tags)
+        // Configuration (v3 tags)
+        if ($item->folder->type == Engine::TYPE_CONFIGURATION) {
+            Kolab\Tags::fetchKolab3Tag($this->imap, $item);
+            return;
+        }
     }
 
     /**
-     * Fetch a list of folder items
+     * Fetch a list of folder items from the source server
      */
     public function fetchItemList(Folder $folder, $callback, ImporterInterface $importer): void
     {
+        // Note: No support for migration from Kolab4 yet
+        if ($this->account->scheme != 'kolab3') {
+            throw new \Exception("Kolab v4 source not supported");
+        }
+
         // IMAP
         if ($folder->type == Engine::TYPE_MAIL) {
             parent::fetchItemList($folder, $callback, $importer);
@@ -146,7 +173,18 @@ class Kolab extends IMAP
             return;
         }
 
-        // TODO: Configuration (v3 tags)
+        // Configuration (v3 tags)
+        if ($folder->type == Engine::TYPE_CONFIGURATION) {
+            // Get existing tags from the destination account
+            $existing = $importer->getItems($folder);
+
+            $mailbox = self::toUTF7($folder->fullname);
+            foreach (Kolab\Tags::getKolab3Tags($this->imap, $mailbox, $existing) as $tag) {
+                $tag['folder'] = $folder;
+                $item = Item::fromArray($tag);
+                $callback($item);
+            }
+        }
     }
 
     /**
@@ -154,6 +192,11 @@ class Kolab extends IMAP
      */
     public function getFolders($types = []): array
     {
+        // Note: No support for migration from Kolab4 yet.
+        if ($this->account->scheme != 'kolab3') {
+            throw new \Exception("Kolab v4 source not supported");
+        }
+
         // Using only IMAP to get the list of all folders works with Kolab v3, but not v4.
         // We could use IMAP, extract the XML, convert to iCal/vCard format and pass to DAV.
         // But it will be easier to use DAV for contact/task/event folders migration.
@@ -169,7 +212,7 @@ class Kolab extends IMAP
         }
 
         // Get IMAP (mail and configuration) folders
-        $folders = $this->imap->listMailboxes('', '');
+        $folders = $this->imap->listMailboxes('', '', ['SUBSCRIBED']);
 
         if ($folders === false) {
             throw new \Exception("Failed to get list of IMAP folders");
@@ -207,9 +250,14 @@ class Kolab extends IMAP
                 continue;
             }
 
+            $is_subscribed = !empty($this->imap->data['LIST'])
+                && !empty($this->imap->data['LIST'][$folder])
+                && in_array('\Subscribed', $this->imap->data['LIST'][$folder]);
+
             $folder = Folder::fromArray([
-                'fullname' => $folder,
+                'fullname' => self::fromUTF7($folder),
                 'type' => $type,
+                'subscribed' => $is_subscribed || $folder === 'INBOX',
             ]);
 
             if ($type == Engine::TYPE_CONFIGURATION) {
@@ -229,11 +277,16 @@ class Kolab extends IMAP
     }
 
     /**
-     * Get a list of folder items, limited to their essential propeties
+     * Get a list of folder items from the destination server, limited to their essential propeties
      * used in incremental migration to skip unchanged items.
      */
     public function getItems(Folder $folder): array
     {
+        // Destination server is always Kolab4, we don't support migration into Kolab3
+        if ($this->account->scheme == 'kolab3') {
+            throw new \Exception("Kolab v3 destination not supported");
+        }
+
         // IMAP
         if ($folder->type == Engine::TYPE_MAIL) {
             return parent::getItems($folder);
@@ -246,8 +299,7 @@ class Kolab extends IMAP
 
         // Configuration folder (v3 tags)
         if ($folder->type == Engine::TYPE_CONFIGURATION) {
-            // X-Kolab-Type: application/x-vnd.kolab.configuration.relation
-            // TODO
+            return Kolab\Tags::getKolab4Tags($this->imap);
         }
 
         return [];

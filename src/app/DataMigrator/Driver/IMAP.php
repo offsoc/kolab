@@ -79,28 +79,23 @@ class IMAP implements ExporterInterface, ImporterInterface
             return;
         }
 
-        if (!$this->imap->createFolder(self::toUTF7($folder->targetname))) {
+        $mailbox = self::toUTF7($folder->targetname);
+
+        if (!$this->imap->createFolder($mailbox)) {
             if (str_contains($this->imap->error, "Mailbox already exists")) {
                 // Not an error
-                \Log::debug("Folder already exists: {$folder->targetname}");
+                \Log::debug("Folder already exists: {$mailbox}");
             } else {
                 \Log::warning("Failed to create the folder: {$this->imap->error}");
-                throw new \Exception("Failed to create an IMAP folder {$folder->targetname}");
+                throw new \Exception("Failed to create an IMAP folder {$mailbox}");
             }
         }
 
-        // TODO: Migrate folder subscription state. For now we just subscribe.
-        if (!$this->imap->subscribe(self::toUTF7($folder->targetname))) {
-            \Log::warning("Failed to subscribe to the folder: {$this->imap->error}");
+        if ($folder->subscribed) {
+            if (!$this->imap->subscribe($mailbox)) {
+                \Log::warning("Failed to subscribe to the folder: {$this->imap->error}");
+            }
         }
-    }
-
-    /**
-     * Convert UTF8 string to UTF7-IMAP encoding
-     */
-    private static function toUTF7(string $string): string
-    {
-        return \mb_convert_encoding($string, 'UTF7-IMAP', 'UTF8');
     }
 
     /**
@@ -172,7 +167,7 @@ class IMAP implements ExporterInterface, ImporterInterface
     {
         [$uid, $messageId] = explode(':', $item->id, 2);
 
-        $mailbox = $item->folder->fullname;
+        $mailbox = self::toUTF7($item->folder->fullname);
 
         // Get message flags
         $header = $this->imap->fetchHeader($mailbox, (int) $uid, true, false, ['FLAGS']);
@@ -239,7 +234,7 @@ class IMAP implements ExporterInterface, ImporterInterface
         // Get existing messages' headers from the destination mailbox
         $existing = $importer->getItems($folder);
 
-        $mailbox = $folder->fullname;
+        $mailbox = self::toUTF7($folder->fullname);
 
         // TODO: We should probably first use SEARCH/SORT to skip messages marked as \Deleted
         // It would also allow us to get headers in chunks 200 messages at a time, or so.
@@ -304,7 +299,11 @@ class IMAP implements ExporterInterface, ImporterInterface
             throw new \Exception("Failed to get list of IMAP folders");
         }
 
-        // TODO: Migrate folder subscription state
+        $subscribed = $this->imap->listSubscribed('', '');
+
+        if ($subscribed === false) {
+            throw new \Exception("Failed to get list of subscribed IMAP folders");
+        }
 
         $result = [];
 
@@ -315,8 +314,9 @@ class IMAP implements ExporterInterface, ImporterInterface
             }
 
             $result[] = Folder::fromArray([
-                'fullname' => $folder,
-                'type' => 'mail'
+                'fullname' => self::fromUTF7($folder),
+                'type' => 'mail',
+                'subscribed' => in_array($folder, $subscribed) || $folder === 'INBOX',
             ]);
         }
 
@@ -329,11 +329,7 @@ class IMAP implements ExporterInterface, ImporterInterface
      */
     public function getItems(Folder $folder): array
     {
-        if ($folder->targetname) {
-            $mailbox = self::toUTF7($folder->targetname);
-        } else {
-            $mailbox = $folder->fullname;
-        }
+        $mailbox = self::toUTF7($folder->targetname ? $folder->targetname : $folder->fullname);
 
         // TODO: We should probably first use SEARCH/SORT to skip messages marked as \Deleted
         // TODO: fetchHeaders() fetches too many headers, we should slim-down, here we need
@@ -476,5 +472,21 @@ class IMAP implements ExporterInterface, ImporterInterface
         }
 
         return md5($folder . $message->from . $message->timestamp);
+    }
+
+    /**
+     * Convert UTF8 string to UTF7-IMAP encoding
+     */
+    protected static function toUTF7(string $string): string
+    {
+        return \mb_convert_encoding($string, 'UTF7-IMAP', 'UTF8');
+    }
+
+    /**
+     * Convert UTF7-IMAP string to UTF8 encoding
+     */
+    protected static function fromUTF7(string $string): string
+    {
+        return \mb_convert_encoding($string, 'UTF8', 'UTF7-IMAP');
     }
 }

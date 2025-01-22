@@ -296,7 +296,7 @@ trait BackendsTrait
     /**
      * Create an IMAP folder
      */
-    protected function imapCreateFolder(Account $account, $folder): void
+    protected function imapCreateFolder(Account $account, $folder, bool $subscribe = false): void
     {
         $imap = $this->getImapClient($account);
 
@@ -307,6 +307,12 @@ trait BackendsTrait
                 throw new \Exception("Failed to create an IMAP folder {$account}/{$folder}");
             }
         }
+
+        if ($subscribe) {
+            if (!$imap->subscribe($folder)) {
+                throw new \Exception("Failed to subscribe an IMAP folder {$account}/{$folder}");
+            }
+        }
     }
 
     /**
@@ -315,13 +321,6 @@ trait BackendsTrait
     protected function imapDeleteFolder(Account $account, $folder): void
     {
         $imap = $this->getImapClient($account);
-
-        // Check the folder existence first, to prevent Cyrus IMAP fatal error when
-        // attempting to delete a non-existing folder
-        $existing = $imap->listMailboxes('', $folder);
-        if (is_array($existing) && in_array($folder, $existing)) {
-            return;
-        }
 
         if (!$imap->deleteFolder($folder)) {
             if (str_contains($imap->error, "Mailbox does not exist")) {
@@ -370,11 +369,11 @@ trait BackendsTrait
     /**
      * List IMAP folders
      */
-    protected function imapListFolders(Account $account): array
+    protected function imapListFolders(Account $account, bool $subscribed = false): array
     {
         $imap = $this->getImapClient($account);
 
-        $folders = $imap->listMailboxes('', '');
+        $folders = $subscribed ? $imap->listSubscribed('', '') : $imap->listMailboxes('', '');
 
         if ($folders === false) {
             throw new \Exception("Failed to list IMAP folders for {$account}");

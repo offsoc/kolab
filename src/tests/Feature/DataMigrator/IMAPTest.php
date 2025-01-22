@@ -53,14 +53,17 @@ class IMAPTest extends TestCase
         $this->initAccount($dst);
 
         // Add some mail to the source account
+        $utf7_folder = \mb_convert_encoding('ImapDataMigrator/&kość', 'UTF7-IMAP', 'UTF8');
         $this->imapAppend($src, 'INBOX', 'mail/1.eml');
         $this->imapAppend($src, 'INBOX', 'mail/2.eml', ['SEEN']);
         $this->imapCreateFolder($src, 'ImapDataMigrator');
         $this->imapCreateFolder($src, 'ImapDataMigrator/Test');
-        $this->imapAppend($src, 'ImapDataMigrator/Test', 'mail/1.eml');
-        $this->imapAppend($src, 'ImapDataMigrator/Test', 'mail/2.eml');
+        $this->imapCreateFolder($src, $utf7_folder, true);
+        $this->imapAppend($src, $utf7_folder, 'mail/1.eml', [], '10-Jan-2024 09:09:09 +0000');
+        $this->imapAppend($src, $utf7_folder, 'mail/2.eml', [], '10-Jan-2024 09:09:09 +0000');
 
         // Clean up the destination folders structure
+        $this->imapDeleteFolder($dst, $utf7_folder);
         $this->imapDeleteFolder($dst, 'ImapDataMigrator/Test');
         $this->imapDeleteFolder($dst, 'ImapDataMigrator');
 
@@ -72,6 +75,10 @@ class IMAPTest extends TestCase
         $dstFolders = $this->imapListFolders($dst);
         $this->assertContains('ImapDataMigrator', $dstFolders);
         $this->assertContains('ImapDataMigrator/Test', $dstFolders);
+        $this->assertContains($utf7_folder, $dstFolders);
+        $subscribed = $this->imapListFolders($dst, true);
+        $this->assertContains($utf7_folder, $subscribed);
+        $this->assertNotContains('ImapDataMigrator/Test', $subscribed);
 
         // Assert the migrated messages
         $dstMessages = $this->imapList($dst, 'INBOX');
@@ -83,16 +90,16 @@ class IMAPTest extends TestCase
         $this->assertSame('<sync2@kolab.org>', $msg->messageID);
         $this->assertSame(['SEEN'], array_keys($msg->flags));
 
-        $dstMessages = $this->imapList($dst, 'ImapDataMigrator/Test');
+        $dstMessages = $this->imapList($dst, $utf7_folder);
         $this->assertCount(2, $dstMessages);
         $msg = array_shift($dstMessages);
         $this->assertSame('<sync1@kolab.org>', $msg->messageID);
         $this->assertSame([], $msg->flags);
+        $this->assertSame('10-Jan-2024 09:09:09 +0000', $msg->internaldate);
         $msg = array_shift($dstMessages);
         $this->assertSame('<sync2@kolab.org>', $msg->messageID);
         $this->assertSame([], $msg->flags);
-
-        // TODO: Test INTERNALDATE migration
+        $this->assertSame('10-Jan-2024 09:09:09 +0000', $msg->internaldate);
     }
 
     /**
@@ -142,7 +149,8 @@ class IMAPTest extends TestCase
         $this->assertSame(['<sync3@kolab.org>','<sync4@kolab.org>'], $ids);
 
         // Nothing changed in the other folder
-        $dstMessages = $this->imapList($dst, 'ImapDataMigrator/Test');
+        $utf7_folder = \mb_convert_encoding('ImapDataMigrator/&kość', 'UTF7-IMAP', 'UTF8');
+        $dstMessages = $this->imapList($dst, $utf7_folder);
         $this->assertCount(2, $dstMessages);
         $msg = array_shift($dstMessages);
         $this->assertSame('<sync1@kolab.org>', $msg->messageID);

@@ -382,6 +382,8 @@ class Engine
                 break;
 
             case 'kolab':
+            case 'kolab3':
+            case 'kolab4':
                 $driver = new Driver\Kolab($account, $this);
                 break;
 

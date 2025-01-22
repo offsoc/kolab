@@ -50,7 +50,7 @@ class Account
     {
         $this->input = $input;
 
-        if (!preg_match('|^[a-z]+://.*|', $input)) {
+        if (!preg_match('|^[a-z0-9]+://.*|', $input)) {
             throw new \Exception("Invalid URI specified");
         }
 

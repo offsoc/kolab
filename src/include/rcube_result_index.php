@@ -20,23 +20,6 @@
 */
 
 /**
- * Get first element from an array
- *
- * @param array $array Input array
- *
- * @return mixed First element if found, Null otherwise
- */
-function array_first($array)
-{
-    if (is_array($array)) {
-        reset($array);
-        foreach ($array as $element) {
-            return $element;
-        }
-    }
-}
-
-/**
  * Class for accessing IMAP's SORT/SEARCH/ESEARCH result
  *
  * @package    Framework

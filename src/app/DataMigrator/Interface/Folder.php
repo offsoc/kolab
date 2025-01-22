@@ -21,13 +21,13 @@ class Folder
     /** @var string Folder Kolab object type */
     public $type;
 
-    /** @var string Folder name */
+    /** @var string Folder name (UTF-8) */
     public $name;
 
-    /** @var string Folder name with path */
+    /** @var string Folder name with path (UTF-8) */
     public $fullname;
 
-    /** @var string Target folder name with path */
+    /** @var string Target folder name with path (UTF-8) */
     public $targetname;
 
     /** @var string Storage location (for temporary data) */
@@ -35,6 +35,9 @@ class Folder
 
     /** @var string Migration queue identifier */
     public $queueId;
+
+    /** @var bool Folder subscription state */
+    public $subscribed = true;
 
 
     /**
