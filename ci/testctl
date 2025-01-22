@@ -235,6 +235,28 @@ kolab__test() {
         kolab-tests:latest /init.sh $@
 }
 
+kolab__profile() {
+    mkdir -p profile
+    export POD=tests
+    $PODMAN run -ti --pod tests --name $POD-kolab-tests --replace \
+        --env-file=ci/env \
+        -v ./src:/src/kolabsrc.orig:ro \
+        -v ./profile:/output \
+        -e APP_SERVICES_DOMAINS="localhost" \
+        -e PASSPORT_PRIVATE_KEY="$PASSPORT_PRIVATE_KEY" \
+        -e PASSPORT_PUBLIC_KEY="$PASSPORT_PUBLIC_KEY" \
+        -e APP_URL="http://kolab.local" \
+        -e APP_PUBLIC_URL="http://kolab.local" \
+        -e APP_HEADER_CSP="" \
+        -e APP_HEADER_XFO="" \
+        -e ASSET_URL="http://kolab.local" \
+        -e MEET_SERVER_URLS="http://kolab.local/meetmedia/api/" \
+        -e DAV_URI \
+        -e ACTIVESYNC_URI \
+        -e AUTODISCOVER_URI \
+        kolab-tests:latest /init.sh profile $@
+}
+
 # Validate that the proxy works
 kolab__proxytest() {
     # Without element

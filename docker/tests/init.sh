@@ -67,6 +67,27 @@ elif [ "$1" == "lint" ]; then
     php -dmemory_limit=-1 vendor/bin/phpstan analyse
 
     npm run lint
+elif [ "$1" == "profile" ]; then
+    shift
+
+    cat << EOF > /etc/php.d/xdebug.ini
+zend_extension= usr/lib64/php/modules/xdebug.so
+
+# Profiler config for xdebug3
+xdebug.mode=profile
+xdebug.output_dir="/output/"
+
+EOF
+
+    php \
+        -dmemory_limit=-1 \
+        vendor/bin/phpunit \
+        --exclude-group "$EXCLUDE_GROUPS" \
+        --verbose \
+        --stop-on-defect \
+        --stop-on-error \
+        --stop-on-failure \
+        $@
 else
 
     if [[ "$1" =~ "Browser" ]]; then
