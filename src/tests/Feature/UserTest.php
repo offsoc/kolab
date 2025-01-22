@@ -11,6 +11,7 @@ use App\Sku;
 use App\User;
 use App\Auth\Utils as AuthUtils;
 use Carbon\Carbon;
+use Illuminate\Support\Benchmark;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -1638,4 +1639,44 @@ class UserTest extends TestCase
         $token = AuthUtils::tokenCreate($this->getTestUser('ned@kolab.org')->id);
         $this->assertFalse(isset(User::findAndAuthenticate($user->email, $token)['user']));
     }
+
+    /**
+     * Test User password validation
+     */
+    public function testBenchmarkFindAndAuthenticatePassword(): void
+    {
+        Queue::fake();
+
+        $user = $this->getTestUser('user-test@' . \config('app.domain'), ['password' => 'test']);
+
+        // Seed the cache
+        User::findAndAuthenticate($user->email, "test");
+        $time = Benchmark::measure(function() use (&$user) {
+            User::findAndAuthenticate($user->email, "test");
+        }, 10);
+        // print("\nTime: $time ms\n");
+        // We want this to be faster than the slow default bcrypt algorithm
+        $this->assertTrue($time < 10);
+    }
+
+    /**
+     * Test User token validation
+     */
+    public function testBenchmarkFindAndAuthenticateToken(): void
+    {
+        Queue::fake();
+
+        $user = $this->getTestUser('user-test@' . \config('app.domain'), ['password' => 'test']);
+        $token = AuthUtils::tokenCreate($user->id);
+
+        // Seed the cache
+        User::findAndAuthenticate($user->email, $token);
+        $time = Benchmark::measure(function() use ($user, $token) {
+            User::findAndAuthenticate($user->email, $token);
+        }, 10);
+        // print("\nTime: $time ms\n");
+        // We want this to be faster than the slow default bcrypt algorithm
+        $this->assertTrue($time < 10);
+    }
+
 }

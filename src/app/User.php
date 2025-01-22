@@ -15,6 +15,7 @@ use App\Traits\StatusPropertyTrait;
 use Dyrynda\Database\Support\NullableFields;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -782,10 +783,11 @@ class User extends Authenticatable
      * @param string  $username The username
      * @param string  $password The password in plain text
      * @param ?string $clientIP The IP address of the client
+     * @param ?bool   $withChecks Enable MFA and location checks
      *
      * @return array ['user', 'reason', 'errorMessage']
      */
-    public static function findAndAuthenticate($username, $password, $clientIP = null, $verifyMFA = true): array
+    public static function findAndAuthenticate($username, $password, $clientIP = null, $withChecks = true): array
     {
         $error = null;
 
@@ -800,18 +802,28 @@ class User extends Authenticatable
         } else {
             if ($userid = AuthUtils::tokenValidate($password)) {
                 if ($user->id == $userid) {
-                    $verifyMFA = false;
+                    $withChecks = false;
                 } else {
                     $error = AuthAttempt::REASON_PASSWORD;
                 }
             } else {
+                if (!$withChecks) {
+                    $cacheId = hash('sha256', "{$user->id}-$password");
+                    // Skip the slow password verification for cases where we also don't verify mfa.
+                    // We rely on this for fast cyrus-sasl authentication.
+                    if (Cache::has($cacheId)) {
+                        \Log::debug("Cached authentication for {$user->email}");
+                        return ['user' => $user];
+                    }
+                }
+
                 if (!$user->validatePassword($password)) {
                     $error = AuthAttempt::REASON_PASSWORD;
                 }
             }
         }
 
-        if ($verifyMFA) {
+        if ($withChecks) {
             // Check user (request) location
             if (!$error && !$user->validateLocation($clientIP)) {
                 $error = AuthAttempt::REASON_GEOLOCATION;
@@ -854,6 +866,11 @@ class User extends Authenticatable
         }
 
         \Log::info("Successful authentication for {$user->email}");
+
+        if (!empty($cacheId)) {
+            // Cache for 60s
+            Cache::put($cacheId, true, 60);
+        }
 
         return ['user' => $user];
     }
