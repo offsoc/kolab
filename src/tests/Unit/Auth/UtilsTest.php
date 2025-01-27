@@ -27,5 +27,6 @@ class UtilsTest extends TestCase
 
         // Invalid token
         $this->assertNull(Utils::tokenValidate('sdfsdfsfsdfsdfs!asd!sdfsdfsdfrwet'));
+        $this->assertNull(Utils::tokenValidate('sdfsdfsfsdfsdf'));
     }
 }

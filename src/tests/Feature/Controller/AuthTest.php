@@ -182,6 +182,13 @@ class AuthTest extends TestCase
         $this->assertTrue(is_array($json['statusInfo']));
         $this->assertTrue(is_array($json['settings']));
 
+        // Valid long password (255 chars)
+        $password = str_repeat('123abc789E', 25) . '12345';
+        $user = $this->getTestUser('UsersControllerTest1@userscontroller.com', ['password' => $password]);
+        $post = ['email' => $user->email, 'password' => $password];
+        $response = $this->post("api/auth/login", $post);
+        $response->assertStatus(200);
+
         // Valid user+password (upper-case)
         $post = ['email' => 'John@Kolab.org', 'password' => 'simple123'];
         $response = $this->post("api/auth/login", $post);

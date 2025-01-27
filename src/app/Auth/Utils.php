@@ -48,7 +48,7 @@ class Utils
      */
     public static function tokenValidate($token): ?string
     {
-        if (!preg_match('|^[a-zA-Z0-9!+/]{50,}$|', $token)) {
+        if (!preg_match('|^[a-zA-Z0-9+/]{8,}![a-zA-Z0-9+/]*![a-zA-Z0-9+/]{48,}$|', $token)) {
             // this isn't a token, probably a normal password
             return null;
         }
