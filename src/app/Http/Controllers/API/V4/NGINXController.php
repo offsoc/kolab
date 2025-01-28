@@ -172,11 +172,6 @@ class NGINXController extends Controller
             $username = "$username@$realm";
         }
 
-        if (empty($password)) {
-            \Log::debug("Authentication attempt failed: Empty password provided.");
-            return response('', 403);
-        }
-
         try {
             $this->authorizeRequestCredentialsOnly($username, $password);
         } catch (\Exception $e) {
