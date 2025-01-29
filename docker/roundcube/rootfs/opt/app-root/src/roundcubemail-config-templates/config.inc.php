@@ -124,11 +124,10 @@ if (!function_exists("getenvlist")) {
     $config['plugins'] = $plugins;
 
     // Do not show deleted messages, mark deleted messages as read,
-    // and flag them as deleted instead of moving them to the Trash
-    // folder.
+    // and move deleted messages to the Trash (instead of flagging as deleted)
     $config['skip_deleted'] = true;
     $config['read_when_deleted'] = true;
-    $config['flag_for_deletion'] = true;
+    $config['flag_for_deletion'] = false;
     $config['delete_always'] = true;
 
     $config['session_lifetime'] = 180;
