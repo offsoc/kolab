@@ -520,6 +520,11 @@ smtpd_helo_restrictions =
     reject_invalid_helo_hostname,
     reject_non_fqdn_helo_hostname,
     #reject_rhsbl_helo dbl.spamhaus.org
+# Local clients and authenticated clients may specify any destination domain
+smtpd_relay_restrictions =
+    permit_mynetworks,
+    permit_sasl_authenticated,
+    reject_unauth_destination
 smtpd_recipient_restrictions =
     #permit_mynetworks,
     reject_invalid_hostname,
@@ -573,6 +578,10 @@ submission_helo_restrictions =
     reject_invalid_helo_hostname,
     reject_non_fqdn_helo_hostname,
     #reject_rhsbl_helo dbl.spamhaus.org
+submission_relay_restrictions =
+    permit_mynetworks,
+    permit_sasl_authenticated,
+    reject_unauth_destination
 submission_recipient_restrictions =
  #   check_recipient_access hash:/etc/postfix/recipient_access,
  #   check_recipient_mx_access hash:/etc/postfix/recipient_mx_access,
