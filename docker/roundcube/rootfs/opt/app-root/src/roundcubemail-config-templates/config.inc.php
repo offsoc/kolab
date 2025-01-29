@@ -130,6 +130,14 @@ if (!function_exists("getenvlist")) {
     $config['flag_for_deletion'] = false;
     $config['delete_always'] = true;
 
+
+    $config['dont_override'] = [
+        'skip_deleted',
+        'read_when_deleted',
+        'flag_for_deletion',
+        'delete_always',
+    ];
+
     $config['session_lifetime'] = 180;
     $config['password_charset'] = 'UTF-8';
     $config['useragent'] = 'Kolab 16/Roundcube ' . RCUBE_VERSION;
