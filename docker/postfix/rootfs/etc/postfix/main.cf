@@ -73,7 +73,7 @@ inet_protocols = all
 #proxy_interfaces = 1.2.3.4
 
 # Specify which domains should be delivered locally
-mydestination = $myhostname $mydomain
+mydestination = $myhostname $mydomain mysql:/etc/postfix/sql/mydestination.cf
 # Required to correctly resolve the imap host in the container
 lmtp_host_lookup = native
 # lmtp for local transport
