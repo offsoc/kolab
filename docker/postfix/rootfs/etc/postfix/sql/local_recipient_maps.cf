@@ -2,4 +2,4 @@ hosts = DB_HOST
 user = DB_USERNAME
 password = DB_PASSWORD
 dbname = DB_DATABASE
-query = SELECT email FROM users WHERE email = '%u@%d' AND status & 2 AND NOT status & 4 AND NOT status & 8
+query = SELECT users.email FROM users left join user_aliases ON users.id = user_aliases.user_id WHERE (users.email = '%u@%d' OR user_aliases.alias = '%u@%d') AND users.status & 2 AND NOT users.status & 4 AND NOT users.status & 8 LIMIT 1
