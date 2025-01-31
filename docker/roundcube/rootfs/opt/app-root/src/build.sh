@@ -6,11 +6,32 @@ pushd /opt/app-root/src/
 
 function checkout() {
     if [ ! -d "$1" ]; then
-        git clone "$2" "$1"
+        # If we clone the head of a branch, we can be much more efficient about it,
+        # but it only works for commits that are the head of a branch. So we try, and resort to a full clone otherwise.
+        # The same could be achieved using: git clone --depth 1 --branch dev/kolab-1.6 https://git.kolab.org/source/roundcubemail.git roundcubemail
+        # but that only works with branch/tag names and not with a commit id (and since we pin commit ids we can't use that).
+        mkdir "$1"
         pushd "$1"
-        git checkout "$3" 
-        rm -rf .git
-        popd
+        # Suppress warnings
+        git config --global init.defaultBranch main
+        git config --global advice.detachedHead false
+        git init .
+        git remote add origin "$2"
+        if git fetch --depth 1 origin "$3"; then
+            git checkout "$3"
+            rm -rf .git
+            echo "Successfully fetched $3"
+            popd
+        else
+            echo "Resorting to full clone for $3"
+            popd
+            rm -Rf "$1"
+            git clone "$2" "$1"
+            pushd "$1"
+            git checkout "$3" 
+            rm -rf .git
+            popd
+        fi
     fi
 }
 
