@@ -19,8 +19,10 @@ while ! ./artisan status:health --check Redis; do
     echo "."
 done
 
-# Import the service ca on openshift
-update-ca-trust
+# Import the service ca on openshift, which is used to connect to s3.
+# FIXME it seems this can fail
+# ln: failed to create symbolic link '/etc/pki/ca-trust/extracted/pem/directory-hash/ca-certificates.crt': Permission denied
+update-ca-trust || :
 
 function is_not_initialized() {
     ROWCOUNT=$(echo "select count(*) from migrations;" | mysql -N -b -u "$DB_USERNAME" -p"$DB_PASSWORD" -h "$DB_HOST" "$DB_DATABASE")
