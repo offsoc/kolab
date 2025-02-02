@@ -95,7 +95,7 @@ podman__build_all() {
     podman__build_proxy
     podman__build_coturn
     podman__build_utils
-    podman build docker/fluentbit -t fluentbit
+    podman build docker/vector -t vector
 
     podman build docker/synapse -t synapse
     podman build docker/element -t element
