@@ -77,7 +77,7 @@ class SendTest:
             if "dkim=pass" not in header:
                 print("Failed to validate Authentication-Results header:", header)
                 return False
-            if f"header.d={email_domain}" not in header:
+            if f"header.d={email_domain}" not in header and f"header.i=@{email_domain}" not in header:
                 print("DKIM signature is not aligned", header)
                 return False
 
@@ -92,7 +92,7 @@ class SendTest:
         if msg['Received-Greylist']:
             print("Message was greylisted: " + str(msg['Received-Greylist']))
 
-        if "Pass" not in (msg['Received-SPF'] or ""):
+        if "pass" not in (msg['Received-SPF'] or "").lower():
             print("SPF did not pass: " + str(msg['Received-SPF']))
 
         # Ensure SPF record matches a received line?
