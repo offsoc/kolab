@@ -502,8 +502,8 @@ recipient_delimiter = +
 local_recipient_maps = mysql:/etc/postfix/sql/local_recipient_maps.cf
 #transport_maps = ldap:/etc/postfix/ldap/transport_maps.cf, hash:/etc/postfix/transport
 transport_maps = regexp:/etc/postfix/transport
-#virtual_alias_maps = $alias_maps, ldap:/etc/postfix/ldap/virtual_alias_maps.cf, ldap:/etc/postfix/ldap/virtual_alias_maps_mailforwarding.cf, ldap:/etc/postfix/ldap/virtual_alias_maps_sharedfolders.cf, ldap:/etc/postfix/ldap/mailenabled_distgroups.cf, ldap:/etc/postfix/ldap/mailenabled_dynamic_distgroups.cf
-virtual_alias_maps = $alias_maps
+virtual_alias_maps = $alias_maps, mysql:/etc/postfix/sql/virtual_alias_maps.cf
+#Other virtual alias maps we used to have: ldap:/etc/postfix/ldap/virtual_alias_maps_mailforwarding.cf, ldap:/etc/postfix/ldap/virtual_alias_maps_sharedfolders.cf, ldap:/etc/postfix/ldap/mailenabled_distgroups.cf, ldap:/etc/postfix/ldap/mailenabled_dynamic_distgroups.cf
 smtpd_tls_auth_only = no
 
 # Inbound
