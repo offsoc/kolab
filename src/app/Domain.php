@@ -325,35 +325,6 @@ class Domain extends Model
     }
 
     /**
-     * Unsuspend this domain.
-     *
-     * The domain is unsuspended through either of the following courses of actions;
-     *
-     *   * The account balance has been topped up, or
-     *   * a suspected spammer has resolved their issues, or
-     *   * the command-line is triggered.
-     *
-     * Therefore, we can also confidently set the domain status to 'active' should the ownership of or management
-     * access to have been confirmed before.
-     *
-     * @return void
-     */
-    public function unsuspend(): void
-    {
-        if (!$this->isSuspended()) {
-            return;
-        }
-
-        $this->status ^= Domain::STATUS_SUSPENDED;
-
-        if ($this->isConfirmed() && $this->isVerified()) {
-            $this->status |= Domain::STATUS_ACTIVE;
-        }
-
-        $this->save();
-    }
-
-    /**
      * List the users of a domain, so long as the domain is not a public registration domain.
      * Note: It returns only users with a mailbox.
      *
