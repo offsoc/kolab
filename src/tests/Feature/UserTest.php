@@ -1651,7 +1651,7 @@ class UserTest extends TestCase
 
         // Seed the cache
         User::findAndAuthenticate($user->email, "test");
-        $time = Benchmark::measure(function() use (&$user) {
+        $time = Benchmark::measure(function () use (&$user) {
             User::findAndAuthenticate($user->email, "test");
         }, 10);
         // print("\nTime: $time ms\n");
@@ -1671,12 +1671,11 @@ class UserTest extends TestCase
 
         // Seed the cache
         User::findAndAuthenticate($user->email, $token);
-        $time = Benchmark::measure(function() use ($user, $token) {
+        $time = Benchmark::measure(function () use ($user, $token) {
             User::findAndAuthenticate($user->email, $token);
         }, 10);
         // print("\nTime: $time ms\n");
         // We want this to be faster than the slow default bcrypt algorithm
         $this->assertTrue($time < 10);
     }
-
 }
