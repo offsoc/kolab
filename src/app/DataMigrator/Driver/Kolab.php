@@ -14,12 +14,22 @@ use App\DataMigrator\Interface\ItemSet;
  */
 class Kolab extends IMAP
 {
-    protected const CTYPE_KEY         = '/shared/vendor/kolab/folder-type';
+    protected const CTYPE_KEY = '/shared/vendor/kolab/folder-type';
     protected const CTYPE_KEY_PRIVATE = '/private/vendor/kolab/folder-type';
+    protected const UID_KEY = '/shared/vendor/kolab/uniqueid';
+    protected const UID_KEY_CYRUS = '/shared/vendor/cmu/cyrus-imapd/uniqueid';
+    protected const COLOR_KEY = '/shared/vendor/kolab/color';
+    protected const COLOR_KEY_PRIVATE = '/private/vendor/kolab/color';
+
     protected const DAV_TYPES = [
         Engine::TYPE_CONTACT,
         Engine::TYPE_EVENT,
         Engine::TYPE_TASK,
+    ];
+    protected const IMAP_TYPES = [
+        Engine::TYPE_MAIL,
+        Engine::TYPE_CONFIGURATION,
+        Engine::TYPE_FILE
     ];
 
     /** @var DAV DAV importer/exporter engine */
@@ -87,6 +97,12 @@ class Kolab extends IMAP
             $this->davDriver->createFolder($folder);
             return;
         }
+
+        // Files
+        if ($folder->type == Engine::TYPE_FILE) {
+            Kolab\Files::createFolder($this->account, $folder);
+            return;
+        }
     }
 
     /**
@@ -115,9 +131,33 @@ class Kolab extends IMAP
             return;
         }
 
+        // Files
+        if ($item->folder->type == Engine::TYPE_FILE) {
+            Kolab\Files::saveKolab4File($this->account, $item);
+            return;
+        }
+
         // Configuration (v3 tags)
         if ($item->folder->type == Engine::TYPE_CONFIGURATION) {
             Kolab\Tags::migrateKolab3Tag($this->imap, $item);
+            return;
+        }
+    }
+
+    /**
+     * Fetching a folder metadata
+     */
+    public function fetchFolder(Folder $folder): void
+    {
+        // No support for migration from Kolab4 yet
+        if ($this->account->scheme != 'kolab3') {
+            throw new \Exception("Kolab v4 source not supported");
+        }
+
+        // IMAP (and DAV)
+        // TODO: We can treat 'file' folders the same, but we have no sharing in Kolab4 yet for them
+        if ($folder->type == Engine::TYPE_MAIL || in_array($folder->type, self::DAV_TYPES)) {
+            parent::fetchFolder($folder);
             return;
         }
     }
@@ -141,6 +181,12 @@ class Kolab extends IMAP
         // DAV
         if (in_array($item->folder->type, self::DAV_TYPES)) {
             $this->davDriver->fetchItem($item);
+            return;
+        }
+
+        // Files (IMAP)
+        if ($item->folder->type == Engine::TYPE_FILE) {
+            Kolab\Files::fetchKolab3File($this->imap, $item);
             return;
         }
 
@@ -173,6 +219,19 @@ class Kolab extends IMAP
             return;
         }
 
+        // Files
+        if ($folder->type == Engine::TYPE_FILE) {
+            // Get existing files from the destination account
+            $existing = $importer->getItems($folder);
+
+            $mailbox = self::toUTF7($folder->fullname);
+            foreach (Kolab\Files::getKolab3Files($this->imap, $mailbox, $existing) as $file) {
+                $file['folder'] = $folder;
+                $item = Item::fromArray($file);
+                $callback($item);
+            }
+        }
+
         // Configuration (v3 tags)
         if ($folder->type == Engine::TYPE_CONFIGURATION) {
             // Get existing tags from the destination account
@@ -193,23 +252,13 @@ class Kolab extends IMAP
     public function getFolders($types = []): array
     {
         // Note: No support for migration from Kolab4 yet.
+        // We use IMAP to get the list of all folders, but we'll get folder contents from IMAP and DAV.
+        // This will not work with Kolab4
         if ($this->account->scheme != 'kolab3') {
             throw new \Exception("Kolab v4 source not supported");
         }
 
-        // Using only IMAP to get the list of all folders works with Kolab v3, but not v4.
-        // We could use IMAP, extract the XML, convert to iCal/vCard format and pass to DAV.
-        // But it will be easier to use DAV for contact/task/event folders migration.
         $result = [];
-
-        // Get DAV folders
-        if (empty($types) || count(array_intersect($types, self::DAV_TYPES)) > 0) {
-            $result = $this->davDriver->getFolders($types);
-        }
-
-        if (!empty($types) && count(array_intersect($types, [Engine::TYPE_MAIL, Engine::TYPE_CONFIGURATION])) == 0) {
-            return $result;
-        }
 
         // Get IMAP (mail and configuration) folders
         $folders = $this->imap->listMailboxes('', '', ['SUBSCRIBED']);
@@ -218,7 +267,16 @@ class Kolab extends IMAP
             throw new \Exception("Failed to get list of IMAP folders");
         }
 
-        $metadata = $this->imap->getMetadata('*', [self::CTYPE_KEY, self::CTYPE_KEY_PRIVATE]);
+        $meta_keys = [
+            self::CTYPE_KEY,
+            self::CTYPE_KEY_PRIVATE,
+            self::COLOR_KEY,
+            self::COLOR_KEY_PRIVATE,
+            self::UID_KEY,
+            self::UID_KEY_CYRUS,
+        ];
+
+        $metadata = $this->imap->getMetadata('*', $meta_keys);
 
         if ($metadata === null) {
             throw new \Exception("Failed to get METADATA for IMAP folders. Not a Kolab server?");
@@ -227,17 +285,19 @@ class Kolab extends IMAP
         $configuration_folders = [];
 
         foreach ($folders as $folder) {
+            $folder_meta = $metadata[$folder] ?? [];
+
             $type = 'mail';
-            if (!empty($metadata[$folder][self::CTYPE_KEY_PRIVATE])) {
-                $type = $metadata[$folder][self::CTYPE_KEY_PRIVATE];
-            } elseif (!empty($metadata[$folder][self::CTYPE_KEY])) {
-                $type = $metadata[$folder][self::CTYPE_KEY];
+            if (!empty($folder_meta[self::CTYPE_KEY_PRIVATE])) {
+                $type = $folder_meta[self::CTYPE_KEY_PRIVATE];
+            } elseif (!empty($folder_meta[self::CTYPE_KEY])) {
+                $type = $folder_meta[self::CTYPE_KEY];
             }
 
             [$type] = explode('.', $type);
 
             // These types we do not support
-            if ($type != Engine::TYPE_MAIL && $type != Engine::TYPE_CONFIGURATION) {
+            if (!in_array($type, self::IMAP_TYPES) && !in_array($type, self::DAV_TYPES)) {
                 continue;
             }
 
@@ -259,6 +319,29 @@ class Kolab extends IMAP
                 'type' => $type,
                 'subscribed' => $is_subscribed || $folder === 'INBOX',
             ]);
+
+            $uid = $folder_meta[self::UID_KEY] ?? $folder_meta[self::UID_KEY_CYRUS] ?? null;
+
+            if (in_array($type, self::DAV_TYPES)) {
+                if (empty($uid)) {
+                    throw new \Exception("Missing UID for folder {$folder->fullname}");
+                }
+
+                // In tests we're using Cyrus to emulate iRony, but it uses different folder paths/names
+                if (!empty($this->account->params['v4dav'])) {
+                    // Note: Use this code path (option) for tests
+                    $folder->id = $this->davDriver->getFolderPath($folder);
+                } else {
+                    $path = $type == 'contact' ? 'addressbooks' : 'calendars';
+                    $folder->id = sprintf('/%s/%s/%s', $path, $this->account->email, $uid);
+                }
+
+                if (!empty($folder_meta[self::COLOR_KEY_PRIVATE])) {
+                    $folder->color = $folder_meta[self::COLOR_KEY_PRIVATE];
+                } elseif (!empty($folder_meta[self::COLOR_KEY])) {
+                    $folder->color = $folder_meta[self::COLOR_KEY];
+                }
+            }
 
             if ($type == Engine::TYPE_CONFIGURATION) {
                 $configuration_folders[] = $folder;
@@ -297,11 +380,29 @@ class Kolab extends IMAP
             return $this->davDriver->getItems($folder);
         }
 
-        // Configuration folder (v3 tags)
+        // Files
+        if ($folder->type == Engine::TYPE_FILE) {
+            return Kolab\Files::getKolab4Files($this->account, $folder);
+        }
+
+        // Configuration folder (tags)
         if ($folder->type == Engine::TYPE_CONFIGURATION) {
             return Kolab\Tags::getKolab4Tags($this->imap);
         }
 
         return [];
+    }
+
+    /**
+     * Initialize IMAP connection and authenticate the user
+     */
+    protected static function initIMAP(array $config): \rcube_imap_generic
+    {
+        $imap = parent::initIMAP($config);
+
+        // Advertise itself as a Kolab client, in case Guam is in the way
+        $imap->id(['name' => 'Cockpit/Kolab']);
+
+        return $imap;
     }
 }

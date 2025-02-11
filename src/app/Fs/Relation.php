@@ -18,4 +18,7 @@ class Relation extends Model
 
     /** @var string Database table name */
     protected $table = 'fs_relations';
+
+    /** @var bool Indicates if the model should be timestamped. */
+    public $timestamps = false;
 }

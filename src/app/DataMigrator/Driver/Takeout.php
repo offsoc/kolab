@@ -102,6 +102,14 @@ class Takeout implements ExporterInterface
     }
 
     /**
+     * Fetching a folder metadata
+     */
+    public function fetchFolder(Folder $folder): void
+    {
+        // NOP
+    }
+
+    /**
      * Fetch a list of folder items
      */
     public function fetchItemList(Folder $folder, $callback, ImporterInterface $importer): void

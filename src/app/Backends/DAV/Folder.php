@@ -22,6 +22,9 @@ class Folder
     /** @var ?string Folder color (calendar-color property) */
     public $color;
 
+    /** @var array Folder 'invites' property */
+    public $invites = [];
+
     /** @var ?string Folder owner (email) */
     public $owner;
 
@@ -72,6 +75,9 @@ class Folder
             }
         }
 
+        $folder->types = $types;
+        $folder->components = $components;
+
         if ($owner = $element->getElementsByTagName('owner')->item(0)) {
             if ($owner->firstChild) {
                 $href = $owner->firstChild->nodeValue; // owner principal href
@@ -81,8 +87,52 @@ class Folder
             }
         }
 
-        $folder->types = $types;
-        $folder->components = $components;
+        // 'invite' from draft-pot-webdav-resource-sharing
+        if ($invite_element = $element->getElementsByTagName('invite')->item(0)) {
+            $invites = [];
+            foreach ($invite_element->childNodes as $sharee) {
+                /** @var \DOMElement $sharee */
+                $href = $sharee->getElementsByTagName('href')->item(0)->nodeValue;
+                $status = 'noresponse';
+
+                if ($comment = $sharee->getElementsByTagName('comment')->item(0)) {
+                    $comment = $comment->nodeValue;
+                }
+
+                if ($displayname = $sharee->getElementsByTagName('displayname')->item(0)) {
+                    $displayname = $displayname->nodeValue;
+                }
+
+                if ($access = $sharee->getElementsByTagName('share-access')->item(0)) {
+                    $access = $access->firstChild->localName;
+                } else {
+                    $access = \App\Backends\DAV::SHARING_NOT_SHARED;
+                }
+
+                $props = [
+                    'invite-noresponse',
+                    'invite-accepted',
+                    'invite-declined',
+                    'invite-invalid',
+                    'invite-deleted',
+                ];
+
+                foreach ($props as $name) {
+                    if ($node = $sharee->getElementsByTagName($name)->item(0)) {
+                        $status = str_replace('invite-', '', $node->localName);
+                    }
+                }
+
+                $invites[$href] = [
+                    'access' => $access,
+                    'status' => $status,
+                    'comment' => $comment,
+                    'displayname' => $displayname,
+                ];
+            }
+
+            $folder->invites = $invites;
+        }
 
         return $folder;
     }
@@ -150,7 +200,7 @@ class Folder
             'xmlns:d="DAV:"',
             // 'xmlns:cs="http://calendarserver.org/ns/"',
             'xmlns:c="urn:ietf:params:xml:ns:caldav"',
-            // 'xmlns:a="http://apple.com/ns/ical/"',
+            'xmlns:a="http://apple.com/ns/ical/"',
             // 'xmlns:k="Kolab:"'
         ]);
 
@@ -158,13 +208,14 @@ class Folder
         return '<?xml version="1.0" encoding="utf-8"?>'
             . '<d:propfind ' . $ns . '>'
                 . '<d:prop>'
-                    // . '<a:calendar-color/>'
+                    . '<a:calendar-color/>'
                     . '<c:supported-calendar-component-set/>'
                     // . '<cs:getctag/>'
                     // . '<d:acl/>'
                     // . '<d:current-user-privilege-set/>'
                     . '<d:resourcetype/>'
                     . '<d:displayname/>'
+                    . '<d:invite/>'
                     // . '<k:alarms/>'
                 . '</d:prop>'
             . '</d:propfind>';

@@ -2,6 +2,8 @@
 
 namespace App\DataMigrator;
 
+use App\User;
+
 /**
  * Data object representing user account on an external service
  */
@@ -36,6 +38,9 @@ class Account
 
     /** @var string Full account definition */
     protected $input;
+
+    /** @var ?User User object */
+    protected $user;
 
 
     /**
@@ -113,6 +118,20 @@ class Account
     public function __toString(): string
     {
         return $this->input;
+    }
+
+    /**
+     * Returns User object assiciated with the account (if it is a local account)
+     *
+     * @return ?User User object if found
+     */
+    public function getUser(): ?User
+    {
+        if (!$this->user && $this->email) {
+            $this->user = User::where('email', $this->email)->first();
+        }
+
+        return $this->user;
     }
 
     /**

@@ -292,8 +292,8 @@ class FsController extends RelationController
 
         // Add properties
         $result->join('fs_properties', 'fs_items.id', '=', 'fs_properties.item_id')
-                ->whereNot('type', '&', Item::TYPE_INCOMPLETE)
-                ->where('key', 'name');
+            ->whereNot('type', '&', Item::TYPE_INCOMPLETE)
+            ->where('key', 'name');
 
         if ($type) {
             if ($type == self::TYPE_COLLECTION) {
@@ -320,6 +320,8 @@ class FsController extends RelationController
         // Process the result
         $result = $result->map(
             function ($file) {
+                // TODO: This is going to be 100 SELECT queries (with pageSize=100), we should get
+                // file properties using the main query
                 $result = $this->objectToClient($file);
                 $result['name'] = $file->name; // @phpstan-ignore-line
 

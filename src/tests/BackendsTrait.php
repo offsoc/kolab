@@ -271,7 +271,7 @@ trait BackendsTrait
     /**
      * Append an email message to the IMAP folder
      */
-    protected function imapAppend(Account $account, $folder, $filename, $flags = [], $date = null): string
+    protected function imapAppend(Account $account, $folder, $filename, $flags = [], $date = null, $replace = [])
     {
         $imap = $this->getImapClient($account);
 
@@ -283,6 +283,10 @@ trait BackendsTrait
 
         $source = file_get_contents($source);
         $source = preg_replace('/\r?\n/', "\r\n", $source);
+
+        foreach ($replace as $from => $to) {
+            $source = preg_replace($from, $to, $source);
+        }
 
         $uid = $imap->append($folder, $source, $flags, $date, true);
 

@@ -78,6 +78,14 @@ class Test implements ExporterInterface, ImporterInterface
     }
 
     /**
+     * Fetching a folder metadata
+     */
+    public function fetchFolder(Folder $folder): void
+    {
+        // NOP
+    }
+
+    /**
      * Fetching an item
      */
     public function fetchItem(Item $item): void

@@ -13,6 +13,7 @@ use App\DataMigrator\Interface\ExporterInterface;
 use App\DataMigrator\Interface\ImporterInterface;
 use App\DataMigrator\Interface\Item;
 use App\DataMigrator\Interface\ItemSet;
+use App\User;
 use App\Utils;
 use Illuminate\Http\Client\RequestException;
 
@@ -121,27 +122,69 @@ class DAV implements ExporterInterface, ImporterInterface
         // Note: iRony flattens the list by modifying the folder name
         // This is not going to work with Cyrus DAV, but anyway folder
         // hierarchies support is not full in Kolab 4.
+        $href = false;
         foreach ($folders as $dav_folder) {
             if (str_replace(' » ', '/', $dav_folder->name) === $folder->fullname) {
-                // do nothing, folder already exists
-                return;
+                $href = $dav_folder->href;
+                break;
             }
         }
 
-        $home = $this->client->getHome($dav_type);
-        $folder_id = Utils::uuidStr();
-        $collection_type = $dav_type == DAVClient::TYPE_VCARD ? 'addressbook' : 'calendar';
+        if (!$href) {
+            $home = $this->client->getHome($dav_type);
+            $folder_id = Utils::uuidStr();
+            $collection_type = $dav_type == DAVClient::TYPE_VCARD ? 'addressbook' : 'calendar';
 
-        // We create all folders on the top-level
-        $dav_folder = new DAVFolder();
-        $dav_folder->name = $folder->fullname;
-        $dav_folder->href = rtrim($home, '/') . '/' . $folder_id;
-        $dav_folder->components = [$dav_type];
-        $dav_folder->types = ['collection', $collection_type];
+            // We create all folders on the top-level
+            $dav_folder = new DAVFolder();
+            $dav_folder->name = $folder->fullname;
+            $dav_folder->href = $href = rtrim($home, '/') . '/' . $folder_id;
+            $dav_folder->components = [$dav_type];
+            $dav_folder->types = ['collection', $collection_type];
+            $dav_folder->color = $folder->color;
 
-        if ($this->client->folderCreate($dav_folder) === false) {
-            throw new \Exception("Failed to create a DAV folder {$dav_folder->href}");
+            if ($this->client->folderCreate($dav_folder) === false) {
+                throw new \Exception("Failed to create a DAV folder {$href}");
+            }
+        } elseif ($folder->color) {
+            $dav_folder = new DAVFolder();
+            $dav_folder->href = $href;
+            $dav_folder->color = $folder->color;
+
+            if ($this->client->folderUpdate($dav_folder) === false) {
+                throw new \Exception("Failed to update a DAV folder {$href}");
+            }
         }
+
+        // Sharing (Cyrus/Kolab4 style)
+        if (!empty($folder->acl)) {
+            // Note: We assume the destination account is controlled by this cockpit instance
+            $emails = array_diff(array_keys($folder->acl), [$this->account->email]);
+            $acl = [];
+
+            foreach (User::whereIn('email', $emails)->pluck('email') as $email) {
+                $rights = $folder->acl[$email];
+                if (in_array('w', $rights) || in_array('a', $rights)) {
+                    $acl[$email] = DAVClient::SHARING_READ_WRITE;
+                } elseif (in_array('r', $rights)) {
+                    $acl[$email] = DAVClient::SHARING_READ;
+                }
+            }
+
+            if (!empty($acl)) {
+                if ($this->client->shareResource($href, $acl) === false) {
+                    \Log::warning("Failed to set sharees on the folder: {$href}");
+                }
+            }
+        }
+    }
+
+    /**
+     * Fetching a folder metadata
+     */
+    public function fetchFolder(Folder $folder): void
+    {
+        // NOP
     }
 
     /**
@@ -183,7 +226,7 @@ class DAV implements ExporterInterface, ImporterInterface
         $existing = $importer->getItems($folder);
 
         $dav_type = $this->type2DAV($folder->type);
-        $location = $this->getFolderPath($folder);
+        $location = $folder->id ?? $this->getFolderPath($folder);
         $search = new DAVSearch($dav_type, false);
 
         // TODO: We request only properties relevant to incremental migration,
@@ -352,8 +395,9 @@ class DAV implements ExporterInterface, ImporterInterface
 
                 $result[$folder->href] = Folder::fromArray([
                     'fullname' => str_replace(' » ', '/', $folder->name),
-                    'href' => $folder->href,
+                    'id' => $folder->href,
                     'type' => $type,
+                    'color' => $folder->color,
                 ]);
             }
         }
@@ -364,7 +408,7 @@ class DAV implements ExporterInterface, ImporterInterface
     /**
      * Get folder relative URI
      */
-    protected function getFolderPath(Folder $folder): string
+    public function getFolderPath(Folder $folder): string
     {
         $cache_key = $folder->type . '!' . $folder->fullname;
         if (isset($this->folderPaths[$cache_key])) {

@@ -18,6 +18,12 @@ class DAV
         self::TYPE_VCARD => 'urn:ietf:params:xml:ns:carddav',
     ];
 
+    public const SHARING_READ = 'read';
+    public const SHARING_READ_WRITE = 'read-write';
+    public const SHARING_NO_ACCESS = 'no-access';
+    public const SHARING_OWNER = 'shared-owner';
+    public const SHARING_NOT_SHARED = 'not-shared';
+
     protected $url;
     protected $user;
     protected $password;
@@ -468,6 +474,58 @@ class DAV
         }
 
         return $objects;
+    }
+
+    /**
+     *  Set folder sharing invites (draft-pot-webdav-resource-sharing)
+     *
+     * @param string $location Resource (folder) location
+     * @param array  $sharees  Map of sharee => privilege
+     *
+     * @return bool True on success, False on error
+     */
+    public function shareResource(string $location, array $sharees): bool
+    {
+        // TODO: This might need to be configurable or discovered somehow
+        $path = '/principals/user/';
+        if ($host_path = parse_url($this->url, PHP_URL_PATH)) {
+            $path = '/' . trim($host_path, '/') . $path;
+        }
+
+        $props = '';
+
+        foreach ($sharees as $href => $sharee) {
+            if (!is_array($sharee)) {
+                $sharee = ['access' => $sharee];
+            }
+
+            $href = $path . $href;
+            $props .= '<d:sharee>'
+                . '<d:href>' . htmlspecialchars($href, ENT_XML1, 'UTF-8') . '</d:href>'
+                . '<d:share-access><d:' . ($sharee['access'] ?? self::SHARING_NO_ACCESS) . '/></d:share-access>'
+                . '<d:' . ($sharee['status'] ?? 'noresponse') . '/>';
+
+            if (isset($sharee['comment']) && strlen($sharee['comment'])) {
+                $props .= '<d:comment>' . htmlspecialchars($sharee['comment'], ENT_XML1, 'UTF-8') . '</d:comment>';
+            }
+
+            if (isset($sharee['displayname']) && strlen($sharee['displayname'])) {
+                $props .= '<d:prop><d:displayname>'
+                    . htmlspecialchars($sharee['comment'], ENT_XML1, 'UTF-8')
+                    . '</d:displayname></d:prop>';
+            }
+
+            $props .= '</d:sharee>';
+        }
+
+        $headers = ['Content-Type' => 'application/davsharing+xml; charset=utf-8'];
+
+        $body = '<?xml version="1.0" encoding="utf-8"?>'
+            . '<d:share-resource xmlns:d="DAV:">' . $props . '</d:share-resource>';
+
+        $response = $this->request($location, 'POST', $body, $headers);
+
+        return $response !== false;
     }
 
     /**

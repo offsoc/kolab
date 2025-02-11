@@ -18,6 +18,9 @@ class Folder
     /** @var string Folder class */
     public $class;
 
+    /** @var ?string A color assigned to the folder */
+    public $color;
+
     /** @var string Folder Kolab object type */
     public $type;
 
@@ -38,6 +41,12 @@ class Folder
 
     /** @var bool Folder subscription state */
     public $subscribed = true;
+
+    /** @var array Access Control list (email => rights) */
+    public $acl = [];
+
+    /** @var array Extra (temporary, cache) data */
+    public $data = [];
 
 
     /**

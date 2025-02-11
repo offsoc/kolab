@@ -30,6 +30,11 @@ interface ExporterInterface
     public function fetchItemList(Folder $folder, $callback, ImporterInterface $importer): void;
 
     /**
+     * Fetching a folder metadata
+     */
+    public function fetchFolder(Folder $folder): void;
+
+    /**
      * Fetching an item
      */
     public function fetchItem(Item $item): void;

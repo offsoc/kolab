@@ -9,6 +9,7 @@ use App\DataMigrator\Interface\ExporterInterface;
 use App\DataMigrator\Interface\ImporterInterface;
 use App\DataMigrator\Interface\Item;
 use App\DataMigrator\Interface\ItemSet;
+use App\User;
 
 /**
  * Data migration from IMAP
@@ -38,7 +39,7 @@ class IMAP implements ExporterInterface, ImporterInterface
 
         // TODO: Move this to self::authenticate()?
         $config = self::getConfig($account);
-        $this->imap = self::initIMAP($config);
+        $this->imap = static::initIMAP($config);
     }
 
     /**
@@ -74,14 +75,9 @@ class IMAP implements ExporterInterface, ImporterInterface
             throw new \Exception("IMAP does not support folder of type {$folder->type}");
         }
 
-        if ($folder->targetname == 'INBOX') {
-            // INBOX always exists
-            return;
-        }
-
         $mailbox = self::toUTF7($folder->targetname);
 
-        if (!$this->imap->createFolder($mailbox)) {
+        if ($mailbox != 'INBOX' && !$this->imap->createFolder($mailbox)) {
             if (str_contains($this->imap->error, "Mailbox already exists")) {
                 // Not an error
                 \Log::debug("Folder already exists: {$mailbox}");
@@ -95,6 +91,25 @@ class IMAP implements ExporterInterface, ImporterInterface
             if (!$this->imap->subscribe($mailbox)) {
                 \Log::warning("Failed to subscribe to the folder: {$this->imap->error}");
             }
+        }
+
+        // ACL
+        if (!empty($folder->acl)) {
+            // Note: We assume the destination account is controlled by this cockpit instance
+            $emails = array_diff(array_keys($folder->acl), [$this->account->email]);
+            foreach (User::whereIn('email', $emails)->pluck('email') as $email) {
+                if (!$this->imap->setACL($mailbox, $email, $folder->acl[$email])) {
+                    \Log::warning("Failed to set ACL for {$email} on the folder: {$this->imap->error}");
+                }
+            }
+            /*
+            // FIXME: Looks like this might not work on Cyrus IMAP depending on config
+            if (!empty($folder->acl['anyone'])) {
+                if (!$this->imap->setACL($mailbox, 'anyone', $folder->acl['anyone'])) {
+                    \Log::warning("Failed to set ACL for anyone on the folder: {$this->imap->error}");
+                }
+            }
+            */
         }
     }
 
@@ -156,6 +171,29 @@ class IMAP implements ExporterInterface, ImporterInterface
                         $this->imap->flag($mailbox, $item->existing['uid'], $flag);
                     }
                 }
+            }
+        }
+    }
+
+    /**
+     * Fetching a folder metadata
+     */
+    public function fetchFolder(Folder $folder): void
+    {
+        $mailbox = self::toUTF7($folder->targetname);
+
+        // Get folder ACL
+        if ($this->imap->getCapability('ACL')) {
+            // TODO: Support RIGHTS= capability
+            $acl = $this->imap->getACL($mailbox);
+            if (is_array($acl)) {
+                $acl = array_change_key_case($acl, \CASE_LOWER);
+                // owner should always have full rights, no need to migrate this entry,
+                // and it would be problematic if the source email is different than the destination email
+                unset($acl[$this->account->email]);
+                $folder->acl = $acl;
+            } else {
+                \Log::warning("Failed to get ACL for the folder: {$this->imap->error}");
             }
         }
     }

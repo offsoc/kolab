@@ -1,0 +1,56 @@
+MIME-Version: 1.0
+From: ned@kolab.org
+To: ned@kolab.org
+Date: Mon, 25 Nov 2024 13:22:21 +0100
+X-Kolab-Type: application/x-vnd.kolab.file
+X-Kolab-Mime-Version: 3.0
+Subject: f76382d6-651d-43ea-ae64-eca3884aed04
+User-Agent: Kolab 16/Roundcube 1.5-git
+Content-Type: multipart/mixed;
+ boundary="=_f70c0dafff53b07d8e6e5a83f1430da1"
+
+--=_f70c0dafff53b07d8e6e5a83f1430da1
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=ISO-8859-1
+
+This is a Kolab Groupware object. To view this object you will need an emai=
+l client that understands the Kolab Groupware format. For a list of such em=
+ail clients please visit https://www.kolab.org/
+
+
+--=_f70c0dafff53b07d8e6e5a83f1430da1
+Content-Transfer-Encoding: 8bit
+Content-Type: application/vnd.kolab+xml; charset=UTF-8;
+ name=kolab.xml
+Content-Disposition: attachment;
+ filename=kolab.xml;
+ size=618
+
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<file xmlns="http://kolab.org" version="3.0">
+  <uid>f76382d6-651d-43ea-ae64-eca3884aed04</uid>
+  <prodid>Roundcube-libkolab-1.1 Libkolabxml-1.3.1</prodid>
+  <creation-date>2019-03-12T09:35:08Z</creation-date>
+  <last-modification-date>2024-11-25T12:22:21Z</last-modification-date>
+  <classification>PUBLIC</classification>
+  <file>
+    <parameters>
+      <fmttype>application/vnd.oasis.opendocument.text</fmttype>
+      <x-label>&amp;kość.odt</x-label>
+    </parameters>
+    <uri>cid:ko.1732537341.48230.odt</uri>
+  </file>
+  <note/>
+</file>
+
+--=_f70c0dafff53b07d8e6e5a83f1430da1
+Content-ID: <ko.1732537341.48230.odt>
+Content-Transfer-Encoding: base64
+Content-Type: application/vnd.oasis.opendocument.odt;
+ name*=UTF-8''&ko%C5%9B%C4%87.odt
+Content-Disposition: attachment;
+ filename*=UTF-8''&ko%C5%9B%C4%87.odt;
+ size=30068
+
+%FILE%
+--=_f70c0dafff53b07d8e6e5a83f1430da1--

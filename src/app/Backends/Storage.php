@@ -107,6 +107,27 @@ class Storage
     }
 
     /**
+     * File content getter.
+     *
+     * @param \App\Fs\Item $file File object
+     *
+     * @throws \Exception
+     */
+    public static function fileFetch(Item $file): string
+    {
+        $output = '';
+
+        $file->chunks()->orderBy('sequence')->get()->each(function ($chunk) use ($file, &$output) {
+            $disk = LaravelStorage::disk(\config('filesystems.default'));
+            $path = Storage::chunkLocation($chunk->chunk_id, $file);
+
+            $output .= $disk->read($path);
+        });
+
+        return $output;
+    }
+
+    /**
      * File upload handler
      *
      * @param resource      $stream File input stream
@@ -211,7 +232,6 @@ class Storage
         if ($from < $upload['uploaded'] || $from > $upload['uploaded'] || $from > $upload['size']) {
             throw new \Exception("Invalid 'from' parameter for resumable file upload.");
         }
-
 
         $disk = LaravelStorage::disk(\config('filesystems.default'));
         $chunkId = \App\Utils::uuidStr();

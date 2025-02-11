@@ -41,7 +41,7 @@ class Item extends Model
 
 
     /**
-     * COntent chunks of this item (file).
+     * Content chunks of this item (file).
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
@@ -156,14 +156,14 @@ class Item extends Model
     private function storeProperty(string $key, $value): void
     {
         if ($value === null || $value === '') {
-            // Note: We're selecting the record first, so observers can act
-            if ($prop = $this->properties()->where('key', $key)->first()) {
-                $prop->delete();
-            }
+            $this->properties()->where('key', $key)->delete();
         } else {
-            $this->properties()->updateOrCreate(
-                ['key' => $key],
-                ['value' => $value]
+            // Note: updateOrCreate() uses two queries, but upsert() uses one
+            $this->properties()->upsert(
+                // Note: Setting 'item_id' here should not be needed after we migrate to Laravel v11
+                [['key' => $key, 'value' => $value, 'item_id' => $this->id]],
+                ['item_id', 'key'],
+                ['value']
             );
         }
     }
