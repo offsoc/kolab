@@ -41,6 +41,7 @@ class SendTest:
         self.sender_password = options.sender_password
 
         self.target_address = options.target_address
+        self.from_address = options.from_address
 
         self.body = options.body
         self.verbose = options.verbose
@@ -141,12 +142,17 @@ class SendTest:
         else:
             to = self.recipient_username
 
+        if self.from_address:
+            from_address = self.from_address
+        else:
+            from_address = self.sender_username
+
         print(f"Sending email to {to}")
 
         msg = mailtemplate.format(
             messageid="<{}@deliverycheck.org>".format(self.uuid),
             subject=self.subject,
-            sender=self.sender_username,
+            sender=from_address,
             to=to,
             date=dtstamp.strftime("%a, %d %b %Y %H:%M:%S %z"),
             body=self.body,
@@ -157,13 +163,13 @@ class SendTest:
                 smtp.ehlo()
                 smtp.login(self.sender_username, self.sender_password)
                 smtp.noop()
-                smtp.sendmail(self.sender_username, to, msg)
+                smtp.sendmail(from_address, to, msg)
                 print(f"Email with uuid {self.uuid} sent")
         else:
             with smtplib.SMTP_SSL(host=self.sender_host, port=self.sender_port or 465) as smtp:
                 smtp.login(self.sender_username, self.sender_password)
                 smtp.noop()
-                smtp.sendmail(self.sender_username, to, msg)
+                smtp.sendmail(from_address, to, msg)
                 print(f"Email with uuid {self.uuid} sent")
 
 
@@ -179,6 +185,7 @@ parser.add_argument('--recipient-port', help='The IMAP recipient port', default=
 parser.add_argument('--timeout', help='Timeout in minutes', type=int, default=10)
 parser.add_argument("--starttls", action='store_true', help="Use SMTP starttls over 587")
 parser.add_argument("--verbose", action='store_true', help="Verbose mode")
+parser.add_argument("--from-address", help="Source address instead of the sender username")
 parser.add_argument("--target-address", help="Target address instead of the recipient username")
 parser.add_argument("--body", help="Body text to include")
 parser.add_argument("--validate", action='store_true', help="Validate the received message")
