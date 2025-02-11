@@ -74,8 +74,9 @@ class SendTest:
         # DKIM validation status
         # Authentication-Results: kolab.klab.cc (amavis); dkim=pass (2048-bit key)
         #  reason="pass (just generated, assumed good)" header.d=kolab.klab.cc
+        # dkim=neutral is what we get when the public key is not available to validate
         for header in msg.get_all('Authentication-Results', ["No header available"]):
-            if "dkim=pass" not in header:
+            if "dkim=pass" not in header and "dkim=neutral" not in header:
                 print("Failed to validate Authentication-Results header:", header)
                 return False
             if f"header.d={email_domain}" not in header and f"header.i=@{email_domain}" not in header:
