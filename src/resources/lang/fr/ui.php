@@ -70,8 +70,8 @@ return [
     'domain' => [
         'dns-confirm' => "Exemple de confirmation du DNS d'un domaine:",
         'dns-config' => "Exemple de configuration du DNS d'un domaine:",
-        'config' => "Configuration du domaine",
-        'config-intro' => "Afin de permettre à {app} de recevoir le trafic de messagerie pour votre domaine, vous devez ajuster les paramètres DNS, plus précisément les entrées MX, en conséquence.",
+        'config' => "Configuration du DNS",
+        'config-intro' => "Afin de permettre à {app} de recevoir le trafic de messagerie pour votre domaine, vous devez ajuster les paramètres DNS, en conséquence.",
         'config-sample' => "Modifiez le fichier de zone de votre domaine et remplacez les entrées MX existantes par les valeurs suivantes:",
         'config-hint' => "Si vous ne savez pas comment définir les entrées DNS pour votre domaine, veuillez contacter le service d'enregistrement auprès duquel vous avez enregistré le domaine ou votre fournisseur d'hébergement Web.",
         'confirm' => "Confirmation du domaine",

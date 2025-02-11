@@ -128,9 +128,9 @@ return [
     ],
 
     'domain' => [
-        'config' => "Domain configuration",
-        'config-intro' => "In order to let {app} receive email traffic for your domain you need to adjust the DNS settings, more precisely the MX entries, accordingly.",
-        'config-sample' => "Edit your domain's zone file and replace existing MX entries with the following values:",
+        'config' => "DNS configuration",
+        'config-intro' => "In order to let {app} send and receive email traffic for your domain you need to adjust the DNS settings.",
+        'config-sample' => "Edit your domain's zone file and replace any existing MX entries and add other entries as follows:",
         'config-hint' => "If you don't know how to set DNS entries for your domain, please contact the registration service where you registered the domain or your web hosting provider.",
         'confirm' => "Domain ownership confirmation",
         'confirm-intro' => "In order to confirm that you're the actual owner or administrator of the domain, "
