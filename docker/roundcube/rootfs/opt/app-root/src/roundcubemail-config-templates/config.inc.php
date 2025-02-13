@@ -15,11 +15,7 @@ if (!function_exists("getenvlist")) {
     $dbHost = getenv('DB_HOST');
     $config['db_dsnw'] = "mysql://$dbUsername:$dbPass@$dbHost/$dbDatabase";
 
-    $components = explode('.', $_SERVER["HTTP_HOST"] ?? "");
-    if (count($components) > 2) {
-        array_shift($components);
-    }
-    $config['session_domain'] = implode('.', $components);
+    $config['session_domain'] = $_SERVER['HTTP_HOST'] ?? '';
 
     $config['des_key'] = getenv('DES_KEY');
     $config['username_domain'] = getenv('APP_DOMAIN');
