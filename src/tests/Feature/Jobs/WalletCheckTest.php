@@ -136,33 +136,7 @@ class WalletCheckTest extends TestCase
     }
 
     /**
-     * Test job handle, top-up before reminder notification
-     *
-     * @depends testHandleInitial
-     */
-    public function testHandleBeforeReminder(): void
-    {
-        Mail::fake();
-
-        $user = $this->prepareTestUser($wallet);
-        $now = Carbon::now();
-
-        // Balance turned negative 7-1 days ago
-        $wallet->setSetting('balance_negative_since', $now->subDays(7 - 1)->toDateTimeString());
-
-        $job = new WalletCheck($wallet->id);
-        $res = $job->handle();
-
-        Mail::assertNothingSent();
-
-        // TODO: Test that it actually executed the topUpWallet()
-        $this->assertSame(WalletCheck::THRESHOLD_BEFORE_REMINDER, $res);
-    }
-
-    /**
      * Test job handle, reminder notification
-     *
-     * @depends testHandleBeforeReminder
      */
     public function testHandleReminder(): void
     {

@@ -10,9 +10,7 @@ class WalletCheck extends CommonJob
 {
     public const THRESHOLD_DEGRADE = 'degrade';
     public const THRESHOLD_DEGRADE_REMINDER = 'degrade-reminder';
-    public const THRESHOLD_BEFORE_DEGRADE = 'before-degrade';
     public const THRESHOLD_REMINDER = 'reminder';
-    public const THRESHOLD_BEFORE_REMINDER = 'before-reminder';
     public const THRESHOLD_INITIAL = 'initial';
 
     /** @var int How many times retry the job if it fails. */
@@ -71,7 +69,7 @@ class WalletCheck extends CommonJob
 
         $this->wallet->chargeEntitlements();
         try {
-            $this->topUpWallet();
+            PaymentsController::topUpWallet($this->wallet);
         } catch (\Exception $e) {
             \Log::error("Failed to top-up wallet {$this->walletId}: " . $e->getMessage());
             // Notification emails should be sent even if the top-up fails
@@ -86,17 +84,13 @@ class WalletCheck extends CommonJob
         $steps = [
             // Send the initial reminder
             self::THRESHOLD_INITIAL => 'initialReminderForDegrade',
-            // Try to top-up the wallet before the second reminder
-            self::THRESHOLD_BEFORE_REMINDER => 'topUpWallet',
             // Send the second reminder
             self::THRESHOLD_REMINDER => 'secondReminderForDegrade',
-            // Try to top-up the wallet before the account degradation
-            self::THRESHOLD_BEFORE_DEGRADE => 'topUpWallet',
             // Degrade the account
             self::THRESHOLD_DEGRADE => 'degradeAccount',
         ];
 
-        if ($this->wallet->owner && $this->wallet->owner->isDegraded()) {
+        if ($this->wallet->owner->isDegraded()) {
             $this->degradedReminder();
             return self::THRESHOLD_DEGRADE_REMINDER;
         }
@@ -120,7 +114,7 @@ class WalletCheck extends CommonJob
             return;
         }
 
-        if (!$this->wallet->owner || $this->wallet->owner->isDegraded()) {
+        if ($this->wallet->owner->isDegraded()) {
             return;
         }
 
@@ -141,7 +135,7 @@ class WalletCheck extends CommonJob
             return;
         }
 
-        if (!$this->wallet->owner || $this->wallet->owner->isDegraded()) {
+        if ($this->wallet->owner->isDegraded()) {
             return;
         }
 
@@ -159,7 +153,7 @@ class WalletCheck extends CommonJob
     protected function degradeAccount()
     {
         // The account may be already deleted, or degraded
-        if (!$this->wallet->owner || $this->wallet->owner->isDegraded()) {
+        if ($this->wallet->owner->isDegraded()) {
             return;
         }
 
@@ -187,7 +181,7 @@ class WalletCheck extends CommonJob
     protected function degradedReminder()
     {
         // Sanity check
-        if (!$this->wallet->owner || !$this->wallet->owner->isDegraded()) {
+        if (!$this->wallet->owner->isDegraded()) {
             return;
         }
 
@@ -266,12 +260,8 @@ class WalletCheck extends CommonJob
         }
 
         $thresholds = [
-            // A day before the second reminder
-            self::THRESHOLD_BEFORE_REMINDER => 7 - 1,
             // Second notification
             self::THRESHOLD_REMINDER => 7,
-            // Last chance to top-up the wallet
-            self::THRESHOLD_BEFORE_DEGRADE => 13,
             // Account degradation
             self::THRESHOLD_DEGRADE => 14,
         ];
@@ -281,13 +271,5 @@ class WalletCheck extends CommonJob
         }
 
         return null;
-    }
-
-    /**
-     * Try to automatically top-up the wallet
-     */
-    protected function topUpWallet(): void
-    {
-        PaymentsController::topUpWallet($this->wallet);
     }
 }
