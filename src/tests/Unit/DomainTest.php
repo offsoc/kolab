@@ -166,4 +166,88 @@ class DomainTest extends TestCase
 
         $this->assertSame(implode(', ', $expected), $domain->statusText());
     }
+
+    /**
+     * Test setNamespaceAttribute()
+     */
+    public function testSetNamespaceAttribute(): void
+    {
+        $domain = new Domain();
+
+        $domain->namespace = 'UPPERCASE';
+
+        $this->assertTrue($domain->namespace === 'uppercase'); // @phpstan-ignore-line
+    }
+
+    /**
+     * Test setStatusAttribute()
+     */
+    public function testSetStatusAttribute()
+    {
+        $domain = new Domain();
+
+        $this->expectException(\Exception::class);
+
+        $domain->status = 123456;
+
+        // Public domain
+        $domain = new Domain();
+        $domain->type = Domain::TYPE_PUBLIC;
+
+        $domain->status = 115;
+
+        $this->assertTrue($domain->status == 115);
+
+        // ACTIVE makes not NEW
+        $domain = new Domain();
+        $domain->status = Domain::STATUS_NEW;
+
+        $this->assertTrue($domain->isNew());
+        $this->assertFalse($domain->isActive());
+
+        $domain->status |= Domain::STATUS_ACTIVE;
+
+        $this->assertFalse($domain->isNew());
+        $this->assertTrue($domain->isActive());
+
+        // CONFIRMED sets VERIFIED.
+        $domain = new Domain();
+        $domain->status = Domain::STATUS_CONFIRMED;
+
+        $this->assertTrue($domain->isConfirmed());
+        $this->assertTrue($domain->isVerified());
+
+        // CONFIRMED sets ACTIVE.
+        $domain = new Domain();
+        $domain->status = Domain::STATUS_CONFIRMED;
+
+        $this->assertTrue($domain->isConfirmed());
+        $this->assertTrue($domain->isActive());
+
+        // DELETED drops ACTIVE
+        $domain = new Domain();
+        $domain->status = Domain::STATUS_ACTIVE;
+
+        $this->assertTrue($domain->isActive());
+        $this->assertFalse($domain->isNew());
+        $this->assertFalse($domain->isDeleted());
+
+        $domain->status |= Domain::STATUS_DELETED;
+
+        $this->assertFalse($domain->isActive());
+        $this->assertFalse($domain->isNew());
+        $this->assertTrue($domain->isDeleted());
+
+        // SUSPENDED drops ACTIVE.
+        $domain = new Domain();
+        $domain->status = Domain::STATUS_ACTIVE;
+
+        $this->assertTrue($domain->isActive());
+        $this->assertFalse($domain->isSuspended());
+
+        $domain->status |= Domain::STATUS_SUSPENDED;
+
+        $this->assertFalse($domain->isActive());
+        $this->assertTrue($domain->isSuspended());
+    }
 }
