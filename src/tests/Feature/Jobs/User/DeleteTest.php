@@ -86,6 +86,10 @@ class DeleteTest extends TestCase
 
         Queue::fake();
 
+        // Note: This user might have been already deleted in the same tests run,
+        // in the same second. If that's the case IMAP DELETE will fail. So, let's wait a second.
+        sleep(1);
+
         $job = new \App\Jobs\User\DeleteJob($user->id);
         $job->handle();
 
