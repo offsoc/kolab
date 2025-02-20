@@ -517,7 +517,7 @@ class Wallet extends Model
             // Disable (not remove) the mandate
             \Log::warning("Top-up for wallet {$this->id}: mandate too little");
             $this->setSetting('mandate_disabled', '1');
-            \App\Jobs\PaymentMandateDisabledEmail::dispatch($this);
+            \App\Jobs\Mail\PaymentMandateDisabledJob::dispatch($this);
             return false;
         }
 
