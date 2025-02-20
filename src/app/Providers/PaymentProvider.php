@@ -60,7 +60,7 @@ abstract class PaymentProvider
      */
     public static function factory($provider_or_wallet = null, $currency = null)
     {
-        if (\strtolower($currency) == 'btc') {
+        if (is_string($currency) && \strtolower($currency) == 'btc') {
             return new \App\Providers\Payment\Coinbase();
         }
         switch (self::providerName($provider_or_wallet)) {

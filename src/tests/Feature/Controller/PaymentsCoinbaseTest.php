@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Controller;
 
-use App\Http\Controllers\API\V4\PaymentsController;
 use App\Payment;
 use App\Transaction;
 use App\Wallet;
@@ -443,5 +442,6 @@ class PaymentsCoinbaseTest extends TestCase
         $json = $response->json();
 
         $this->assertCount(1, $json);
+        $this->assertSame('creditcard', $json[0]['id']);
     }
 }

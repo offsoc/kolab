@@ -130,8 +130,7 @@ class WalletCheckTest extends TestCase
 
         $this->assertTrue($wallet->balance < 0); // @phpstan-ignore-line
 
-        // TODO: How to mock PaymentsProvider::topUpWallet() to make sure it was called?
-        // We should probably move this method to the App\Wallet class to make it possible.
+        // TODO: Wallet::topUp() to make sure it was called
         $this->markTestIncomplete();
     }
 

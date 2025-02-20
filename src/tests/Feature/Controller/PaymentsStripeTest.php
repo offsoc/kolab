@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Controller;
 
-use App\Http\Controllers\API\V4\PaymentsController;
 use App\Payment;
 use App\Providers\PaymentProvider;
 use App\Transaction;
@@ -587,7 +586,7 @@ class PaymentsStripeTest extends TestCase
         $client->addResponse($paymentMethod);
 
         // Expect a recurring payment as we have a valid mandate at this point
-        $result = PaymentsController::topUpWallet($wallet);
+        $result = $wallet->topUp();
         $this->assertTrue($result);
 
         // Check that the payments table contains a new record with proper amount
@@ -601,7 +600,7 @@ class PaymentsStripeTest extends TestCase
 
         // Expect no payment if the mandate is disabled
         $wallet->setSetting('mandate_disabled', 1);
-        $result = PaymentsController::topUpWallet($wallet);
+        $result = $wallet->topUp();
         $this->assertFalse($result);
         $this->assertCount(1, $wallet->payments()->get());
 
@@ -609,7 +608,7 @@ class PaymentsStripeTest extends TestCase
         $wallet->setSetting('mandate_disabled', null);
         $wallet->balance = 1000;
         $wallet->save();
-        $result = PaymentsController::topUpWallet($wallet);
+        $result = $wallet->topUp();
         $this->assertFalse($result);
         $this->assertCount(1, $wallet->payments()->get());
 
@@ -618,7 +617,7 @@ class PaymentsStripeTest extends TestCase
         $wallet->balance = -2050;
         $wallet->save();
 
-        $result = PaymentsController::topUpWallet($wallet);
+        $result = $wallet->topUp();
         $this->assertFalse($result);
         $this->assertCount(1, $wallet->payments()->get());
 
@@ -632,7 +631,7 @@ class PaymentsStripeTest extends TestCase
         $wallet->setSetting('mollie_mandate_id', null);
         $wallet->balance = 0;
         $wallet->save();
-        $result = PaymentsController::topUpWallet($wallet);
+        $result = $wallet->topUp();
         $this->assertFalse($result);
         $this->assertCount(1, $wallet->payments()->get());
 
@@ -831,7 +830,7 @@ class PaymentsStripeTest extends TestCase
         $client->addResponse($setupIntent);
         $client->addResponse($paymentIntent);
 
-        $result = PaymentsController::topUpWallet($wallet);
+        $result = $wallet->topUp();
         $this->assertTrue($result);
 
         // Check that the payments table contains a new record with proper amount(s)
@@ -862,7 +861,9 @@ class PaymentsStripeTest extends TestCase
         $this->assertCount(2 + intval($hasCoinbase), $json);
         $this->assertSame('creditcard', $json[0]['id']);
         $this->assertSame('paypal', $json[1]['id']);
-        $this->assertSame('bitcoin', $json[2]['id']);
+        if ($hasCoinbase) {
+            $this->assertSame('bitcoin', $json[2]['id']);
+        }
 
         $response = $this->actingAs($user)->get('api/v4/payments/methods?type=' . Payment::TYPE_RECURRING);
         $response->assertStatus(200);

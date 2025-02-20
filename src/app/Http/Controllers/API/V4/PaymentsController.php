@@ -67,7 +67,7 @@ class PaymentsController extends Controller
         if ($wallet->balance < round($request->balance * 100)) {
             $mandate['amount'] = (int) round($request->amount * 100);
 
-            self::addTax($wallet, $mandate);
+            $mandate = $wallet->paymentRequest($mandate);
         }
 
         $provider = PaymentProvider::factory($wallet);
@@ -290,15 +290,13 @@ class PaymentsController extends Controller
 
         $currency = $request->currency;
 
-        $request = [
+        $request = $wallet->paymentRequest([
             'type' => Payment::TYPE_ONEOFF,
             'currency' => $currency,
             'amount' => $amount,
             'methodId' => $request->methodId ?: PaymentProvider::METHOD_CREDITCARD,
             'description' => Tenant::getConfig($user->tenant_id, 'app.name') . ' Payment',
-        ];
-
-        self::addTax($wallet, $request);
+        ]);
 
         $provider = PaymentProvider::factory($wallet, $currency);
 
@@ -359,82 +357,6 @@ class PaymentsController extends Controller
         }
 
         return response($code < 400 ? 'Success' : 'Server error', $code);
-    }
-
-    /**
-     * Top up a wallet with a "recurring" payment.
-     *
-     * @param \App\Wallet $wallet The wallet to charge
-     *
-     * @return bool True if the payment has been initialized
-     */
-    public static function topUpWallet(Wallet $wallet): bool
-    {
-        $settings = $wallet->getSettings(['mandate_disabled', 'mandate_balance', 'mandate_amount']);
-
-        \Log::debug("Requested top-up for wallet {$wallet->id}");
-
-        if (!empty($settings['mandate_disabled'])) {
-            \Log::debug("Top-up for wallet {$wallet->id}: mandate disabled");
-            return false;
-        }
-
-        $min_balance = (int) round(floatval($settings['mandate_balance']) * 100);
-        $amount = (int) round(floatval($settings['mandate_amount']) * 100);
-
-        // The wallet balance is greater than the auto-payment threshold
-        if ($wallet->balance >= $min_balance) {
-            // Do nothing
-            return false;
-        }
-
-        $provider = PaymentProvider::factory($wallet);
-        $mandate = (array) $provider->getMandate($wallet);
-
-        if (empty($mandate['isValid'])) {
-            \Log::warning("Top-up for wallet {$wallet->id}: mandate invalid");
-            if (empty($mandate['isPending'])) {
-                \Log::warning("Disabling mandate");
-                $wallet->setSetting('mandate_disabled', '1');
-            }
-            return false;
-        }
-
-        // The defined top-up amount is not enough
-        // Disable auto-payment and notify the user
-        if ($wallet->balance + $amount < 0) {
-            // Disable (not remove) the mandate
-            \Log::warning("Top-up for wallet {$wallet->id}: mandate too little");
-            $wallet->setSetting('mandate_disabled', '1');
-            \App\Jobs\PaymentMandateDisabledEmail::dispatch($wallet);
-            return false;
-        }
-
-        $appName = Tenant::getConfig($wallet->owner->tenant_id, 'app.name');
-        $description = "{$appName} Recurring Payment";
-        if ($plan = $wallet->plan()) {
-            if ($plan->months == 12) {
-                $description = "{$appName} Annual Payment";
-            } elseif ($plan->months == 3) {
-                $description = "{$appName} Quarterly Payment";
-            } elseif ($plan->months == 1) {
-                $description = "{$appName} Monthly Payment";
-            }
-        }
-
-        $request = [
-            'type' => Payment::TYPE_RECURRING,
-            'currency' => $wallet->currency,
-            'amount' => $amount,
-            'methodId' => PaymentProvider::METHOD_CREDITCARD,
-            'description' => $description,
-        ];
-
-        self::addTax($wallet, $request);
-
-        $result = $provider->payment($wallet, $request);
-
-        return !empty($result);
     }
 
     /**
@@ -581,34 +503,5 @@ class PaymentsController extends Controller
             'hasMore' => $hasMore,
             'page' => $page,
         ]);
-    }
-
-    /**
-     * Calculates tax for the payment, fills the request with additional properties
-     *
-     * @param \App\Wallet $wallet  The wallet
-     * @param array       $request The request data with the payment amount
-     */
-    protected static function addTax(Wallet $wallet, array &$request): void
-    {
-        $request['vat_rate_id'] = null;
-        $request['credit_amount'] = $request['amount'];
-
-        if ($rate = $wallet->vatRate()) {
-            $request['vat_rate_id'] = $rate->id;
-
-            switch (\config('app.vat.mode')) {
-                case 1:
-                    // In this mode tax is added on top of the payment. The amount
-                    // to pay grows, but we keep wallet balance without tax.
-                    $request['amount'] = $request['amount'] + round($request['amount'] * $rate->rate / 100);
-                    break;
-
-                default:
-                    // In this mode tax is "swallowed" by the vendor. The payment
-                    // amount does not change
-                    break;
-            }
-        }
     }
 }

@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Controller;
 
-use App\Http\Controllers\API\V4\PaymentsController;
 use App\Payment;
 use App\Plan;
 use App\Providers\PaymentProvider;
@@ -579,7 +578,7 @@ class PaymentsMollieTest extends TestCase
 
         // Expect a recurring payment as we have a valid mandate at this point
         // and the balance is below the threshold
-        $this->assertTrue(PaymentsController::topUpWallet($wallet));
+        $this->assertTrue($wallet->topUp());
 
         // Check that the payments table contains a new record with proper amount.
         // There should be two records, one for the mandate payment and another for
@@ -615,7 +614,7 @@ class PaymentsMollieTest extends TestCase
 
         // Expect no payment if the mandate is disabled
         $wallet->setSetting('mandate_disabled', 1);
-        $result = PaymentsController::topUpWallet($wallet);
+        $result = $wallet->topUp();
         $this->assertFalse($result);
         $this->assertCount(2, $wallet->payments()->get());
 
@@ -623,7 +622,7 @@ class PaymentsMollieTest extends TestCase
         $wallet->setSetting('mandate_disabled', null);
         $wallet->balance = 1000;
         $wallet->save();
-        $result = PaymentsController::topUpWallet($wallet);
+        $result = $wallet->topUp();
         $this->assertFalse($result);
         $this->assertCount(2, $wallet->payments()->get());
 
@@ -631,7 +630,7 @@ class PaymentsMollieTest extends TestCase
         $wallet->setSetting('mandate_disabled', null);
         $wallet->balance = -2050;
         $wallet->save();
-        $result = PaymentsController::topUpWallet($wallet);
+        $result = $wallet->topUp();
         $this->assertFalse($result);
         $this->assertCount(2, $wallet->payments()->get());
 
@@ -645,7 +644,7 @@ class PaymentsMollieTest extends TestCase
         $wallet->setSetting('mollie_mandate_id', null);
         $wallet->balance = 0;
         $wallet->save();
-        $result = PaymentsController::topUpWallet($wallet);
+        $result = $wallet->topUp();
         $this->assertFalse($result);
         $this->assertCount(2, $wallet->payments()->get());
 
@@ -792,7 +791,7 @@ class PaymentsMollieTest extends TestCase
         // Top-up (recurring payment)
         // Expect a recurring payment as we have a valid mandate at this point
         // and the balance is below the threshold
-        $this->assertTrue(PaymentsController::topUpWallet($wallet));
+        $this->assertTrue($wallet->topUp());
 
         // Check that the payments table contains a new record with proper amount(s)
         $payment = $wallet->payments()->first();
@@ -814,8 +813,6 @@ class PaymentsMollieTest extends TestCase
         $user = $this->getTestUser('john@kolab.org');
         $wallet = $user->wallets()->first();
         $wallet->transactions()->delete();
-
-        $mollie = PaymentProvider::factory('mollie');
 
         // Create a paid payment
         $payment = Payment::create([
@@ -973,8 +970,6 @@ class PaymentsMollieTest extends TestCase
         $user = $this->getTestUser('john@kolab.org');
         $wallet = $user->wallets()->first();
         $wallet->transactions()->delete();
-
-        $mollie = PaymentProvider::factory('mollie');
 
         // Create a paid payment
         $payment = Payment::create([

@@ -884,6 +884,16 @@ class WalletTest extends TestCase
     }
 
     /**
+     * Tests for topUp()
+     */
+    public function testTopUp(): void
+    {
+        // TODO: Tests from tests/Feature/Controller/Payments*Test.php that invoke
+        // Wallet::topUp() should be moved here
+        $this->markTestIncomplete();
+    }
+
+    /**
      * Tests for updateEntitlements()
      */
     public function testUpdateEntitlements(): void

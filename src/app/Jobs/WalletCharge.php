@@ -3,7 +3,6 @@
 namespace App\Jobs;
 
 use App\Wallet;
-use App\Http\Controllers\API\V4\PaymentsController;
 
 class WalletCharge extends CommonJob
 {
@@ -48,7 +47,7 @@ class WalletCharge extends CommonJob
         $this->logJobStart($this->walletId);
 
         if ($wallet = Wallet::find($this->walletId)) {
-            PaymentsController::topUpWallet($wallet);
+            $wallet->topUp();
         }
     }
 }

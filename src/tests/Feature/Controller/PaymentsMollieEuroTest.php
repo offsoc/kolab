@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Controller;
 
-use App\Http\Controllers\API\V4\PaymentsController;
 use App\Payment;
 use App\Providers\PaymentProvider;
 use App\Transaction;
@@ -457,7 +456,7 @@ class PaymentsMollieEuroTest extends TestCase
 
         // Expect a recurring payment as we have a valid mandate at this point
         // and the balance is below the threshold
-        $result = PaymentsController::topUpWallet($wallet);
+        $result = $wallet->topUp();
         $this->assertTrue($result);
 
         // Check that the payments table contains a new record with proper amount.
@@ -494,7 +493,7 @@ class PaymentsMollieEuroTest extends TestCase
 
         // Expect no payment if the mandate is disabled
         $wallet->setSetting('mandate_disabled', 1);
-        $result = PaymentsController::topUpWallet($wallet);
+        $result = $wallet->topUp();
         $this->assertFalse($result);
         $this->assertCount(2, $wallet->payments()->get());
 
@@ -502,7 +501,7 @@ class PaymentsMollieEuroTest extends TestCase
         $wallet->setSetting('mandate_disabled', null);
         $wallet->balance = 1000;
         $wallet->save();
-        $result = PaymentsController::topUpWallet($wallet);
+        $result = $wallet->topUp();
         $this->assertFalse($result);
         $this->assertCount(2, $wallet->payments()->get());
 
@@ -510,7 +509,7 @@ class PaymentsMollieEuroTest extends TestCase
         $wallet->setSetting('mandate_disabled', null);
         $wallet->balance = -2050;
         $wallet->save();
-        $result = PaymentsController::topUpWallet($wallet);
+        $result = $wallet->topUp();
         $this->assertFalse($result);
         $this->assertCount(2, $wallet->payments()->get());
 
@@ -524,7 +523,7 @@ class PaymentsMollieEuroTest extends TestCase
         $wallet->setSetting('mollie_mandate_id', null);
         $wallet->balance = 0;
         $wallet->save();
-        $result = PaymentsController::topUpWallet($wallet);
+        $result = $wallet->topUp();
         $this->assertFalse($result);
         $this->assertCount(2, $wallet->payments()->get());
 
@@ -630,8 +629,6 @@ class PaymentsMollieEuroTest extends TestCase
         $wallet->currency = 'EUR';
         $wallet->save();
         $wallet->transactions()->delete();
-
-        $mollie = PaymentProvider::factory('mollie');
 
         // Create a paid payment
         $payment = Payment::create([

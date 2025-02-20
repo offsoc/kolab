@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Providers\PaymentProvider;
 use App\Traits\SettingsTrait;
 use App\Traits\UuidStrKeyTrait;
 use Carbon\Carbon;
@@ -381,6 +382,36 @@ class Wallet extends Model
     }
 
     /**
+     * Prepare a payment. Calculates tax for the payment, fills the request with additional properties.
+     *
+     * @param array $request The request data with the payment amount
+     */
+    public function paymentRequest(array $request): array
+    {
+        $request['vat_rate_id'] = null;
+        $request['credit_amount'] = $request['amount'];
+
+        if ($rate = $this->vatRate()) {
+            $request['vat_rate_id'] = $rate->id;
+
+            switch (\config('app.vat.mode')) {
+                case 1:
+                    // In this mode tax is added on top of the payment. The amount
+                    // to pay grows, but we keep wallet balance without tax.
+                    $request['amount'] = $request['amount'] + round($request['amount'] * $rate->rate / 100);
+                    break;
+
+                default:
+                    // In this mode tax is "swallowed" by the vendor. The payment
+                    // amount does not change
+                    break;
+            }
+        }
+
+        return $request;
+    }
+
+    /**
      * Payments on this wallet.
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
@@ -440,6 +471,79 @@ class Wallet extends Model
     public function refund($amount, string $description = ''): Wallet
     {
         return $this->balanceUpdate(Transaction::WALLET_REFUND, $amount, $description);
+    }
+
+    /**
+     * Top up a wallet with a "recurring" payment.
+     *
+     * @return bool True if the payment has been initialized
+     */
+    public function topUp(): bool
+    {
+        $settings = $this->getSettings(['mandate_disabled', 'mandate_balance', 'mandate_amount']);
+
+        \Log::debug("Requested top-up for wallet {$this->id}");
+
+        if (!empty($settings['mandate_disabled'])) {
+            \Log::debug("Top-up for wallet {$this->id}: mandate disabled");
+            return false;
+        }
+
+        $min_balance = (int) round(floatval($settings['mandate_balance']) * 100);
+        $amount = (int) round(floatval($settings['mandate_amount']) * 100);
+
+        // The wallet balance is greater than the auto-payment threshold
+        if ($this->balance >= $min_balance) {
+            // Do nothing
+            return false;
+        }
+
+        $provider = PaymentProvider::factory($this);
+        $mandate = (array) $provider->getMandate($this);
+
+        if (empty($mandate['isValid'])) {
+            \Log::warning("Top-up for wallet {$this->id}: mandate invalid");
+            if (empty($mandate['isPending'])) {
+                \Log::warning("Disabling mandate");
+                $this->setSetting('mandate_disabled', '1');
+            }
+
+            return false;
+        }
+
+        // The defined top-up amount is not enough
+        // Disable auto-payment and notify the user
+        if ($this->balance + $amount < 0) {
+            // Disable (not remove) the mandate
+            \Log::warning("Top-up for wallet {$this->id}: mandate too little");
+            $this->setSetting('mandate_disabled', '1');
+            \App\Jobs\PaymentMandateDisabledEmail::dispatch($this);
+            return false;
+        }
+
+        $appName = Tenant::getConfig($this->owner->tenant_id, 'app.name');
+        $description = "{$appName} Recurring Payment";
+        if ($plan = $this->plan()) {
+            if ($plan->months == 12) {
+                $description = "{$appName} Annual Payment";
+            } elseif ($plan->months == 3) {
+                $description = "{$appName} Quarterly Payment";
+            } elseif ($plan->months == 1) {
+                $description = "{$appName} Monthly Payment";
+            }
+        }
+
+        $request = $this->paymentRequest([
+            'type' => Payment::TYPE_RECURRING,
+            'currency' => $this->currency,
+            'amount' => $amount,
+            'methodId' => PaymentProvider::METHOD_CREDITCARD,
+            'description' => $description,
+        ]);
+
+        $result = $provider->payment($this, $request);
+
+        return !empty($result);
     }
 
     /**

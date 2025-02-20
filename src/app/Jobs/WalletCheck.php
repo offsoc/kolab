@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Http\Controllers\API\V4\PaymentsController;
 use App\Wallet;
 use Carbon\Carbon;
 
@@ -69,7 +68,7 @@ class WalletCheck extends CommonJob
 
         $this->wallet->chargeEntitlements();
         try {
-            PaymentsController::topUpWallet($this->wallet);
+            $this->wallet->topUp();
         } catch (\Exception $e) {
             \Log::error("Failed to top-up wallet {$this->walletId}: " . $e->getMessage());
             // Notification emails should be sent even if the top-up fails
