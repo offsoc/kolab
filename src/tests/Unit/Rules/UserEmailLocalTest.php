@@ -27,6 +27,8 @@ class UserEmailLocalTest extends TestCase
             ['Admin', false, 'The specified user is not available.'],
             ['Sales', false, 'The specified user is not available.'],
             ['Root', false, 'The specified user is not available.'],
+            ['Postmaster', false, 'The specified user is not available.'],
+            ['Webmaster', false, 'The specified user is not available.'],
             // Valid
             ['test.test', false, null],
             // Valid for external domains
@@ -34,6 +36,8 @@ class UserEmailLocalTest extends TestCase
             ['Admin', true, null],
             ['Sales', true, null],
             ['Root', true, null],
+            ['Postmaster', true, null],
+            ['Webmaster', true, null],
         ];
     }
 

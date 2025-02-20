@@ -51,9 +51,9 @@ class UserEmailLocal implements Rule
         }
 
         // Check if the local part is not one of exceptions
-        // (when signing up for an account in public domain
+        // (when creating an account/alias in a public domain)
         if (!$this->external) {
-            $exceptions = '/^(admin|administrator|sales|root)$/i';
+            $exceptions = '/^(admin|administrator|postmaster|sales|root|webmaster)$/i';
 
             if (preg_match($exceptions, $login)) {
                 $this->message = \trans('validation.entryexists', ['attribute' => $attribute]);
