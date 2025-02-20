@@ -459,7 +459,7 @@ class PaymentsMollieTest extends TestCase
 
         // Assert that email notification job wasn't dispatched,
         // it is expected only for recurring payments
-        Bus::assertDispatchedTimes(\App\Jobs\PaymentEmail::class, 0);
+        Bus::assertDispatchedTimes(\App\Jobs\Mail\PaymentJob::class, 0);
 
         // Verify "paid -> open -> paid" scenario, assert that balance didn't change
         $mollie_response['status'] = 'open';
@@ -510,7 +510,7 @@ class PaymentsMollieTest extends TestCase
 
         // Assert that email notification job wasn't dispatched,
         // it is expected only for recurring payments
-        Bus::assertDispatchedTimes(\App\Jobs\PaymentEmail::class, 0);
+        Bus::assertDispatchedTimes(\App\Jobs\Mail\PaymentJob::class, 0);
     }
 
     /**
@@ -606,8 +606,8 @@ class PaymentsMollieTest extends TestCase
             $transaction->description
         );
 
-        Bus::assertDispatchedTimes(\App\Jobs\PaymentEmail::class, 1);
-        Bus::assertDispatched(\App\Jobs\PaymentEmail::class, function ($job) use ($payment) {
+        Bus::assertDispatchedTimes(\App\Jobs\Mail\PaymentJob::class, 1);
+        Bus::assertDispatched(\App\Jobs\Mail\PaymentJob::class, function ($job) use ($payment) {
             $job_payment = $this->getObjectProperty($job, 'payment');
             return $job_payment->id === $payment->id;
         });
@@ -634,8 +634,8 @@ class PaymentsMollieTest extends TestCase
         $this->assertFalse($result);
         $this->assertCount(2, $wallet->payments()->get());
 
-        Bus::assertDispatchedTimes(\App\Jobs\PaymentMandateDisabledEmail::class, 1);
-        Bus::assertDispatched(\App\Jobs\PaymentMandateDisabledEmail::class, function ($job) use ($wallet) {
+        Bus::assertDispatchedTimes(\App\Jobs\Mail\PaymentMandateDisabledJob::class, 1);
+        Bus::assertDispatched(\App\Jobs\Mail\PaymentMandateDisabledJob::class, function ($job) use ($wallet) {
             $job_wallet = $this->getObjectProperty($job, 'wallet');
             return $job_wallet->id === $wallet->id;
         });
@@ -648,7 +648,7 @@ class PaymentsMollieTest extends TestCase
         $this->assertFalse($result);
         $this->assertCount(2, $wallet->payments()->get());
 
-        Bus::assertDispatchedTimes(\App\Jobs\PaymentMandateDisabledEmail::class, 1);
+        Bus::assertDispatchedTimes(\App\Jobs\Mail\PaymentMandateDisabledJob::class, 1);
 
         // Test webhook for recurring payments
 
@@ -692,8 +692,8 @@ class PaymentsMollieTest extends TestCase
         );
 
         // Assert that email notification job has been dispatched
-        Bus::assertDispatchedTimes(\App\Jobs\PaymentEmail::class, 1);
-        Bus::assertDispatched(\App\Jobs\PaymentEmail::class, function ($job) use ($payment) {
+        Bus::assertDispatchedTimes(\App\Jobs\Mail\PaymentJob::class, 1);
+        Bus::assertDispatched(\App\Jobs\Mail\PaymentJob::class, function ($job) use ($payment) {
             $job_payment = $this->getObjectProperty($job, 'payment');
             return $job_payment->id === $payment->id;
         });
@@ -727,8 +727,8 @@ class PaymentsMollieTest extends TestCase
         $this->assertTrue(!empty($wallet->getSetting('mandate_disabled')));
 
         // Assert that email notification job has been dispatched
-        Bus::assertDispatchedTimes(\App\Jobs\PaymentEmail::class, 1);
-        Bus::assertDispatched(\App\Jobs\PaymentEmail::class, function ($job) use ($payment) {
+        Bus::assertDispatchedTimes(\App\Jobs\Mail\PaymentJob::class, 1);
+        Bus::assertDispatched(\App\Jobs\Mail\PaymentJob::class, function ($job) use ($payment) {
             $job_payment = $this->getObjectProperty($job, 'payment');
             return $job_payment->id === $payment->id;
         });
@@ -953,7 +953,7 @@ class PaymentsMollieTest extends TestCase
         $this->assertSame("mollie", $payments[0]->provider);
         $this->assertSame('', $payments[0]->description);
 
-        Bus::assertNotDispatched(\App\Jobs\PaymentEmail::class);
+        Bus::assertNotDispatched(\App\Jobs\Mail\PaymentJob::class);
 
         $this->unmockMollie();
     }

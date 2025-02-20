@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Jobs\PasswordResetEmail;
+use App\Jobs\Mail\PasswordResetJob;
 use App\Rules\Password;
 use App\User;
 use App\VerificationCode;
@@ -59,7 +59,7 @@ class PasswordResetController extends Controller
         $user->verificationcodes()->save($code);
 
         // Send email/sms message
-        PasswordResetEmail::dispatch($code);
+        PasswordResetJob::dispatch($code);
 
         return response()->json(['status' => 'success', 'code' => $code->code]);
     }

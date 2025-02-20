@@ -66,8 +66,8 @@ class TrialEndTest extends TestCase
 
         Queue::fake();
         $code = \Artisan::call("wallet:trial-end");
-        Queue::assertPushed(\App\Jobs\TrialEndEmail::class, 1);
-        Queue::assertPushed(\App\Jobs\TrialEndEmail::class, function ($job) use ($user) {
+        Queue::assertPushed(\App\Jobs\Mail\TrialEndJob::class, 1);
+        Queue::assertPushed(\App\Jobs\Mail\TrialEndJob::class, function ($job) use ($user) {
             $job_user = TestCase::getObjectProperty($job, 'account');
             return $job_user->id === $user->id;
         });

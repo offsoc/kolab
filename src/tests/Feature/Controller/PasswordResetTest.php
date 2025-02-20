@@ -120,10 +120,10 @@ class PasswordResetTest extends TestCase
         $this->assertNotEmpty($json['code']);
 
         // Assert the email sending job was pushed once
-        Queue::assertPushed(\App\Jobs\PasswordResetEmail::class, 1);
+        Queue::assertPushed(\App\Jobs\Mail\PasswordResetJob::class, 1);
 
         // Assert the job has proper data assigned
-        Queue::assertPushed(\App\Jobs\PasswordResetEmail::class, function ($job) use ($user, &$code, $json) {
+        Queue::assertPushed(\App\Jobs\Mail\PasswordResetJob::class, function ($job) use ($user, &$code, $json) {
             $code = TestCase::getObjectProperty($job, 'code');
 
             return $code->user->id == $user->id && $code->code == $json['code'];

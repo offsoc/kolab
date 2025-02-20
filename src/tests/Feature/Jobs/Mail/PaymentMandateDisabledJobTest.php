@@ -1,19 +1,17 @@
 <?php
 
-namespace Tests\Feature\Jobs;
+namespace Tests\Feature\Jobs\Mail;
 
-use App\Jobs\PaymentMandateDisabledEmail;
+use App\Jobs\Mail\PaymentMandateDisabledJob;
 use App\Mail\PaymentMandateDisabled;
 use App\User;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
-class PaymentMandateDisabledEmailTest extends TestCase
+class PaymentMandateDisabledJobTest extends TestCase
 {
     /**
      * {@inheritDoc}
-     *
-     * @return void
      */
     public function setUp(): void
     {
@@ -24,8 +22,6 @@ class PaymentMandateDisabledEmailTest extends TestCase
 
     /**
      * {@inheritDoc}
-     *
-     * @return void
      */
     public function tearDown(): void
     {
@@ -36,10 +32,8 @@ class PaymentMandateDisabledEmailTest extends TestCase
 
     /**
      * Test job handle
-     *
-     * @return void
      */
-    public function testHandle()
+    public function testHandle(): void
     {
         $status = User::STATUS_ACTIVE | User::STATUS_LDAP_READY | User::STATUS_IMAP_READY;
         $user = $this->getTestUser('PaymentEmail@UserAccount.com', ['status' => $status]);
@@ -51,8 +45,10 @@ class PaymentMandateDisabledEmailTest extends TestCase
         // Assert that no jobs were pushed...
         Mail::assertNothingSent();
 
-        $job = new PaymentMandateDisabledEmail($wallet);
+        $job = new PaymentMandateDisabledJob($wallet);
         $job->handle();
+
+        $this->assertSame(PaymentMandateDisabledJob::QUEUE, $job->queue);
 
         // Assert the email sending job was pushed once
         Mail::assertSent(PaymentMandateDisabled::class, 1);

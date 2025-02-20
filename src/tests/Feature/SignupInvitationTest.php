@@ -42,10 +42,10 @@ class SignupInvitationTest extends TestCase
         $this->assertSame(\config('app.tenant_id'), $invitation->tenant_id);
         $this->assertTrue(preg_match('/^[a-f0-9-]{36}$/', $invitation->id) > 0);
 
-        Queue::assertPushed(\App\Jobs\SignupInvitationEmail::class, 1);
+        Queue::assertPushed(\App\Jobs\Mail\SignupInvitationJob::class, 1);
 
         Queue::assertPushed(
-            \App\Jobs\SignupInvitationEmail::class,
+            \App\Jobs\Mail\SignupInvitationJob::class,
             function ($job) use ($invitation) {
                 $inv = TestCase::getObjectProperty($job, 'invitation');
 
@@ -85,10 +85,10 @@ class SignupInvitationTest extends TestCase
         $invitation->status = SI::STATUS_NEW;
         $invitation->save();
 
-        Queue::assertPushed(\App\Jobs\SignupInvitationEmail::class, 1);
+        Queue::assertPushed(\App\Jobs\Mail\SignupInvitationJob::class, 1);
 
         Queue::assertPushed(
-            \App\Jobs\SignupInvitationEmail::class,
+            \App\Jobs\Mail\SignupInvitationJob::class,
             function ($job) use ($invitation) {
                 $inv = TestCase::getObjectProperty($job, 'invitation');
 
@@ -104,10 +104,10 @@ class SignupInvitationTest extends TestCase
         $invitation->status = SI::STATUS_NEW;
         $invitation->save();
 
-        Queue::assertPushed(\App\Jobs\SignupInvitationEmail::class, 1);
+        Queue::assertPushed(\App\Jobs\Mail\SignupInvitationJob::class, 1);
 
         Queue::assertPushed(
-            \App\Jobs\SignupInvitationEmail::class,
+            \App\Jobs\Mail\SignupInvitationJob::class,
             function ($job) use ($invitation) {
                 $inv = TestCase::getObjectProperty($job, 'invitation');
 

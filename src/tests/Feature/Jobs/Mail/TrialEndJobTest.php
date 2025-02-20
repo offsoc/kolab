@@ -1,19 +1,17 @@
 <?php
 
-namespace Tests\Feature\Jobs;
+namespace Tests\Feature\Jobs\Mail;
 
-use App\Jobs\TrialEndEmail;
+use App\Jobs\Mail\TrialEndJob;
 use App\Mail\TrialEnd;
 use App\User;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
-class TrialEndEmailTest extends TestCase
+class TrialEndJobTest extends TestCase
 {
     /**
      * {@inheritDoc}
-     *
-     * @return void
      */
     public function setUp(): void
     {
@@ -24,8 +22,6 @@ class TrialEndEmailTest extends TestCase
 
     /**
      * {@inheritDoc}
-     *
-     * @return void
      */
     public function tearDown(): void
     {
@@ -36,10 +32,8 @@ class TrialEndEmailTest extends TestCase
 
     /**
      * Test job handle
-     *
-     * @return void
      */
-    public function testHandle()
+    public function testHandle(): void
     {
         $status = User::STATUS_ACTIVE | User::STATUS_LDAP_READY | User::STATUS_IMAP_READY;
         $user = $this->getTestUser('PaymentEmail@UserAccount.com', ['status' => $status]);
@@ -50,8 +44,10 @@ class TrialEndEmailTest extends TestCase
         // Assert that no jobs were pushed...
         Mail::assertNothingSent();
 
-        $job = new TrialEndEmail($user);
+        $job = new TrialEndJob($user);
         $job->handle();
+
+        $this->assertSame(TrialEndJob::QUEUE, $job->queue);
 
         // Assert the email sending job was pushed once
         Mail::assertSent(TrialEnd::class, 1);

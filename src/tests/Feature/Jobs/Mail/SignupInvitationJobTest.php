@@ -1,8 +1,8 @@
 <?php
 
-namespace Tests\Feature\Jobs;
+namespace Tests\Feature\Jobs\Mail;
 
-use App\Jobs\SignupInvitationEmail;
+use App\Jobs\Mail\SignupInvitationJob;
 use App\Mail\SignupInvitation;
 use App\SignupInvitation as SI;
 use Illuminate\Queue\Events\JobFailed;
@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
-class SignupInvitationEmailTest extends TestCase
+class SignupInvitationJobTest extends TestCase
 {
     private $invitation;
 
@@ -37,15 +37,17 @@ class SignupInvitationEmailTest extends TestCase
     /**
      * Test job handle
      */
-    public function testSignupInvitationEmailHandle(): void
+    public function testHandle(): void
     {
         Mail::fake();
 
         // Assert that no jobs were pushed...
         Mail::assertNothingSent();
 
-        $job = new SignupInvitationEmail($this->invitation);
+        $job = new SignupInvitationJob($this->invitation);
         $job->handle();
+
+        $this->assertSame(SignupInvitationJob::QUEUE, $job->queue);
 
         // Assert the email sending job was pushed once
         Mail::assertSent(SignupInvitation::class, 1);
@@ -61,7 +63,7 @@ class SignupInvitationEmailTest extends TestCase
     /**
      * Test job failure handling
      */
-    public function testSignupInvitationEmailFailure(): void
+    public function testFailure(): void
     {
         $this->markTestIncomplete();
     }

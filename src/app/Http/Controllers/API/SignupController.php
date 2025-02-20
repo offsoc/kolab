@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Jobs\SignupVerificationEmail;
+use App\Jobs\Mail\SignupVerificationJob;
 use App\Discount;
 use App\Domain;
 use App\Plan;
@@ -135,7 +135,7 @@ class SignupController extends Controller
             $response['domains'] = $has_domain ? [] : Domain::getPublicDomains();
         } else {
             // External email verification, send an email message
-            SignupVerificationEmail::dispatch($code);
+            SignupVerificationJob::dispatch($code);
         }
 
         return response()->json($response);

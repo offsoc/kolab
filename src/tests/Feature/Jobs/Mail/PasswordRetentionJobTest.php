@@ -1,19 +1,17 @@
 <?php
 
-namespace Tests\Feature\Jobs\Password;
+namespace Tests\Feature\Jobs\Mail;
 
-use App\Jobs\Password\RetentionEmailJob;
+use App\Jobs\Mail\PasswordRetentionJob;
 use App\Mail\PasswordExpirationReminder;
 use App\User;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
-class RetentionEmailJobTest extends TestCase
+class PasswordRetentionJobTest extends TestCase
 {
     /**
      * {@inheritDoc}
-     *
-     * @return void
      */
     public function setUp(): void
     {
@@ -24,8 +22,6 @@ class RetentionEmailJobTest extends TestCase
 
     /**
      * {@inheritDoc}
-     *
-     * @return void
      */
     public function tearDown(): void
     {
@@ -36,10 +32,8 @@ class RetentionEmailJobTest extends TestCase
 
     /**
      * Test job handle
-     *
-     * @return void
      */
-    public function testHandle()
+    public function testHandle(): void
     {
         $status = User::STATUS_ACTIVE | User::STATUS_LDAP_READY | User::STATUS_IMAP_READY;
         $user = $this->getTestUser('PasswordRetention@UserAccount.com', ['status' => $status]);
@@ -50,9 +44,10 @@ class RetentionEmailJobTest extends TestCase
         // Assert that no jobs were pushed...
         Mail::assertNothingSent();
 
-        $job = new RetentionEmailJob($user, $expiresOn);
+        $job = new PasswordRetentionJob($user, $expiresOn);
         $job->handle();
 
+        $this->assertSame(PasswordRetentionJob::QUEUE, $job->queue);
         $this->assertMatchesRegularExpression(
             '/^' . now()->format('Y-m-d') . ' [0-9]{2}:[0-9]{2}:[0-9]{2}$/',
             $user->getSetting('password_expiration_warning')

@@ -1,27 +1,11 @@
 <?php
 
-namespace App\Jobs\Password;
+namespace App\Jobs\Mail;
 
 use App\Mail\PasswordExpirationReminder;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
 
-class RetentionEmailJob implements ShouldQueue
+class PasswordRetentionJob extends \App\Jobs\MailJob
 {
-    use Dispatchable;
-    use InteractsWithQueue;
-    use Queueable;
-    use SerializesModels;
-
-    /** @var bool Delete the job if its models no longer exist. */
-    public $deleteWhenMissingModels = true;
-
-    /** @var int The number of times the job may be attempted. */
-    public $tries = 3;
-
     /** @var int The number of seconds to wait before retrying the job. */
     public $backoff = 30;
 
@@ -44,6 +28,7 @@ class RetentionEmailJob implements ShouldQueue
     {
         $this->user = $user;
         $this->expiresOn = $expiresOn;
+        $this->onQueue(self::QUEUE);
     }
 
     /**

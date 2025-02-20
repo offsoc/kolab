@@ -30,7 +30,7 @@ class SignupInvitationObserver
      */
     public function created(SI $invitation)
     {
-        \App\Jobs\SignupInvitationEmail::dispatch($invitation);
+        \App\Jobs\Mail\SignupInvitationJob::dispatch($invitation);
     }
 
     /**
@@ -49,7 +49,7 @@ class SignupInvitationObserver
             $invitation->status == SI::STATUS_NEW
             && ($oldStatus == SI::STATUS_FAILED || $oldStatus == SI::STATUS_SENT)
         ) {
-            \App\Jobs\SignupInvitationEmail::dispatch($invitation);
+            \App\Jobs\Mail\SignupInvitationJob::dispatch($invitation);
         }
     }
 }

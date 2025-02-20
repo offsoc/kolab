@@ -60,7 +60,7 @@ class TrialEndCommand extends Command
             }
 
             // Send the email asynchronously
-            \App\Jobs\TrialEndEmail::dispatch($wallet->owner);
+            \App\Jobs\Mail\TrialEndJob::dispatch($wallet->owner);
 
             // Store the timestamp
             $wallet->setSetting('trial_end_notice', (string) \now());

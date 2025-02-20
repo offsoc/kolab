@@ -339,7 +339,7 @@ class Mollie extends \App\Providers\PaymentProvider
         DB::commit();
 
         if (!empty($notify)) {
-            \App\Jobs\PaymentEmail::dispatch($payment);
+            \App\Jobs\Mail\PaymentJob::dispatch($payment);
         }
 
         return [
@@ -456,7 +456,7 @@ class Mollie extends \App\Providers\PaymentProvider
             DB::commit();
 
             if (!empty($notify)) {
-                \App\Jobs\PaymentEmail::dispatch($payment);
+                \App\Jobs\Mail\PaymentJob::dispatch($payment);
             }
         } catch (ApiException $e) {
             \Log::error(sprintf('Mollie API call failed (%s)', $e->getMessage()));

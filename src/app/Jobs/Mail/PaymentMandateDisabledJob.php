@@ -1,31 +1,15 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\Mail;
 
 use App\Mail\PaymentMandateDisabled;
 use App\User;
 use App\Wallet;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
 
-class PaymentMandateDisabledEmail implements ShouldQueue
+class PaymentMandateDisabledJob extends \App\Jobs\MailJob
 {
-    use Dispatchable;
-    use InteractsWithQueue;
-    use Queueable;
-    use SerializesModels;
-
-    /** @var int The number of times the job may be attempted. */
-    public $tries = 3;
-
     /** @var int The number of seconds to wait before retrying the job. */
     public $backoff = 30;
-
-    /** @var bool Delete the job if the wallet no longer exist. */
-    public $deleteWhenMissingModels = true;
 
     /** @var \App\Wallet A wallet object */
     protected $wallet;
@@ -46,6 +30,7 @@ class PaymentMandateDisabledEmail implements ShouldQueue
     {
         $this->wallet = $wallet;
         $this->controller = $controller;
+        $this->onQueue(self::QUEUE);
     }
 
     /**

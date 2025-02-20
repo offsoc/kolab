@@ -194,7 +194,7 @@ class PaymentsCoinbaseTest extends TestCase
 
         // Assert that email notification job wasn't dispatched,
         // it is expected only for recurring payments
-        Bus::assertDispatchedTimes(\App\Jobs\PaymentEmail::class, 0);
+        Bus::assertDispatchedTimes(\App\Jobs\Mail\PaymentJob::class, 0);
 
         // Verify "paid -> open -> paid" scenario, assert that balance didn't change
         $post = [
@@ -257,7 +257,7 @@ class PaymentsCoinbaseTest extends TestCase
 
         // Assert that email notification job wasn't dispatched,
         // it is expected only for recurring payments
-        Bus::assertDispatchedTimes(\App\Jobs\PaymentEmail::class, 0);
+        Bus::assertDispatchedTimes(\App\Jobs\Mail\PaymentJob::class, 0);
     }
 
     /**

@@ -416,7 +416,7 @@ class PaymentsStripeTest extends TestCase
 
         // Assert that email notification job wasn't dispatched,
         // it is expected only for recurring payments
-        Bus::assertDispatchedTimes(\App\Jobs\PaymentEmail::class, 0);
+        Bus::assertDispatchedTimes(\App\Jobs\Mail\PaymentJob::class, 0);
 
         // Test that balance didn't change if the same event is posted
         $response = $this->webhookRequest($post);
@@ -441,7 +441,7 @@ class PaymentsStripeTest extends TestCase
 
         // Assert that email notification job wasn't dispatched,
         // it is expected only for recurring payments
-        Bus::assertDispatchedTimes(\App\Jobs\PaymentEmail::class, 0);
+        Bus::assertDispatchedTimes(\App\Jobs\Mail\PaymentJob::class, 0);
 
         // Test for payment failure ('canceled' status)
         $payment->refresh();
@@ -459,7 +459,7 @@ class PaymentsStripeTest extends TestCase
 
         // Assert that email notification job wasn't dispatched,
         // it is expected only for recurring payments
-        Bus::assertDispatchedTimes(\App\Jobs\PaymentEmail::class, 0);
+        Bus::assertDispatchedTimes(\App\Jobs\Mail\PaymentJob::class, 0);
     }
 
     /**
@@ -621,8 +621,8 @@ class PaymentsStripeTest extends TestCase
         $this->assertFalse($result);
         $this->assertCount(1, $wallet->payments()->get());
 
-        Bus::assertDispatchedTimes(\App\Jobs\PaymentMandateDisabledEmail::class, 1);
-        Bus::assertDispatched(\App\Jobs\PaymentMandateDisabledEmail::class, function ($job) use ($wallet) {
+        Bus::assertDispatchedTimes(\App\Jobs\Mail\PaymentMandateDisabledJob::class, 1);
+        Bus::assertDispatched(\App\Jobs\Mail\PaymentMandateDisabledJob::class, function ($job) use ($wallet) {
             $job_wallet = $this->getObjectProperty($job, 'wallet');
             return $job_wallet->id === $wallet->id;
         });
@@ -635,7 +635,7 @@ class PaymentsStripeTest extends TestCase
         $this->assertFalse($result);
         $this->assertCount(1, $wallet->payments()->get());
 
-        Bus::assertDispatchedTimes(\App\Jobs\PaymentMandateDisabledEmail::class, 1);
+        Bus::assertDispatchedTimes(\App\Jobs\Mail\PaymentMandateDisabledJob::class, 1);
 
         $this->unmockStripe();
 
@@ -680,8 +680,8 @@ class PaymentsStripeTest extends TestCase
         );
 
         // Assert that email notification job has been dispatched
-        Bus::assertDispatchedTimes(\App\Jobs\PaymentEmail::class, 1);
-        Bus::assertDispatched(\App\Jobs\PaymentEmail::class, function ($job) use ($payment) {
+        Bus::assertDispatchedTimes(\App\Jobs\Mail\PaymentJob::class, 1);
+        Bus::assertDispatched(\App\Jobs\Mail\PaymentJob::class, function ($job) use ($payment) {
             $job_payment = $this->getObjectProperty($job, 'payment');
             return $job_payment->id === $payment->id;
         });
@@ -708,8 +708,8 @@ class PaymentsStripeTest extends TestCase
         $this->assertTrue(!empty($wallet->getSetting('mandate_disabled')));
 
         // Assert that email notification job has been dispatched
-        Bus::assertDispatchedTimes(\App\Jobs\PaymentEmail::class, 1);
-        Bus::assertDispatched(\App\Jobs\PaymentEmail::class, function ($job) use ($payment) {
+        Bus::assertDispatchedTimes(\App\Jobs\Mail\PaymentJob::class, 1);
+        Bus::assertDispatched(\App\Jobs\Mail\PaymentJob::class, function ($job) use ($payment) {
             $job_payment = $this->getObjectProperty($job, 'payment');
             return $job_payment->id === $payment->id;
         });
@@ -732,7 +732,7 @@ class PaymentsStripeTest extends TestCase
 
         // Assert that email notification job wasn't dispatched,
         // it is expected only for recurring payments
-        Bus::assertDispatchedTimes(\App\Jobs\PaymentEmail::class, 0);
+        Bus::assertDispatchedTimes(\App\Jobs\Mail\PaymentJob::class, 0);
     }
 
     /**

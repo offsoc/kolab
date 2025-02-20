@@ -1,33 +1,18 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\Mail;
 
 use App\Mail\TrialEnd;
 use App\User;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
 
-class TrialEndEmail implements ShouldQueue
+class TrialEndJob extends \App\Jobs\MailJob
 {
-    use Dispatchable;
-    use InteractsWithQueue;
-    use Queueable;
-    use SerializesModels;
-
-    /** @var int The number of times the job may be attempted. */
-    public $tries = 3;
-
     /** @var int The number of seconds to wait before retrying the job. */
     public $backoff = 30;
 
-    /** @var bool Delete the job if its models no longer exist. */
-    public $deleteWhenMissingModels = true;
-
     /** @var \App\User The account owner */
     protected $account;
+
 
     /**
      * Create a new job instance.
@@ -39,6 +24,7 @@ class TrialEndEmail implements ShouldQueue
     public function __construct(User $account)
     {
         $this->account = $account;
+        $this->onQueue(self::QUEUE);
     }
 
     /**

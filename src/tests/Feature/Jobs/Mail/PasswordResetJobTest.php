@@ -1,20 +1,18 @@
 <?php
 
-namespace Tests\Feature\Jobs;
+namespace Tests\Feature\Jobs\Mail;
 
-use App\Jobs\PasswordResetEmail;
+use App\Jobs\Mail\PasswordResetJob;
 use App\Mail\PasswordReset;
 use App\User;
 use App\VerificationCode;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
-class PasswordResetEmailTest extends TestCase
+class PasswordResetJobTest extends TestCase
 {
     /**
      * {@inheritDoc}
-     *
-     * @return void
      */
     public function setUp(): void
     {
@@ -25,8 +23,6 @@ class PasswordResetEmailTest extends TestCase
 
     /**
      * {@inheritDoc}
-     *
-     * @return void
      */
     public function tearDown(): void
     {
@@ -37,10 +33,8 @@ class PasswordResetEmailTest extends TestCase
 
     /**
      * Test job handle
-     *
-     * @return void
      */
-    public function testPasswordResetEmailHandle()
+    public function testHandle(): void
     {
         $code = new VerificationCode([
                 'mode' => 'password-reset',
@@ -55,8 +49,10 @@ class PasswordResetEmailTest extends TestCase
         // Assert that no jobs were pushed...
         Mail::assertNothingSent();
 
-        $job = new PasswordResetEmail($code);
+        $job = new PasswordResetJob($code);
         $job->handle();
+
+        $this->assertSame(PasswordResetJob::QUEUE, $job->queue);
 
         // Assert the email sending job was pushed once
         Mail::assertSent(PasswordReset::class, 1);

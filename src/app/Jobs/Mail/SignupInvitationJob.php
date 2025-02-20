@@ -1,31 +1,12 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\Mail;
 
-use App\SignupInvitation;
 use App\Mail\SignupInvitation as SignupInvitationMail;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
+use App\SignupInvitation;
 
-class SignupInvitationEmail implements ShouldQueue
+class SignupInvitationJob extends \App\Jobs\MailJob
 {
-    use Dispatchable;
-    use InteractsWithQueue;
-    use Queueable;
-    use SerializesModels;
-
-    /** @var int The number of times the job may be attempted. */
-    public $tries = 3;
-
-    /** @var bool Delete the job if its models no longer exist. */
-    public $deleteWhenMissingModels = true;
-
-    /** @var int The number of seconds to wait before retrying the job. */
-    public $backoff = 10;
-
     /** @var SignupInvitation Signup invitation object */
     protected $invitation;
 
@@ -40,6 +21,7 @@ class SignupInvitationEmail implements ShouldQueue
     public function __construct(SignupInvitation $invitation)
     {
         $this->invitation = $invitation;
+        $this->onQueue(self::QUEUE);
     }
 
     /**

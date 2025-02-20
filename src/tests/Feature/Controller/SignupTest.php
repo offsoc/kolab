@@ -346,10 +346,10 @@ class SignupTest extends TestCase
         $this->assertSame(null, $code->submit_ip_address);
 
         // Assert the email sending job was pushed once
-        Queue::assertPushed(\App\Jobs\SignupVerificationEmail::class, 1);
+        Queue::assertPushed(\App\Jobs\Mail\SignupVerificationJob::class, 1);
 
         // Assert the job has proper data assigned
-        Queue::assertPushed(\App\Jobs\SignupVerificationEmail::class, function ($job) use ($data, $json) {
+        Queue::assertPushed(\App\Jobs\Mail\SignupVerificationJob::class, function ($job) use ($data, $json) {
             $code = TestCase::getObjectProperty($job, 'code');
 
             return $code->code === $json['code']
@@ -372,7 +372,7 @@ class SignupTest extends TestCase
         $this->assertNotEmpty($json['code']);
 
         // Assert the job has proper data assigned
-        Queue::assertPushed(\App\Jobs\SignupVerificationEmail::class, function ($job) use ($data, $json) {
+        Queue::assertPushed(\App\Jobs\Mail\SignupVerificationJob::class, function ($job) use ($data, $json) {
             $code = TestCase::getObjectProperty($job, 'code');
 
             return $code->code === $json['code']
@@ -725,10 +725,10 @@ class SignupTest extends TestCase
         $this->assertNotEmpty($json['code']);
 
         // Assert the email sending job was pushed once
-        Queue::assertPushed(\App\Jobs\SignupVerificationEmail::class, 1);
+        Queue::assertPushed(\App\Jobs\Mail\SignupVerificationJob::class, 1);
 
         // Assert the job has proper data assigned
-        Queue::assertPushed(\App\Jobs\SignupVerificationEmail::class, function ($job) use ($data, $json) {
+        Queue::assertPushed(\App\Jobs\Mail\SignupVerificationJob::class, function ($job) use ($data, $json) {
             $code = TestCase::getObjectProperty($job, 'code');
 
             return $code->code === $json['code']

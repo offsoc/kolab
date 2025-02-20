@@ -337,7 +337,7 @@ class Stripe extends \App\Providers\PaymentProvider
                         }
 
                         // Notify the user
-                        \App\Jobs\PaymentEmail::dispatch($payment);
+                        \App\Jobs\Mail\PaymentJob::dispatch($payment);
                     }
                 }
 

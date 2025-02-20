@@ -1,8 +1,8 @@
 <?php
 
-namespace Tests\Feature\Jobs;
+namespace Tests\Feature\Jobs\Mail;
 
-use App\Jobs\PaymentEmail;
+use App\Jobs\Mail\PaymentJob;
 use App\Mail\PaymentFailure;
 use App\Mail\PaymentSuccess;
 use App\Payment;
@@ -10,12 +10,10 @@ use App\User;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
-class PaymentEmailTest extends TestCase
+class PaymentJobTest extends TestCase
 {
     /**
      * {@inheritDoc}
-     *
-     * @return void
      */
     public function setUp(): void
     {
@@ -26,8 +24,6 @@ class PaymentEmailTest extends TestCase
 
     /**
      * {@inheritDoc}
-     *
-     * @return void
      */
     public function tearDown(): void
     {
@@ -38,10 +34,8 @@ class PaymentEmailTest extends TestCase
 
     /**
      * Test job handle
-     *
-     * @return void
      */
-    public function testHandle()
+    public function testHandle(): void
     {
         $status = User::STATUS_ACTIVE | User::STATUS_LDAP_READY | User::STATUS_IMAP_READY;
         $user = $this->getTestUser('PaymentEmail@UserAccount.com', ['status' => $status]);
@@ -66,8 +60,10 @@ class PaymentEmailTest extends TestCase
         // Assert that no jobs were pushed...
         Mail::assertNothingSent();
 
-        $job = new PaymentEmail($payment);
+        $job = new PaymentJob($payment);
         $job->handle();
+
+        $this->assertSame(PaymentJob::QUEUE, $job->queue);
 
         // Assert the email sending job was pushed once
         Mail::assertSent(PaymentSuccess::class, 1);
@@ -80,7 +76,7 @@ class PaymentEmailTest extends TestCase
         $payment->status = Payment::STATUS_FAILED;
         $payment->save();
 
-        $job = new PaymentEmail($payment);
+        $job = new PaymentJob($payment);
         $job->handle();
 
         // Assert the email sending job was pushed once
@@ -94,7 +90,7 @@ class PaymentEmailTest extends TestCase
         $payment->status = Payment::STATUS_EXPIRED;
         $payment->save();
 
-        $job = new PaymentEmail($payment);
+        $job = new PaymentJob($payment);
         $job->handle();
 
         // Assert the email sending job was pushed twice
@@ -114,7 +110,7 @@ class PaymentEmailTest extends TestCase
             $payment->status = $state;
             $payment->save();
 
-            $job = new PaymentEmail($payment);
+            $job = new PaymentJob($payment);
             $job->handle();
         }
 

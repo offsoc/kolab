@@ -77,7 +77,7 @@ class PasswordRetentionCommand extends Command
                         // Send a warning if it wasn't sent yet or 7 days passed since the last warning.
                         // Which means that we send the email 14 and 7 days before the password expires.
                         if (empty($warnedOn) || $warnedOn->diffInDays(Carbon::now(), false) > 7) {
-                            \App\Jobs\Password\RetentionEmailJob::dispatch($user, $nextUpdate->toDateString());
+                            \App\Jobs\Mail\PasswordRetentionJob::dispatch($user, $nextUpdate->toDateString());
                         }
                     }
                 });

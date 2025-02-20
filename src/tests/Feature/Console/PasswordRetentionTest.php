@@ -2,7 +2,8 @@
 
 namespace Tests\Feature\Console;
 
-use App\Jobs\Password\RetentionEmailJob;
+use App\Jobs\MailJob;
+use App\Jobs\Mail\PasswordRetentionJob;
 use App\User;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
@@ -89,12 +90,12 @@ class PasswordRetentionTest extends TestCase
         $this->assertSame(0, $code);
         $this->assertSame("", $output);
 
-        Queue::assertPushed(RetentionEmailJob::class, 2);
-        Queue::assertPushed(RetentionEmailJob::class, function ($job) use ($user) {
+        Queue::assertPushed(PasswordRetentionJob::class, 2);
+        Queue::assertPushed(PasswordRetentionJob::class, function ($job) use ($user) {
             $job_user = TestCase::getObjectProperty($job, 'user');
             return $job_user->id === $user->id;
         });
-        Queue::assertPushed(RetentionEmailJob::class, function ($job) use ($owner) {
+        Queue::assertPushed(PasswordRetentionJob::class, function ($job) use ($owner) {
             $job_user = TestCase::getObjectProperty($job, 'user');
             return $job_user->id === $owner->id;
         });
@@ -108,8 +109,8 @@ class PasswordRetentionTest extends TestCase
         $code = \Artisan::call("password:retention");
         $this->assertSame(0, $code);
 
-        Queue::assertPushed(RetentionEmailJob::class, 1);
-        Queue::assertPushed(RetentionEmailJob::class, function ($job) use ($user) {
+        Queue::assertPushed(PasswordRetentionJob::class, 1);
+        Queue::assertPushed(PasswordRetentionJob::class, function ($job) use ($user) {
             $job_user = TestCase::getObjectProperty($job, 'user');
             return $job_user->id === $user->id;
         });

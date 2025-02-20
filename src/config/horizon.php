@@ -144,7 +144,7 @@ return [
         'production' => [
             'supervisor-1' => [
                 'connection' => 'redis',
-                'queue' => ['default'],
+                'queue' => ['default', App\Jobs\MailJob::QUEUE],
                 'balance' => 'auto',
                 'maxProcesses' => 1,
                 'minProcesses' => 1,
@@ -155,7 +155,7 @@ return [
         'local' => [
             'supervisor-1' => [
                 'connection' => 'redis',
-                'queue' => ['default'],
+                'queue' => ['default', App\Jobs\MailJob::QUEUE],
                 'balance' => 'auto',
                 'maxProcesses' => 1,
                 'minProcesses' => 1,

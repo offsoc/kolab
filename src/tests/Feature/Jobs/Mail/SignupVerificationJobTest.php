@@ -1,20 +1,18 @@
 <?php
 
-namespace Tests\Feature\Jobs;
+namespace Tests\Feature\Jobs\Mail;
 
-use App\Jobs\SignupVerificationEmail;
+use App\Jobs\Mail\SignupVerificationJob;
 use App\Mail\SignupVerification;
 use App\SignupCode;
 use App\Tenant;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
-class SignupVerificationEmailTest extends TestCase
+class SignupVerificationJobTest extends TestCase
 {
     /**
      * {@inheritDoc}
-     *
-     * @return void
      */
     public function setUp(): void
     {
@@ -25,8 +23,6 @@ class SignupVerificationEmailTest extends TestCase
 
     /**
      * {@inheritDoc}
-     *
-     * @return void
      */
     public function tearDown(): void
     {
@@ -37,10 +33,8 @@ class SignupVerificationEmailTest extends TestCase
 
     /**
      * Test job handle
-     *
-     * @return void
      */
-    public function testSignupVerificationEmailHandle()
+    public function testHandle(): void
     {
         $tenant = Tenant::orderBy('id', 'desc')->first();
         $tenant->setSetting('mail.sender.address', 'sender@tenant');
@@ -58,8 +52,10 @@ class SignupVerificationEmailTest extends TestCase
         // Assert that no jobs were pushed...
         Mail::assertNothingSent();
 
-        $job = new SignupVerificationEmail($code);
+        $job = new SignupVerificationJob($code);
         $job->handle();
+
+        $this->assertSame(SignupVerificationJob::QUEUE, $job->queue);
 
         // Assert the email sending job was pushed once
         Mail::assertSent(SignupVerification::class, 1);
