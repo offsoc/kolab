@@ -8,13 +8,8 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 
 /**
- * The abstract \App\Jobs\DomainJob implements the logic needed for all dispatchable Jobs related to
- * \App\Domain objects.
- *
- * ```php
- * $job = new \App\Jobs\Domain\CreateJob($domainId);
- * $job->handle();
- * ```
+ * The abstract class implementing the logic needed for all dispatchable Jobs.
+ * Includes default retry configuration.
  */
 abstract class CommonJob implements ShouldQueue
 {
@@ -48,7 +43,7 @@ abstract class CommonJob implements ShouldQueue
      *
      * @var int
      */
-    public $tries = 5;
+    public $tries = 3;
 
     /**
      * Execute the job.
@@ -56,6 +51,16 @@ abstract class CommonJob implements ShouldQueue
      * @return void
      */
     abstract public function handle();
+
+    /**
+     * Number of seconds to wait before retrying the job.
+     *
+     * @return array<int, int>
+     */
+    public function backoff(): array
+    {
+        return [5, 15, 30, 60, 120];
+    }
 
     /**
      * Delete the job from the queue.
