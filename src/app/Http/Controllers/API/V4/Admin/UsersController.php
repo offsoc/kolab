@@ -51,6 +51,11 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
             if ($owner) {
                 $result = $owner->users(false)->orderBy('email')->get();
             }
+        } elseif (strpos($search, '*')) {
+            // Search by email
+            $result = User::withTrashed()->whereLike('email', str_replace("*", "%", $search))
+                ->orderBy('email')
+                ->get();
         } elseif (strpos($search, '@')) {
             // Search by email
             $result = User::withTrashed()->where('email', $search)
