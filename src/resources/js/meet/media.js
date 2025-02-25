@@ -2,10 +2,10 @@
 
 function Media()
 {
-    let audioActive = null     // True if the audio track is active
-    let videoActive = null     // True if the video track is active
-    let audioSource = ''        // Current audio device identifier
-    let videoSource = ''        // Current video device identifier
+    let audioSource = localStorage.getItem('kolab-meet-audio-source') // Current audio device identifier
+    let videoSource = localStorage.getItem('kolab-meet-video-source') // Current video device identifier
+    let audioActive = null      // True if the audio track is active
+    let videoActive = null      // True if the video track is active
     let mediaStream = null      // Current media stream
     let cameras = []            // List of user video devices
     let microphones = []        // List of user audio devices
@@ -191,7 +191,7 @@ function Media()
                 audio: audioSource ? { deviceId: audioSource } : true
             })
 
-            //If audio or video was explicitly disabled we remove all tracks.
+            // If audio or video was explicitly disabled we remove all tracks.
             if (videoActive === false) {
                 this.removeTracksFromStream(mediaStream, 'Video')
             }
@@ -212,6 +212,9 @@ function Media()
                 audioActive = true
                 volumeMeterStart()
             }
+
+            localStorage.setItem('kolab-meet-audio-source', audioSource);
+            localStorage.setItem('kolab-meet-video-source', videoSource);
 
             // The labels are only available after we have permission, so we re-list the available devices.
             microphones = await this.getAudioDevices()
@@ -291,6 +294,8 @@ function Media()
             audioSource = deviceId
         }
 
+        localStorage.setItem('kolab-meet-audio-source', audioSource);
+
         return audioActive
     }
 
@@ -328,6 +333,8 @@ function Media()
             videoActive = true
             videoSource = deviceId
         }
+
+        localStorage.setItem('kolab-meet-video-source', videoSource);
 
         return videoActive
     }
