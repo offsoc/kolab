@@ -6,6 +6,8 @@ use App\Wallet;
 
 class WalletCharge extends CommonJob
 {
+    public const QUEUE = 'background';
+
     /** @var int How many times retry the job if it fails. */
     public $tries = 5;
 
@@ -25,6 +27,7 @@ class WalletCharge extends CommonJob
     public function __construct(string $walletId)
     {
         $this->walletId = $walletId;
+        $this->onQueue(self::QUEUE);
     }
 
     /**

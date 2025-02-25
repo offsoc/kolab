@@ -49,6 +49,9 @@ class WalletCheckTest extends TestCase
         $job = new WalletCheck($wallet->id);
         $job->handle();
 
+        // Ensure the job ends up on the correct queue
+        $this->assertSame(WalletCheck::QUEUE, $job->queue);
+
         Mail::assertNothingSent();
 
         // Balance is negative now

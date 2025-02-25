@@ -12,6 +12,8 @@ class WalletCheck extends CommonJob
     public const THRESHOLD_REMINDER = 'reminder';
     public const THRESHOLD_INITIAL = 'initial';
 
+    public const QUEUE = 'background';
+
     /** @var int How many times retry the job if it fails. */
     public $tries = 5;
 
@@ -35,6 +37,7 @@ class WalletCheck extends CommonJob
     public function __construct(string $walletId)
     {
         $this->walletId = $walletId;
+        $this->onQueue(self::QUEUE);
     }
 
     /**
