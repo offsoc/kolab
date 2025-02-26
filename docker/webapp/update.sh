@@ -4,31 +4,9 @@ set -x
 
 REBUILD=false
 # Update the sourcecode if available.
-# This also copies the .env files that is required if we don't provide
-# a configuration via the environment.
-# So we need this for the podman setup
-if [ -d /src/kolabsrc.orig ]; then
+if [ -d /src/kolabsrc.orig ] || [ -d /src/overlay ]; then
     echo "----> Updating source"
     /update-source.sh
-
-    REBUILD=true
-fi
-
-if [ -d /src/overlay ]; then
-    echo "----> Applying overlay"
-    rsync -av \
-        --exclude=vendor \
-        --exclude=composer.lock \
-        --exclude=node_modules \
-        --exclude=package-lock.json \
-        --exclude=public \
-        --exclude=storage \
-        --exclude=resources/build \
-        --exclude=bootstrap \
-        --exclude=.gitignore \
-        --exclude=.env \
-        /src/overlay/ /opt/app-root/src/ | tee /tmp/rsync-overlay.output
-
     REBUILD=true
 fi
 
