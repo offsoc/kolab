@@ -39,6 +39,8 @@ class DAV implements ExporterInterface, ImporterInterface
      */
     public function __construct(Account $account, Engine $engine)
     {
+        // Note: This user impersonation method works only with Kolab v3 iRony when kolab_auth_proxy plugin is enabled.
+        // For Kolab v4 we need another approach - just use the kolab:// scheme for this.
         $username = $account->username . ($account->loginas ? "**{$account->loginas}" : '');
         $baseUri = preg_replace('|^dav|', 'http', $account->uri);
 

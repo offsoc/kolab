@@ -19,8 +19,11 @@ class IMAP implements ExporterInterface, ImporterInterface
     /** @const int Max number of items to migrate in one go */
     protected const CHUNK_SIZE = 100;
 
-    /** @var \rcube_imap_generic Imap backend */
+    /** @var ?\rcube_imap_generic Imap backend */
     protected $imap;
+
+    /** @var array IMAP configuration */
+    protected $config;
 
     /** @var Account Account to operate on */
     protected $account;
@@ -36,10 +39,7 @@ class IMAP implements ExporterInterface, ImporterInterface
     {
         $this->account = $account;
         $this->engine = $engine;
-
-        // TODO: Move this to self::authenticate()?
-        $config = self::getConfig($account);
-        $this->imap = static::initIMAP($config);
+        $this->config = self::getConfig($account);
     }
 
     /**
@@ -47,6 +47,10 @@ class IMAP implements ExporterInterface, ImporterInterface
      */
     public function __destruct()
     {
+        if (!$this->imap) {
+            return;
+        }
+
         try {
             $this->imap->closeConnection();
         } catch (\Throwable $e) {
@@ -60,6 +64,7 @@ class IMAP implements ExporterInterface, ImporterInterface
      */
     public function authenticate(): void
     {
+        $this->initIMAP();
     }
 
     /**
@@ -71,6 +76,8 @@ class IMAP implements ExporterInterface, ImporterInterface
      */
     public function createFolder(Folder $folder): void
     {
+        $this->initIMAP();
+
         if ($folder->type != 'mail') {
             throw new \Exception("IMAP does not support folder of type {$folder->type}");
         }
@@ -122,6 +129,8 @@ class IMAP implements ExporterInterface, ImporterInterface
      */
     public function createItem(Item $item): void
     {
+        $this->initIMAP();
+
         $mailbox = self::toUTF7($item->folder->targetname);
 
         if (strlen($item->content)) {
@@ -180,6 +189,8 @@ class IMAP implements ExporterInterface, ImporterInterface
      */
     public function fetchFolder(Folder $folder): void
     {
+        $this->initIMAP();
+
         $mailbox = self::toUTF7($folder->targetname);
 
         // Get folder ACL
@@ -203,6 +214,8 @@ class IMAP implements ExporterInterface, ImporterInterface
      */
     public function fetchItem(Item $item): void
     {
+        $this->initIMAP();
+
         [$uid, $messageId] = explode(':', $item->id, 2);
 
         $mailbox = self::toUTF7($item->folder->fullname);
@@ -269,6 +282,8 @@ class IMAP implements ExporterInterface, ImporterInterface
      */
     public function fetchItemList(Folder $folder, $callback, ImporterInterface $importer): void
     {
+        $this->initIMAP();
+
         // Get existing messages' headers from the destination mailbox
         $existing = $importer->getItems($folder);
 
@@ -331,6 +346,8 @@ class IMAP implements ExporterInterface, ImporterInterface
      */
     public function getFolders($types = []): array
     {
+        $this->initIMAP();
+
         $folders = $this->imap->listMailboxes('', '');
 
         if ($folders === false) {
@@ -367,6 +384,8 @@ class IMAP implements ExporterInterface, ImporterInterface
      */
     public function getItems(Folder $folder): array
     {
+        $this->initIMAP();
+
         $mailbox = self::toUTF7($folder->targetname ? $folder->targetname : $folder->fullname);
 
         // TODO: We should probably first use SEARCH/SORT to skip messages marked as \Deleted
@@ -401,25 +420,37 @@ class IMAP implements ExporterInterface, ImporterInterface
     /**
      * Initialize IMAP connection and authenticate the user
      */
-    protected static function initIMAP(array $config): \rcube_imap_generic
+    protected function initIMAP(): void
     {
-        $imap = new \rcube_imap_generic();
-
-        if (\config('app.debug')) {
-            $imap->setDebug(true, 'App\Backends\IMAP::logDebug');
+        if ($this->imap) {
+            return;
         }
 
-        $imap->connect($config['host'], $config['user'], $config['password'], $config['options']);
+        $this->imap = new \rcube_imap_generic();
 
-        if (!$imap->connected()) {
-            $message = sprintf("Login failed for %s against %s. %s", $config['user'], $config['host'], $imap->error);
+        if (\config('app.debug')) {
+            $this->imap->setDebug(true, 'App\Backends\IMAP::logDebug');
+        }
+
+        $this->imap->connect(
+            $this->config['host'],
+            $this->config['user'],
+            $this->config['password'],
+            $this->config['options']
+        );
+
+        if (!$this->imap->connected()) {
+            $message = sprintf(
+                "Login failed for %s against %s. %s",
+                $this->config['user'],
+                $this->config['host'],
+                $this->imap->error
+            );
 
             \Log::error($message);
 
             throw new \Exception("Connection to IMAP failed");
         }
-
-        return $imap;
     }
 
     /**

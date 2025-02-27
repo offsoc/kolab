@@ -4,8 +4,10 @@ namespace Tests\Feature\DataMigrator;
 
 use App\Backends\Storage;
 use App\DataMigrator\Account;
+use App\DataMigrator\Driver\Kolab;
 use App\DataMigrator\Driver\Kolab\Tags as KolabTags;
 use App\DataMigrator\Engine;
+use App\DataMigrator\Interface\Folder;
 use App\DataMigrator\Queue as MigratorQueue;
 use App\Fs\Item as FsItem;
 use Illuminate\Support\Facades\DB;
@@ -271,6 +273,41 @@ class KolabTest extends TestCase
         $this->assertSame('application/vnd.oasis.opendocument.odt', $files['&kość.odt']->getProperty('mimetype'));
         $this->assertSame('2024-01-12 09:09:09', $files['&kość.odt']->updated_at->toDateTimeString());
         $this->assertSame('123', Storage::fileFetch($files['&kość.odt']));
+    }
+
+    /**
+     * Test user impersonation support
+     */
+    public function testUserImpersonation(): void
+    {
+        [$src, $src_imap, $src_dav, $dst, $dst_imap, $dst_dav] = $this->getTestAccounts();
+
+        $this->initAccount($dst_imap);
+        $this->initAccount($dst_dav);
+        $this->imapAppend($dst_imap, 'INBOX', 'mail/1.eml');
+        $this->davAppend($dst_dav, 'Calendar', ['event/3.ics'], Engine::TYPE_EVENT);
+
+        $adminUser = \config('services.imap.admin_login');
+        $adminPass = \config('services.imap.admin_password');
+        $dst_impersonated = str_replace('jack%40kolab.org:simple123', "{$adminUser}:{$adminPass}", (string) $dst)
+            . '&user=jack@kolab.org';
+
+        $migrator = new Engine();
+        $account = new Account($dst_impersonated);
+        $driver = new Kolab($account, $migrator);
+
+        // This involves IMAP and DAV authentication, so it should be enough,
+        // but we make some more assertions to make sure we're connected to the proper account.
+        $driver->authenticate();
+
+        $mail_items = $driver->getItems(Folder::fromArray(['fullname' => 'INBOX', 'type' => Engine::TYPE_MAIL]));
+        $this->assertCount(1, $mail_items);
+        $this->assertArrayHasKey('<sync1@kolab.org>', $mail_items);
+        $event_items = $driver->getItems(Folder::fromArray(['fullname' => 'Calendar', 'type' => Engine::TYPE_EVENT]));
+        $this->assertCount(1, $event_items);
+        $this->assertArrayHasKey('aaa-aaa', $event_items);
+
+        // TODO: We'll need a Kolab3 installation (iRony) to test if impersonation works there
     }
 
     /**

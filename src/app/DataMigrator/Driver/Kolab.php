@@ -8,6 +8,7 @@ use App\DataMigrator\Interface\Folder;
 use App\DataMigrator\Interface\ImporterInterface;
 use App\DataMigrator\Interface\Item;
 use App\DataMigrator\Interface\ItemSet;
+use App\User;
 
 /**
  * Data migration from/to a Kolab server
@@ -49,6 +50,18 @@ class Kolab extends IMAP
         $uri = preg_replace('/^kolab:/', 'tls:', $uri);
 
         parent::__construct(new Account($uri), $engine);
+
+        // Support user impersonation in Kolab v4 DAV by issuing a token
+        // Note: This is not needed for Kolab v3 (iRony), but the kolab_auth_proxy plugin must be enabled there.
+        if ($account->loginas && $account->scheme != 'kolab3' && ($user = $account->getUser())) {
+            // Cyrus DAV does not support proxy authorization via DAV. Even though it has
+            // the Authorize-As header, it is used only for cummunication with Murder backends.
+            // We use a one-time token instead. It's valid for 6 hours, assume it's enough time
+            // to migrate an account.
+            $account->password = \App\Auth\Utils::tokenCreate((string) $user->id, 6 * 60 * 60);
+            $account->username = $account->loginas;
+            unset($account->loginas);
+        }
 
         // Setup DAV connection
         $uri = sprintf(
@@ -139,6 +152,7 @@ class Kolab extends IMAP
 
         // Configuration (v3 tags)
         if ($item->folder->type == Engine::TYPE_CONFIGURATION) {
+            $this->initIMAP();
             Kolab\Tags::migrateKolab3Tag($this->imap, $item);
             return;
         }
@@ -186,12 +200,14 @@ class Kolab extends IMAP
 
         // Files (IMAP)
         if ($item->folder->type == Engine::TYPE_FILE) {
+            $this->initIMAP();
             Kolab\Files::fetchKolab3File($this->imap, $item);
             return;
         }
 
         // Configuration (v3 tags)
         if ($item->folder->type == Engine::TYPE_CONFIGURATION) {
+            $this->initIMAP();
             Kolab\Tags::fetchKolab3Tag($this->imap, $item);
             return;
         }
@@ -221,6 +237,8 @@ class Kolab extends IMAP
 
         // Files
         if ($folder->type == Engine::TYPE_FILE) {
+            $this->initIMAP();
+
             // Get existing files from the destination account
             $existing = $importer->getItems($folder);
 
@@ -234,6 +252,8 @@ class Kolab extends IMAP
 
         // Configuration (v3 tags)
         if ($folder->type == Engine::TYPE_CONFIGURATION) {
+            $this->initIMAP();
+
             // Get existing tags from the destination account
             $existing = $importer->getItems($folder);
 
@@ -251,6 +271,8 @@ class Kolab extends IMAP
      */
     public function getFolders($types = []): array
     {
+        $this->initIMAP();
+
         // Note: No support for migration from Kolab4 yet.
         // We use IMAP to get the list of all folders, but we'll get folder contents from IMAP and DAV.
         // This will not work with Kolab4
@@ -387,6 +409,7 @@ class Kolab extends IMAP
 
         // Configuration folder (tags)
         if ($folder->type == Engine::TYPE_CONFIGURATION) {
+            $this->initIMAP();
             return Kolab\Tags::getKolab4Tags($this->imap);
         }
 
@@ -396,13 +419,11 @@ class Kolab extends IMAP
     /**
      * Initialize IMAP connection and authenticate the user
      */
-    protected static function initIMAP(array $config): \rcube_imap_generic
+    protected function initIMAP(): void
     {
-        $imap = parent::initIMAP($config);
+        parent::initIMAP();
 
         // Advertise itself as a Kolab client, in case Guam is in the way
-        $imap->id(['name' => 'Cockpit/Kolab']);
-
-        return $imap;
+        $this->imap->id(['name' => 'Cockpit/Kolab']);
     }
 }
