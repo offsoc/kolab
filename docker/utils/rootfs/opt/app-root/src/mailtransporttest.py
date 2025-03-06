@@ -46,9 +46,10 @@ class SendTest:
         self.body = options.body
         self.verbose = options.verbose
         self.validate = options.validate
+        self.bulk_send = options.bulk_send
 
-        self.uuid = str(uuid.uuid4())
-        self.subject = f"Delivery Check {self.uuid}"
+        self.uuid = None
+        self.subject = None
 
     def validate_message(self, message):
         import email.parser
@@ -135,9 +136,20 @@ class SendTest:
             return True
         return False
 
-    def send_mail(self, starttls):
+    def get_message(self, from_address, to):
+        self.uuid = str(uuid.uuid4())
+        self.subject = f"Delivery Check {self.uuid}"
         dtstamp = datetime.utcnow()
+        return mailtemplate.format(
+            messageid="<{}@deliverycheck.org>".format(self.uuid),
+            subject=self.subject,
+            sender=from_address,
+            to=to,
+            date=dtstamp.strftime("%a, %d %b %Y %H:%M:%S %z"),
+            body=self.body,
+        )
 
+    def send_mail(self, starttls):
         if self.target_address:
             to = self.target_address
         else:
@@ -148,30 +160,25 @@ class SendTest:
         else:
             from_address = self.sender_username
 
-        print(f"Sending email to {to}")
+        count = 1 if not self.bulk_send else self.bulk_send
+        print(f"Sending {count} email to {to}")
 
-        msg = mailtemplate.format(
-            messageid="<{}@deliverycheck.org>".format(self.uuid),
-            subject=self.subject,
-            sender=from_address,
-            to=to,
-            date=dtstamp.strftime("%a, %d %b %Y %H:%M:%S %z"),
-            body=self.body,
-        )
         if starttls:
             with smtplib.SMTP(host=self.sender_host, port=self.sender_port or 587) as smtp:
                 smtp.starttls()
                 smtp.ehlo()
                 smtp.login(self.sender_username, self.sender_password)
                 smtp.noop()
-                smtp.sendmail(from_address, to, msg)
-                print(f"Email with uuid {self.uuid} sent")
+                for _ in range(count):
+                    smtp.sendmail(from_address, to, self.get_message(from_address, to))
+                    print(f"Email with uuid {self.uuid} sent")
         else:
             with smtplib.SMTP_SSL(host=self.sender_host, port=self.sender_port or 465) as smtp:
                 smtp.login(self.sender_username, self.sender_password)
                 smtp.noop()
-                smtp.sendmail(from_address, to, msg)
-                print(f"Email with uuid {self.uuid} sent")
+                for _ in range(count):
+                    smtp.sendmail(from_address, to, self.get_message(from_address, to))
+                    print(f"Email with uuid {self.uuid} sent")
 
 
 parser = argparse.ArgumentParser(description='Mail transport tests.')
@@ -190,11 +197,15 @@ parser.add_argument("--from-address", help="Source address instead of the sender
 parser.add_argument("--target-address", help="Target address instead of the recipient username")
 parser.add_argument("--body", help="Body text to include")
 parser.add_argument("--validate", action='store_true', help="Validate the received message")
+parser.add_argument('--bulk-send', help='Bulk send email, then exit', type=int, default=0)
 
 args = parser.parse_args()
 
 obj = SendTest(args)
 obj.send_mail(args.starttls)
+
+if args.bulk_send:
+    sys.exit(0)
 
 timeout = 10
 
