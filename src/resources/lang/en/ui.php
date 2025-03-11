@@ -436,6 +436,7 @@ return [
         'step2' => "We sent out a confirmation code to your email address. Enter the code we sent you, or click the link in the message.",
         'step3' => "Create your {app} identity (you can choose additional addresses later).",
         'created' => "The account is about to be created!",
+        'owndomain' => "Use your own domain",
         'token' => "Signup authorization token",
         'voucher' => "Voucher Code",
     ],

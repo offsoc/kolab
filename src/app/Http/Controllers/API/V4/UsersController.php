@@ -7,7 +7,6 @@ use App\Domain;
 use App\License;
 use App\Plan;
 use App\Rules\Password;
-use App\Rules\UserEmailDomain;
 use App\Rules\UserEmailLocal;
 use App\Sku;
 use App\User;
@@ -248,8 +247,7 @@ class UsersController extends RelationController
         $result = [
             'skus' => $skus,
             'enableBeta' => $hasBeta,
-            // TODO: This will change when we enable all users to create domains
-            'enableDomains' => $isController && $hasCustomDomain,
+            'enableDomains' => $isController && ($hasCustomDomain || $plan?->hasDomain()),
             'enableDistlists' => $isController && $hasCustomDomain && \config('app.with_distlists'),
             'enableFiles' => !$isDegraded && $hasBeta && \config('app.with_files'),
             'enableFolders' => $isController && $hasCustomDomain && \config('app.with_shared_folders'),
@@ -260,7 +258,7 @@ class UsersController extends RelationController
             'enableUsers' => $isController,
             'enableWallets' => $isController && \config('app.with_wallet'),
             'enableWalletMandates' => $isController,
-            'enableWalletPayments' => $isController && (!$plan || $plan->mode != Plan::MODE_MANDATE),
+            'enableWalletPayments' => $isController && $plan?->mode != Plan::MODE_MANDATE,
             'enableCompanionapps' => $hasBeta && \config('app.with_companion_app'),
         ];
 

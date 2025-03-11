@@ -33,13 +33,11 @@ class EntitlementObserver
             return false;
         }
 
-        $sku = \App\Sku::find($entitlement->sku_id);
-
-        if (!$sku) {
+        if (empty($entitlement->sku)) {
             return false;
         }
 
-        $result = $sku->handler_class::preReq($entitlement, $wallet->owner);
+        $result = $entitlement->sku->handler_class::preReq($entitlement, $wallet->owner);
 
         if (!$result) {
             return false;

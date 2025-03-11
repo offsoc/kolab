@@ -162,6 +162,7 @@
                         if (response.data.status == 'success') {
                             this.$toast.success(response.data.message)
                             this.$router.push({ name: 'domains' })
+                            this.$root.updateStatusInfo()
                         }
                     })
             },
@@ -179,6 +180,7 @@
                     .then(response => {
                         this.$toast.success(response.data.message)
                         this.$router.push({ name: 'domains' })
+                        this.$root.updateStatusInfo()
                     })
             },
             submitSettings() {

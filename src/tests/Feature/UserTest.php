@@ -7,6 +7,7 @@ use App\EventLog;
 use App\Group;
 use App\Package;
 use App\PackageSku;
+use App\Plan;
 use App\Sku;
 use App\User;
 use App\Auth\Utils as AuthUtils;
@@ -115,7 +116,37 @@ class UserTest extends TestCase
      */
     public function testAssignPlan(): void
     {
-        $this->markTestIncomplete();
+        $domain = $this->getTestDomain('useraccount.com', [
+                'status' => Domain::STATUS_NEW | Domain::STATUS_ACTIVE,
+                'type' => Domain::TYPE_EXTERNAL,
+        ]);
+        $user = $this->getTestUser('useraccounta@' . $domain->namespace);
+        $plan = Plan::withObjectTenantContext($user)->where('title', 'group')->first();
+
+        // Group plan without domain
+        $user->assignPlan($plan);
+
+        $this->assertSame((string) $plan->id, $user->getSetting('plan_id'));
+        $this->assertSame(7, $user->entitlements()->count()); // 5 storage + 1 mailbox + 1 groupware
+
+        $user = $this->getTestUser('useraccountb@' . $domain->namespace);
+
+        // Group plan with a domain
+        $user->assignPlan($plan, $domain);
+
+        $this->assertSame((string) $plan->id, $user->getSetting('plan_id'));
+        $this->assertSame(7, $user->entitlements()->count()); // 5 storage + 1 mailbox + 1 groupware
+        $this->assertSame(1, $domain->entitlements()->count());
+
+        // Individual plan (domain is not allowed)
+        $user = $this->getTestUser('user-test@' . \config('app.domain'));
+        $plan = Plan::withObjectTenantContext($user)->where('title', 'individual')->first();
+
+        $this->expectException(\Exception::class);
+        $user->assignPlan($plan, $domain);
+
+        $this->assertNull($user->getSetting('plan_id'));
+        $this->assertSame(0, $user->entitlements()->count());
     }
 
     /**

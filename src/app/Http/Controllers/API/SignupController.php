@@ -9,14 +9,16 @@ use App\Domain;
 use App\Plan;
 use App\Providers\PaymentProvider;
 use App\ReferralCode;
-use App\Rules\SignupExternalEmail;
-use App\Rules\SignupToken as SignupTokenRule;
 use App\Rules\Password;
 use App\Rules\ReferralCode as ReferralCodeRule;
+use App\Rules\SignupExternalEmail;
+use App\Rules\SignupToken as SignupTokenRule;
 use App\Rules\UserEmailDomain;
 use App\Rules\UserEmailLocal;
 use App\SignupCode;
 use App\SignupInvitation;
+use App\SignupToken;
+use App\Tenant;
 use App\User;
 use App\Utils;
 use App\VatRate;
@@ -92,11 +94,12 @@ class SignupController extends Controller
             'first_name' => 'max:128',
             'last_name' => 'max:128',
             'voucher' => 'max:32',
+            'plan' => 'required',
         ];
 
-        $plan = $this->getPlan();
+        $plan = $this->getPlan($request);
 
-        if ($plan->mode == Plan::MODE_TOKEN) {
+        if ($plan?->mode == Plan::MODE_TOKEN) {
             $rules['token'] = ['required', 'string', new SignupTokenRule($plan)];
         } else {
             $rules['email'] = ['required', 'string', new SignupExternalEmail()];
@@ -124,15 +127,13 @@ class SignupController extends Controller
             'status' => 'success',
             'code' => $code->code,
             'mode' => $plan->mode ?: 'email',
+            'domains' => Domain::getPublicDomains(),
+            'is_domain' => $plan->hasDomain(),
         ];
 
         if ($plan->mode == Plan::MODE_TOKEN) {
             // Token verification, jump to the last step
-            $has_domain = $plan->hasDomain();
-
             $response['short_code'] = $code->short_code;
-            $response['is_domain'] = $has_domain;
-            $response['domains'] = $has_domain ? [] : Domain::getPublicDomains();
         } else {
             // External email verification, send an email message
             SignupVerificationJob::dispatch($code);
@@ -156,17 +157,10 @@ class SignupController extends Controller
             return $this->errorResponse(404);
         }
 
-        $has_domain = $this->getPlan()->hasDomain();
-
-        $result = [
-            'id' => $id,
-            'is_domain' => $has_domain,
-            'domains' => $has_domain ? [] : Domain::getPublicDomains(),
-        ];
+        $result = ['id' => $id];
 
         return response()->json($result);
     }
-
 
     /**
      * Validation of the verification code.
@@ -199,20 +193,25 @@ class SignupController extends Controller
             || $code->isExpired()
             || Str::upper($request->short_code) !== Str::upper($code->short_code)
         ) {
-            $errors = ['short_code' => "The code is invalid or expired."];
+            $errors = ['short_code' => self::trans('validation.signupcodeinvalid')];
             return response()->json(['status' => 'error', 'errors' => $errors], 422);
         }
 
         // For signup last-step mode remember the code object, so we can delete it
         // with single SQL query (->delete()) instead of two
-        $request->code = $code;
+        $request->merge(['code' => $code]);
+
+        $plan = $this->getPlan($request);
+
+        if (!$plan) {
+            $errors = ['short_code' => self::trans('validation.signupcodeinvalid')];
+            return response()->json(['status' => 'error', 'errors' => $errors], 422);
+        }
 
         if ($update) {
             $code->verify_ip_address = $request->ip();
             $code->save();
         }
-
-        $has_domain = $this->getPlan()->hasDomain();
 
         // Return user name and email/phone/voucher from the codes database,
         // domains list for selection and "plan type" flag
@@ -222,8 +221,7 @@ class SignupController extends Controller
                 'first_name' => $code->first_name,
                 'last_name' => $code->last_name,
                 'voucher' => $code->voucher,
-                'is_domain' => $has_domain,
-                'domains' => $has_domain ? [] : Domain::getPublicDomains(),
+                'is_domain' => $plan->hasDomain(),
         ]);
     }
 
@@ -243,10 +241,28 @@ class SignupController extends Controller
             'voucher' => 'max:32',
         ];
 
+        if ($request->invitation) {
+            // Signup via invitation
+            $invitation = SignupInvitation::withEnvTenantContext()->find($request->invitation);
+
+            if (empty($invitation) || $invitation->isCompleted()) {
+                return $this->errorResponse(404);
+            }
+
+            // Check optional fields
+            $rules['first_name'] = 'max:128';
+            $rules['last_name'] = 'max:128';
+        }
+
+        if (!$request->code) {
+            $rules['plan'] = 'required';
+        }
+
+        $plan = $this->getPlan($request);
+
         // Direct signup by token
         if ($request->token) {
             // This will validate the token and the plan mode
-            $plan = $request->plan ? Plan::withEnvTenantContext()->where('title', $request->plan)->first() : null;
             $rules['token'] = ['required', 'string', new SignupTokenRule($plan)];
         }
 
@@ -259,52 +275,22 @@ class SignupController extends Controller
 
         $settings = [];
 
-        if (!empty($request->token)) {
+        if ($request->token) {
             $settings = ['signup_token' => strtoupper($request->token)];
-        } elseif (!empty($request->plan) && empty($request->code) && empty($request->invitation)) {
-            // Plan parameter is required/allowed in mandate mode
-            $plan = Plan::withEnvTenantContext()->where('title', $request->plan)->first();
-
-            if (!$plan || $plan->mode != Plan::MODE_MANDATE) {
-                $msg = self::trans('validation.exists', ['attribute' => 'plan']);
-                return response()->json(['status' => 'error', 'errors' => ['plan' => $msg]], 422);
-            }
-        } elseif ($request->invitation) {
-            // Signup via invitation
-            $invitation = SignupInvitation::withEnvTenantContext()->find($request->invitation);
-
-            if (empty($invitation) || $invitation->isCompleted()) {
-                return $this->errorResponse(404);
-            }
-
-            // Check required fields
-            $v = Validator::make(
-                $request->all(),
-                [
-                    'first_name' => 'max:128',
-                    'last_name' => 'max:128',
-                ]
-            );
-
-            $errors = $v->fails() ? $v->errors()->toArray() : [];
-
-            if (!empty($errors)) {
-                return response()->json(['status' => 'error', 'errors' => $errors], 422);
-            }
-
+        } elseif (!empty($invitation)) {
             $settings = [
                 'external_email' => $invitation->email,
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
             ];
+        } elseif (!$request->code && $plan?->mode == Plan::MODE_MANDATE) {
+            // mandate mode
         } else {
             // Validate verification codes (again)
             $v = $this->verify($request, false);
             if ($v->status() !== 200) {
                 return $v;
             }
-
-            $plan = $this->getPlan();
 
             // Get user name/email from the verification code database
             $code_data = $v->getData();
@@ -313,6 +299,8 @@ class SignupController extends Controller
                 'first_name' => $code_data->first_name,
                 'last_name' => $code_data->last_name,
             ];
+
+            $plan = $this->getPlan($request);
 
             if ($plan->mode == Plan::MODE_TOKEN) {
                 $settings['signup_token'] = strtoupper($code_data->email);
@@ -332,10 +320,6 @@ class SignupController extends Controller
             }
         }
 
-        if (empty($plan)) {
-            $plan = $this->getPlan();
-        }
-
         $is_domain = $plan->hasDomain();
 
         // Validate login
@@ -345,7 +329,6 @@ class SignupController extends Controller
 
         // Set some properties for signup() method
         $request->settings = $settings;
-        $request->plan = $plan;
         $request->discount = $discount ?? null;
         $request->invitation = $invitation ?? null;
 
@@ -391,7 +374,7 @@ class SignupController extends Controller
         DB::beginTransaction();
 
         // Create domain record
-        if ($is_domain) {
+        if ($is_domain && !Domain::withTrashed()->where('namespace', $domain_name)->exists()) {
             $domain = Domain::create([
                     'namespace' => $domain_name,
                     'type' => Domain::TYPE_EXTERNAL,
@@ -452,7 +435,7 @@ class SignupController extends Controller
 
         // Bump up counter on the signup token
         if (!empty($request->settings['signup_token'])) {
-            \App\SignupToken::where('id', $request->settings['signup_token'])->increment('counter');
+            SignupToken::where('id', $request->settings['signup_token'])->increment('counter');
         }
 
         DB::commit();
@@ -508,7 +491,7 @@ class SignupController extends Controller
             $mandate = [
                 'currency' => $wallet->currency,
 
-                'description' => \App\Tenant::getConfig($user->tenant_id, 'app.name')
+                'description' => Tenant::getConfig($user->tenant_id, 'app.name')
                     . ' ' . self::trans('app.mandate-description-suffix'),
 
                 'methodId' => PaymentProvider::METHOD_CREDITCARD,
@@ -576,13 +559,15 @@ class SignupController extends Controller
     /**
      * Returns plan for the signup process
      *
+     * @param \Illuminate\Http\Request $request HTTP request
+     *
      * @returns \App\Plan Plan object selected for current signup process
      */
-    protected function getPlan()
+    protected function getPlan(Request $request)
     {
-        $request = request();
+        if (!$request->plan instanceof Plan) {
+            $plan = null;
 
-        if (!$request->plan || !$request->plan instanceof Plan) {
             // Get the plan if specified and exists...
             if (($request->code instanceof SignupCode) && $request->code->plan) {
                 $plan = Plan::withEnvTenantContext()->where('title', $request->code->plan)->first();
@@ -590,13 +575,7 @@ class SignupController extends Controller
                 $plan = Plan::withEnvTenantContext()->where('title', $request->plan)->first();
             }
 
-            // ...otherwise use the default plan
-            if (empty($plan)) {
-                // TODO: Get default plan title from config
-                $plan = Plan::withEnvTenantContext()->where('title', 'individual')->first();
-            }
-
-            $request->plan = $plan;
+            $request->merge(['plan' => $plan]);
         }
 
         return $request->plan;
@@ -605,13 +584,13 @@ class SignupController extends Controller
     /**
      * Login (kolab identity) validation
      *
-     * @param string $login    Login (local part of an email address)
-     * @param string $domain   Domain name
-     * @param bool   $external Enables additional checks for domain part
+     * @param string $login     Login (local part of an email address)
+     * @param string $namespace Domain name
+     * @param bool   $external  Enable signup for a custom domain
      *
      * @return array Error messages on validation error
      */
-    protected static function validateLogin($login, $domain, $external = false): ?array
+    protected static function validateLogin($login, $namespace, $external = false): ?array
     {
         // Validate login part alone
         $v = Validator::make(
@@ -623,29 +602,35 @@ class SignupController extends Controller
             return ['login' => $v->errors()->toArray()['login'][0]];
         }
 
-        $domains = $external ? null : Domain::getPublicDomains();
-
-        // Validate the domain
-        $v = Validator::make(
-            ['domain' => $domain],
-            ['domain' => ['required', 'string', new UserEmailDomain($domains)]]
-        );
-
-        if ($v->fails()) {
-            return ['domain' => $v->errors()->toArray()['domain'][0]];
+        $domain = null;
+        if (is_string($namespace)) {
+            $namespace = Str::lower($namespace);
+            $domain = Domain::withTrashed()->where('namespace', $namespace)->first();
         }
 
-        $domain = Str::lower($domain);
+        if ($domain && $domain->isPublic() && !$domain->trashed()) {
+            // no error, everyone can signup for an existing public domain
+        } elseif ($domain) {
+            // domain exists and is not public (or is deleted)
+            return ['domain' => self::trans('validation.domainnotavailable')];
+        } else {
+            // non-existing custom domain
+            if (!$external) {
+                return ['domain' => self::trans('validation.domaininvalid')];
+            }
 
-        // Check if domain is already registered with us
-        if ($external) {
-            if (Domain::withTrashed()->where('namespace', $domain)->exists()) {
-                return ['domain' => self::trans('validation.domainexists')];
+            $v = Validator::make(
+                ['domain' => $namespace],
+                ['domain' => ['required', 'string', new UserEmailDomain()]]
+            );
+
+            if ($v->fails()) {
+                return ['domain' => $v->errors()->toArray()['domain'][0]];
             }
         }
 
         // Check if user with specified login already exists
-        $email = $login . '@' . $domain;
+        $email = $login . '@' . $namespace;
         if (User::emailExists($email) || User::aliasExists($email) || \App\Group::emailExists($email)) {
             return ['login' => self::trans('validation.loginexists')];
         }

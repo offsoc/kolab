@@ -1,6 +1,6 @@
 <template>
     <div class="container">
-        <div id="step0" v-if="!invitation">
+        <div id="step0">
             <div class="plan-selector row row-cols-sm-2 g-3">
                 <div v-for="item in plans" :key="item.id" :id="'plan-' + item.title">
                     <div :class="'card bg-light plan-' + item.title">
@@ -39,7 +39,7 @@
                         <label for="signup_email" class="visually-hidden">{{ $t('signup.email') }}</label>
                         <input type="text" class="form-control" id="signup_email" :placeholder="$t('signup.email')" required v-model="email">
                     </div>
-                    <btn class="btn-secondary" @click="stepBack">{{ $t('btn.back') }}</btn>
+                    <btn class="btn-secondary" @click="stepBack" v-if="plans.length > 1">{{ $t('btn.back') }}</btn>
                     <btn class="btn-primary ms-2" type="submit" icon="check">{{ $t('btn.continue') }}</btn>
                 </form>
             </div>
@@ -78,10 +78,14 @@
                     </div>
                     <div class="mb-3">
                         <label for="signup_login" class="visually-hidden"></label>
+                        <div v-if="is_domain" class="form-check float-end text-secondary">
+                            <input class="form-check-input" type="checkbox" value="1" id="custom_domain" @change="useCustomDomain">
+                            <label class="form-check-label" for="custom_domain">{{ $t('signup.owndomain') }}</label>
+                        </div>
                         <div class="input-group">
                             <input type="text" class="form-control" id="signup_login" required v-model="login" :placeholder="$t('signup.login')">
                             <span class="input-group-text">@</span>
-                            <input v-if="is_domain" type="text" class="form-control rounded-end" id="signup_domain" required v-model="domain" :placeholder="$t('form.domain')">
+                            <input v-if="use_custom" type="text" class="form-control rounded-end" id="signup_domain" required :placeholder="$t('form.domain')" v-model="domain">
                             <select v-else class="form-select rounded-end" id="signup_domain" required v-model="domain">
                                 <option v-for="_domain in domains" :key="_domain" :value="_domain">{{ _domain }}</option>
                             </select>
@@ -92,7 +96,7 @@
                         <label for="signup_voucher" class="visually-hidden">{{ $t('signup.voucher') }}</label>
                         <input type="text" class="form-control" id="signup_voucher" :placeholder="$t('signup.voucher')" v-model="voucher">
                     </div>
-                    <btn v-if="!invitation" class="btn-secondary me-2" @click="stepBack">{{ $t('btn.back') }}</btn>
+                    <btn v-if="!invitation || plans.length > 1" class="btn-secondary me-2" @click="stepBack">{{ $t('btn.back') }}</btn>
                     <btn class="btn-primary" type="submit" icon="check">
                         <span v-if="invitation">{{ $t('btn.signup') }}</span>
                         <span v-else>{{ $t('btn.submit') }}</span>
@@ -176,7 +180,9 @@
                 },
                 plans: [],
                 referral: '',
+                selectedDomain: '',
                 token: '',
+                use_custom: false,
                 voucher: ''
             }
         },
@@ -201,14 +207,7 @@
                 axios.get('/api/auth/signup/invitations/' + params[1], { loader: true })
                     .then(response => {
                         this.invitation = response.data
-                        this.login = response.data.login
-                        this.voucher = response.data.voucher
-                        this.first_name = response.data.first_name
-                        this.last_name = response.data.last_name
-                        this.plan = response.data.plan
-                        this.is_domain = response.data.is_domain
-                        this.setDomain(response.data)
-                        this.displayForm(3, true)
+                        this.displayForm(0)
                     })
                     .catch(error => {
                         this.$root.errorHandler(error)
@@ -247,29 +246,20 @@
                     this.plan = title
                     this.mode = plan.mode
                     this.is_domain = plan.isDomain
-                    this.domain = ''
 
-                    let step = 1
-
-                    if (plan.mode == 'mandate') {
-                        step = 3
-                        if (!plan.isDomain || !this.domains.length) {
-                            axios.get('/api/auth/signup/domains')
-                                .then(response => {
-                                    this.displayForm(step, true)
-                                    this.setDomain(response.data)
-                                })
-                            return
-                        }
-                    }
-
-                    this.displayForm(step, true)
+                    this.displayForm(plan.mode == 'mandate' || this.invitation ? 3 : 1, true)
                 }
             },
             step0(plan) {
                 if (!this.plans.length) {
                     axios.get('/api/auth/signup/plans', { loader: true }).then(response => {
                         this.plans = response.data.plans
+                        if (this.plans.length == 1) {
+                            if (!plan || plan != this.plans[0].title) {
+                                plan = this.plans[0].title
+                            }
+                        }
+
                         this.selectPlanByTitle(plan)
                     })
                     .catch(error => {
@@ -291,12 +281,8 @@
                         this.short_code = response.data.short_code
                         this.mode = response.data.mode
                         this.is_domain = response.data.is_domain
+                        this.setDomain(response.data)
                         this.displayForm(this.mode == 'token' ? 3 : 2, true)
-
-                        // Fill the domain selector with available domains
-                        if (!this.is_domain) {
-                            this.setDomain(response.data)
-                        }
                     })
             },
             // Submits the code to the API for verification
@@ -311,19 +297,13 @@
 
                 axios.post('/api/auth/signup/verify', post)
                     .then(response => {
-                        this.displayForm(3, true)
                         // Reset user name/email/plan, we don't have them if user used a verification link
                         this.first_name = response.data.first_name
                         this.last_name = response.data.last_name
                         this.email = response.data.email
                         this.is_domain = response.data.is_domain
                         this.voucher = response.data.voucher
-                        this.domain = ''
-
-                        // Fill the domain selector with available domains
-                        if (!this.is_domain) {
-                            this.setDomain(response.data)
-                        }
+                        this.displayForm(3, true)
                     })
                     .catch(error => {
                         if (bylink === true) {
@@ -366,7 +346,7 @@
                 const card = $(e.target).closest('.card[id^="step"]')
                 let step = card.attr('id').replace('step', '')
 
-                card.addClass('d-none').find('form')[0].reset()
+                card.addClass('d-none')
 
                 step -= 1
 
@@ -374,7 +354,7 @@
                     step = 1
                 }
 
-                if (this.mode == 'mandate' && step < 3) {
+                if ((this.invitation || this.mode == 'mandate') && step < 3) {
                     step = 0
                 }
 
@@ -394,10 +374,19 @@
                     return this.step0()
                 }
 
-                $('#step' + step).removeClass('d-none').find('form')[0].reset()
+                if (step > 2 && !this.domains.length) {
+                    axios.get('/api/auth/signup/domains')
+                        .then(response => {
+                            this.setDomain(response.data)
+                            this.displayForm(step, focus)
+                        })
+                    return
+                }
+
+                $('#step' + step).removeClass('d-none')
 
                 if (focus) {
-                    $('#step' + step).find('input').first().focus()
+                    $('#step' + step).find('input:not([type=checkbox])').first().focus()
                 }
             },
             lastStepPostData() {
@@ -430,6 +419,12 @@
                         this.domain = this.domains[0]
                     }
                 }
+
+                this.selectedDomain = this.domain
+            },
+            useCustomDomain(event) {
+                this.use_custom = event.target.checked
+                this.domain = this.use_custom ? '' : this.selectedDomain
             }
         }
     }

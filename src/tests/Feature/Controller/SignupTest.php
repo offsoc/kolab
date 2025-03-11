@@ -188,14 +188,16 @@ class SignupTest extends TestCase
         $response->assertStatus(422);
 
         $this->assertSame('error', $json['status']);
-        $this->assertCount(1, $json['errors']);
+        $this->assertCount(2, $json['errors']);
         $this->assertArrayHasKey('email', $json['errors']);
+        $this->assertArrayHasKey('plan', $json['errors']);
 
         // Data with missing name
         $data = [
             'email' => 'UsersApiControllerTest1@UsersApiControllerTest.com',
             'first_name' => str_repeat('a', 250),
             'last_name' => str_repeat('a', 250),
+            'plan' => 'individual',
         ];
 
         $response = $this->post('/api/auth/signup/init', $data);
@@ -208,11 +210,12 @@ class SignupTest extends TestCase
         $this->assertArrayHasKey('first_name', $json['errors']);
         $this->assertArrayHasKey('last_name', $json['errors']);
 
-        // Data with invalid email (but not phone number)
+        // Data with invalid email (but not phone number), and invalid plan
         $data = [
             'email' => '@example.org',
             'first_name' => 'Signup',
             'last_name' => 'User',
+            'plan' => 'invalid',
         ];
 
         $response = $this->post('/api/auth/signup/init', $data);
@@ -221,13 +224,15 @@ class SignupTest extends TestCase
         $response->assertStatus(422);
 
         $this->assertSame('error', $json['status']);
-        $this->assertCount(1, $json['errors']);
+        $this->assertCount(2, $json['errors']);
         $this->assertArrayHasKey('email', $json['errors']);
+        $this->assertArrayHasKey('plan', $json['errors']);
 
         // Sanity check on voucher code, last/first name is optional
         $data = [
             'voucher' => '123456789012345678901234567890123',
             'email' => 'valid@email.com',
+            'plan' => 'individual',
         ];
 
         $response = $this->post('/api/auth/signup/init', $data);
@@ -244,6 +249,7 @@ class SignupTest extends TestCase
             'email' => str_repeat('a', 190) . '@example.org',
             'first_name' => 'Signup',
             'last_name' => 'User',
+            'plan' => 'individual',
         ];
 
         $response = $this->post('/api/auth/signup/init', $data);
@@ -262,6 +268,7 @@ class SignupTest extends TestCase
             'email' => 'test@example.org',
             'first_name' => 'Signup',
             'last_name' => 'User',
+            'plan' => 'individual',
         ];
 
         \config(['app.signup.email_limit' => 0]);
@@ -287,6 +294,7 @@ class SignupTest extends TestCase
             'email' => 'ip@example.org',
             'first_name' => 'Signup',
             'last_name' => 'User',
+            'plan' => 'individual',
         ];
 
         \config(['app.signup.email_limit' => 0]);
@@ -326,7 +334,7 @@ class SignupTest extends TestCase
             'email' => 'testuser@external.com',
             'first_name' => 'Signup',
             'last_name' => 'User',
-            'plan' => 'individual',
+            'plan' => 'group',
         ];
 
         $response = $this->post('/api/auth/signup/init', $data, ['REMOTE_ADDR' => '10.1.1.2']);
@@ -334,10 +342,12 @@ class SignupTest extends TestCase
 
         $response->assertStatus(200);
 
-        $this->assertCount(3, $json);
+        $this->assertCount(5, $json);
         $this->assertSame('success', $json['status']);
         $this->assertSame('email', $json['mode']);
+        $this->assertSame(true, $json['is_domain']);
         $this->assertNotEmpty($json['code']);
+        $this->assertSame($all_domains = Domain::getPublicDomains(), $json['domains']);
 
         $code = SignupCode::find($json['code']);
 
@@ -361,15 +371,18 @@ class SignupTest extends TestCase
 
         // Try the same with voucher
         $data['voucher'] = 'TEST';
+        $data['plan'] = 'individual';
 
         $response = $this->post('/api/auth/signup/init', $data);
         $json = $response->json();
 
         $response->assertStatus(200);
-        $this->assertCount(3, $json);
+        $this->assertCount(5, $json);
         $this->assertSame('success', $json['status']);
         $this->assertSame('email', $json['mode']);
+        $this->assertSame(false, $json['is_domain']);
         $this->assertNotEmpty($json['code']);
+        $this->assertSame($all_domains, $json['domains']);
 
         // Assert the job has proper data assigned
         Queue::assertPushed(\App\Jobs\Mail\SignupVerificationJob::class, function ($job) use ($data, $json) {
@@ -461,14 +474,14 @@ class SignupTest extends TestCase
         $json = $response->json();
 
         $response->assertStatus(200);
-        $this->assertCount(7, $json);
+        $this->assertCount(6, $json);
         $this->assertSame('success', $json['status']);
         $this->assertSame($result['email'], $json['email']);
         $this->assertSame($result['first_name'], $json['first_name']);
         $this->assertSame($result['last_name'], $json['last_name']);
         $this->assertSame($result['voucher'], $json['voucher']);
         $this->assertSame(false, $json['is_domain']);
-        $this->assertTrue(is_array($json['domains']) && !empty($json['domains']));
+        //$this->assertTrue(is_array($json['domains']) && !empty($json['domains']));
 
         $code->refresh();
 
@@ -494,10 +507,11 @@ class SignupTest extends TestCase
 
         $response->assertStatus(422);
         $this->assertSame('error', $json['status']);
-        $this->assertCount(3, $json['errors']);
+        $this->assertCount(4, $json['errors']);
         $this->assertArrayHasKey('login', $json['errors']);
         $this->assertArrayHasKey('password', $json['errors']);
         $this->assertArrayHasKey('domain', $json['errors']);
+        $this->assertArrayHasKey('plan', $json['errors']);
 
         $domain = $this->getPublicDomain();
 
@@ -506,6 +520,7 @@ class SignupTest extends TestCase
             'login' => 'test',
             'password' => 'test',
             'password_confirmation' => 'test2',
+            'plan' => 'individual',
         ];
 
         $response = $this->post('/api/auth/signup', $data);
@@ -525,6 +540,7 @@ class SignupTest extends TestCase
             'domain' => $domain,
             'password' => 'test',
             'password_confirmation' => 'test',
+            'plan' => 'indvalid',
         ];
 
         $response = $this->post('/api/auth/signup', $data);
@@ -532,9 +548,10 @@ class SignupTest extends TestCase
 
         $response->assertStatus(422);
         $this->assertSame('error', $json['status']);
-        $this->assertCount(2, $json['errors']);
+        $this->assertCount(3, $json['errors']);
         $this->assertArrayHasKey('login', $json['errors']);
         $this->assertArrayHasKey('password', $json['errors']);
+        $this->assertArrayHasKey('plan', $json['errors']);
 
         // Missing codes
         $data = [
@@ -542,6 +559,7 @@ class SignupTest extends TestCase
             'domain' => $domain,
             'password' => 'testtest',
             'password_confirmation' => 'testtest',
+            'plan' => 'individual',
         ];
 
         $response = $this->post('/api/auth/signup', $data);
@@ -719,10 +737,12 @@ class SignupTest extends TestCase
         $json = $response->json();
 
         $response->assertStatus(200);
-        $this->assertCount(3, $json);
+        $this->assertCount(5, $json);
         $this->assertSame('success', $json['status']);
         $this->assertSame('email', $json['mode']);
+        $this->assertSame(true, $json['is_domain']);
         $this->assertNotEmpty($json['code']);
+        $this->assertSame(Domain::getPublicDomains(), $json['domains']);
 
         // Assert the email sending job was pushed once
         Queue::assertPushed(\App\Jobs\Mail\SignupVerificationJob::class, 1);
@@ -749,14 +769,13 @@ class SignupTest extends TestCase
         $result = $response->json();
 
         $response->assertStatus(200);
-        $this->assertCount(7, $result);
+        $this->assertCount(6, $result);
         $this->assertSame('success', $result['status']);
         $this->assertSame($user_data['email'], $result['email']);
         $this->assertSame($user_data['first_name'], $result['first_name']);
         $this->assertSame($user_data['last_name'], $result['last_name']);
         $this->assertSame(null, $result['voucher']);
         $this->assertSame(true, $result['is_domain']);
-        $this->assertSame([], $result['domains']);
 
         // Final signup request
         $login = 'admin';
@@ -871,7 +890,7 @@ class SignupTest extends TestCase
 
         $this->assertSame('error', $json['status']);
         $this->assertCount(1, $json['errors']);
-        $this->assertSame("The selected plan is invalid.", $json['errors']['plan']);
+        $this->assertSame(["The plan field is required."], $json['errors']['plan']);
 
         // Test valid input
         $post['plan'] = $plan->title;
@@ -907,14 +926,21 @@ class SignupTest extends TestCase
             'domain' => 'kolabnow.com',
             'password' => 'testtest',
             'password_confirmation' => 'testtest',
+            'plan' => 'individual',
         ];
 
         // Test invalid invitation identifier
         $response = $this->post('/api/auth/signup', $post);
         $response->assertStatus(404);
 
-        // Test valid input
+        // Test invalid plan
         $post['invitation'] = $invitation->id;
+        $post['plan'] = 'invalid';
+        $response = $this->post('/api/auth/signup', $post);
+        $response->assertStatus(422);
+
+        // Test valid input
+        $post['plan'] = 'individual';
         $response = $this->post('/api/auth/signup', $post);
         $result = $response->json();
 
@@ -1034,10 +1060,13 @@ class SignupTest extends TestCase
         $json = $response->json();
 
         $this->assertSame('error', $json['status']);
-        $this->assertSame(['referral' => ["The referral program code is invalid."]], $json['errors']);
+        $this->assertCount(2, $json['errors']);
+        $this->assertSame(['The referral program code is invalid.'], $json['errors']['referral']);
+        $this->assertSame(['The plan field is required.'], $json['errors']['plan']);
 
         // Test valid code
         $post['referral'] = $referral_code->code;
+        $post['plan'] = 'individual';
         $response = $this->post('/api/auth/signup/init', $post);
 
         $json = $response->json();
@@ -1098,11 +1127,12 @@ class SignupTest extends TestCase
         $json = $response->json();
 
         $this->assertSame('error', $json['status']);
-        $this->assertCount(4, $json['errors']);
+        $this->assertCount(5, $json['errors']);
         $this->assertSame(["The login must be at least 2 characters."], $json['errors']['login']);
         $this->assertSame(["The password confirmation does not match."], $json['errors']['password']);
         $this->assertSame(["The domain field is required."], $json['errors']['domain']);
         $this->assertSame(["The voucher may not be greater than 32 characters."], $json['errors']['voucher']);
+        $this->assertSame(["The plan field is required."], $json['errors']['plan']);
 
         // Test with mode=mandate plan, but invalid voucher code
         $post = [
@@ -1182,6 +1212,7 @@ class SignupTest extends TestCase
             ['test.test', $domain, false, null],
             ['test_test', $domain, false, null],
             ['test-test', $domain, false, null],
+            ['test-test', 'kolab.org', false, ['domain' => 'The specified domain is not available.']],
             ['admin', $domain, false, ['login' => 'The specified login is not available.']],
             ['administrator', $domain, false, ['login' => 'The specified login is not available.']],
             ['sales', $domain, false, ['login' => 'The specified login is not available.']],
@@ -1189,6 +1220,7 @@ class SignupTest extends TestCase
 
             // Domain account
             ['admin', 'kolabsys.com', true, null],
+            ['testsystemdomain', $domain, true, null],
             ['testnonsystemdomain', 'invalid', true, ['domain' => 'The specified domain is invalid.']],
             ['testnonsystemdomain', '.com', true, ['domain' => 'The specified domain is invalid.']],
         ];

@@ -356,6 +356,12 @@ const app = new Vue({
             // Add 'class' attribute to the body, different for each page
             // so, we can apply page-specific styles
             document.body.className = 'page-' + (name || this.pageName()).replace(/\/.*$/, '').toLowerCase()
+        },
+        updateStatusInfo() {
+            axios.get('/api/v4/users/' + this.authInfo.id + '/status')
+                .then(response => {
+                    this.authInfo.statusInfo = response.data
+                })
         }
     }
 })

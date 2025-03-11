@@ -25,7 +25,7 @@ class DomainList extends Page
      */
     public function assert($browser)
     {
-        $browser->assertPathIs($this->url())
+        $browser->waitForLocation($this->url())
             ->waitUntilMissing('@app .app-loader')
             ->assertSeeIn('@list .card-title', 'Domains');
     }

@@ -3,6 +3,7 @@
 namespace Tests\Browser;
 
 use App\Domain;
+use App\Plan;
 use App\User;
 use Tests\Browser;
 use Tests\Browser\Components\Dialog;
@@ -22,7 +23,9 @@ class DomainTest extends TestCaseDusk
     public function setUp(): void
     {
         parent::setUp();
+
         $this->deleteTestDomain('testdomain.com');
+        $this->deleteTestUser('testuserdomain@' . \config('app.domain'));
     }
 
     /**
@@ -31,6 +34,8 @@ class DomainTest extends TestCaseDusk
     public function tearDown(): void
     {
         $this->deleteTestDomain('testdomain.com');
+        $this->deleteTestUser('testuserdomain@' . \config('app.domain'));
+
         parent::tearDown();
     }
 
@@ -217,8 +222,8 @@ class DomainTest extends TestCaseDusk
      */
     public function testDomainListEmpty(): void
     {
+        // User is not a wallet controller
         $this->browse(function ($browser) {
-            // Login the user
             $browser->visit('/login')
                 ->on(new Home())
                 ->submitLogon('jack@kolab.org', 'simple123', true)
@@ -227,15 +232,51 @@ class DomainTest extends TestCaseDusk
                 ->assertMissing('@links a.link-domains')
                 ->assertMissing('@links a.link-users')
                 ->assertMissing('@links a.link-wallet');
-/*
-                // On dashboard click the "Domains" link
-                ->assertSeeIn('@links a.link-domains', 'Domains')
+        });
+
+        // A group account without a custom domain
+        $user = $this->getTestUser('testuserdomain@' . \config('app.domain'), ['password' => 'simple123']);
+        $plan = Plan::withObjectTenantContext($user)->where('title', 'group')->first();
+        $user->setSetting('plan_id', $plan->id);
+
+        $this->browse(function ($browser) use ($user) {
+            $browser->visit('/login')
+                ->on(new Home())
+                ->submitLogon($user->email, 'simple123', true)
+                ->on(new Dashboard())
+                ->assertVisible('@links a.link-settings')
+                ->assertVisible('@links a.link-domains')
+                ->assertMissing('@links a.link-shared-folders')
                 ->click('@links a.link-domains')
-                // On Domains List page click the domain entry
+                // We'll create/delete a domain and make sure new Dashboard items appear after that.
+                // More precise tests on the domain creation/deletion and list pages are in another place
                 ->on(new DomainList())
-                ->assertMissing('@table tbody')
-                ->assertSeeIn('tfoot td', 'There are no domains in this account.');
-*/
+                ->click('.card-title button.btn-success')
+                ->on(new DomainInfo())
+                ->type('@general #namespace', 'testdomain.com')
+                ->click('button[type=submit]')
+                ->on(new DomainList())
+                ->assertSeeIn('@table tr:nth-child(1) a', 'testdomain.com')
+                ->click('a.link-dashboard')
+                ->on(new Dashboard())
+                ->assertVisible('@links a.link-domains')
+                ->assertVisible('@links a.link-shared-folders')
+                ->click('@links a.link-domains')
+                ->on(new DomainList())
+                ->click('@table tbody tr:nth-child(1) a')
+                ->on(new DomainInfo())
+                ->waitFor('button.button-delete')
+                ->click('button.button-delete')
+                ->with(new Dialog('#delete-warning'), function ($browser) {
+                    $browser->click('@button-action');
+                })
+                ->waitUntilMissing('#delete-warning')
+                ->on(new DomainList())
+                ->assertElementsCount('@table tbody tr', 0)
+                ->click('a.link-dashboard')
+                ->on(new Dashboard())
+                ->assertVisible('@links a.link-domains')
+                ->assertMissing('@links a.link-shared-folders');
         });
     }
 

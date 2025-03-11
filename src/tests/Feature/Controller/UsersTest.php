@@ -674,6 +674,17 @@ class UsersTest extends TestCase
         $result = UsersController::statusInfo($user);
         $this->assertTrue($result['enableBeta']);
         $this->assertFalse($result['enableRooms']);
+
+        // Test user in a group account without a custom domain
+        $user = $this->getTestUser('UsersControllerTest2@userscontroller.com');
+        $plan = Plan::withObjectTenantContext($user)->where('title', 'group')->first();
+        $user->setSetting('plan_id', $plan->id);
+
+        $result = UsersController::statusInfo($user);
+        $this->assertTrue($result['enableDomains']);
+        $this->assertFalse($result['enableFolders']);
+        $this->assertFalse($result['enableDistlists']);
+        $this->assertFalse($result['enableResources']);
     }
 
     /**

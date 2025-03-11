@@ -23,7 +23,6 @@ use Spatie\Translatable\HasTranslations;
  * @property string         $id
  * @property string         $mode           Plan signup mode (Plan::MODE_*)
  * @property string         $name
- * @property \App\Package[] $packages
  * @property datetime       $promo_from
  * @property datetime       $promo_to
  * @property ?int           $tenant_id

@@ -150,21 +150,31 @@ class User extends Authenticatable
      * @param \App\Domain $domain Optional domain object
      *
      * @return \App\User Self
+     * @throws \Exception
      */
     public function assignPlan($plan, $domain = null): User
     {
-        $this->setSetting('plan_id', $plan->id);
+        $domain_packages = $plan->packages->filter(function ($package) {
+            return $package->isDomain();
+        });
 
-        foreach ($plan->packages as $package) {
-            if ($package->isDomain()) {
-                if (!$domain) {
-                    throw new \Exception("Attempted to assign a domain package without passing a domain.");
-                }
+        // Before we do anything let's make sure that a custom domain can be assigned only
+        // to a plan with a domain package
+        if ($domain && $domain_packages->isEmpty()) {
+            throw new \Exception("Custom domain requires a plan with a domain SKU");
+        }
+
+        foreach ($plan->packages->diff($domain_packages) as $package) {
+            $this->assignPackage($package);
+        }
+
+        if ($domain) {
+            foreach ($domain_packages as $package) {
                 $domain->assignPackage($package, $this);
-            } else {
-                $this->assignPackage($package);
             }
         }
+
+        $this->setSetting('plan_id', $plan->id);
 
         return $this;
     }

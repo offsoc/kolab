@@ -34,6 +34,7 @@ class SignupTest extends TestCaseDusk
         $this->deleteTestDomain('user-domain-signup.com');
 
         Plan::whereNot('mode', Plan::MODE_EMAIL)->update(['mode' => Plan::MODE_EMAIL]);
+        Plan::withEnvTenantContext()->where('title', 'individual')->update(['hidden' => false]);
         SignupToken::truncate();
         ReferralProgram::query()->delete();
     }
@@ -49,6 +50,7 @@ class SignupTest extends TestCaseDusk
         SignupInvitation::truncate();
 
         Plan::whereNot('mode', Plan::MODE_EMAIL)->update(['mode' => Plan::MODE_EMAIL]);
+        Plan::withEnvTenantContext()->where('title', 'individual')->update(['hidden' => false]);
         SignupToken::truncate();
         ReferralProgram::query()->delete();
 
@@ -323,6 +325,8 @@ class SignupTest extends TestCaseDusk
                     ->assertVisible('#signup_password')
                     ->assertVisible('#signup_password_confirmation')
                     ->assertVisible('select#signup_domain')
+                    ->assertMissing('#custom_domain')
+                    ->assertMissing('input#signup_domain')
                     ->assertElementsCount('select#signup_domain option', $domains_count, false)
                     ->assertText('select#signup_domain option:nth-child(1)', $domains[0])
                     ->assertValue('select#signup_domain option:nth-child(1)', $domains[0])
@@ -456,15 +460,28 @@ class SignupTest extends TestCaseDusk
                     ->click('[type=submit]');
             });
 
-            // Here we expect 4 text inputs, Back and Continue buttons
+            // Here we expect text inputs, as well as domain selector, and buttons
             $browser->whenAvailable('@step3', function ($step) {
+                $domains = Domain::getPublicDomains();
+                $domains_count = count($domains);
+
                 $step->assertVisible('#signup_login')
                     ->assertVisible('#signup_password')
                     ->assertVisible('#signup_password_confirmation')
-                    ->assertVisible('input#signup_domain')
+                    ->assertVisible('select#signup_domain')
+                    ->assertMissing('input#signup_domain')
+                    ->assertVisible('#custom_domain')
+                    ->assertElementsCount('select#signup_domain option', $domains_count, false)
+                    ->assertText('select#signup_domain option:nth-child(1)', $domains[0])
+                    ->assertValue('select#signup_domain option:nth-child(1)', $domains[0])
+                    ->assertText('select#signup_domain option:nth-child(2)', $domains[1])
+                    ->assertValue('select#signup_domain option:nth-child(2)', $domains[1])
                     ->assertVisible('[type=button]')
                     ->assertVisible('[type=submit]')
                     ->assertFocused('#signup_login')
+                    ->click('#custom_domain + label')
+                    ->assertVisible('input#signup_domain')
+                    ->assertMissing('select#signup_domain')
                     ->assertValue('input#signup_domain', '')
                     ->assertValue('#signup_login', '')
                     ->assertValue('#signup_password', '')
@@ -473,8 +490,7 @@ class SignupTest extends TestCaseDusk
 
             // Submit invalid login and password data
             $browser->with('@step3', function ($step) {
-                $step->assertFocused('#signup_login')
-                    ->type('#signup_login', '*')
+                $step->type('#signup_login', '*')
                     ->type('#signup_domain', 'test.com')
                     ->type('#signup_password', '12345678')
                     ->type('#signup_password_confirmation', '123456789')
@@ -525,6 +541,71 @@ class SignupTest extends TestCaseDusk
     }
 
     /**
+     * Test more signup cases
+     */
+    public function testSignupGroupWithPublicDomain(): void
+    {
+        // We also test skipping plan selection if there's only one plan active
+        $plan = Plan::withEnvTenantContext()->where('title', 'individual')->first();
+        $plan->hidden = true;
+        $plan->save();
+
+        $this->browse(function (Browser $browser) {
+            $browser->visit(new Signup());
+
+            // Submit valid data
+            $browser->whenAvailable('@step1', function ($step) {
+                $step->type('#signup_first_name', 'Test')
+                    ->type('#signup_last_name', 'User')
+                    ->type('#signup_email', 'BrowserSignupTestUser1@kolab.org')
+                    ->click('[type=submit]');
+            });
+
+            // Submit valid code
+            $browser->whenAvailable('@step2', function ($step) {
+                // Get the code and short_code from database
+                $code = $step->value('#signup_code');
+                $code = SignupCode::find($code);
+
+                $step->type('#signup_short_code', $code->short_code)
+                    ->click('[type=submit]');
+            });
+
+            // Here we expect text inputs, as well as domain selector, and buttons
+            $browser->whenAvailable('@step3', function ($step) {
+                $step->assertVisible('#signup_login')
+                    ->assertVisible('#signup_password')
+                    ->assertVisible('#signup_password_confirmation')
+                    ->assertVisible('select#signup_domain')
+                    ->assertMissing('input#signup_domain')
+                    ->assertVisible('#custom_domain')
+                    ->assertValue('select#signup_domain option:checked', \config('app.domain'))
+                    ->type('#signup_login', 'signuptestdusk')
+                    ->type('#signup_password', '12345678')
+                    ->type('#signup_password_confirmation', '12345678')
+                    ->click('[type=submit]');
+            });
+
+            // At this point we should be auto-logged-in to dashboard
+            $browser->waitUntilMissing('@step3')
+                ->waitUntilMissing('.app-loader')
+                ->on(new Dashboard())
+                ->assertUser('signuptestdusk@' . \config('app.domain'))
+                ->assertVisible('@links a.link-settings')
+                ->assertVisible('@links a.link-domains')
+                ->assertVisible('@links a.link-users')
+                ->assertVisible('@links a.link-wallet')
+                ->assertMissing('@links a.link-distlists')
+                ->assertMissing('@links a.link-shared-folders')
+                ->assertMissing('@links a.link-resources');
+
+            $browser->within(new Menu(), function ($browser) {
+                $browser->clickMenuItem('logout');
+            });
+        });
+    }
+
+    /**
      * Test signup with a mandate plan, also the UI lock
      *
      * @group mollie
@@ -558,6 +639,7 @@ class SignupTest extends TestCaseDusk
                     $domains_count = count($domains);
 
                     $browser->assertMissing('.card-title')
+                        ->waitFor('select#signup_domain option:checked')
                         ->assertElementsCount('select#signup_domain option', $domains_count, false)
                         ->assertText('select#signup_domain option:nth-child(1)', $domains[0])
                         ->assertValue('select#signup_domain option:nth-child(1)', $domains[0])
@@ -585,7 +667,6 @@ class SignupTest extends TestCaseDusk
                 })
                 ->on(new PaymentMollie())
                 ->assertSeeIn('@title', 'Auto-Payment Setup')
-                ->assertMissing('@amount')
                 ->submitPayment('open')
                 ->on(new PaymentStatus())
                 ->assertSeeIn('@lock-alert', 'The account is locked')
@@ -755,6 +836,7 @@ class SignupTest extends TestCaseDusk
                 // Step 2
                 ->whenAvailable('@step3', function ($browser) {
                     $browser->assertSeeIn('.card-title', 'Sign Up - Step 2/2')
+                        ->click('#custom_domain')
                         ->type('input#signup_domain', 'user-domain-signup.com')
                         ->type('#signup_login', 'admin')
                         ->type('#signup_password', '12345678')
@@ -902,11 +984,13 @@ class SignupTest extends TestCaseDusk
             $browser->visit('/signup/invite/' . $invitation->id)
                 ->onWithoutAssert(new Signup())
                 ->waitUntilMissing('.app-loader')
+                ->waitFor('@step0')
+                ->click('.plan-individual button')
                 ->with('@step3', function ($step) {
                     $domains_count = count(Domain::getPublicDomains());
 
                     $step->assertMissing('.card-title')
-                        ->assertVisible('#signup_last_name')
+                        ->waitFor('#signup_last_name')
                         ->assertVisible('#signup_first_name')
                         ->assertVisible('#signup_login')
                         ->assertVisible('#signup_password')
@@ -914,7 +998,7 @@ class SignupTest extends TestCaseDusk
                         ->assertVisible('select#signup_domain')
                         ->assertElementsCount('select#signup_domain option', $domains_count, false)
                         ->assertVisible('[type=submit]')
-                        ->assertMissing('[type=button]') // Back button
+                        ->assertVisible('[type=button]') // Back button
                         ->assertSeeIn('[type=submit]', 'Sign Up')
                         ->assertFocused('#signup_first_name')
                         ->assertValue('select#signup_domain', \config('app.domain'))
