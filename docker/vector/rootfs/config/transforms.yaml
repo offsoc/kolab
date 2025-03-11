@@ -35,7 +35,7 @@ transforms:
       if contains(string!(.log), "accept lock") {
         abort
       }
-      structured = parse_regex(.log, pattern: r'^(?<program>.*)\[(?<pid>[0-9]+)\]( )?: *(?<log>.*)$') ?? {}
+      structured = parse_regex(.log, pattern: r'^(?<time>[^ ]+ [0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9]) (?<host>[^ ]+) (?<facility>[^ ]+) (?<program>.*)\[(?<pid>[0-9]+)\]( )?: *(?<log>.*)$') ?? {}
       . = merge(., structured)
       .timestamp = parse_timestamp(.timestamp, "%Y/%m/%d %H:%M:%S %z") ?? now()
   parse_proxy:

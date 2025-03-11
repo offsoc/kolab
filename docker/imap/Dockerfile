@@ -33,6 +33,7 @@ RUN dnf -y install \
         cyrus-sasl \
         cyrus-sasl-plain \
         perl-Cyrus \
+        busybox \
         rsync && \
     dnf clean all
 
@@ -61,7 +62,6 @@ RUN PATHS=(/etc /etc/passwd /etc/saslauthd.conf /etc/cyrus.conf /etc/imapd.conf 
     chown 1001:0 ${PATHS[@]} && \
     chmod g=u ${PATHS[@]}
 
-USER 1001
 WORKDIR /opt/app-root/src
 
 ENV SERVICES_PORT=8000

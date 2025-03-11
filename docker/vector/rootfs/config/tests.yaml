@@ -148,7 +148,7 @@ tests:
       pod_node_name: dws07.kolabsys.com
       pod_owner: ReplicaSet/imap-8ff9c4bdd
       pod_uid: d59374a6-e466-446e-bcfa-dd0c0d089acb
-      log: 'saslauthd[12] :auth success: [user=admin] [service=imap] [realm=kolab.local] [mech=httpform]'
+      log: 'Mar 11 19:00:42 imap-f99cb6ddc-4gplf auth.debug saslauthd[12] :auth success: [user=admin] [service=imap] [realm=kolab.local] [mech=httpform]'
       source_type: kubernetes_logs
       stream: stderr
       timestamp: "2024-08-19T20:17:16.927434664Z"
@@ -174,7 +174,7 @@ tests:
       pod_node_name: dws07.kolabsys.com
       pod_owner: ReplicaSet/imap-8ff9c4bdd
       pod_uid: d59374a6-e466-446e-bcfa-dd0c0d089acb
-      log: 'cyrus-imapd/imap[13064]: USAGE admin@kolab.local user: 0.017951 sys: 0.011378'
+      log: 'Mar 11 19:00:42 imap-f99cb6ddc-4gplf local6.info cyrus-imapd/imap[13064]: USAGE admin@kolab.local user: 0.017951 sys: 0.011378'
       source_type: kubernetes_logs
       stream: stderr
       timestamp: "2024-08-19T20:15:24.033133869Z"

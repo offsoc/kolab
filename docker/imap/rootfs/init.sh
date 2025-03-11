@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e
+set -x
 
 sed -i -r \
     -e "s|IMAP_ADMIN_LOGIN|$IMAP_ADMIN_LOGIN|g" \
@@ -25,9 +26,6 @@ fi
 if [[ "$IMAPD_CONF" != "/etc/imapd.conf" ]]; then
     cp "$IMAPD_CONF" /etc/imapd.conf
 fi
-
-mkdir -p /var/lib/imap/socket
-mkdir -p /var/lib/imap/db
 
 if [[ "$WITH_TLS" == "true" ]]; then
     if [[ -f ${SSL_CERTIFICATE} ]]; then
@@ -103,26 +101,35 @@ else
     fi
 fi
 
-/usr/sbin/saslauthd -m /run/saslauthd -a httpform -d &
 # Can't run as user because of /dev/ permissions so far.
 # Cyrus imap only logs to /dev/log, no way around it it seems.
-# sudo rsyslogd
-
+busybox syslogd -n -O- &
 
 # Cyrus needs an entry in /etc/passwd. The alternative would perhaps be the nss_wrapper.
 # https://docs.openshift.com/container-platform/3.11/creating_images/guidelines.html#openshift-specific-guidelines
 # FIXME: This probably currently just works because we make /etc/ writable, which I suppose we shouldn't.
-ID=$(id -u)
-GID=$(id -g)
+ID=$(id -u default)
+GID=$(id -g default)
 echo "$ID:x:$ID:$GID::/opt/app-root/:/bin/bash" > /etc/passwd
 
+runuser -u "$ID" -- /usr/sbin/saslauthd -m /run/saslauthd -a httpform -d &
+
+chown -R "$ID:$GID" /var/spool/imap/
+chown -R "$ID:$GID" /var/lib/imap/
+
+runuser -u "$ID" -- mkdir -p /var/lib/imap/socket
+runuser -u "$ID" -- mkdir -p /var/lib/imap/db
+
+export CYRUS_USER="$ID"
+export CYRUS_VERBOSE=1
+# This will print a warning about a missing /var/lib/imap/db/skipstamp, but will still validate the config
+runuser -u "$ID" -- cyr_info conf-lint
+
 if [[ "$1" == "validate" ]]; then
-    # This will print a warning about a missing /var/lib/imap/db/skipstamp, but will still validate the config
-    cyr_info conf-lint
     echo "Config validated"
 else
-    cyr_info conf-lint
-    exec env CYRUS_VERBOSE=1 CYRUS_USER="$ID" /usr/libexec/master -D -p /var/run/master.pid
+    echo "Starting cyrus"
+    runuser -u "$ID" -- /usr/libexec/master -D -p /var/run/master.pid
 fi
 
 
