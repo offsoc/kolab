@@ -7,9 +7,6 @@ use App\User;
 
 class PaymentJob extends \App\Jobs\MailJob
 {
-    /** @var int The number of seconds to wait before retrying the job. */
-    public $backoff = 30;
-
     /** @var \App\Payment A payment object */
     protected $payment;
 

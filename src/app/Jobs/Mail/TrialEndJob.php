@@ -7,9 +7,6 @@ use App\User;
 
 class TrialEndJob extends \App\Jobs\MailJob
 {
-    /** @var int The number of seconds to wait before retrying the job. */
-    public $backoff = 30;
-
     /** @var \App\User The account owner */
     protected $account;
 

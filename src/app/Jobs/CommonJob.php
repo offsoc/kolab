@@ -43,7 +43,7 @@ abstract class CommonJob implements ShouldQueue
      *
      * @var int
      */
-    public $tries = 3;
+    public $tries = 24;
 
     /**
      * Execute the job.
@@ -59,7 +59,7 @@ abstract class CommonJob implements ShouldQueue
      */
     public function backoff(): array
     {
-        return [5, 15, 30, 60, 120];
+        return [5, 15, 60, 300, 3600];
     }
 
     /**
@@ -147,7 +147,7 @@ abstract class CommonJob implements ShouldQueue
     /**
      * Log human-readable job title (at least contains job class name)
      */
-    public function logJobStart($ident = null): void
+    protected function logJobStart($ident = null): void
     {
         \Log::info('Starting ' . $this::class . ($ident ? " for {$ident}" : ''));
     }

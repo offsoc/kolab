@@ -6,9 +6,6 @@ use App\Mail\PasswordExpirationReminder;
 
 class PasswordRetentionJob extends \App\Jobs\MailJob
 {
-    /** @var int The number of seconds to wait before retrying the job. */
-    public $backoff = 30;
-
     /** @var string Password expiration date */
     protected $expiresOn;
 

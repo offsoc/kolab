@@ -30,6 +30,9 @@ class AclCleanupJob extends CommonJob
      */
     public $timeout = 60 * 60;
 
+    /** @var int The number of tries for this Job. */
+    public $tries = 3;
+
 
     /**
      * Create a new job instance.

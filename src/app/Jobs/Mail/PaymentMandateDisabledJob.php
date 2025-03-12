@@ -8,9 +8,6 @@ use App\Wallet;
 
 class PaymentMandateDisabledJob extends \App\Jobs\MailJob
 {
-    /** @var int The number of seconds to wait before retrying the job. */
-    public $backoff = 30;
-
     /** @var \App\Wallet A wallet object */
     protected $wallet;
 

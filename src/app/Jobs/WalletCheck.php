@@ -41,16 +41,6 @@ class WalletCheck extends CommonJob
     }
 
     /**
-     * Number of seconds to wait before retrying the job.
-     *
-     * @return array<int, int>
-     */
-    public function backoff(): array
-    {
-        return [10, 30, 60, 120, 300];
-    }
-
-    /**
      * Execute the job.
      *
      * @return ?string Executed action (THRESHOLD_*)
