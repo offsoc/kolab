@@ -545,7 +545,7 @@ smtpd_sender_login_maps =
 
 smtpd_sender_restrictions =
     #permit_mynetworks,
-    #check_sender_access hash:/etc/postfix/sender_access,
+    check_sender_access hash:/etc/postfix/sender_access,
     reject_unknown_sender_domain,
     #check_client_access hash:/etc/postfix/client_access,
     #check_client_access cidr:/etc/postfix/client_access_cidr,
