@@ -508,7 +508,7 @@ kolab__deploy() {
     podman__run_imap
     podman__healthcheck $POD-imap
 
-    export CONFIG=config.prod
+    export CONFIG=config.kolabnow
     podman__run_webapp
     podman__healthcheck $POD-webapp
 
@@ -538,6 +538,7 @@ kolab__deploy() {
 # Re-run a container in the dev pod
 kolab__run() {
     POD=dev
+    export CONFIG=config.kolabnow
     NAME="$1"
     shift
     if [ "$NAME" == "--build" ]; then
