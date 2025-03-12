@@ -453,7 +453,7 @@ kolab__mailtransporttest() {
 kolab__deploy() {
     export POD=dev
 
-    if [ `getenforce` == "Enforcing" ]; then 
+    if [[ "$(getenforce)" == "Enforcing" ]]; then 
         # Patches on how to correctly configure selinux are welcome
         echo "selinux breaks networking, please disable"
         exit 1
