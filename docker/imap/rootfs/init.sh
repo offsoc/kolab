@@ -112,7 +112,7 @@ ID=$(id -u default)
 GID=$(id -g default)
 echo "$ID:x:$ID:$GID::/opt/app-root/:/bin/bash" > /etc/passwd
 
-runuser -u "$ID" -- /usr/sbin/saslauthd -m /run/saslauthd -a httpform -d &
+runuser -u "$ID" -- /usr/sbin/saslauthd -m /run/saslauthd -a httpform &
 
 chown -R "$ID:$GID" /var/spool/imap/
 chown -R "$ID:$GID" /var/lib/imap/
@@ -129,7 +129,7 @@ if [[ "$1" == "validate" ]]; then
     echo "Config validated"
 else
     echo "Starting cyrus"
-    runuser -u "$ID" -- /usr/libexec/master -D -p /var/run/master.pid
+    exec runuser -u "$ID" -- /usr/libexec/master -D -p /var/run/master.pid
 fi
 
 
