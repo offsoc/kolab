@@ -175,6 +175,8 @@ kolab__build() {
         podman__build docker/element element
         podman__build_roundcube
         podman__build_postfix
+        podman__build_amavis
+        podman__build_collabora
         podman__build_tests
         kolab__certs
     fi
