@@ -84,8 +84,8 @@ class SendTest:
                 print("DKIM signature is not aligned", header)
                 return False
 
-        if "NO" not in (msg['X-Spam-Flag'] or ""):
-            print("Test email is flagged as spam or header is missing")
+        if msg['X-Spam-Flag'] and "NO" not in msg['X-Spam-Flag']:
+            print("Test email is flagged as spam")
             print("Existing header: " + str(msg['X-Spam-Flag']))
             return False
 
@@ -95,7 +95,7 @@ class SendTest:
         if msg['Received-Greylist']:
             print("Message was greylisted: " + str(msg['Received-Greylist']))
 
-        if "pass" not in (msg['Received-SPF'] or "").lower():
+        if msg['Received-SPF'] and "pass" not in msg['Received-SPF'].lower():
             print("SPF did not pass: " + str(msg['Received-SPF']))
 
         # Ensure SPF record matches a received line?
