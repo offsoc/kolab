@@ -27,6 +27,17 @@ Content-Type: text/plain; charset=US-ASCII
 '''.strip()
 
 
+RED='\033[31m'
+GREEN='\033[32m'
+RESET='\033[39m'
+
+def print_error(msg):
+    print(RED + f"=> ERROR: {msg}")
+    print(RESET)  # and reset to default color
+
+def print_success(msg):
+    print(GREEN + f"=> {msg}")
+    print(RESET)  # and reset to default color
 
 class SendTest:
     def __init__(self, options):
@@ -78,14 +89,14 @@ class SendTest:
         # dkim=neutral is what we get when the public key is not available to validate
         for header in msg.get_all('Authentication-Results', ["No header available"]):
             if "dkim=pass" not in header and "dkim=neutral" not in header:
-                print("Failed to validate Authentication-Results header:", header)
+                print_error("Failed to validate Authentication-Results header:", header)
                 return False
             if f"header.d={email_domain}" not in header and f"header.i=@{email_domain}" not in header:
-                print("DKIM signature is not aligned", header)
+                print_error("DKIM signature is not aligned", header)
                 return False
 
         if msg['X-Spam-Flag'] and "NO" not in msg['X-Spam-Flag']:
-            print("Test email is flagged as spam")
+            print_error("Test email is flagged as spam")
             print("Existing header: " + str(msg['X-Spam-Flag']))
             return False
 
@@ -126,7 +137,7 @@ class SendTest:
                 typ, data = imap.fetch(num, "(RFC822)")
                 message = data[0][1]
                 if not self.validate_message(message):
-                    print("Failed to validate the message.")
+                    print_error("Failed to validate the message.")
                     print(message.decode())
                     sys.exit(1)
 
@@ -211,7 +222,7 @@ timeout = 10
 
 for i in range(1, round(args.timeout * 60 / timeout) + 1):
     if obj.check_for_mail():
-        print("Success!")
+        print_success("Success!")
         # TODO print statistics? Push statistics directly someplace?
         sys.exit(0)
     print(f"waiting for {timeout}")
@@ -219,5 +230,5 @@ for i in range(1, round(args.timeout * 60 / timeout) + 1):
 
 # TODO print statistics? Push statistics directly someplace?
 
-print("Failed to find the mail")
+print_error("Failed to find the mail")
 sys.exit(1)
