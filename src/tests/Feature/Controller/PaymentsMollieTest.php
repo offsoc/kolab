@@ -12,14 +12,15 @@ use App\VatRate;
 use App\Utils;
 use GuzzleHttp\Psr7\Response;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 use Tests\BrowserAddonTrait;
-use Tests\MollieMocksTrait;
 
 class PaymentsMollieTest extends TestCase
 {
-    use MollieMocksTrait;
     use BrowserAddonTrait;
+
+    protected const API_URL = 'https://api.mollie.com/v2';
 
     /**
      * {@inheritDoc}
@@ -316,8 +317,10 @@ class PaymentsMollieTest extends TestCase
             ]
         ];
 
-        $responseStack = $this->mockMollie();
-        $responseStack->append(new Response(410, [], json_encode($mollie_response)));
+        $mollieId = $wallet->getSetting('mollie_id');
+        Http::fakeClear()->fake([
+            self::API_URL . "/customers/{$mollieId}/mandates/123" => Http::response($mollie_response, 410, []),
+        ]);
 
         $wallet->fresh()->setSetting('mollie_mandate_id', '123');
 
@@ -438,8 +441,9 @@ class PaymentsMollieTest extends TestCase
         // We'll trigger the webhook with payment id and use mocking for
         // a request to the Mollie payments API. We cannot force Mollie
         // to make the payment status change.
-        $responseStack = $this->mockMollie();
-        $responseStack->append(new Response(200, [], json_encode($mollie_response)));
+        Http::fakeClear()->fake([
+            self::API_URL . "/payments/{$payment->id}" => Http::response($mollie_response, 200, []),
+        ]);
 
         $post = ['id' => $payment->id];
         $response = $this->post("api/webhooks/payment/mollie", $post);
@@ -464,7 +468,9 @@ class PaymentsMollieTest extends TestCase
         // Verify "paid -> open -> paid" scenario, assert that balance didn't change
         $mollie_response['status'] = 'open';
         unset($mollie_response['paidAt']);
-        $responseStack->append(new Response(200, [], json_encode($mollie_response)));
+        Http::fakeClear()->fake([
+            self::API_URL . "/payments/{$payment->id}" => Http::response($mollie_response, 200, []),
+        ]);
 
         $response = $this->post("api/webhooks/payment/mollie", $post);
         $response->assertStatus(200);
@@ -474,7 +480,9 @@ class PaymentsMollieTest extends TestCase
 
         $mollie_response['status'] = 'paid';
         $mollie_response['paidAt'] = date('c');
-        $responseStack->append(new Response(200, [], json_encode($mollie_response)));
+        Http::fakeClear()->fake([
+            self::API_URL . "/payments/{$payment->id}" => Http::response($mollie_response, 200, []),
+        ]);
 
         $response = $this->post("api/webhooks/payment/mollie", $post);
         $response->assertStatus(200);
@@ -489,23 +497,21 @@ class PaymentsMollieTest extends TestCase
         $payment->status = Payment::STATUS_OPEN;
         $payment->save();
 
-        $mollie_response = [
-            "resource" => "payment",
-            "id" => $payment->id,
-            "status" => "failed",
-            "mode" => "test",
-        ];
+        $mollie_response['status'] = 'failed';
+        $mollie_response['failedAt'] = date('c');
+        unset($mollie_response['paidAt']);
 
         // We'll trigger the webhook with payment id and use mocking for
         // a request to the Mollie payments API. We cannot force Mollie
         // to make the payment status change.
-        $responseStack = $this->mockMollie();
-        $responseStack->append(new Response(200, [], json_encode($mollie_response)));
+        Http::fakeClear()->fake([
+            self::API_URL . "/payments/{$payment->id}" => Http::response($mollie_response, 200, []),
+        ]);
 
         $response = $this->post("api/webhooks/payment/mollie", $post);
         $response->assertStatus(200);
 
-        $this->assertSame('failed', $payment->fresh()->status);
+        $this->assertSame(Payment::STATUS_FAILED, $payment->fresh()->status);
         $this->assertEquals(1234, $wallet->fresh()->balance);
 
         // Assert that email notification job wasn't dispatched,
@@ -547,8 +553,9 @@ class PaymentsMollieTest extends TestCase
             "mode" => "test",
         ];
 
-        $responseStack = $this->mockMollie();
-        $responseStack->append(new Response(200, [], json_encode($mollie_response)));
+        Http::fakeClear()->fake([
+            self::API_URL . "/payments/{$payment->id}" => Http::response($mollie_response, 200, []),
+        ]);
 
         $post = ['id' => $payment->id];
         $response = $this->post("api/webhooks/payment/mollie", $post);
@@ -654,7 +661,6 @@ class PaymentsMollieTest extends TestCase
 
         $wallet->transactions()->delete();
 
-        $responseStack = $this->mockMollie();
         Bus::fake();
 
         $payment->refresh();
@@ -673,7 +679,9 @@ class PaymentsMollieTest extends TestCase
         // We'll trigger the webhook with payment id and use mocking for
         // a request to the Mollie payments API. We cannot force Mollie
         // to make the payment status change.
-        $responseStack->append(new Response(200, [], json_encode($mollie_response)));
+        Http::fakeClear()->fake([
+            self::API_URL . "/payments/{$payment->id}" => Http::response($mollie_response, 200, []),
+        ]);
 
         $post = ['id' => $payment->id];
         $response = $this->post("api/webhooks/payment/mollie", $post);
@@ -715,7 +723,9 @@ class PaymentsMollieTest extends TestCase
             "mode" => "test",
         ];
 
-        $responseStack->append(new Response(200, [], json_encode($mollie_response)));
+        Http::fakeClear()->fake([
+            self::API_URL . "/payments/{$payment->id}" => Http::response($mollie_response, 200, []),
+        ]);
 
         $response = $this->post("api/webhooks/payment/mollie", $post);
         $response->assertStatus(200);
@@ -732,8 +742,6 @@ class PaymentsMollieTest extends TestCase
             $job_payment = $this->getObjectProperty($job, 'payment');
             return $job_payment->id === $payment->id;
         });
-
-        $this->unmockMollie();
     }
 
     /**
@@ -865,11 +873,11 @@ class PaymentsMollieTest extends TestCase
             ]
         ];
 
-        // We'll trigger the webhook with payment id and use mocking for
-        // requests to the Mollie payments API.
-        $responseStack = $this->mockMollie();
-        $responseStack->append(new Response(200, [], json_encode($mollie_response1)));
-        $responseStack->append(new Response(200, [], json_encode($mollie_response2)));
+        // We'll trigger the webhook with payment id and use mocking for requests to the Mollie payments API.
+        Http::fakeClear()->fake([
+            self::API_URL . "/payments/{$payment->id}" => Http::response($mollie_response1, 200, []),
+            self::API_URL . "/payments/{$payment->id}/refunds" => Http::response($mollie_response2, 200, []),
+        ]);
 
         $post = ['id' => $payment->id];
         $response = $this->post("api/webhooks/payment/mollie", $post);
@@ -925,9 +933,10 @@ class PaymentsMollieTest extends TestCase
 
         // We'll trigger the webhook with payment id and use mocking for
         // requests to the Mollie payments API.
-        $responseStack = $this->mockMollie();
-        $responseStack->append(new Response(200, [], json_encode($mollie_response1)));
-        $responseStack->append(new Response(200, [], json_encode($mollie_response2)));
+        Http::fakeClear()->fake([
+            self::API_URL . "/payments/{$payment->id}" => Http::response($mollie_response1, 200, []),
+            self::API_URL . "/payments/{$payment->id}/chargebacks" => Http::response($mollie_response2, 200, []),
+        ]);
 
         $post = ['id' => $payment->id];
         $response = $this->post("api/webhooks/payment/mollie", $post);
@@ -954,8 +963,6 @@ class PaymentsMollieTest extends TestCase
         $this->assertSame('', $payments[0]->description);
 
         Bus::assertNotDispatched(\App\Jobs\Mail\PaymentJob::class);
-
-        $this->unmockMollie();
     }
 
     /**
@@ -1024,9 +1031,10 @@ class PaymentsMollieTest extends TestCase
 
         // We'll trigger the webhook with payment id and use mocking for
         // requests to the Mollie payments API.
-        $responseStack = $this->mockMollie();
-        $responseStack->append(new Response(200, [], json_encode($mollie_response1)));
-        $responseStack->append(new Response(200, [], json_encode($mollie_response2)));
+        Http::fakeClear()->fake([
+            self::API_URL . "/payments/{$payment->id}" => Http::response($mollie_response1, 200, []),
+            self::API_URL . "/payments/{$payment->id}/refunds" => Http::response($mollie_response2, 200, []),
+        ]);
 
         $post = ['id' => $payment->id];
         $response = $this->post("api/webhooks/payment/mollie", $post);
@@ -1044,8 +1052,6 @@ class PaymentsMollieTest extends TestCase
         $this->assertTrue($payments[0]->amount >= -114);
         $this->assertSame(-101, $payments[0]->currency_amount);
         $this->assertSame('EUR', $payments[0]->currency);
-
-        $this->unmockMollie();
     }
 
     /**

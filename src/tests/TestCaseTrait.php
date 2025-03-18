@@ -635,7 +635,7 @@ trait TestCaseTrait
     protected function fakeQueueReset()
     {
         // Release all locks for ShouldBeUnique jobs. Works only with Redis cache.
-        $db = \cache()->getStore()->lockConnection();
+        $db = \cache()->getStore()->lockConnection(); // @phpstan-ignore-line
         $prefix = $db->getOptions()->prefix?->getPrefix();
 
         foreach ($db->keys('*') as $key) {

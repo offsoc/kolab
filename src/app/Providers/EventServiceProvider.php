@@ -38,4 +38,14 @@ class EventServiceProvider extends ServiceProvider
     {
         return false;
     }
+
+    /**
+     * Configure the proper event listeners for email verification.
+     *
+     * @return void
+     */
+    protected function configureEmailVerification()
+    {
+        // No body disables default Registered event listener
+    }
 }

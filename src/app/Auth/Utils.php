@@ -14,7 +14,7 @@ class Utils
      *
      * @return string|null Encrypted token, Null on failure
      */
-    public static function tokenCreate($userid, $ttl = 10): ?string
+    public static function tokenCreate($userid, int $ttl = 10): ?string
     {
         // Note: Laravel's Crypt::encryptString() creates output that is too long
         // We need output string to be max. 127 characters. For that reason

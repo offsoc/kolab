@@ -100,7 +100,7 @@ class FsController extends RelationController
             return $this->errorResponse($file);
         }
 
-        $result = $file->properties()->where('key', 'like', 'share-%')->get()->map(
+        $result = $file->properties()->whereLike('key', 'share-%')->get()->map(
             fn($prop) => self::permissionToClient($prop->key, $prop->value)
         );
 
@@ -146,7 +146,7 @@ class FsController extends RelationController
 
         // Check if it already exists
         if (empty($errors['user'])) {
-            if ($file->properties()->where('key', 'like', 'share-%')->where('value', 'like', "$user:%")->exists()) {
+            if ($file->properties()->whereLike('key', 'share-%')->whereLike('value', "{$user}:%")->exists()) {
                 $errors['user'] = self::trans('validation.file-perm-exists');
             }
         }
@@ -244,7 +244,7 @@ class FsController extends RelationController
         $user = \strtolower($request->input('user'));
 
         if (empty($errors['user']) && strpos($property->value, "$user:") !== 0) {
-            if ($file->properties()->where('key', 'like', 'share-%')->where('value', 'like', "$user:%")->exists()) {
+            if ($file->properties()->whereLike('key', 'share-%')->whereLike('value', "{$user}:%")->exists()) {
                 $errors['user'] = self::trans('validation.file-perm-exists');
             }
         }
@@ -304,7 +304,7 @@ class FsController extends RelationController
         }
 
         if (strlen($search)) {
-            $result->whereLike('fs_properties.value', $search);
+            $result->whereLike('fs_properties.value', "%{$search}%");
         }
 
         $result = $result->orderBy('name')
@@ -666,7 +666,7 @@ class FsController extends RelationController
                         ->where('fs_properties.key', $request->input('deduplicate-property'));
                 })
                 ->where('type', '&', $type)
-                ->whereLike('fs_properties.value', $request->input('deduplicate-value'))
+                ->whereLike('fs_properties.value', '%' . $request->input('deduplicate-value') . '%')
                 ->first();
 
             // FIXME: Should we throw an error if there's more than one item?

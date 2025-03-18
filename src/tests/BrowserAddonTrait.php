@@ -6,6 +6,7 @@ use Facebook\WebDriver\Chrome\ChromeOptions;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Laravel\Dusk\Chrome\SupportsChrome;
+use Mollie\Laravel\Facades\Mollie;
 
 trait BrowserAddonTrait
 {
@@ -104,6 +105,7 @@ trait BrowserAddonTrait
         $this->startBrowser()->visit($json['redirectUrl']);
 
         $molliePage = new \Tests\Browser\Pages\PaymentMollie();
+        $this->browser->on($molliePage);
         $molliePage->assert($this->browser);
         $molliePage->submitPayment($this->browser, 'paid');
 
@@ -111,7 +113,7 @@ trait BrowserAddonTrait
         // exist until payment is paid. As we do not expect a webhook to be handled, we
         // manually get the mandate ID from Mollie.
         if (!$wallet->getSetting('mollie_mandate_id')) {
-            $mollie_payment = \mollie()->payments()->get($json['id']);
+            $mollie_payment = Mollie::api()->payments->get($json['id']);
 
             $this->assertTrue(!empty($mollie_payment->mandateId));
             $wallet->setSetting('mollie_mandate_id', $mollie_payment->mandateId);

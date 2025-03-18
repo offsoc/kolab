@@ -17,7 +17,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  *
  * @property int    $id        The group identifier
  * @property string $email     An email address
- * @property string $members   A comma-separated list of email addresses
+ * @property array  $members   A list of email addresses
  * @property string $name      The group name
  * @property int    $status    The group status
  * @property int    $tenant_id Tenant identifier

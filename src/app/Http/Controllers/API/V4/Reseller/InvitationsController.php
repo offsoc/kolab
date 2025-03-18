@@ -75,7 +75,7 @@ class InvitationsController extends Controller
             if (strpos($search, '@')) {
                 $result->where('email', $search);
             } else {
-                $result->whereLike('email', $search);
+                $result->whereLike('email', "%{$search}%");
             }
         }
 

@@ -60,7 +60,7 @@ class PasswordRetentionCommand extends Command
                     }
 
                     // @phpstan-ignore-next-line
-                    $nextUpdate = $lastUpdate->copy()->addMonthsWithoutOverflow($account->max_age);
+                    $nextUpdate = $lastUpdate->copy()->addMonthsWithoutOverflow((int) $account->max_age);
                     $diff = Carbon::now()->diffInDays($nextUpdate, false);
 
                     // The password already expired, do nothing

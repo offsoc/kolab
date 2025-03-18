@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
+use Mollie\Laravel\Facades\Mollie;
 
 class OwnerSwapCommand extends Command
 {
@@ -104,7 +105,7 @@ class OwnerSwapCommand extends Command
     private function updatePaymentCustomer(\App\Wallet $wallet): void
     {
         if ($mollie_id = $wallet->getSetting('mollie_id')) {
-            mollie()->customers()->update($mollie_id, [
+            Mollie::api()->customers->update($mollie_id, [
                     'name'  => $wallet->owner->name(),
                     'email' => $wallet->id . '@private.' . \config('app.domain'),
             ]);

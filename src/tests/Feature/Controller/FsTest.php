@@ -22,7 +22,7 @@ class FsTest extends TestCase
     {
         parent::setUp();
 
-        Item::query()->delete();
+        Item::query()->forceDelete();
     }
 
     /**
@@ -30,7 +30,7 @@ class FsTest extends TestCase
      */
     public function tearDown(): void
     {
-        Item::query()->delete();
+        Item::query()->forceDelete();
 
         $disk = LaravelStorage::disk(\config('filesystems.default'));
         foreach ($disk->listContents('') as $dir) {

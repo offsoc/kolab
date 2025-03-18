@@ -25,7 +25,7 @@ class PaymentMollie extends Page
      */
     public function assert($browser)
     {
-        $browser->waitFor('form');
+        $browser->waitFor('form')->waitFor('@title');
     }
 
     /**

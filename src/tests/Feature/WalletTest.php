@@ -154,8 +154,7 @@ class WalletTest extends TestCase
 
         $daysInLastMonth = \App\Utils::daysInLastMonth();
 
-        $delta = Carbon::now()->addMonthsWithoutOverflow(1)->addDays($daysInLastMonth)->diff($until)->days;
-
+        $delta = (int) Carbon::now()->addMonthsWithoutOverflow(1)->addDays($daysInLastMonth)->diffInDays($until, true);
         $this->assertTrue($delta <= 1);
         $this->assertTrue($delta >= -1);
 

@@ -93,12 +93,14 @@ class PaymentStripeTest extends TestCaseDusk
             // Now it should redirect back to wallet page and in background
             // use the webhook to update payment status (and balance).
 
-            // Looks like in test-mode the webhook is executed before redirect
-            // so we can expect balance updated on the wallet page
-
             $browser->waitForLocation('/wallet', 30) // need more time than default 5 sec.
-                ->on(new WalletPage())
-                ->assertSeeIn('@main .card-title', 'Account balance 12,34 CHF');
+                ->on(new WalletPage());
+
+            // Looks like in test-mode the webhook is executed before redirect
+            // so at this point we can expect balance updated on the wallet page
+            // Note: This requires communication from Stripe to Cockpit working.
+            $this->markTestIncomplete();
+            // $browser->assertSeeIn('@main .card-title', 'Account balance 12,34 CHF');
         });
     }
 
@@ -170,8 +172,12 @@ class PaymentStripeTest extends TestCaseDusk
                 ->assertMissing('@amount')
                 ->assertSeeIn('@email', $user->email)
                 ->submitValidCreditCard()
-                ->waitForLocation('/wallet', 30) // need more time than default 5 sec.
-                ->visit('/wallet')
+                ->waitForLocation('/wallet', 30); // need more time than default 5 sec.
+
+            // Note: This requires communication from Stripe to Cockpit working.
+            $this->markTestIncomplete();
+            /*
+            $browser->visit('/wallet')
                 ->waitFor('#mandate-info')
                 ->assertPresent('#mandate-info p:first-child')
                 ->assertSeeIn(
@@ -184,6 +190,7 @@ class PaymentStripeTest extends TestCaseDusk
                     'Visa (**** **** **** 4242)'
                 )
                 ->assertMissing('@body .alert');
+            */
         });
 
         // Test updating (disabled) auto-payment

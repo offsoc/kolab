@@ -11,11 +11,9 @@ use GuzzleHttp\Psr7\Response;
 use Illuminate\Support\Facades\Bus;
 use Tests\TestCase;
 use Tests\BrowserAddonTrait;
-use Tests\MollieMocksTrait;
 
 class PaymentsMollieTest extends TestCase
 {
-    use MollieMocksTrait;
     use BrowserAddonTrait;
 
     /**
@@ -144,8 +142,6 @@ class PaymentsMollieTest extends TestCase
         $this->assertEquals(10, $wallet->getSetting('mandate_balance'));
 
         Bus::assertDispatchedTimes(\App\Jobs\WalletCharge::class, 0);
-
-        $this->unmockMollie();
 
         // Delete mandate
         $response = $this->actingAs($reseller)->delete("api/v4/payments/mandate");

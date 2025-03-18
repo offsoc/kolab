@@ -91,12 +91,14 @@ class AuthorizeTest extends TestCaseDusk
                 ->waitFor('#auth-form button.btn-success')
                 ->click('#auth-form button.btn-success')
                 ->waitForLocation('/support')
-                ->assertScript("location.search.match(/^\?code=[a-f0-9]+&state=state/) !== null");
+                ->assertScript("location.search.match(/^\?code=[a-f0-9]+&state=state/) !== null")
+                ->pause(1000); // let the Support page refresh the session tokens before we proceed
 
             // Visit the page and expect an immediate redirect
             $browser->visit($url)
                 ->waitForLocation('/support')
-                ->assertScript("location.search.match(/^\?code=[a-f0-9]+&state=state/) !== null");
+                ->assertScript("location.search.match(/^\?code=[a-f0-9]+&state=state/) !== null")
+                ->pause(1000); // let the Support page refresh the session token before we proceed
 
             // Error handling (invalid response_type)
             $browser->visit(str_replace('response_type=code', 'response_type=invalid', $url))

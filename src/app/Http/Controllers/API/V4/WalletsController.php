@@ -349,7 +349,7 @@ class WalletsController extends ResourceController
                 'parts' => 1,
             ];
 
-            if ($now->diff($until)->days > 31) {
+            if ($now->diffAsDateInterval($until)->days > 31) {
                 $diffOptions['parts'] = 2;
             }
 

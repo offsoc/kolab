@@ -596,7 +596,7 @@ class Wallet extends Model
     {
         $plan = $this->plan();
         $freeMonths = $plan ? $plan->free_months : 0;
-        $trialEnd = $freeMonths ? $this->owner->created_at->copy()->addMonthsWithoutOverflow($freeMonths) : null;
+        $trialEnd = $freeMonths ? $this->owner->created_at->copy()->addMonthsWithoutOverflow((int) $freeMonths) : null;
 
         if ($trialEnd) {
             // Get all SKUs assigned to the plan (they are free in trial)
@@ -787,14 +787,14 @@ class Wallet extends Model
             $fee = 0;
 
             // Charge for full months first
-            if (($diff = $startDate->diffInMonths($endDate)) > 0) {
+            if (($diff = intval($startDate->diffInMonths($endDate, true))) > 0) {
                 $cost += floor($entitlement->cost * $discountRate) * $diff;
                 $fee += $entitlement->fee * $diff;
                 $startDate->addMonthsWithoutOverflow($diff);
             }
 
             // Charge for the rest of the period
-            if (($diff = $startDate->diffInDays($endDate)) > 0) {
+            if (($diff = intval($startDate->diffInDays($endDate, true))) > 0) {
                 // The price per day is based on the number of days in the month(s)
                 // Note: The $endDate does not have to be the current month
                 $endMonthDiff = $endDate->day > $diff ? $diff : $endDate->day;
@@ -813,7 +813,7 @@ class Wallet extends Model
             }
         } else {
             // Note: In this mode we expect to charge the entitlement for full month(s) only
-            $diff = $startDate->diffInMonths($endDate);
+            $diff = (int) $startDate->diffInMonths($endDate, true);
 
             if ($diff <= 0) {
                 // Do not update updated_at column (not a full month) unless trial end date

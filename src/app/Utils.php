@@ -83,7 +83,7 @@ class Utils
         $start = new Carbon('first day of last month');
         $end = new Carbon('last day of last month');
 
-        return $start->diffInDays($end) + 1;
+        return intval($start->diffInDays($end)) + 1;
     }
 
     /**

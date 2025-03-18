@@ -176,9 +176,9 @@ class Coinbase extends \App\Providers\PaymentProvider
 
         // Store the payment reference in database
         $payment['status'] = Payment::STATUS_OPEN;
-        //We take the code instead of the id because it fits into our current db schema and the id doesn't
+        // We take the code instead of the id because it fits into our current db schema and the id doesn't
         $payment['id'] = $json['data']['code'];
-        //We store in satoshis (the database stores it as INTEGER type)
+        // We store in satoshis (the database stores it as INTEGER type)
         $payment['currency_amount'] = $json['data']['pricing']['bitcoin']['amount'] * self::SATOSHI_MULTIPLIER;
         $payment['currency'] = 'BTC';
 

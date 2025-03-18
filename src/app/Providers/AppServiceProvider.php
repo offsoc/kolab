@@ -129,28 +129,6 @@ class AppServiceProvider extends ServiceProvider
             }
         );
 
-        // Query builder 'whereLike' mocro
-        Builder::macro(
-            'whereLike',
-            function (string $column, string $search, int $mode = 0) {
-                $search = addcslashes($search, '%_');
-
-                switch ($mode) {
-                    case 2:
-                        $search .= '%';
-                        break;
-                    case 1:
-                        $search = '%' . $search;
-                        break;
-                    default:
-                        $search = '%' . $search . '%';
-                }
-
-                /** @var Builder $this */
-                return $this->where($column, 'like', $search);
-            }
-        );
-
         Http::macro('withSlowLog', function () {
             return Http::withOptions([
                 'on_stats' => function (\GuzzleHttp\TransferStats $stats) {
@@ -162,6 +140,15 @@ class AppServiceProvider extends ServiceProvider
                     }
                 },
             ]);
+        });
+
+        Http::macro('fakeClear', function () {
+            $reflection = new \ReflectionObject(Http::getFacadeRoot());
+            $property = $reflection->getProperty('stubCallbacks');
+            $property->setAccessible(true);
+            $property->setValue(Http::getFacadeRoot(), collect());
+
+            return Http::getFacadeRoot();
         });
 
         $this->applyOverrideConfig();

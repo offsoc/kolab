@@ -3,6 +3,7 @@
 namespace Tests\Feature\Console;
 
 use Illuminate\Support\Facades\Queue;
+use Mollie\Laravel\Facades\Mollie;
 use Tests\TestCase;
 
 class OwnerSwapTest extends TestCase
@@ -120,7 +121,7 @@ class OwnerSwapTest extends TestCase
      */
     private function createMollieCustomer($wallet)
     {
-        $customer = mollie()->customers()->create([
+        $customer = Mollie::api()->customers->create([
                 'name'  => $wallet->owner->name(),
                 'email' => $wallet->id . '@private.' . \config('app.domain'),
         ]);
@@ -137,6 +138,6 @@ class OwnerSwapTest extends TestCase
      */
     private function getMollieCustomer(string $mollie_id)
     {
-        return mollie()->customers()->get($mollie_id);
+        return Mollie::api()->customers->get($mollie_id);
     }
 }

@@ -89,8 +89,9 @@ class PaymentMollieTest extends TestCaseDusk
                 ->assertSeeIn('@amount', 'CHF 12.34')
                 ->submitPayment()
                 ->waitForLocation('/wallet')
-                ->on(new WalletPage())
-                ->assertSeeIn('@main .card-title', 'Account balance 12,34 CHF');
+                ->on(new WalletPage());
+                // Note: This depends on Mollie to Cockcpit communication (webhook)
+                // $browser->assertSeeIn('@main .card-title', 'Account balance 12,34 CHF');
 
             $this->assertSame(1, $user->wallets()->first()->payments()->count());
         });
@@ -160,9 +161,14 @@ class PaymentMollieTest extends TestCaseDusk
                 })
                 ->on(new PaymentMollie())
                 ->assertSeeIn('@title', $user->tenant->title . ' Auto-Payment Setup')
-                ->assertMissing('@amount')
+                ->assertSeeIn('@amount', 'CHF 0.00')
                 ->submitPayment()
-                ->waitForLocation('/wallet')
+                ->waitForLocation('/wallet');
+
+            // Note: This part requires Mollie to Cockpit communication working (webhook)
+            $this->markTestIncomplete();
+            /*
+            $browser->pause(1000)
                 ->visit('/wallet')
                 ->waitFor('#mandate-info')
                 ->assertPresent('#mandate-info p:first-child')
@@ -178,6 +184,7 @@ class PaymentMollieTest extends TestCaseDusk
                 ->assertMissing('@body .alert');
 
             $this->assertSame(1, $user->wallets()->first()->payments()->count());
+            */
         });
 
         // Test updating (disabled) auto-payment
@@ -260,6 +267,7 @@ class PaymentMollieTest extends TestCaseDusk
                 ->on(new PaymentMollie())
                 ->submitPayment('open')
                 ->waitForLocation('/wallet')
+                ->pause(1000)
                 ->visit('/wallet')
                 ->on(new WalletPage())
                 ->assertSeeIn(
@@ -293,6 +301,7 @@ class PaymentMollieTest extends TestCaseDusk
                 ->on(new PaymentMollie())
                 ->submitPayment('failed')
                 ->waitForLocation('/wallet')
+                ->pause(1000)
                 ->visit('/wallet')
                 ->on(new WalletPage())
                 ->waitFor('#mandate-form .alert-danger')

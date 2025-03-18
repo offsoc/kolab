@@ -14,7 +14,7 @@
         }
     ],
     "require": {
-        "php": "^8.1",
+        "php": "^8.2",
         "bacon/bacon-qr-code": "^2.0",
         "barryvdh/laravel-dompdf": "^2.0.1",
         "doctrine/dbal": "^3.6",
@@ -23,14 +23,14 @@
         "guzzlehttp/guzzle": "^7.8.0",
         "jeremy379/laravel-openid-connect": "~2.4.0",
         "kolab/net_ldap3": "dev-master",
-        "laravel/framework": "^10.15.0",
+        "laravel/framework": "^11.0",
         "laravel/horizon": "^5.9",
-        "laravel/octane": "^2.0",
+        "laravel/octane": "^2.3",
         "laravel/passport": "^12.0",
         "laravel/tinker": "^2.8",
         "league/flysystem-aws-s3-v3": "^3.0",
         "mlocati/spf-lib": "^3.1",
-        "mollie/laravel-mollie": "^2.22",
+        "mollie/laravel-mollie": "^3.0",
         "pear/crypt_gpg": "^1.6.6",
         "pear/mail_mime": "~1.10.11",
         "predis/predis": "^2.0",
@@ -40,11 +40,11 @@
         "stripe/stripe-php": "^10.7"
     },
     "require-dev": {
-        "code-lts/doctum": "^5.5.1",
+        "code-lts/doctum": "dev-main",
+        "larastan/larastan": "^2.0",
         "laravel/dusk": "~8.2.2",
         "mockery/mockery": "^1.5",
-        "larastan/larastan": "^2.0",
-        "phpstan/phpstan": "^1.4",
+        "phpstan/phpstan": "^1.12",
         "phpunit/phpunit": "^9",
         "squizlabs/php_codesniffer": "^3.6"
     },

@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('id', 36)->primary();
             $table->string('country', 2);
             $table->timestamp('start')->useCurrent();
-            $table->double('rate', 5, 2);
+            $table->double('rate');
 
             $table->unique(['country', 'start']);
         });

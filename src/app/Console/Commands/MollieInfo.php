@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Console\Command;
 use App\User;
+use Mollie\Laravel\Facades\Mollie;
 
 class MollieInfo extends Command
 {
@@ -68,7 +69,7 @@ class MollieInfo extends Command
         } else {
             $this->info("Available payment methods:");
 
-            foreach (mollie()->methods()->all() as $method) {
+            foreach (Mollie::api()->methods->all() as $method) {
                 $this->info("- {$method->description} ({$method->id}):");
                 $this->info("    status: {$method->status}");
                 $this->info(sprintf(

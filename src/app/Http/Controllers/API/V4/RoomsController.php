@@ -69,7 +69,7 @@ class RoomsController extends RelationController
         }
 
         $rooms = $user->rooms(true)
-            ->union($shared) // @phpstan-ignore-line
+            ->union($shared)
             ->orderBy('name')
             ->get()
             ->map(function ($room) {

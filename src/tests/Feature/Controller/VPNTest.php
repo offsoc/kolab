@@ -101,12 +101,9 @@ EOF;
         $token = $parser->parse($jwt);
 
         $this->assertSame("default", $token->claims()->get('entitlement'));
-        $this->assertSame("2022-02-02T13:00:00+00:00", $token->claims()->get(
-            RegisteredClaims::ISSUED_AT
-        )->format(\DateTimeImmutable::RFC3339));
-        $this->assertSame(0, Carbon::now()->diffInSeconds(new Carbon($token->claims()->get(
-            RegisteredClaims::ISSUED_AT
-        ))));
+        $issued_at = $token->claims()->get(RegisteredClaims::ISSUED_AT);
+        $this->assertSame("2022-02-02T13:00:00+00:00", $issued_at->format(\DateTimeImmutable::RFC3339));
+        $this->assertSame(0.0, Carbon::now()->diffInSeconds(new Carbon($issued_at)));
 
         $validator = new Validator();
         $key = InMemory::plainText($publicKey);

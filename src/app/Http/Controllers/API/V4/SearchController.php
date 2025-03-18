@@ -42,8 +42,8 @@ class SearchController extends Controller
             ->where('user_id', $user->id);
 
         if (strlen($search)) {
-            $aliases->whereLike('alias', $search);
-            $query->whereLike('email', $search);
+            $aliases->whereLike('alias', "%{$search}%");
+            $query->whereLike('email', "%{$search}%");
         }
 
         if ($with_aliases) {
@@ -92,7 +92,7 @@ class SearchController extends Controller
         // Sub-query for user IDs who's names match the search criteria
         $foundUserIds = UserSetting::select('user_id')
             ->whereIn('key', ['first_name', 'last_name'])
-            ->whereLike('value', $search)
+            ->whereLike('value', "%{$search}%")
             ->whereIn('user_id', $allUsers);
 
         // Prepare the query
@@ -102,12 +102,12 @@ class SearchController extends Controller
 
         if (strlen($search)) {
             $query->where(function ($query) use ($foundUserIds, $search) {
-                $query->whereLike('email', $search)
+                $query->whereLike('email', "%{$search}%")
                     ->orWhereIn('id', $foundUserIds);
             });
 
             $aliases->where(function ($query) use ($foundUserIds, $search) {
-                $query->whereLike('alias', $search)
+                $query->whereLike('alias', "%{$search}%")
                     ->orWhereIn('user_id', $foundUserIds);
             });
         }

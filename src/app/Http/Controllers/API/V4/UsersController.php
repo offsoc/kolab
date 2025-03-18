@@ -72,14 +72,14 @@ class UsersController extends RelationController
             $allUsers1 = clone $result;
             $allUsers2 = clone $result;
 
-            $result->whereLike('email', $search)
+            $result->whereLike('email', "%{$search}%")
                 ->union(
                     $allUsers1->join('user_aliases', 'users.id', '=', 'user_aliases.user_id')
-                        ->whereLike('alias', $search)
+                        ->whereLike('alias', "%{$search}%")
                 )
                 ->union(
                     $allUsers2->join('user_settings', 'users.id', '=', 'user_settings.user_id')
-                        ->whereLike('value', $search)
+                        ->whereLike('value', "%{$search}%")
                         ->whereIn('key', ['first_name', 'last_name'])
                 );
         }

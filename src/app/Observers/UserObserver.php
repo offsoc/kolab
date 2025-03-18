@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Group;
 use App\User;
 use App\Wallet;
 
@@ -92,6 +93,7 @@ class UserObserver
         $wallet = $user->wallet();
         if ($wallet && $wallet->owner) {
             $wallet->owner->groups()->each(function ($group) use ($user) {
+                /** @var Group $group */
                 if (in_array($user->email, $group->members)) {
                     $group->members = array_diff($group->members, [$user->email]);
                     $group->save();

@@ -8,6 +8,7 @@ use App\Wallet;
 use Illuminate\Support\Facades\DB;
 use Mollie\Api\Exceptions\ApiException;
 use Mollie\Api\Types;
+use Mollie\Laravel\Facades\Mollie as MollieAPI;
 
 class Mollie extends \App\Providers\PaymentProvider
 {
@@ -41,7 +42,7 @@ class Mollie extends \App\Providers\PaymentProvider
      */
     public static function healthcheck()
     {
-        mollie()->methods()->allActive();
+        MollieAPI::api()->methods->allActive();
         return true;
     }
 
@@ -88,7 +89,7 @@ class Mollie extends \App\Providers\PaymentProvider
 
         // Create the payment in Mollie
         try {
-            $response = mollie()->payments()->create($request);
+            $response = MollieAPI::api()->payments->create($request);
         } catch (ApiException $e) {
             self::logRequestError($request, $e, "Failed to create mandate");
             throw $e;
@@ -225,7 +226,7 @@ class Mollie extends \App\Providers\PaymentProvider
 
         // Create the payment in Mollie
         try {
-            $response = mollie()->payments()->create($request);
+            $response = MollieAPI::api()->payments->create($request);
         } catch (ApiException $e) {
             self::logRequestError($request, $e, "Failed to create payment");
             throw $e;
@@ -253,7 +254,7 @@ class Mollie extends \App\Providers\PaymentProvider
      */
     public function cancel(Wallet $wallet, $paymentId): bool
     {
-        $response = mollie()->payments()->delete($paymentId);
+        $response = MollieAPI::api()->payments->delete($paymentId);
 
         $db_payment = Payment::find($paymentId);
         $db_payment->status = $response->status;
@@ -306,7 +307,7 @@ class Mollie extends \App\Providers\PaymentProvider
 
         // Create the payment in Mollie
         try {
-            $response = mollie()->payments()->create($request);
+            $response = MollieAPI::api()->payments->create($request);
         } catch (ApiException $e) {
             self::logRequestError($request, $e, "Failed to create payment");
             throw $e;
@@ -370,7 +371,7 @@ class Mollie extends \App\Providers\PaymentProvider
         try {
             // Get the payment details from Mollie
             // TODO: Consider https://github.com/mollie/mollie-api-php/issues/502 when it's fixed
-            $mollie_payment = mollie()->payments()->get($payment_id);
+            $mollie_payment = MollieAPI::api()->payments->get($payment_id);
 
             $refunds = [];
 
@@ -480,7 +481,7 @@ class Mollie extends \App\Providers\PaymentProvider
 
         // Register the user in Mollie
         if (empty($customer_id) && $create) {
-            $customer = mollie()->customers()->create([
+            $customer = MollieAPI::api()->customers->create([
                     'name'  => $wallet->owner->name(),
                     'email' => $wallet->id . '@private.' . \config('app.domain'),
             ]);
@@ -503,7 +504,7 @@ class Mollie extends \App\Providers\PaymentProvider
         // Get the manadate reference we already have
         if ($settings['mollie_id'] && $settings['mollie_mandate_id']) {
             try {
-                return mollie()->mandates()->getForId($settings['mollie_id'], $settings['mollie_mandate_id']);
+                return MollieAPI::api()->mandates->getForId($settings['mollie_id'], $settings['mollie_mandate_id']);
             } catch (ApiException $e) {
                 // FIXME: What about 404?
                 if ($e->getCode() == 410) {
@@ -580,7 +581,7 @@ class Mollie extends \App\Providers\PaymentProvider
     public function providerPaymentMethods(string $type, string $currency): array
     {
         // Prefer methods in the system currency
-        $providerMethods = (array) mollie()->methods()->allActive(
+        $providerMethods = (array) MollieAPI::api()->methods->allActive(
             [
                 'sequenceType' => $type,
                 'amount' => [
@@ -592,7 +593,7 @@ class Mollie extends \App\Providers\PaymentProvider
 
         // Get EUR methods (e.g. bank transfers are in EUR only)
         if ($currency != 'EUR') {
-            $eurMethods = (array) mollie()->methods()->allActive(
+            $eurMethods = (array) MollieAPI::api()->methods->allActive(
                 [
                     'sequenceType' => $type,
                     'amount' => [
@@ -634,7 +635,7 @@ class Mollie extends \App\Providers\PaymentProvider
      */
     public function getPayment($paymentId): array
     {
-        $payment = mollie()->payments()->get($paymentId);
+        $payment = MollieAPI::api()->payments->get($paymentId);
 
         return [
             'id' => $payment->id,

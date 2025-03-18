@@ -21,7 +21,7 @@ class RequestHandlerTest extends TestCase
     /**
      * Test REQUEST method
      *
-     * @group @dav
+     * @group dav
      */
     public function testItipRequest(): void
     {
@@ -59,7 +59,7 @@ class RequestHandlerTest extends TestCase
     /**
      * Test REQUEST method with recurrence
      *
-     * @group @dav
+     * @group dav
      */
     public function testItipRequestRecurrence(): void
     {

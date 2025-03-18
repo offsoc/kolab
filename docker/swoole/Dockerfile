@@ -1,11 +1,12 @@
 FROM apheleia/almalinux9
 
-ARG SWOOLE_VERSION=v5.1.2
+ARG PHP_VERSION=8.2
+ARG SWOOLE_VERSION=v6.0.1
+
 ENV HOME=/opt/app-root/src
 
-
 RUN dnf module reset php && \
-    dnf module -y enable php:8.1 && \
+    dnf module -y enable php:${PHP_VERSION} && \
     dnf module -y enable nodejs:20 && \
     dnf -y install \
         --setopt=install_weak_deps=False \
