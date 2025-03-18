@@ -179,12 +179,16 @@ class Engine
 
         $count = 0;
         $itemCount = 0;
+        $startTime = 0;
         $async = empty($this->options['sync']);
 
         // Fetch items from the source
         $this->exporter->fetchItemList(
             $folder,
-            function ($item_or_set) use (&$count, &$itemCount, $async) {
+            function ($item_or_set) use (&$count, &$itemCount, &$startTime, $async) {
+                if (!$startTime) {
+                    $startTime = time();
+                }
                 if ($item_or_set instanceof ItemSet) {
                     $itemCount += count($item_or_set->items);
                 } else {
@@ -199,6 +203,8 @@ class Engine
                     }
                     $count++;
                 } else {
+                    $rate = (double)$itemCount / max((time() - $startTime), 1);
+                    $this->progress(sprintf("  Item Progress [%d] %f items/s", $itemCount, $rate));
                     if ($item_or_set instanceof ItemSet) {
                         $this->processItemSet($item_or_set);
                     } else {
@@ -208,6 +214,7 @@ class Engine
             },
             $this->importer
         );
+        $this->progressComplete();
 
         $this->debug("Migrated $itemCount items");
         if ($count) {
@@ -289,6 +296,29 @@ class Engine
             $output->writeln("$line");
         } else {
             \Log::debug("[DataMigrator] $line");
+        }
+    }
+
+    /**
+     * Print progress information
+     *
+     * This just rewrite the curent line
+     */
+    public function progress($line)
+    {
+        if (!empty($this->options['stdout'])) {
+            $output = new \Symfony\Component\Console\Output\ConsoleOutput();
+            $output->write("\r$line");
+        }
+    }
+
+    /**
+     * Move to a new line after progress output
+     */
+    public function progressComplete() {
+        if (!empty($this->options['stdout'])) {
+            $output = new \Symfony\Component\Console\Output\ConsoleOutput();
+            $output->writeln("");
         }
     }
 
