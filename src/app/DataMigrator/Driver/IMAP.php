@@ -132,6 +132,7 @@ class IMAP implements ExporterInterface, ImporterInterface
         $this->initIMAP();
 
         $mailbox = self::toUTF7($item->folder->targetname);
+        $result = null;
 
         if (strlen($item->content)) {
             $result = $this->imap->append(
@@ -141,10 +142,6 @@ class IMAP implements ExporterInterface, ImporterInterface
                 $item->data['internaldate'] ?? null,
                 true
             );
-
-            if ($result === false) {
-                throw new \Exception("Failed to append IMAP message into {$mailbox}");
-            }
         } elseif ($item->filename) {
             $result = $this->imap->appendFromFile(
                 $mailbox,
@@ -154,9 +151,14 @@ class IMAP implements ExporterInterface, ImporterInterface
                 $item->data['internaldate'] ?? null,
                 true
             );
+        }
 
-            if ($result === false) {
-                throw new \Exception("Failed to append IMAP message into {$mailbox}");
+        if ($result === false) {
+            // Don't abort the migration because of malformed messages
+            if ($this->imap->error == "APPEND: Message contains invalid header") {
+                \Log::warning("Failed to append IMAP message ({$item->id}) into {$mailbox}: {$this->imap->error}");
+            } else {
+                throw new \Exception("Failed to append IMAP message ({$item->id}) into {$mailbox}: {$this->imap->error}");
             }
         }
 
