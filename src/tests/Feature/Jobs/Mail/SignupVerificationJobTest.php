@@ -55,8 +55,6 @@ class SignupVerificationJobTest extends TestCase
         $job = new SignupVerificationJob($code);
         $job->handle();
 
-        $this->assertSame(SignupVerificationJob::QUEUE, $job->queue);
-
         // Assert the email sending job was pushed once
         Mail::assertSent(SignupVerification::class, 1);
 

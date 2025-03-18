@@ -21,7 +21,6 @@ class SignupVerificationJob extends \App\Jobs\MailJob
     public function __construct(SignupCode $code)
     {
         $this->code = $code;
-        $this->onQueue(self::QUEUE);
     }
 
     /**

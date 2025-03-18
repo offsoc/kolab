@@ -47,7 +47,6 @@ class PasswordRetentionJobTest extends TestCase
         $job = new PasswordRetentionJob($user, $expiresOn);
         $job->handle();
 
-        $this->assertSame(PasswordRetentionJob::QUEUE, $job->queue);
         $this->assertMatchesRegularExpression(
             '/^' . now()->format('Y-m-d') . ' [0-9]{2}:[0-9]{2}:[0-9]{2}$/',
             $user->getSetting('password_expiration_warning')

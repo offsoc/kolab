@@ -17,7 +17,9 @@ abstract class MailJob extends CommonJob
     /** @var bool Delete the job if its models no longer exist. */
     public $deleteWhenMissingModels = true;
 
-    public const QUEUE = 'mail';
+    /** @var string|null The name of the queue the job should be sent to. */
+    public $queue = \App\Enums\Queue::Mail->value;
+
 
     /**
      * Number of seconds to wait before retrying the job.

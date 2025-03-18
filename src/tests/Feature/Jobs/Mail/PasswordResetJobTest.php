@@ -7,6 +7,7 @@ use App\Mail\PasswordReset;
 use App\User;
 use App\VerificationCode;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class PasswordResetJobTest extends TestCase
@@ -52,8 +53,6 @@ class PasswordResetJobTest extends TestCase
         $job = new PasswordResetJob($code);
         $job->handle();
 
-        $this->assertSame(PasswordResetJob::QUEUE, $job->queue);
-
         // Assert the email sending job was pushed once
         Mail::assertSent(PasswordReset::class, 1);
 
@@ -67,5 +66,10 @@ class PasswordResetJobTest extends TestCase
             return $mail->hasFrom(\config('mail.sender.address'), \config('mail.sender.name'))
                 && $mail->hasReplyTo(\config('mail.replyto.address'), \config('mail.replyto.name'));
         });
+
+        // Test that the job is dispatched to the proper queue
+        Queue::fake();
+        PasswordResetJob::dispatch($code);
+        Queue::assertPushedOn(\App\Enums\Queue::Mail->value, PasswordResetJob::class);
     }
 }

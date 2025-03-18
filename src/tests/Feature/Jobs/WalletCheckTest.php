@@ -34,6 +34,18 @@ class WalletCheckTest extends TestCase
     }
 
     /**
+     * Test job's queue assignment on dispatch
+     */
+    public function testDispatchQueue(): void
+    {
+        // Test that the job is dispatched to the proper queue
+        Queue::fake();
+        $user = $this->getTestUser('jack@kolab.org');
+        WalletCheck::dispatch($user->wallets()->first()->id);
+        Queue::assertPushedOn(\App\Enums\Queue::Background->value, WalletCheck::class);
+    }
+
+    /**
      * Test job handle, initial negative-balance notification
      */
     public function testHandleInitial(): void
@@ -50,7 +62,7 @@ class WalletCheckTest extends TestCase
         $job->handle();
 
         // Ensure the job ends up on the correct queue
-        $this->assertSame(WalletCheck::QUEUE, $job->queue);
+        $this->assertSame(\App\Enums\Queue::Background->value, $job->queue);
 
         Mail::assertNothingSent();
 

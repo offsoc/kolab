@@ -48,8 +48,6 @@ class PaymentMandateDisabledJobTest extends TestCase
         $job = new PaymentMandateDisabledJob($wallet);
         $job->handle();
 
-        $this->assertSame(PaymentMandateDisabledJob::QUEUE, $job->queue);
-
         // Assert the email sending job was pushed once
         Mail::assertSent(PaymentMandateDisabled::class, 1);
 

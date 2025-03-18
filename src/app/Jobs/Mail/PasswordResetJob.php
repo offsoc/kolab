@@ -21,7 +21,6 @@ class PasswordResetJob extends \App\Jobs\MailJob
     public function __construct(VerificationCode $code)
     {
         $this->code = $code;
-        $this->onQueue(self::QUEUE);
     }
 
     /**

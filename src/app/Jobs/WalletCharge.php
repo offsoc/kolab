@@ -6,13 +6,11 @@ use App\Wallet;
 
 class WalletCharge extends CommonJob
 {
-    public const QUEUE = 'background';
-
     /** @var int How many times retry the job if it fails. */
     public $tries = 5;
 
-    /** @var bool Delete the job if the wallet no longer exist. */
-    public $deleteWhenMissingModels = true;
+    /** @var string|null The name of the queue the job should be sent to. */
+    public $queue = \App\Enums\Queue::Background->value;
 
     /** @var string A wallet identifier */
     protected $walletId;
@@ -27,7 +25,6 @@ class WalletCharge extends CommonJob
     public function __construct(string $walletId)
     {
         $this->walletId = $walletId;
-        $this->onQueue(self::QUEUE);
     }
 
     /**

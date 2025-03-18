@@ -25,7 +25,6 @@ class PasswordRetentionJob extends \App\Jobs\MailJob
     {
         $this->user = $user;
         $this->expiresOn = $expiresOn;
-        $this->onQueue(self::QUEUE);
     }
 
     /**

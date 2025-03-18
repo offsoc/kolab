@@ -21,7 +21,6 @@ class TrialEndJob extends \App\Jobs\MailJob
     public function __construct(User $account)
     {
         $this->account = $account;
-        $this->onQueue(self::QUEUE);
     }
 
     /**

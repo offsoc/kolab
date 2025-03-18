@@ -27,7 +27,6 @@ class PaymentMandateDisabledJob extends \App\Jobs\MailJob
     {
         $this->wallet = $wallet;
         $this->controller = $controller;
-        $this->onQueue(self::QUEUE);
     }
 
     /**

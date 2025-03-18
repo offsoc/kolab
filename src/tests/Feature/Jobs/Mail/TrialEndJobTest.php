@@ -47,8 +47,6 @@ class TrialEndJobTest extends TestCase
         $job = new TrialEndJob($user);
         $job->handle();
 
-        $this->assertSame(TrialEndJob::QUEUE, $job->queue);
-
         // Assert the email sending job was pushed once
         Mail::assertSent(TrialEnd::class, 1);
 

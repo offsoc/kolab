@@ -47,8 +47,6 @@ class SignupInvitationJobTest extends TestCase
         $job = new SignupInvitationJob($this->invitation);
         $job->handle();
 
-        $this->assertSame(SignupInvitationJob::QUEUE, $job->queue);
-
         // Assert the email sending job was pushed once
         Mail::assertSent(SignupInvitation::class, 1);
 
@@ -58,13 +56,5 @@ class SignupInvitationJobTest extends TestCase
         });
 
         $this->assertTrue($this->invitation->isSent());
-    }
-
-    /**
-     * Test job failure handling
-     */
-    public function testFailure(): void
-    {
-        $this->markTestIncomplete();
     }
 }

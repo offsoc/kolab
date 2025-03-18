@@ -1,11 +1,6 @@
 <?php
 
-// Prioritized list of all queues
-$queues = [
-    'default',
-    App\Jobs\MailJob::QUEUE,
-    App\Jobs\WalletCheck::QUEUE,
-];
+use App\Enums\Queue;
 
 return [
 
@@ -151,7 +146,7 @@ return [
         'production' => [
             'supervisor-1' => [
                 'connection' => 'redis',
-                'queue' => $queues,
+                'queue' => Queue::values(),
                 'balance' => 'auto',
                 'maxProcesses' => 1,
                 'minProcesses' => 1,
@@ -162,7 +157,7 @@ return [
         'local' => [
             'supervisor-1' => [
                 'connection' => 'redis',
-                'queue' => $queues,
+                'queue' => Queue::values(),
                 'balance' => 'auto',
                 'maxProcesses' => 1,
                 'minProcesses' => 1,

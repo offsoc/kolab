@@ -3,6 +3,7 @@
 namespace Tests\Feature\Jobs\User;
 
 use App\Backends\LDAP;
+use App\Jobs\User\UpdateJob;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -56,7 +57,7 @@ class UpdateTest extends TestCase
 
         $user->setAliases($aliases);
 
-        $job = new \App\Jobs\User\UpdateJob($user->id);
+        $job = new UpdateJob($user->id);
         $job->handle();
 
         if (\config('app.with_ldap')) {
@@ -72,7 +73,7 @@ class UpdateTest extends TestCase
 
         $user->setAliases($aliases);
 
-        $job = new \App\Jobs\User\UpdateJob($user->id);
+        $job = new UpdateJob($user->id);
         $job->handle();
 
         if (\config('app.with_ldap')) {
@@ -85,7 +86,7 @@ class UpdateTest extends TestCase
         $aliases = [];
         $user->setAliases($aliases);
 
-        $job = new \App\Jobs\User\UpdateJob($user->id);
+        $job = new UpdateJob($user->id);
         $job->handle();
 
         if (\config('app.with_ldap')) {
@@ -96,7 +97,7 @@ class UpdateTest extends TestCase
 
         // Test deleted user
         $user->delete();
-        $job = new \App\Jobs\User\UpdateJob($user->id);
+        $job = new UpdateJob($user->id);
         $job->handle();
 
         $this->assertTrue($job->isDeleted());
@@ -104,7 +105,7 @@ class UpdateTest extends TestCase
         // Test job failure (user unknown)
         // The job will be released
         $this->expectException(\Exception::class);
-        $job = new \App\Jobs\User\UpdateJob(123);
+        $job = new UpdateJob(123);
         $job->handle();
 
         $this->assertTrue($job->isReleased());

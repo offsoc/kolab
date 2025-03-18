@@ -21,7 +21,6 @@ class SignupInvitationJob extends \App\Jobs\MailJob
     public function __construct(SignupInvitation $invitation)
     {
         $this->invitation = $invitation;
-        $this->onQueue(self::QUEUE);
     }
 
     /**

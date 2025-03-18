@@ -26,7 +26,6 @@ class PaymentJob extends \App\Jobs\MailJob
     {
         $this->payment = $payment;
         $this->controller = $controller;
-        $this->onQueue(self::QUEUE);
     }
 
     /**
