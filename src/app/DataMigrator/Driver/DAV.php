@@ -100,8 +100,17 @@ class DAV implements ExporterInterface, ImporterInterface
                 break;
         }
 
-        if ($this->client->create($object) === false) {
-            throw new \Exception("Failed to save DAV object at {$href}");
+        try {
+            if ($this->client->create($object) === false) {
+                throw new \Exception("Failed to save DAV object at {$href}");
+            }
+        } catch (RequestException $e) {
+            \Log::warning("Failed (code {$e->getCode()}) to save DAV object at {$href}:\n  {$e->getMessage()}");
+            // 400 is returned on errors that only affect individual events,
+            // so we don't abort the migration because of that.
+            if ($e->getCode() != 400) {
+                throw new \Exception("Failed to save DAV object at {$href}");
+            }
         }
     }
 
