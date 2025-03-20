@@ -131,6 +131,11 @@ class Takeout implements ExporterInterface
             $headline = '';
 
             while (($line = fgets($fp)) !== false) {
+                // make sure we use correct end-line sequence
+                if (substr($line, -2) != "\r\n") {
+                    $line = substr($line, 0, -1) . "\r\n";
+                }
+
                 if (str_starts_with($line, 'From ') && preg_match('/^From [^\s]+ [a-zA-Z]{3} [a-zA-Z]{3}/', $line)) {
                     $this->mailItemHandler($folder, $headline, $msg, $existing, $callback);
                     $msg = '';
@@ -155,52 +160,67 @@ class Takeout implements ExporterInterface
             }
 
             // Read iCalendar file line by line
-            // Note: We assume that event exceptions are always in order after the master event
+            // We can't do a sinle pass pass over the stream because events and event exceptions can be
+            // spread across the whole file not necessarily one after another.
             $fp = fopen("{$this->location}/Calendar/{$foldername}.ics", 'r');
             $event = '';
-            $previous = '';
             $head = '';
             $got_head = false;
+            $events = [];
+            $pos = 0;
+            $start = null;
+
+            $add_vevent_block = function ($start_pos, $end_pos) use (&$event, &$events) {
+                // Get the UID which will be the array key
+                if (preg_match('/\nUID:(.[^\r\n]+(\r\n[\s\t][^\r\n]+)*)/', $event, $matches)) {
+                    $uid =  str_replace(["\r\n ", "\r\n  "], '', $matches[1]);
+                    // Remember position in the stream, we don't want to copy the whole content into memory
+                    $chunk = $start_pos . ':' . $end_pos;
+                    $events[$uid] = isset($events[$uid]) ? array_merge($events[$uid], [$chunk]) : [$chunk];
+                }
+
+                $event = '';
+            };
 
             while (($line = fgets($fp)) !== false) {
+                $pos += strlen($line);
+
                 if (str_starts_with($line, 'BEGIN:VEVENT')) {
                     $got_head = true;
-                    if (strlen($event)) {
-                        if (strpos($event, "\nRECURRENCE-ID")) {
-                            $previous .= $event;
-                        } else {
-                            if (strlen($previous)) {
-                                $_event = $head . $previous . "END:VCALENDAR\r\n";
-                                $this->eventItemHandler($folder, $_event, $existing, $callback);
-                            }
-                            $previous = $event;
-                        }
-                        $event = '';
+                    if ($start) {
+                        $add_vevent_block($start, $pos - strlen($line));
                     }
+
+                    $start = $pos - strlen($line);
                 } elseif (!$got_head) {
                     $head .= $line;
                     continue;
                 }
 
-                // TODO: Probably stream_get_contents() once per event would be faster than concatenating lines
-                if (!str_starts_with($line, 'END:VCALENDAR')) {
-                    $event .= $line;
+                if (str_starts_with($line, 'END:VCALENDAR')) {
+                    $pos -= strlen($line);
+                    break;
                 }
+
+                $event .= $line;
+            }
+
+            if ($start) {
+                $add_vevent_block($start, $pos);
+            }
+
+            // Handle the events one by one (joining multiple VEVENT blocks for the same event)
+            foreach ($events as $chunks) {
+                $event = '';
+                foreach ($chunks as $pos) {
+                    [$start, $end] = explode(':', $pos);
+                    $event .= stream_get_contents($fp, intval($end) - intval($start), intval($start));
+                }
+
+                $this->eventItemHandler($folder, $head . $event . "END:VCALENDAR\r\n", $existing, $callback);
             }
 
             fclose($fp);
-
-            if (strlen($event)) {
-                if (strpos($event, "\nRECURRENCE-ID")) {
-                    $previous .= $event;
-                } else {
-                    $this->eventItemHandler($folder, $head . $event . "END:VCALENDAR\r\n", $existing, $callback);
-                }
-            }
-            if (strlen($previous)) {
-                $this->eventItemHandler($folder, $head . $previous . "END:VCALENDAR\r\n", $existing, $callback);
-            }
-
             return;
         }
 
