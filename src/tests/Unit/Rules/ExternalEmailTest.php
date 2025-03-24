@@ -13,7 +13,7 @@ class ExternalEmailTest extends TestCase
      *
      * @return array Arguments for testExternalEmail()
      */
-    public function dataExternalEmail(): array
+    public static function dataExternalEmail(): array
     {
         return [
             // invalid

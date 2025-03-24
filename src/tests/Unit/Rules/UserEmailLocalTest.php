@@ -13,7 +13,7 @@ class UserEmailLocalTest extends TestCase
      *
      * @return array Arguments for testUserEmailLocal()
      */
-    public function dataUserEmailLocal(): array
+    public static function dataUserEmailLocal(): array
     {
         return [
             // non-string input

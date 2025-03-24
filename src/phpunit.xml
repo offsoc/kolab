@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit backupGlobals="false"
-         backupStaticAttributes="false"
          bootstrap="vendor/autoload.php"
          colors="true"
-         convertErrorsToExceptions="true"
-         convertNoticesToExceptions="true"
-         convertWarningsToExceptions="true"
+         displayDetailsOnPhpunitDeprecations="true"
+         failOnDeprecation="true"
+         failOnNotice="true"
+         failOnWarning="true"
          processIsolation="false"
          stopOnFailure="false">
     <testsuites>
@@ -26,11 +26,11 @@
              <exclude>tests/Browser/PaymentCoinbaseTest.php</exclude>
         </testsuite>
     </testsuites>
-    <coverage processUncoveredFiles="true">
+    <source>
         <include>
             <directory suffix=".php">./app</directory>
         </include>
-    </coverage>
+    </source>
     <logging>
         <testdoxHtml outputFile="./tests/report/testdox.html" />
     </logging>

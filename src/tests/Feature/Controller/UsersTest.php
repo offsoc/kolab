@@ -1485,6 +1485,8 @@ class UsersTest extends TestCase
 
         // Jack is not a John's wallet controller
         $jack = $this->getTestUser('jack@kolab.org');
+        $jack->status |= User::STATUS_ACTIVE;
+        $jack->save();
         $result = $this->invokeMethod(new UsersController(), 'userResponse', [$jack]);
 
         $this->assertFalse($result['statusInfo']['enableDomains']);

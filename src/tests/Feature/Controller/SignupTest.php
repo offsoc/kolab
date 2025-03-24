@@ -1196,15 +1196,16 @@ class SignupTest extends TestCase
     }
 
     /**
-     * List of login/domain validation cases for testValidateLogin()
+     * Signup login/domain validation.
      *
-     * @return array Arguments for testValidateLogin()
+     * Note: Technically these include unit tests, but let's keep it here for now.
+     * FIXME: Shall we do a http request for each case?
      */
-    public function dataValidateLogin(): array
+    public function testValidateLogin(): void
     {
         $domain = $this->getPublicDomain();
 
-        return [
+        $cases = [
             // Individual account
             ['', $domain, false, ['login' => 'The login field is required.']],
             ['test123456', 'localhost', false, ['domain' => 'The specified domain is invalid.']],
@@ -1224,21 +1225,13 @@ class SignupTest extends TestCase
             ['testnonsystemdomain', 'invalid', true, ['domain' => 'The specified domain is invalid.']],
             ['testnonsystemdomain', '.com', true, ['domain' => 'The specified domain is invalid.']],
         ];
-    }
 
-    /**
-     * Signup login/domain validation.
-     *
-     * Note: Technically these include unit tests, but let's keep it here for now.
-     * FIXME: Shall we do a http request for each case?
-     *
-     * @dataProvider dataValidateLogin
-     */
-    public function testValidateLogin($login, $domain, $external, $expected_result): void
-    {
-        $result = $this->invokeMethod(new SignupController(), 'validateLogin', [$login, $domain, $external]);
+        foreach ($cases as $case) {
+            [$login, $domain, $external, $expected_result] = $case;
+            $result = $this->invokeMethod(new SignupController(), 'validateLogin', [$login, $domain, $external]);
 
-        $this->assertSame($expected_result, $result);
+            $this->assertSame($expected_result, $result);
+        }
     }
 
     /**
