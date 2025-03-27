@@ -154,11 +154,13 @@ class IMAP implements ExporterInterface, ImporterInterface
         }
 
         if ($result === false) {
+            $msg = "Failed to append IMAP message ({$item->id}) into {$mailbox}: {$this->imap->error}";
+
             // Don't abort the migration because of malformed messages
             if ($this->imap->error == "APPEND: Message contains invalid header") {
-                \Log::warning("Failed to append IMAP message ({$item->id}) into {$mailbox}: {$this->imap->error}");
+                \Log::warning($msg);
             } else {
-                throw new \Exception("Failed to append IMAP message ({$item->id}) into {$mailbox}: {$this->imap->error}");
+                throw new \Exception($msg);
             }
         }
 

@@ -315,7 +315,8 @@ class Engine
     /**
      * Move to a new line after progress output
      */
-    public function progressComplete() {
+    public function progressComplete()
+    {
         if (!empty($this->options['stdout'])) {
             $output = new \Symfony\Component\Console\Output\ConsoleOutput();
             $output->writeln("");
