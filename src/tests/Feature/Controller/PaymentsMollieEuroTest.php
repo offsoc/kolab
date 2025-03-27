@@ -205,7 +205,7 @@ class PaymentsMollieEuroTest extends TestCase
         $this->assertEquals(30.10, $wallet->getSetting('mandate_amount'));
         $this->assertEquals(10, $wallet->getSetting('mandate_balance'));
 
-        Bus::assertDispatchedTimes(\App\Jobs\WalletCharge::class, 0);
+        Bus::assertDispatchedTimes(\App\Jobs\Wallet\ChargeJob::class, 0);
 
         // Test updating a disabled mandate (invalid input)
         $wallet->setSetting('mandate_disabled', 1);
@@ -235,8 +235,8 @@ class PaymentsMollieEuroTest extends TestCase
         $this->assertSame($mandate_id, $json['id']);
         $this->assertFalse($json['isDisabled']);
 
-        Bus::assertDispatchedTimes(\App\Jobs\WalletCharge::class, 1);
-        Bus::assertDispatched(\App\Jobs\WalletCharge::class, function ($job) use ($wallet) {
+        Bus::assertDispatchedTimes(\App\Jobs\Wallet\ChargeJob::class, 1);
+        Bus::assertDispatched(\App\Jobs\Wallet\ChargeJob::class, function ($job) use ($wallet) {
             $job_wallet_id = $this->getObjectProperty($job, 'walletId');
             return $job_wallet_id === $wallet->id;
         });

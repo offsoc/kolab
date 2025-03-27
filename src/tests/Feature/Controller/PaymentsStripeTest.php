@@ -283,8 +283,8 @@ class PaymentsStripeTest extends TestCase
         $this->assertSame('AAA', $json['id']);
         $this->assertFalse($json['isDisabled']);
 
-        Bus::assertDispatchedTimes(\App\Jobs\WalletCharge::class, 1);
-        Bus::assertDispatched(\App\Jobs\WalletCharge::class, function ($job) use ($wallet) {
+        Bus::assertDispatchedTimes(\App\Jobs\Wallet\ChargeJob::class, 1);
+        Bus::assertDispatched(\App\Jobs\Wallet\ChargeJob::class, function ($job) use ($wallet) {
             $job_wallet_id = $this->getObjectProperty($job, 'walletId');
             return $job_wallet_id === $wallet->id;
         });
@@ -515,9 +515,9 @@ class PaymentsStripeTest extends TestCase
         $this->assertSame(Payment::STATUS_PAID, $payment->status);
         $this->assertSame($payment->id, $wallet->fresh()->getSetting('stripe_mandate_id'));
 
-        // Expect a WalletCharge job if the balance is negative
-        Bus::assertDispatchedTimes(\App\Jobs\WalletCharge::class, 1);
-        Bus::assertDispatched(\App\Jobs\WalletCharge::class, function ($job) use ($wallet) {
+        // Expect a wallet charge job if the balance is negative
+        Bus::assertDispatchedTimes(\App\Jobs\Wallet\ChargeJob::class, 1);
+        Bus::assertDispatched(\App\Jobs\Wallet\ChargeJob::class, function ($job) use ($wallet) {
             $job_wallet_id = TestCase::getObjectProperty($job, 'walletId');
             return $job_wallet_id === $wallet->id;
         });

@@ -141,7 +141,7 @@ class PaymentsMollieTest extends TestCase
         $this->assertEquals(30.10, $wallet->getSetting('mandate_amount'));
         $this->assertEquals(10, $wallet->getSetting('mandate_balance'));
 
-        Bus::assertDispatchedTimes(\App\Jobs\WalletCharge::class, 0);
+        Bus::assertDispatchedTimes(\App\Jobs\Wallet\ChargeJob::class, 0);
 
         // Delete mandate
         $response = $this->actingAs($reseller)->delete("api/v4/payments/mandate");

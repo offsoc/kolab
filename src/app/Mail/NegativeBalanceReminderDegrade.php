@@ -2,7 +2,7 @@
 
 namespace App\Mail;
 
-use App\Jobs\WalletCheck;
+use App\Jobs\Wallet\CheckJob;
 use App\Tenant;
 use App\User;
 use App\Utils;
@@ -37,7 +37,7 @@ class NegativeBalanceReminderDegrade extends Mailable
     {
         $appName = Tenant::getConfig($this->user->tenant_id, 'app.name');
         $supportUrl = Tenant::getConfig($this->user->tenant_id, 'app.support_url');
-        $threshold = WalletCheck::threshold($this->wallet, WalletCheck::THRESHOLD_DEGRADE);
+        $threshold = CheckJob::threshold($this->wallet, CheckJob::THRESHOLD_DEGRADE);
 
         $vars = [
             'date' => $threshold->toDateString(),

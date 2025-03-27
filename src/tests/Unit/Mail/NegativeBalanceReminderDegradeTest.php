@@ -2,7 +2,7 @@
 
 namespace Tests\Unit\Mail;
 
-use App\Jobs\WalletCheck;
+use App\Jobs\Wallet\CheckJob;
 use App\Mail\NegativeBalanceReminderDegrade;
 use App\User;
 use App\Wallet;
@@ -21,7 +21,7 @@ class NegativeBalanceReminderDegradeTest extends TestCase
         $wallet->balance = -100;
         $wallet->save();
 
-        $threshold = WalletCheck::threshold($wallet, WalletCheck::THRESHOLD_DEGRADE);
+        $threshold = CheckJob::threshold($wallet, CheckJob::THRESHOLD_DEGRADE);
 
         \config([
                 'app.support_url' => 'https://kolab.org/support',

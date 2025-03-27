@@ -132,7 +132,7 @@ class PaymentsController extends Controller
 
         // Trigger auto-payment if the balance is below the threshold
         if ($wallet->balance < round($request->balance * 100)) {
-            \App\Jobs\WalletCharge::dispatch($wallet->id);
+            \App\Jobs\Wallet\ChargeJob::dispatch($wallet->id);
         }
 
         $result = self::walletMandate($wallet);

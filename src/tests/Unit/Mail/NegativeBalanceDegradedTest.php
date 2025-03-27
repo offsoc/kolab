@@ -2,7 +2,6 @@
 
 namespace Tests\Unit\Mail;
 
-use App\Jobs\WalletCheck;
 use App\Mail\NegativeBalanceDegraded;
 use App\User;
 use App\Wallet;

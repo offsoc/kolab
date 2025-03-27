@@ -2,7 +2,6 @@
 
 namespace App\Mail;
 
-use App\Jobs\WalletCheck;
 use App\Tenant;
 use App\User;
 use App\Utils;
@@ -10,15 +9,15 @@ use App\Wallet;
 
 class NegativeBalanceDegraded extends Mailable
 {
-    /** @var \App\Wallet A wallet with a negative balance */
+    /** @var Wallet A wallet with a negative balance */
     protected $wallet;
 
 
     /**
      * Create a new message instance.
      *
-     * @param \App\Wallet $wallet A wallet
-     * @param \App\User   $user   A wallet controller to whom the email is being sent
+     * @param Wallet $wallet A wallet
+     * @param User   $user   A wallet controller to whom the email is being sent
      *
      * @return void
      */

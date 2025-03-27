@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\Wallet;
 
+use App\Jobs\CommonJob;
 use App\Wallet;
 use Carbon\Carbon;
 
-class WalletCheck extends CommonJob
+class CheckJob extends CommonJob
 {
     public const THRESHOLD_DEGRADE = 'degrade';
     public const THRESHOLD_DEGRADE_REMINDER = 'degrade-reminder';
@@ -224,10 +225,10 @@ class WalletCheck extends CommonJob
      * Get the date-time for an action threshold. Calculated using
      * the date when a wallet balance turned negative.
      *
-     * @param \App\Wallet $wallet A wallet
-     * @param string      $type   Action type (one of self::THRESHOLD_*)
+     * @param Wallet $wallet A wallet
+     * @param string $type   Action type (one of self::THRESHOLD_*)
      *
-     * @return \Carbon\Carbon The threshold date-time object
+     * @return Carbon The threshold date-time object
      */
     public static function threshold(Wallet $wallet, string $type): ?Carbon
     {

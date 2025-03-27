@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\Wallet;
 
+use App\Jobs\CommonJob;
 use App\Wallet;
 
-class WalletCharge extends CommonJob
+class ChargeJob extends CommonJob
 {
     /** @var int How many times retry the job if it fails. */
     public $tries = 5;

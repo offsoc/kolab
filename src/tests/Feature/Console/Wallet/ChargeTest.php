@@ -50,8 +50,8 @@ class ChargeTest extends TestCase
         $this->artisan('wallet:charge ' . $wallet->id)
             ->assertExitCode(0);
 
-        Queue::assertPushed(\App\Jobs\WalletCheck::class, 1);
-        Queue::assertPushed(\App\Jobs\WalletCheck::class, function ($job) use ($wallet) {
+        Queue::assertPushed(\App\Jobs\Wallet\CheckJob::class, 1);
+        Queue::assertPushed(\App\Jobs\Wallet\CheckJob::class, function ($job) use ($wallet) {
             $job_wallet_id = TestCase::getObjectProperty($job, 'walletId');
             return $job_wallet_id === $wallet->id;
         });
@@ -76,12 +76,12 @@ class ChargeTest extends TestCase
 
         $this->artisan('wallet:charge')->assertExitCode(0);
 
-        Queue::assertPushed(\App\Jobs\WalletCheck::class, $count);
-        Queue::assertPushed(\App\Jobs\WalletCheck::class, function ($job) use ($wallet1) {
+        Queue::assertPushed(\App\Jobs\Wallet\CheckJob::class, $count);
+        Queue::assertPushed(\App\Jobs\Wallet\CheckJob::class, function ($job) use ($wallet1) {
             $job_wallet_id = TestCase::getObjectProperty($job, 'walletId');
             return $job_wallet_id === $wallet1->id;
         });
-        Queue::assertPushed(\App\Jobs\WalletCheck::class, function ($job) use ($wallet2) {
+        Queue::assertPushed(\App\Jobs\Wallet\CheckJob::class, function ($job) use ($wallet2) {
             $job_wallet_id = TestCase::getObjectProperty($job, 'walletId');
             return $job_wallet_id === $wallet2->id;
         });

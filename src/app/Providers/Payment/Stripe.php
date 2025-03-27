@@ -79,7 +79,7 @@ class Stripe extends \App\Providers\PaymentProvider
         ];
 
         // Note: Stripe does not allow to set amount for 'setup' operation
-        // We'll dispatch WalletCharge job when we receive a webhook request
+        // We'll dispatch Wallet\ChargeJob when we receive a webhook request
 
         $session = StripeAPI\Checkout\Session::create($request);
 
@@ -375,7 +375,7 @@ class Stripe extends \App\Providers\PaymentProvider
 
                     // Top-up the wallet if balance is below the threshold
                     if ($payment->wallet->balance < $threshold && $payment->status != Payment::STATUS_PAID) {
-                        \App\Jobs\WalletCharge::dispatch($payment->wallet->id);
+                        \App\Jobs\Wallet\ChargeJob::dispatch($payment->wallet->id);
                     }
                 }
 

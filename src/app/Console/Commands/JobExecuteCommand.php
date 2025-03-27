@@ -32,9 +32,7 @@ class JobExecuteCommand extends Command
 
         $job = str_replace('/', '\\', $job);
 
-        if (preg_match('/^(WalletCheck|WalletCharge)$/', $job)) {
-            $object = $this->getWallet($object);
-        } elseif (preg_match('/^(User|Domain|Group|Resource|SharedFolder).[a-zA-Z]+$/', $job, $m)) {
+        if (preg_match('/^(User|Domain|Group|Resource|SharedFolder|Wallet).[a-zA-Z]+$/', $job, $m)) {
             $object = $this->{'get' . $m[1]}($object);
         } else {
             $this->error("Invalid or unsupported job name.");

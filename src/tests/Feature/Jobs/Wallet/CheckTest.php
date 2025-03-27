@@ -1,8 +1,8 @@
 <?php
 
-namespace Tests\Feature\Jobs;
+namespace Tests\Feature\Jobs\Wallet;
 
-use App\Jobs\WalletCheck;
+use App\Jobs\Wallet\CheckJob;
 use App\User;
 use App\Wallet;
 use Carbon\Carbon;
@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
-class WalletCheckTest extends TestCase
+class CheckTest extends TestCase
 {
     /**
      * {@inheritDoc}
@@ -41,8 +41,8 @@ class WalletCheckTest extends TestCase
         // Test that the job is dispatched to the proper queue
         Queue::fake();
         $user = $this->getTestUser('jack@kolab.org');
-        WalletCheck::dispatch($user->wallets()->first()->id);
-        Queue::assertPushedOn(\App\Enums\Queue::Background->value, WalletCheck::class);
+        CheckJob::dispatch($user->wallets()->first()->id);
+        Queue::assertPushedOn(\App\Enums\Queue::Background->value, CheckJob::class);
     }
 
     /**
@@ -58,7 +58,7 @@ class WalletCheckTest extends TestCase
         $wallet->balance = 0;
         $wallet->save();
 
-        $job = new WalletCheck($wallet->id);
+        $job = new CheckJob($wallet->id);
         $job->handle();
 
         // Ensure the job ends up on the correct queue
@@ -70,7 +70,7 @@ class WalletCheckTest extends TestCase
         $wallet->balance = -100;
         $wallet->save();
 
-        $job = new WalletCheck($wallet->id);
+        $job = new CheckJob($wallet->id);
         $job->handle();
 
         Mail::assertNothingSent();
@@ -79,7 +79,7 @@ class WalletCheckTest extends TestCase
         $wallet->setSetting('balance_negative_since', $now->subHours(2)->toDateTimeString());
         $wallet->setSetting('balance_warning_initial', null);
 
-        $job = new WalletCheck($wallet->id);
+        $job = new CheckJob($wallet->id);
         $job->handle();
 
         // Assert the mail was sent to the user's email, but not to his external email
@@ -90,7 +90,7 @@ class WalletCheckTest extends TestCase
 
         // Run the job again to make sure the notification is not sent again
         Mail::fake();
-        $job = new WalletCheck($wallet->id);
+        $job = new CheckJob($wallet->id);
         $job->handle();
 
         Mail::assertNothingSent();
@@ -100,7 +100,7 @@ class WalletCheckTest extends TestCase
         $wallet->setSetting('balance_negative_since', null);
         $wallet->setSetting('balance_warning_initial', null);
 
-        $job = new WalletCheck($wallet->id);
+        $job = new CheckJob($wallet->id);
         $job->handle();
 
         // Assert the mail was sent to the user's email, but not to his external email
@@ -119,7 +119,7 @@ class WalletCheckTest extends TestCase
         $wallet->owner->suspend();
         $wallet->setSetting('balance_warning_initial', null);
 
-        $job = new WalletCheck($wallet->id);
+        $job = new CheckJob($wallet->id);
         $job->handle();
 
         Mail::assertNothingSent();
@@ -138,7 +138,7 @@ class WalletCheckTest extends TestCase
         $wallet->save();
         $this->backdateEntitlements($wallet->entitlements, Carbon::now()->subWeeks(5));
 
-        $job = new WalletCheck($wallet->id);
+        $job = new CheckJob($wallet->id);
         $job->handle();
 
         $wallet->refresh();
@@ -162,7 +162,7 @@ class WalletCheckTest extends TestCase
         // Balance turned negative 7+1 days ago, expect mail sent
         $wallet->setSetting('balance_negative_since', $now->subDays(7 + 1)->toDateTimeString());
 
-        $job = new WalletCheck($wallet->id);
+        $job = new CheckJob($wallet->id);
         $job->handle();
 
         // Assert the mail was sent to the user's email and to his external email
@@ -173,7 +173,7 @@ class WalletCheckTest extends TestCase
 
         // Run the job again to make sure the notification is not sent again
         Mail::fake();
-        $job = new WalletCheck($wallet->id);
+        $job = new CheckJob($wallet->id);
         $job->handle();
 
         Mail::assertNothingSent();
@@ -183,7 +183,7 @@ class WalletCheckTest extends TestCase
         $wallet->owner->suspend();
         $wallet->setSetting('balance_warning_reminder', null);
 
-        $job = new WalletCheck($wallet->id);
+        $job = new CheckJob($wallet->id);
         $job->handle();
 
         Mail::assertNothingSent();
@@ -207,7 +207,7 @@ class WalletCheckTest extends TestCase
         $days = 7 + 7 + 1;
         $wallet->setSetting('balance_negative_since', $now->subDays($days)->toDateTimeString());
 
-        $job = new WalletCheck($wallet->id);
+        $job = new CheckJob($wallet->id);
         $job->handle();
 
         // Assert the mail was sent to the user's email, and his external email
@@ -224,7 +224,7 @@ class WalletCheckTest extends TestCase
         $wallet->owner->suspend();
         $wallet->owner->undegrade();
 
-        $job = new WalletCheck($wallet->id);
+        $job = new CheckJob($wallet->id);
         $job->handle();
 
         Mail::assertNothingSent();
@@ -248,32 +248,32 @@ class WalletCheckTest extends TestCase
         // Test degraded_last_reminder not set
         $wallet->setSetting('degraded_last_reminder', null);
 
-        $job = new WalletCheck($wallet->id);
+        $job = new CheckJob($wallet->id);
         $res = $job->handle();
 
         Mail::assertNothingSent();
 
         $_last = Wallet::find($wallet->id)->getSetting('degraded_last_reminder');
         $this->assertSame(Carbon::now()->toDateTimeString(), $_last);
-        $this->assertSame(WalletCheck::THRESHOLD_DEGRADE_REMINDER, $res);
+        $this->assertSame(CheckJob::THRESHOLD_DEGRADE_REMINDER, $res);
 
         // Test degraded_last_reminder set, but 14 days didn't pass yet
         $last = $now->copy()->subDays(10);
         $wallet->setSetting('degraded_last_reminder', $last->toDateTimeString());
 
-        $job = new WalletCheck($wallet->id);
+        $job = new CheckJob($wallet->id);
         $res = $job->handle();
 
         Mail::assertNothingSent();
 
         $_last = $wallet->fresh()->getSetting('degraded_last_reminder');
-        $this->assertSame(WalletCheck::THRESHOLD_DEGRADE_REMINDER, $res);
+        $this->assertSame(CheckJob::THRESHOLD_DEGRADE_REMINDER, $res);
         $this->assertSame($last->toDateTimeString(), $_last);
 
         // Test degraded_last_reminder set, and 14 days passed
         $wallet->setSetting('degraded_last_reminder', $now->copy()->subDays(14)->setSeconds(0));
 
-        $job = new WalletCheck($wallet->id);
+        $job = new CheckJob($wallet->id);
         $res = $job->handle();
 
         // Assert the mail was sent to the user's email, and his external email
@@ -284,7 +284,7 @@ class WalletCheckTest extends TestCase
 
         $_last = $wallet->fresh()->getSetting('degraded_last_reminder');
         $this->assertSame(Carbon::now()->toDateTimeString(), $_last);
-        $this->assertSame(WalletCheck::THRESHOLD_DEGRADE_REMINDER, $res);
+        $this->assertSame(CheckJob::THRESHOLD_DEGRADE_REMINDER, $res);
 
         // Test suspended user - no mail sent
         Mail::fake();
@@ -292,7 +292,7 @@ class WalletCheckTest extends TestCase
         $wallet->owner->undegrade();
         $wallet->setSetting('degraded_last_reminder', null);
 
-        $job = new WalletCheck($wallet->id);
+        $job = new CheckJob($wallet->id);
         $job->handle();
 
         Mail::assertNothingSent();
