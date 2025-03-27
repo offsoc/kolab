@@ -3,6 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Console\Command;
+use App\User;
+use App\Wallet;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Mollie\Laravel\Facades\Mollie;
@@ -61,40 +63,61 @@ class OwnerSwapCommand extends Command
 
         DB::beginTransaction();
 
-        // Switch wallet for existing entitlements
-        $wallet->entitlements()->withTrashed()->update(['wallet_id' => $target_wallet->id]);
-
-        // Update target user's created_at timestamp to the source user's created_at.
-        // This is needed because we use this date when charging entitlements,
-        // i.e. the first month is free.
-        $dt = \now()->subMonthsWithoutOverflow(1);
-        if ($target->created_at > $dt && $target->created_at > $user->created_at) {
-            $target->created_at = $user->created_at;
-            $target->save();
-        }
-
-        // Migrate wallet properties
-        $target_wallet->balance = $wallet->balance;
-        $target_wallet->currency = $wallet->currency;
-        $target_wallet->save();
-
-        $wallet->balance = 0;
-        $wallet->save();
-
-        // Migrate wallet settings
-        $settings = $wallet->settings()->get();
-
-        \App\WalletSetting::where('wallet_id', $wallet->id)->delete();
-        \App\WalletSetting::where('wallet_id', $target_wallet->id)->delete();
-
-        foreach ($settings as $setting) {
-            $target_wallet->setSetting($setting->key, $setting->value);
-        }
+        $this->migrateWallet($wallet, $target_wallet);
+        $this->migrateUser($user, $target);
 
         DB::commit();
 
         // Update mollie/stripe customer email (which point to the old wallet id)
         $this->updatePaymentCustomer($target_wallet);
+    }
+
+    /**
+     * Move settings from one user to another
+     */
+    private function migrateUser(User $source, User $target): void
+    {
+        // Update target user's created_at timestamp to the source user's created_at.
+        // This is needed because we use this date when charging entitlements,
+        // i.e. the first month is free.
+        $dt = \now()->subMonthsWithoutOverflow(1);
+        if ($target->created_at > $dt && $target->created_at > $source->created_at) {
+            $target->created_at = $source->created_at;
+            $target->save();
+        }
+
+        // Move plan_id setting
+        if ($plan_id = $source->getSetting('plan_id')) {
+            $target->setSetting('plan_id', $plan_id);
+            $source->removeSetting('plan_id');
+        }
+    }
+
+    /**
+     * Move entitlements, settings and state from one wallet to another
+     */
+    private function migrateWallet(Wallet $source, Wallet $target): void
+    {
+        // Switch wallet for existing entitlements
+        $source->entitlements()->withTrashed()->update(['wallet_id' => $target->id]);
+
+        // Migrate wallet properties
+        $target->balance = $source->balance;
+        $target->currency = $source->currency;
+        $target->save();
+
+        $source->balance = 0;
+        $source->save();
+
+        // Migrate wallet settings
+        $settings = $source->settings()->get();
+
+        $source->settings()->delete();
+        $target->settings()->delete();
+
+        foreach ($settings as $setting) {
+            $target->setSetting($setting->key, $setting->value);
+        }
     }
 
     /**

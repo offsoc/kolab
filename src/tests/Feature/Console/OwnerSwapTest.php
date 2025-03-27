@@ -61,6 +61,7 @@ class OwnerSwapTest extends TestCase
         $target_wallet = $user->wallets()->first();
         $owner->created_at = \now()->subMonths(1);
         $owner->save();
+        $owner->setSetting('plan_id', 'test');
 
         $entitlements = $wallet->entitlements()->orderBy('id')->pluck('id')->all();
         $this->assertCount(15, $entitlements);
@@ -96,6 +97,7 @@ class OwnerSwapTest extends TestCase
         $this->assertSame($wallet->currency, $target_wallet->currency);
         $this->assertTrue($user->created_at->toDateTimeString() === $owner->created_at->toDateTimeString());
         $this->assertSame('test', $target_wallet->getSetting('test'));
+        $this->assertSame('test', $user->getSetting('plan_id'));
 
         $wallet->refresh();
         $this->assertSame(null, $wallet->getSetting('test'));
