@@ -46,6 +46,7 @@ class EWS implements ExporterInterface
         'AllContactsExtended',
         'AllPersonMetadata',
         'AllTodoTasks',
+        'Calendar Version Store',
         'Document Centric Conversations',
         'ExternalContacts',
         'Flagged Emails',
