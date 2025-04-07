@@ -36,12 +36,9 @@ class CreateTest extends TestCase
         Queue::fake();
 
         // Test unknown folder
-        $this->expectException(\Exception::class);
-        $job = new \App\Jobs\SharedFolder\CreateJob(123);
+        $job = (new \App\Jobs\SharedFolder\CreateJob(123))->withFakeQueueInteractions();
         $job->handle();
-
-        $this->assertTrue($job->isReleased());
-        $this->assertFalse($job->hasFailed());
+        $job->assertReleased(delay: 5);
 
         $folder = $this->getTestSharedFolder(
             'folder-test@' . \config('app.domain'),
@@ -53,12 +50,12 @@ class CreateTest extends TestCase
         $this->assertFalse($folder->isActive());
 
         // Test shared folder creation
-        $job = new \App\Jobs\SharedFolder\CreateJob($folder->id);
+        $job = (new \App\Jobs\SharedFolder\CreateJob($folder->id))->withFakeQueueInteractions();
         $job->handle();
+        $job->assertNotFailed();
 
         $folder->refresh();
 
-        $this->assertFalse($job->hasFailed());
         if (\config('app.with_ldap')) {
             $this->assertTrue($folder->isLdapReady());
         } else {
@@ -75,21 +72,17 @@ class CreateTest extends TestCase
         $folder->status |= SharedFolder::STATUS_DELETED;
         $folder->save();
 
-        $job = new \App\Jobs\SharedFolder\CreateJob($folder->id);
+        $job = (new \App\Jobs\SharedFolder\CreateJob($folder->id))->withFakeQueueInteractions();
         $job->handle();
-
-        $this->assertTrue($job->hasFailed());
-        $this->assertSame("Shared folder {$folder->id} is marked as deleted.", $job->failureMessage);
+        $job->assertFailedWith("Shared folder {$folder->id} is marked as deleted.");
 
         $folder->status ^= SharedFolder::STATUS_DELETED;
         $folder->save();
         $folder->delete();
 
-        $job = new \App\Jobs\SharedFolder\CreateJob($folder->id);
+        $job = (new \App\Jobs\SharedFolder\CreateJob($folder->id))->withFakeQueueInteractions();
         $job->handle();
-
-        $this->assertTrue($job->hasFailed());
-        $this->assertSame("Shared folder {$folder->id} is actually deleted.", $job->failureMessage);
+        $job->assertFailedWith("Shared folder {$folder->id} is actually deleted.");
 
         // TODO: Test failures on domain sanity checks
         // TODO: Test partial execution, i.e. only IMAP or only LDAP

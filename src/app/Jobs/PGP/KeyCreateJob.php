@@ -47,12 +47,12 @@ class KeyCreateJob extends UserJob
 
         // sanity checks
         if ($user->isDeleted()) {
-            $this->fail(new \Exception("User {$this->userId} is marked as deleted."));
+            $this->fail("User {$this->userId} is marked as deleted.");
             return;
         }
 
         if ($user->trashed()) {
-            $this->fail(new \Exception("User {$this->userId} is actually deleted."));
+            $this->fail("User {$this->userId} is actually deleted.");
             return;
         }
 
@@ -60,7 +60,7 @@ class KeyCreateJob extends UserJob
             $this->userEmail != $user->email
             && !$user->aliases()->where('alias', $this->userEmail)->exists()
         ) {
-            $this->fail(new \Exception("Alias {$this->userEmail} is actually deleted."));
+            $this->fail("Alias {$this->userEmail} is actually deleted.");
             return;
         }
 

@@ -21,7 +21,7 @@ class VerifyJob extends SharedFolderJob
 
         // the user has a mailbox (or is marked as such)
         if ($folder->isImapReady()) {
-            $this->fail(new \Exception("Shared folder {$this->folderId} is already verified."));
+            $this->fail("Shared folder {$this->folderId} is already verified.");
             return;
         }
 

@@ -48,12 +48,12 @@ class CreateJob extends UserJob
 
         // sanity checks
         if ($user->isDeleted()) {
-            $this->fail(new \Exception("User {$this->userId} is marked as deleted."));
+            $this->fail("User {$this->userId} is marked as deleted.");
             return;
         }
 
         if ($user->trashed()) {
-            $this->fail(new \Exception("User {$this->userId} is actually deleted."));
+            $this->fail("User {$this->userId} is actually deleted.");
             return;
         }
 
@@ -63,12 +63,12 @@ class CreateJob extends UserJob
         $domain = $user->domain();
 
         if (!$domain) {
-            $this->fail(new \Exception("The domain for {$this->userId} does not exist."));
+            $this->fail("The domain for {$this->userId} does not exist.");
             return;
         }
 
         if ($domain->isDeleted()) {
-            $this->fail(new \Exception("The domain for {$this->userId} is marked as deleted."));
+            $this->fail("The domain for {$this->userId} is marked as deleted.");
             return;
         }
 

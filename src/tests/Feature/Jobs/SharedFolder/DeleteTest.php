@@ -36,11 +36,9 @@ class DeleteTest extends TestCase
         Queue::fake();
 
         // Test non-existing folder ID
-        $job = new \App\Jobs\SharedFolder\DeleteJob(123);
+        $job = (new \App\Jobs\SharedFolder\DeleteJob(123))->withFakeQueueInteractions();
         $job->handle();
-
-        $this->assertTrue($job->hasFailed());
-        $this->assertSame("Shared folder 123 could not be found in the database.", $job->failureMessage);
+        $job->assertFailedWith("Shared folder 123 could not be found in the database.");
 
         $folder = $this->getTestSharedFolder('folder-test@' . \config('app.domain'), [
                 'status' => SharedFolder::STATUS_NEW
@@ -61,11 +59,9 @@ class DeleteTest extends TestCase
         $this->assertFalse($folder->isDeleted());
 
         // Test deleting not deleted folder
-        $job = new \App\Jobs\SharedFolder\DeleteJob($folder->id);
+        $job = (new \App\Jobs\SharedFolder\DeleteJob($folder->id))->withFakeQueueInteractions();
         $job->handle();
-
-        $this->assertTrue($job->hasFailed());
-        $this->assertSame("Shared folder {$folder->id} is not deleted.", $job->failureMessage);
+        $job->assertFailedWith("Shared folder {$folder->id} is not deleted.");
 
         $folder->deleted_at = \now();
         $folder->saveQuietly();
@@ -84,10 +80,8 @@ class DeleteTest extends TestCase
         Queue::assertPushed(\App\Jobs\SharedFolder\UpdateJob::class, 0);
 
         // Test deleting already deleted folder
-        $job = new \App\Jobs\SharedFolder\DeleteJob($folder->id);
+        $job = (new \App\Jobs\SharedFolder\DeleteJob($folder->id))->withFakeQueueInteractions();
         $job->handle();
-
-        $this->assertTrue($job->hasFailed());
-        $this->assertSame("Shared folder {$folder->id} is already marked as deleted.", $job->failureMessage);
+        $job->assertFailedWith("Shared folder {$folder->id} is already marked as deleted.");
     }
 }

@@ -34,8 +34,7 @@ class VerifyCommand extends Command
             return 1;
         }
 
-        $job = new \App\Jobs\Resource\VerifyJob($resource->id);
-        $job->handle();
+        \App\Jobs\Resource\VerifyJob::dispatchSync($resource->id);
 
         // TODO: We should check the job result and print an error on failure
     }

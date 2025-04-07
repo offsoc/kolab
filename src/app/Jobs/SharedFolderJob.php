@@ -73,7 +73,7 @@ abstract class SharedFolderJob extends CommonJob
                 return null;
             }
 
-            $this->fail(new \Exception("Shared folder {$this->folderId} could not be found in the database."));
+            $this->fail("Shared folder {$this->folderId} could not be found in the database.");
         }
 
         return $folder;

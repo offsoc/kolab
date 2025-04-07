@@ -74,7 +74,7 @@ abstract class ResourceJob extends CommonJob
                 return null;
             }
 
-            $this->fail(new \Exception("Resource {$this->resourceId} could not be found in the database."));
+            $this->fail("Resource {$this->resourceId} could not be found in the database.");
         }
 
         return $resource;

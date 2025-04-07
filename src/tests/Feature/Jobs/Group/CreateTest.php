@@ -47,11 +47,8 @@ class CreateTest extends TestCase
         }
 
         // Test non-existing group ID
-        $this->expectException(\Exception::class);
-        $job = new \App\Jobs\Group\CreateJob(123);
+        $job = (new \App\Jobs\Group\CreateJob(123))->withFakeQueueInteractions();
         $job->handle();
-
-        $this->assertTrue($job->isReleased());
-        $this->assertFalse($job->hasFailed());
+        $job->assertReleased(delay: 5);
     }
 }

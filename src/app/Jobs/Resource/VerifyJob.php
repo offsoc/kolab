@@ -21,7 +21,7 @@ class VerifyJob extends ResourceJob
 
         // the resource was already verified
         if ($resource->isImapReady()) {
-            $this->fail(new \Exception("Resource {$this->resourceId} is already verified."));
+            $this->fail("Resource {$this->resourceId} is already verified.");
             return;
         }
 

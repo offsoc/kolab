@@ -27,13 +27,13 @@ class DeleteJob extends UserJob
         }
 
         if (!$user->trashed()) {
-            $this->fail(new \Exception("User {$this->userId} is not deleted."));
+            $this->fail("User {$this->userId} is not deleted.");
             return;
         }
 
         // sanity checks
         if ($user->isDeleted()) {
-            $this->fail(new \Exception("User {$this->userId} is already marked as deleted."));
+            $this->fail("User {$this->userId} is already marked as deleted.");
             return;
         }
 

@@ -67,11 +67,10 @@ class CreateTest extends TestCase
         );
 
         // Test job releasing on unknown identifier
-        $this->expectException(\Exception::class);
-        $job = new \App\Jobs\Domain\CreateJob(123);
+        $job = (new \App\Jobs\Domain\CreateJob(123))->withFakeQueueInteractions();
         $job->handle();
+        $job->assertReleased(delay: 5);
 
-        $this->assertTrue($job->isReleased());
-        $this->assertFalse($job->hasFailed());
+        // TODO: the job can't be released infinitely (?), test that
     }
 }

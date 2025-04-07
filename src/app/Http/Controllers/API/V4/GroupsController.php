@@ -214,12 +214,8 @@ class GroupsController extends RelationController
             switch ($step) {
                 case 'distlist-ldap-ready':
                     // Group not in LDAP, create it
-                    $job = new \App\Jobs\Group\CreateJob($group->id);
-                    $job->handle();
-
-                    $group->refresh();
-
-                    return $group->isLdapReady();
+                    \App\Jobs\Group\CreateJob::dispatch($group->id);
+                    return null;
             }
         } catch (\Exception $e) {
             \Log::error($e);

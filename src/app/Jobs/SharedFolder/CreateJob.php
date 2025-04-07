@@ -21,12 +21,12 @@ class CreateJob extends SharedFolderJob
 
         // sanity checks
         if ($folder->isDeleted()) {
-            $this->fail(new \Exception("Shared folder {$this->folderId} is marked as deleted."));
+            $this->fail("Shared folder {$this->folderId} is marked as deleted.");
             return;
         }
 
         if ($folder->trashed()) {
-            $this->fail(new \Exception("Shared folder {$this->folderId} is actually deleted."));
+            $this->fail("Shared folder {$this->folderId} is actually deleted.");
             return;
         }
 
@@ -36,12 +36,12 @@ class CreateJob extends SharedFolderJob
         $domain = $folder->domain();
 
         if (!$domain) {
-            $this->fail(new \Exception("The domain for shared folder {$this->folderId} does not exist."));
+            $this->fail("The domain for shared folder {$this->folderId} does not exist.");
             return;
         }
 
         if ($domain->isDeleted()) {
-            $this->fail(new \Exception("The domain for shared folder {$this->folderId} is marked as deleted."));
+            $this->fail("The domain for shared folder {$this->folderId} is marked as deleted.");
             return;
         }
 

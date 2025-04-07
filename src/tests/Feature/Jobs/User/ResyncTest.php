@@ -55,6 +55,8 @@ class ResyncTest extends TestCase
             $this->assertTrue(empty(LDAP::getUser($user->email)));
         }
 
+        Queue::fake();
+
         // Test a user (and custom domain) that both aren't in ldap (despite their status)
         $job = new \App\Jobs\User\ResyncJob($user->id);
         $job->handle();
@@ -62,16 +64,29 @@ class ResyncTest extends TestCase
         $user->refresh();
         $domain->refresh();
 
-        $this->assertTrue($user->isLdapReady());
-        $this->assertTrue($domain->isLdapReady());
-        $this->assertTrue($user->isImapReady());
-        $this->assertTrue(IMAP::verifyAccount($user->email));
-
         if (\config('app.with_ldap')) {
-            $this->assertTrue(!empty(LDAP::getDomain($domain->namespace)));
-            $this->assertTrue(!empty(LDAP::getUser($user->email)));
+            $this->assertFalse($user->isLdapReady());
+            $this->assertFalse($domain->isLdapReady());
+
+            Queue::assertPushed(\App\Jobs\Domain\CreateJob::class, 1);
+            Queue::assertPushed(
+                \App\Jobs\Domain\CreateJob::class,
+                function ($job) use ($domain) {
+                    return $domain->id == TestCase::getObjectProperty($job, 'domainId');
+                }
+            );
         }
 
-        // TODO: More tests cases
+        $this->assertFalse($user->isImapReady());
+
+        Queue::assertPushed(\App\Jobs\User\CreateJob::class, 1);
+        Queue::assertPushed(
+            \App\Jobs\User\CreateJob::class,
+            function ($job) use ($user) {
+                return $user->id == TestCase::getObjectProperty($job, 'userId');
+            }
+        );
+
+        // TODO: More cases
     }
 }

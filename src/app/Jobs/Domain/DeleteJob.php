@@ -21,12 +21,12 @@ class DeleteJob extends DomainJob
 
         // sanity checks
         if (!$domain->trashed()) {
-            $this->fail(new \Exception("Domain {$this->domainId} is not deleted."));
+            $this->fail("Domain {$this->domainId} is not deleted.");
             return;
         }
 
         if ($domain->isDeleted()) {
-            $this->fail(new \Exception("Domain {$this->domainId} is already marked as deleted."));
+            $this->fail("Domain {$this->domainId} is already marked as deleted.");
             return;
         }
 

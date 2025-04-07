@@ -42,11 +42,9 @@ class VerifyTest extends TestCase
         Queue::fake();
 
         // Test non-existing folder ID
-        $job = new \App\Jobs\SharedFolder\VerifyJob(123);
+        $job = (new \App\Jobs\SharedFolder\VerifyJob(123))->withFakeQueueInteractions();
         $job->handle();
-
-        $this->assertTrue($job->hasFailed());
-        $this->assertSame("Shared folder 123 could not be found in the database.", $job->failureMessage);
+        $job->assertFailedWith("Shared folder 123 could not be found in the database.");
 
         // Test existing folder
         $folder = $this->getTestSharedFolder('folder-event@kolab.org');

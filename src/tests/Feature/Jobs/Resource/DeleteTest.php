@@ -36,11 +36,9 @@ class DeleteTest extends TestCase
         Queue::fake();
 
         // Test non-existing resource ID
-        $job = new \App\Jobs\Resource\DeleteJob(123);
+        $job = (new \App\Jobs\Resource\DeleteJob(123))->withFakeQueueInteractions();
         $job->handle();
-
-        $this->assertTrue($job->hasFailed());
-        $this->assertSame("Resource 123 could not be found in the database.", $job->failureMessage);
+        $job->assertFailedWith("Resource 123 could not be found in the database.");
 
         $resource = $this->getTestResource('resource-test@' . \config('app.domain'), [
                 'status' => Resource::STATUS_NEW
@@ -57,11 +55,9 @@ class DeleteTest extends TestCase
         $this->assertFalse($resource->isDeleted());
 
         // Test deleting not deleted resource
-        $job = new \App\Jobs\Resource\DeleteJob($resource->id);
+        $job = (new \App\Jobs\Resource\DeleteJob($resource->id))->withFakeQueueInteractions();
         $job->handle();
-
-        $this->assertTrue($job->hasFailed());
-        $this->assertSame("Resource {$resource->id} is not deleted.", $job->failureMessage);
+        $job->assertFailedWith("Resource {$resource->id} is not deleted.");
 
         $resource->deleted_at = \now();
         $resource->saveQuietly();
@@ -80,10 +76,8 @@ class DeleteTest extends TestCase
         Queue::assertPushed(\App\Jobs\Resource\UpdateJob::class, 0);
 
         // Test deleting already deleted resource
-        $job = new \App\Jobs\Resource\DeleteJob($resource->id);
+        $job = (new \App\Jobs\Resource\DeleteJob($resource->id))->withFakeQueueInteractions();
         $job->handle();
-
-        $this->assertTrue($job->hasFailed());
-        $this->assertSame("Resource {$resource->id} is already marked as deleted.", $job->failureMessage);
+        $job->assertFailedWith("Resource {$resource->id} is already marked as deleted.");
     }
 }

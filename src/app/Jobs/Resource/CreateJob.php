@@ -21,12 +21,12 @@ class CreateJob extends ResourceJob
 
         // sanity checks
         if ($resource->isDeleted()) {
-            $this->fail(new \Exception("Resource {$this->resourceId} is marked as deleted."));
+            $this->fail("Resource {$this->resourceId} is marked as deleted.");
             return;
         }
 
         if ($resource->trashed()) {
-            $this->fail(new \Exception("Resource {$this->resourceId} is actually deleted."));
+            $this->fail("Resource {$this->resourceId} is actually deleted.");
             return;
         }
 
@@ -36,12 +36,12 @@ class CreateJob extends ResourceJob
         $domain = $resource->domain();
 
         if (!$domain) {
-            $this->fail(new \Exception("The domain for resource {$this->resourceId} does not exist."));
+            $this->fail("The domain for resource {$this->resourceId} does not exist.");
             return;
         }
 
         if ($domain->isDeleted()) {
-            $this->fail(new \Exception("The domain for resource {$this->resourceId} is marked as deleted."));
+            $this->fail("The domain for resource {$this->resourceId} is marked as deleted.");
             return;
         }
 

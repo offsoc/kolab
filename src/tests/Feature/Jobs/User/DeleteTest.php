@@ -45,12 +45,8 @@ class DeleteTest extends TestCase
         $user = $this->getTestUser('new-job-user@' . \config('app.domain'));
         $rcuser = Roundcube::userId($user->email);
 
-        try {
-            $job = new \App\Jobs\User\CreateJob($user->id);
-            $job->handle();
-        } catch (\Exception $e) {
-            // Ignore "Attempted to release a manually executed job" exception
-        }
+        $job = new \App\Jobs\User\CreateJob($user->id);
+        $job->handle();
 
         $user->refresh();
 
@@ -60,22 +56,18 @@ class DeleteTest extends TestCase
         $this->assertNotNull($rcdb->table('users')->where('username', $user->email)->first());
 
         // Test job failure (user not yet deleted)
-        $job = new \App\Jobs\User\DeleteJob($user->id);
+        $job = (new \App\Jobs\User\DeleteJob($user->id))->withFakeQueueInteractions();
         $job->handle();
-
-        $this->assertTrue($job->hasFailed());
-        $this->assertSame("User {$user->id} is not deleted.", $job->failureMessage);
+        $job->assertFailedWith("User {$user->id} is not deleted.");
 
         // Test job failure (user already deleted)
         $user->status |= User::STATUS_DELETED;
         $user->deleted_at = \now();
         $user->saveQuietly();
 
-        $job = new \App\Jobs\User\DeleteJob($user->id);
+        $job = (new \App\Jobs\User\DeleteJob($user->id))->withFakeQueueInteractions();
         $job->handle();
-
-        $this->assertTrue($job->hasFailed());
-        $this->assertSame("User {$user->id} is already marked as deleted.", $job->failureMessage);
+        $job->assertFailedWith("User {$user->id} is already marked as deleted.");
 
         // Test success delete from LDAP, IMAP and Roundcube
         $user->status ^= User::STATUS_DELETED;
@@ -90,12 +82,12 @@ class DeleteTest extends TestCase
         // in the same second. If that's the case IMAP DELETE will fail. So, let's wait a second.
         sleep(1);
 
-        $job = new \App\Jobs\User\DeleteJob($user->id);
+        $job = (new \App\Jobs\User\DeleteJob($user->id))->withFakeQueueInteractions();
         $job->handle();
+        $job->assertNotFailed();
 
         $user->refresh();
 
-        $this->assertFalse($job->hasFailed());
         $this->assertFalse($user->isLdapReady());
         $this->assertFalse($user->isImapReady());
         $this->assertTrue($user->isDeleted());

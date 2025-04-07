@@ -65,7 +65,7 @@ abstract class DomainJob extends CommonJob
                 return null;
             }
 
-            $this->fail(new \Exception("Domain {$this->domainId} could not be found in the database."));
+            $this->fail("Domain {$this->domainId} could not be found in the database.");
         }
 
         return $domain;

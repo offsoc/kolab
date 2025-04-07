@@ -49,11 +49,9 @@ class VerifyTest extends TestCase
         $this->assertTrue($domain->fresh()->isVerified());
 
         // Test non-existing domain ID
-        $job = new \App\Jobs\Domain\VerifyJob(123);
+        $job = (new \App\Jobs\Domain\VerifyJob(123))->withFakeQueueInteractions();
         $job->handle();
-
-        $this->assertTrue($job->hasFailed());
-        $this->assertSame("Domain 123 could not be found in the database.", $job->failureMessage);
+        $job->assertFailedWith("Domain 123 could not be found in the database.");
     }
 
     /**

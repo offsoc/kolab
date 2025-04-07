@@ -40,11 +40,9 @@ class UpdateTest extends TestCase
         Queue::fake();
 
         // Test non-existing folder ID
-        $job = new \App\Jobs\SharedFolder\UpdateJob(123);
+        $job = (new \App\Jobs\SharedFolder\UpdateJob(123))->withFakeQueueInteractions();
         $job->handle();
-
-        $this->assertTrue($job->hasFailed());
-        $this->assertSame("Shared folder 123 could not be found in the database.", $job->failureMessage);
+        $job->assertFailedWith("Shared folder 123 could not be found in the database.");
 
         $folder = $this->getTestSharedFolder(
             'folder-test@' . \config('app.domain'),
@@ -65,8 +63,9 @@ class UpdateTest extends TestCase
         $this->assertTrue($folder->isImapReady());
 
         // Run the update job
-        $job = new \App\Jobs\SharedFolder\UpdateJob($folder->id);
+        $job = (new \App\Jobs\SharedFolder\UpdateJob($folder->id))->withFakeQueueInteractions();
         $job->handle();
+        $job->assertNotFailed();
 
         // TODO: Assert that it worked on both LDAP and IMAP side
 
@@ -74,9 +73,8 @@ class UpdateTest extends TestCase
         $folder->status |= SharedFolder::STATUS_DELETED;
         $folder->save();
 
-        $job = new \App\Jobs\SharedFolder\UpdateJob($folder->id);
+        $job = (new \App\Jobs\SharedFolder\UpdateJob($folder->id))->withFakeQueueInteractions();
         $job->handle();
-
-        $this->assertTrue($job->isDeleted());
+        $job->assertDeleted();
     }
 }

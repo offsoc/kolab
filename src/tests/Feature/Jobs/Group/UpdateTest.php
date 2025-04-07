@@ -36,20 +36,17 @@ class UpdateTest extends TestCase
         Queue::fake();
 
         // Test non-existing group ID
-        $job = new \App\Jobs\Group\UpdateJob(123);
+        $job = (new \App\Jobs\Group\UpdateJob(123))->withFakeQueueInteractions();
         $job->handle();
-
-        $this->assertTrue($job->hasFailed());
-        $this->assertSame("Group 123 could not be found in the database.", $job->failureMessage);
+        $job->assertFailedWith("Group 123 could not be found in the database.");
 
         // Create the group
         $group = $this->getTestGroup('group@kolab.org', ['members' => []]);
 
         if (!\config('app.with_ldap')) {
-            $job = new \App\Jobs\Group\UpdateJob($group->id);
+            $job = (new \App\Jobs\Group\UpdateJob($group->id))->withFakeQueueInteractions();
             $job->handle();
-
-            $this->assertTrue($job->isDeleted());
+            $job->assertDeleted();
             $this->markTestSkipped();
         }
 

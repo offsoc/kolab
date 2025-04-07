@@ -42,12 +42,7 @@ class UpdateTest extends TestCase
 
         $user = $this->getTestUser('new-job-user@' . \config('app.domain'));
 
-        try {
-            $job = new \App\Jobs\User\CreateJob($user->id);
-            $job->handle();
-        } catch (\Exception $e) {
-            // Ignore "Attempted to release a manually executed job" exception
-        }
+        \App\Jobs\User\CreateJob::dispatchSync($user->id);
 
         // Test setting two aliases
         $aliases = [
@@ -97,19 +92,14 @@ class UpdateTest extends TestCase
 
         // Test deleted user
         $user->delete();
-        $job = new UpdateJob($user->id);
+        $job = (new UpdateJob($user->id))->withFakeQueueInteractions();
         $job->handle();
+        $job->assertDeleted();
 
-        $this->assertTrue($job->isDeleted());
-
-        // Test job failure (user unknown)
-        // The job will be released
-        $this->expectException(\Exception::class);
-        $job = new UpdateJob(123);
+        // Test job failure (user unknown), the job will be released
+        $job = (new UpdateJob(123))->withFakeQueueInteractions();
         $job->handle();
-
-        $this->assertTrue($job->isReleased());
-        $this->assertFalse($job->hasFailed());
+        $job->assertReleased(delay: 5);
 
         // TODO: Test IMAP, e.g. quota change
     }

@@ -65,7 +65,7 @@ abstract class GroupJob extends CommonJob
                 return null;
             }
 
-            $this->fail(new \Exception("Group {$this->groupId} could not be found in the database."));
+            $this->fail("Group {$this->groupId} could not be found in the database.");
         }
 
         return $group;

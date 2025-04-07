@@ -42,11 +42,9 @@ class VerifyTest extends TestCase
         Queue::fake();
 
         // Test non-existing user ID
-        $job = new \App\Jobs\User\VerifyJob(123);
+        $job = (new \App\Jobs\User\VerifyJob(123))->withFakeQueueInteractions();
         $job->handle();
-
-        $this->assertTrue($job->hasFailed());
-        $this->assertSame("User 123 could not be found in the database.", $job->failureMessage);
+        $job->assertFailedWith("User 123 could not be found in the database.");
 
         // Test existing user
         $user = $this->getTestUser('ned@kolab.org');

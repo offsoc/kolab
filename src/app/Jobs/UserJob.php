@@ -68,7 +68,7 @@ abstract class UserJob extends CommonJob
                 return null;
             }
 
-            $this->fail(new \Exception("User {$this->userId} could not be found in the database."));
+            $this->fail("User {$this->userId} could not be found in the database.");
         }
 
         return $user;

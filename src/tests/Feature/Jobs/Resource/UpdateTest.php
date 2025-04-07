@@ -40,11 +40,9 @@ class UpdateTest extends TestCase
         Queue::fake();
 
         // Test non-existing resource ID
-        $job = new \App\Jobs\Resource\UpdateJob(123);
+        $job = (new \App\Jobs\Resource\UpdateJob(123))->withFakeQueueInteractions();
         $job->handle();
-
-        $this->assertTrue($job->hasFailed());
-        $this->assertSame("Resource 123 could not be found in the database.", $job->failureMessage);
+        $job->assertFailedWith("Resource 123 could not be found in the database.");
 
         $resource = $this->getTestResource(
             'resource-test@' . \config('app.domain'),
@@ -74,9 +72,8 @@ class UpdateTest extends TestCase
         $resource->status |= Resource::STATUS_DELETED;
         $resource->save();
 
-        $job = new \App\Jobs\Resource\UpdateJob($resource->id);
+        $job = (new \App\Jobs\Resource\UpdateJob($resource->id))->withFakeQueueInteractions();
         $job->handle();
-
-        $this->assertTrue($job->isDeleted());
+        $job->assertDeleted();
     }
 }

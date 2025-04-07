@@ -42,11 +42,9 @@ class VerifyTest extends TestCase
         Queue::fake();
 
         // Test non-existing resource ID
-        $job = new \App\Jobs\Resource\VerifyJob(123);
+        $job = (new \App\Jobs\Resource\VerifyJob(123))->withFakeQueueInteractions();
         $job->handle();
-
-        $this->assertTrue($job->hasFailed());
-        $this->assertSame("Resource 123 could not be found in the database.", $job->failureMessage);
+        $job->assertFailedWith("Resource 123 could not be found in the database.");
 
         // Test existing resource
         $resource = $this->getTestResource('resource-test1@kolab.org');

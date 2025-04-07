@@ -50,11 +50,9 @@ class DeleteTest extends TestCase
         }
 
         // Test group that is not deleted yet
-        $job = new \App\Jobs\Group\DeleteJob($group->id);
+        $job = (new \App\Jobs\Group\DeleteJob($group->id))->withFakeQueueInteractions();
         $job->handle();
-
-        $this->assertTrue($job->hasFailed());
-        $this->assertSame("Group {$group->id} is not deleted.", $job->failureMessage);
+        $job->assertFailedWith("Group {$group->id} is not deleted.");
 
         $group->deleted_at = \now();
         $group->saveQuietly();
@@ -82,10 +80,8 @@ class DeleteTest extends TestCase
         );
 */
         // Test non-existing group ID
-        $job = new \App\Jobs\Group\DeleteJob(123);
+        $job = (new \App\Jobs\Group\DeleteJob(123))->withFakeQueueInteractions();
         $job->handle();
-
-        $this->assertTrue($job->hasFailed());
-        $this->assertSame("Group 123 could not be found in the database.", $job->failureMessage);
+        $job->assertFailedWith("Group 123 could not be found in the database.");
     }
 }

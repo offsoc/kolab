@@ -46,7 +46,6 @@ class JobExecuteCommand extends Command
 
         $job = 'App\\Jobs\\' . $job;
 
-        $job = new $job($object->id);
-        $job->handle();
+        $job::dispatchSync($object->id);
     }
 }

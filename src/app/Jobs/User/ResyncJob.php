@@ -42,8 +42,7 @@ class ResyncJob extends UserJob
                 $domain->status &= ~Domain::STATUS_LDAP_READY;
                 $domain->save();
 
-                $job = new \App\Jobs\Domain\CreateJob($domain->id);
-                $job->handle();
+                \App\Jobs\Domain\CreateJob::dispatchSync($domain->id);
             }
 
             if (!LDAP::getUser($user->email)) {
@@ -62,7 +61,6 @@ class ResyncJob extends UserJob
 
         $user->update();
 
-        $job = new $userJob($user->id);
-        $job->handle();
+        $userJob::dispatchSync($user->id);
     }
 }
