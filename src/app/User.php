@@ -421,7 +421,7 @@ class User extends Authenticatable
         }
 
         if ($owner && ($wallet = $this->wallet())) {
-            return $wallet->owner && $wallet->owner->isDegraded();
+            return $wallet->user_id != $this->id && $wallet->owner && $wallet->owner->isDegraded();
         }
 
         return false;
