@@ -89,6 +89,14 @@ class UserObserver
             return;
         }
 
+        if (!$user->isForceDeleting()) {
+            \App\Jobs\User\DeleteJob::dispatch($user->id);
+
+            if (\App\Tenant::getConfig($user->tenant_id, 'pgp.enable')) {
+                \App\Jobs\PGP\KeyDeleteJob::dispatch($user->id, $user->email);
+            }
+        }
+
         // Remove the user from existing groups
         $wallet = $user->wallet();
         if ($wallet && $wallet->owner) {
@@ -120,14 +128,6 @@ class UserObserver
 
         // Remove owned users/domains/groups/resources/etc
         self::removeRelatedObjects($user, $user->isForceDeleting());
-
-        if (!$user->isForceDeleting()) {
-            \App\Jobs\User\DeleteJob::dispatch($user->id);
-
-            if (\App\Tenant::getConfig($user->tenant_id, 'pgp.enable')) {
-                \App\Jobs\PGP\KeyDeleteJob::dispatch($user->id, $user->email);
-            }
-        }
     }
 
     /**
