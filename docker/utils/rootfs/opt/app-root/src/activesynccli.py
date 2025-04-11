@@ -393,6 +393,52 @@ class ActiveSync:
 
         return collection_id
 
+    def create(self, collection_name):
+        start = time.time()
+
+        # From folder sync
+        [folder_sync_key, _] = self.folder_sync()
+        # mail user-created
+        folder_type = 12
+
+        request = """
+        <?xml version="1.0" encoding="utf-8"?>
+        <!DOCTYPE ActiveSync PUBLIC "-//MICROSOFT//DTD ActiveSync//EN" "http://www.microsoft.com/">
+        <FolderCreate xmlns="FolderHierarchy:">
+            <SyncKey>{folder_sync_key}</SyncKey>
+            <ParentId>0</ParentId>
+            <DisplayName>{collection_name}</DisplayName>
+            <Type>{folder_type}</Type>
+        </FolderCreate>
+        """.replace('    ', '').replace('\n', '').format(collection_name=collection_name, folder_sync_key=folder_sync_key, folder_type=folder_type)
+
+        print(request)
+        response = self.send_request('FolderCreate', request)
+
+        assert response.status == 200
+
+        data = response.read()
+        if not data:
+            if self.verbose:
+                print("Empty response, no changes on server")
+            return [sync_key, False]
+
+        result = wbxml.wbxml_to_xml(data)
+
+        if self.verbose:
+            print(result)
+
+        root = ET.fromstring(result)
+        xmlns = "http://synce.org/formats/airsync_wm5/airsync"
+
+        status = root.find(f".//{{{xmlns}}}Status")
+        if status is not None and status.text != "1":
+            raise Exception(f'Create failed with status code {status.text}')
+
+        end = time.time()
+        print("Elapsed: " + str(end - start))
+        print("\n")
+
     def ping(self, collection_id):
         start = time.time()
         collection_id = self.idFromName(collection_id)
@@ -437,7 +483,7 @@ class ActiveSync:
         print("Elapsed: " + str(end - start))
         print("\n")
 
-    def list(self):
+    def folder_sync(self):
         request = """
             <?xml version="1.0" encoding="utf-8"?>
             <!DOCTYPE ActiveSync PUBLIC "-//MICROSOFT//DTD ActiveSync//EN" "http://www.microsoft.com/">
@@ -466,6 +512,12 @@ class ActiveSync:
         if self.verbose:
             print("Current SyncKey:", folder_sync_key)
 
+        return [folder_sync_key, root]
+
+    def list(self):
+        [folder_sync_key, root] = self.folder_sync()
+
+        xmlns = "http://synce.org/formats/airsync_wm5/folderhierarchy"
         folders = {}
         for add in root.findall(f".//{{{xmlns}}}Add"):
             displayName = add.find(f"{{{xmlns}}}DisplayName").text
@@ -555,6 +607,10 @@ def main():
     parser_list = subparsers.add_parser('ping')
     parser_list.add_argument("collectionId", help="Collection Id")
     parser_list.set_defaults(func=lambda args: ActiveSync(args).ping(args.collectionId))
+
+    parser_list = subparsers.add_parser('create')
+    parser_list.add_argument("collectionName", help="Collection Name")
+    parser_list.set_defaults(func=lambda args: ActiveSync(args).create(args.collectionName))
 
     parser_check = subparsers.add_parser('check')
     parser_check.set_defaults(func=lambda args: ActiveSync(args).check())
