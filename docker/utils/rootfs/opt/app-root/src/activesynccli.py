@@ -459,6 +459,10 @@ class ActiveSync:
 
         response = self.send_request('Ping', request)
 
+        if response.status != 200:
+            end = time.time()
+            print("Elapsed: " + str(end - start))
+            print("\n")
         assert response.status == 200
 
         data = response.read()
