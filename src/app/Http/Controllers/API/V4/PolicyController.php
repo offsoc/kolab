@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Policy\Mailfilter\RequestHandler as Mailfilter;
 use App\Policy\RateLimit;
 use App\Policy\RateLimitWhitelist;
+use App\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -160,11 +161,17 @@ class PolicyController extends Controller
             return response()->json(['response' => 'DUNNO'], 200);
         }
 
-        // exempt owners that have made at least two payments and currently maintain a positive balance.
+        // exempt owners that currently maintain a positive balance and made any payments.
+        // Because there might be users that pay via external methods (and don't have Payment records)
+        // we can't check only the Payments table. Instead we assume that a credit/award transaction
+        // is enough to consider the user a "paying user" for purpose of the rate limit.
         if ($wallet->balance > 0) {
-            $payments = $wallet->payments()->where('amount', '>', 0)->where('status', 'paid');
+            $isPayer = $wallet->transactions()
+                ->whereIn('type', [Transaction::WALLET_AWARD, Transaction::WALLET_CREDIT])
+                ->where('amount', '>', 0)
+                ->exists();
 
-            if ($payments->count() >= 2) {
+            if ($isPayer) {
                 return response()->json(['response' => 'DUNNO'], 200);
             }
         }

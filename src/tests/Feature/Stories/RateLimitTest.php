@@ -2,13 +2,12 @@
 
 namespace Tests\Feature\Stories;
 
-use App\Payment;
 use App\Policy\RateLimit;
+use App\Transaction;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
- * @group slow
  * @group data
  * @group ratelimit
  */
@@ -21,12 +20,12 @@ class RateLimitTest extends TestCase
         $this->setUpTest();
         $this->useServicesUrl();
 
-        Payment::query()->delete();
+        Transaction::query()->delete();
     }
 
     public function tearDown(): void
     {
-        Payment::query()->delete();
+        Transaction::query()->delete();
 
         parent::tearDown();
     }
@@ -163,25 +162,6 @@ class RateLimitTest extends TestCase
     {
         $wallet = $this->publicDomainUser->wallets()->first();
 
-        // Ensure there are no payments for the wallet
-        Payment::where('wallet_id', $wallet->id)->delete();
-
-        $payment = [
-            'id' => \App\Utils::uuidInt(),
-            'status' => Payment::STATUS_PAID,
-            'type' => Payment::TYPE_ONEOFF,
-            'description' => 'Paid in March',
-            'wallet_id' => $wallet->id,
-            'provider' => 'stripe',
-            'amount' => 1111,
-            'credit_amount' => 1111,
-            'currency_amount' => 1111,
-            'currency' => 'CHF',
-        ];
-
-        Payment::create($payment);
-        $wallet->credit(1111);
-
         $request = [
             'sender' => $this->publicDomainUser->email,
             'recipients' => ['someone@test.domain']
@@ -200,12 +180,10 @@ class RateLimitTest extends TestCase
         $response = $this->post('api/webhooks/policy/ratelimit', $request);
         $response->assertStatus(403);
 
-        // create a second payment
-        $payment['id'] = \App\Utils::uuidInt();
-        Payment::create($payment);
+        // create a credit transaction
         $wallet->credit(1111);
 
-        // the tenth request should now be allowed
+        // the next request should now be allowed
         $response = $this->post('api/webhooks/policy/ratelimit', $request);
         $response->assertStatus(200);
     }
@@ -216,9 +194,6 @@ class RateLimitTest extends TestCase
     public function testIndividualDiscountMessages()
     {
         $wallet = $this->publicDomainUser->wallets()->first();
-
-        // Ensure there are no payments for the wallet
-        Payment::where('wallet_id', $wallet->id)->delete();
 
         $wallet->discount()->associate(\App\Discount::where('description', 'Free Account')->first());
         $wallet->save();
@@ -282,25 +257,6 @@ class RateLimitTest extends TestCase
     {
         $wallet = $this->publicDomainUser->wallets()->first();
 
-        // Ensure there are no payments for the wallet
-        Payment::where('wallet_id', $wallet->id)->delete();
-
-        $payment = [
-            'id' => \App\Utils::uuidInt(),
-            'status' => Payment::STATUS_PAID,
-            'type' => Payment::TYPE_ONEOFF,
-            'description' => 'Paid in March',
-            'wallet_id' => $wallet->id,
-            'provider' => 'stripe',
-            'amount' => 1111,
-            'credit_amount' => 1111,
-            'currency_amount' => 1111,
-            'currency' => 'CHF',
-        ];
-
-        Payment::create($payment);
-        $wallet->credit(1111);
-
         $request = [
             'sender' => $this->publicDomainUser->email,
             'recipients' => []
@@ -330,10 +286,7 @@ class RateLimitTest extends TestCase
 
         $response->assertStatus(403);
 
-        $payment['id'] = \App\Utils::uuidInt();
-
-        Payment::create($payment);
-        $wallet->credit(1111);
+        $wallet->award(1111);
 
         // the tenth request should now be allowed
         $response = $this->post('api/webhooks/policy/ratelimit', $request);
@@ -426,25 +379,6 @@ class RateLimitTest extends TestCase
     {
         $wallet = $this->domainOwner->wallets()->first();
 
-        // Ensure there are no payments for the wallet
-        Payment::where('wallet_id', $wallet->id)->delete();
-
-        $payment = [
-            'id' => \App\Utils::uuidInt(),
-            'status' => Payment::STATUS_PAID,
-            'type' => Payment::TYPE_ONEOFF,
-            'description' => 'Paid in March',
-            'wallet_id' => $wallet->id,
-            'provider' => 'stripe',
-            'amount' => 1111,
-            'credit_amount' => 1111,
-            'currency_amount' => 1111,
-            'currency' => 'CHF',
-        ];
-
-        Payment::create($payment);
-        $wallet->credit(1111);
-
         $request = [
             'sender' => $this->domainOwner->email,
             'recipients' => []
@@ -473,9 +407,7 @@ class RateLimitTest extends TestCase
         $response = $this->post('api/webhooks/policy/ratelimit', $request);
         $response->assertStatus(403);
 
-        // create a second payment
-        $payment['id'] = \App\Utils::uuidInt();
-        Payment::create($payment);
+        $wallet->credit(1111);
 
         $response = $this->post('api/webhooks/policy/ratelimit', $request);
         $response->assertStatus(200);
