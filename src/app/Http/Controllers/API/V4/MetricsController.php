@@ -28,10 +28,12 @@ class MetricsController extends Controller
      */
     protected function collectPayersCount(): int
     {
-        // A subquery to get the all wallets with a successful payment
-        $payments = DB::table('payments')
-            ->selectRaw('distinct wallet_id')
-            ->where('status', Payment::STATUS_PAID);
+        // A subquery to get the all wallets with a credit/award transaction
+        $transactions = DB::table('transactions')
+            ->selectRaw('distinct object_id as wallet_id')
+            ->where('object_type', Wallet::class)
+            ->where('amount', '>', 0)
+            ->whereIn('type', [Transaction::WALLET_AWARD, Transaction::WALLET_CREDIT]);
 
         // A subquery to get users' wallets (by entitlement) - one record per user
         $wallets = DB::table('entitlements')
@@ -44,8 +46,8 @@ class MetricsController extends Controller
             ->joinSub($wallets, 'wallets', function ($join) {
                 $join->on('users.id', '=', 'wallets.user_id');
             })
-            ->joinSub($payments, 'payments', function ($join) {
-                $join->on('wallets.id', '=', 'payments.wallet_id');
+            ->joinSub($transactions, 'transactions', function ($join) {
+                $join->on('wallets.id', '=', 'transactions.wallet_id');
             })
             ->whereNull('users.deleted_at')
             ->whereNot('users.status', '&', User::STATUS_DEGRADED | User::STATUS_SUSPENDED);
