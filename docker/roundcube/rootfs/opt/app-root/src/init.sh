@@ -96,6 +96,7 @@ if [ "$1" == "syncroton" ]; then
     sed -i -r -e "s/config\['activesync_multifolder_blacklist_event'\] =.*$/config['activesync_multifolder_blacklist_event'] = array('windowsoutlook');/g" roundcubemail/config/kolab_syncroton.inc.php
     sed -i -r -e "s/config\['activesync_multifolder_blacklist_task'\] =.*$/config['activesync_multifolder_blacklist_task'] = array('windowsoutlook');/g" roundcubemail/config/kolab_syncroton.inc.php
     sed -i -r -e "s/config\['activesync_multifolder_blacklist_contact'\] =.*$/config['activesync_multifolder_blacklist_contact'] = array('windowsoutlook');/g" roundcubemail/config/kolab_syncroton.inc.php
+    sed -i -r -e "s/config\['activesync_multifolder_blacklist_note'\] =.*$/config['activesync_multifolder_blacklist_note'] = array('windowsoutlook');/g" roundcubemail/config/kolab_syncroton.inc.php
 
     pushd syncroton
 
