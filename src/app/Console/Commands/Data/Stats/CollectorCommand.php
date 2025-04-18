@@ -4,7 +4,9 @@ namespace App\Console\Commands\Data\Stats;
 
 use App\Http\Controllers\API\V4\Admin\StatsController;
 use App\Payment;
+use App\Transaction;
 use App\User;
+use App\Wallet;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -39,10 +41,12 @@ class CollectorCommand extends Command
      */
     protected function collectPayersCount(): void
     {
-        // A subquery to get the all wallets with a successful payment
-        $payments = DB::table('payments')
-            ->selectRaw('distinct wallet_id')
-            ->where('status', Payment::STATUS_PAID);
+        // A subquery to get the all wallets with a credit/award transaction
+        $transactions = DB::table('transactions')
+            ->selectRaw('distinct object_id as wallet_id')
+            ->where('object_type', Wallet::class)
+            ->where('amount', '>', 0)
+            ->whereIn('type', [Transaction::WALLET_AWARD, Transaction::WALLET_CREDIT]);
 
         // A subquery to get users' wallets (by entitlement) - one record per user
         $wallets = DB::table('entitlements')
@@ -50,14 +54,14 @@ class CollectorCommand extends Command
             ->where('entitleable_type', User::class)
             ->groupBy('entitleable_id');
 
-        // Count all non-degraded and non-deleted users with any successful payment
+        // Count all non-degraded and non-deleted users that are payers
         $counts = DB::table('users')
             ->selectRaw('count(*) as total, users.tenant_id')
             ->joinSub($wallets, 'wallets', function ($join) {
                 $join->on('users.id', '=', 'wallets.user_id');
             })
-            ->joinSub($payments, 'payments', function ($join) {
-                $join->on('wallets.id', '=', 'payments.wallet_id');
+            ->joinSub($transactions, 'transactions', function ($join) {
+                $join->on('wallets.id', '=', 'transactions.wallet_id');
             })
             ->whereNull('users.deleted_at')
             ->whereNot('users.status', '&', User::STATUS_DEGRADED)

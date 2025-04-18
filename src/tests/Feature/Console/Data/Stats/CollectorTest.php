@@ -3,7 +3,6 @@
 namespace Tests\Feature\Console\Data\Stats;
 
 use App\Http\Controllers\API\V4\Admin\StatsController;
-use App\Payment;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -17,7 +16,7 @@ class CollectorTest extends TestCase
         parent::setUp();
 
         DB::table('stats')->truncate();
-        DB::table('payments')->truncate();
+        DB::table('transactions')->truncate();
     }
 
     /**
@@ -26,7 +25,7 @@ class CollectorTest extends TestCase
     public function tearDown(): void
     {
         DB::table('stats')->truncate();
-        DB::table('payments')->truncate();
+        DB::table('transactions')->truncate();
 
         parent::tearDown();
     }
@@ -47,19 +46,7 @@ class CollectorTest extends TestCase
 
         $john = $this->getTestUser('john@kolab.org');
         $wallet = $john->wallet();
-
-        \App\Payment::create([
-                'id' => 'test1',
-                'description' => '',
-                'status' => Payment::STATUS_PAID,
-                'amount' => 1000,
-                'credit_amount' => 1000,
-                'type' => Payment::TYPE_ONEOFF,
-                'wallet_id' => $wallet->id,
-                'provider' => 'mollie',
-                'currency' => $wallet->currency,
-                'currency_amount' => 1000,
-        ]);
+        $wallet->award(1000);
 
         $code = \Artisan::call("data:stats:collector");
         $output = trim(\Artisan::output());
