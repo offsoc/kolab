@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Jobs\User;
 
+use App\Support\Facades\IMAP;
+use App\Support\Facades\LDAP;
 use App\User;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
@@ -27,9 +29,6 @@ class CreateTest extends TestCase
 
     /**
      * Test job handle
-     *
-     * @group ldap
-     * @group imap
      */
     public function testHandle(): void
     {
@@ -41,9 +40,16 @@ class CreateTest extends TestCase
         $domain->save();
 
         // TODO: Make the test working with various with_imap/with_ldap combinations
+        \config(['app.with_ldap' => true]);
+        \config(['app.with_imap' => true]);
+
         $this->assertFalse($user->isLdapReady());
         $this->assertFalse($user->isImapReady());
         $this->assertFalse($user->isActive());
+
+        // Test successful creation
+        IMAP::shouldReceive('createUser')->once()->with($user)->andReturn(true);
+        LDAP::shouldReceive('createUser')->once()->with($user)->andReturn(true);
 
         $job = (new \App\Jobs\User\CreateJob($user->id))->withFakeQueueInteractions();
         $job->handle();
@@ -51,16 +57,8 @@ class CreateTest extends TestCase
 
         $user->refresh();
 
-        if (\config('app.with_ldap')) {
-            $this->assertTrue($user->isLdapReady());
-        } else {
-            $this->assertFalse($user->isLdapReady());
-        }
-        if (\config('app.with_imap')) {
-            $this->assertTrue($user->isImapReady());
-        } else {
-            $this->assertFalse($user->isImapReady());
-        }
+        $this->assertTrue($user->isLdapReady());
+        $this->assertTrue($user->isImapReady());
         $this->assertTrue($user->isActive());
 
         // Test job failure (user deleted)

@@ -22,6 +22,11 @@ abstract class TestCase extends BaseTestCase
 
         // Disable throttling
         $this->withoutMiddleware(ThrottleRequests::class);
+
+        \Mockery::getConfiguration()->setDefaultMatcher(
+            class: \Illuminate\Database\Eloquent\Model::class,
+            matcherClass: \Tests\ModelMatcher::class,
+        );
     }
 
     /**

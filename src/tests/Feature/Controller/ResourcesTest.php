@@ -294,8 +294,6 @@ class ResourcesTest extends TestCase
     /**
      * Test fetching a resource status (GET /api/v4/resources/<resource>/status)
      * and forcing setup process update (?refresh=1)
-     *
-     * @group ldap
      */
     public function testStatus(): void
     {
@@ -408,8 +406,6 @@ class ResourcesTest extends TestCase
 
     /**
      * Test ResourcesController::statusInfo()
-     *
-     * @group ldap
      */
     public function testStatusInfo(): void
     {

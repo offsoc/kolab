@@ -3,6 +3,8 @@
 namespace Tests\Feature\Jobs\SharedFolder;
 
 use App\SharedFolder;
+use App\Support\Facades\IMAP;
+use App\Support\Facades\LDAP;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -27,9 +29,6 @@ class DeleteTest extends TestCase
 
     /**
      * Test job handle
-     *
-     * @group ldap
-     * @group imap
      */
     public function testHandle(): void
     {
@@ -41,22 +40,12 @@ class DeleteTest extends TestCase
         $job->assertFailedWith("Shared folder 123 could not be found in the database.");
 
         $folder = $this->getTestSharedFolder('folder-test@' . \config('app.domain'), [
-                'status' => SharedFolder::STATUS_NEW
+                'status' => SharedFolder::STATUS_NEW | SharedFolder::STATUS_IMAP_READY | SharedFolder::STATUS_LDAP_READY
         ]);
 
-        // Force with_imap=true, otherwise the folder creation job may fail
         // TODO: Make the test working with various with_imap/with_ldap combinations
         \config(['app.with_imap' => true]);
-
-        // create the shared folder first
-        $job = new \App\Jobs\SharedFolder\CreateJob($folder->id);
-        $job->handle();
-
-        $folder->refresh();
-
-        $this->assertSame(\config('app.with_ldap'), $folder->isLdapReady());
-        $this->assertTrue($folder->isImapReady());
-        $this->assertFalse($folder->isDeleted());
+        \config(['app.with_ldap' => true]);
 
         // Test deleting not deleted folder
         $job = (new \App\Jobs\SharedFolder\DeleteJob($folder->id))->withFakeQueueInteractions();
@@ -68,6 +57,9 @@ class DeleteTest extends TestCase
         Queue::fake();
 
         // Test successful deletion
+        IMAP::shouldReceive('deleteSharedFolder')->once()->with($folder)->andReturn(true);
+        LDAP::shouldReceive('deleteSharedFolder')->once()->with($folder)->andReturn(true);
+
         $job = new \App\Jobs\SharedFolder\DeleteJob($folder->id);
         $job->handle();
 

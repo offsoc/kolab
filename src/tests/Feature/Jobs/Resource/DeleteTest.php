@@ -3,6 +3,8 @@
 namespace Tests\Feature\Jobs\Resource;
 
 use App\Resource;
+use App\Support\Facades\IMAP;
+use App\Support\Facades\LDAP;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -27,9 +29,6 @@ class DeleteTest extends TestCase
 
     /**
      * Test job handle
-     *
-     * @group ldap
-     * @group imap
      */
     public function testHandle(): void
     {
@@ -41,16 +40,10 @@ class DeleteTest extends TestCase
         $job->assertFailedWith("Resource 123 could not be found in the database.");
 
         $resource = $this->getTestResource('resource-test@' . \config('app.domain'), [
-                'status' => Resource::STATUS_NEW
+                'status' => Resource::STATUS_NEW | Resource::STATUS_IMAP_READY | Resource::STATUS_LDAP_READY,
         ]);
 
-        // create the resource first
-        $job = new \App\Jobs\Resource\CreateJob($resource->id);
-        $job->handle();
-
-        $resource->refresh();
-
-        $this->assertSame(\config('app.with_ldap'), $resource->isLdapReady());
+        $this->assertTrue($resource->isLdapReady());
         $this->assertTrue($resource->isImapReady());
         $this->assertFalse($resource->isDeleted());
 
@@ -63,7 +56,14 @@ class DeleteTest extends TestCase
         $resource->saveQuietly();
         Queue::fake();
 
+        // TODO: Make the test working with various with_imap/with_ldap combinations
+        \config(['app.with_imap' => true]);
+        \config(['app.with_ldap' => true]);
+
         // Test successful deletion
+        IMAP::shouldReceive('deleteResource')->once()->with($resource)->andReturn(true);
+        LDAP::shouldReceive('deleteResource')->once()->with($resource)->andReturn(true);
+
         $job = new \App\Jobs\Resource\DeleteJob($resource->id);
         $job->handle();
 

@@ -38,16 +38,16 @@ class IMAPTest extends TestCase
         }
 
         if ($this->user) {
-            $this->deleteTestUser($this->user->email);
+            $this->deleteTestUser($this->user->email, true);
         }
         if ($this->group) {
-            $this->deleteTestGroup($this->group->email);
+            $this->deleteTestGroup($this->group->email, true);
         }
         if ($this->resource) {
-            $this->deleteTestResource($this->resource->email);
+            $this->deleteTestResource($this->resource->email, true);
         }
         if ($this->folder) {
-            $this->deleteTestSharedFolder($this->folder->email);
+            $this->deleteTestSharedFolder($this->folder->email, true);
         }
 
         parent::tearDown();

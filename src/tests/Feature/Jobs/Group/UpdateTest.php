@@ -2,8 +2,8 @@
 
 namespace Tests\Feature\Jobs\Group;
 
-use App\Backends\LDAP;
 use App\Group;
+use App\Support\Facades\LDAP;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -28,8 +28,6 @@ class UpdateTest extends TestCase
 
     /**
      * Test job handle
-     *
-     * @group ldap
      */
     public function testHandle(): void
     {
@@ -43,47 +41,48 @@ class UpdateTest extends TestCase
         // Create the group
         $group = $this->getTestGroup('group@kolab.org', ['members' => []]);
 
-        if (!\config('app.with_ldap')) {
-            $job = (new \App\Jobs\Group\UpdateJob($group->id))->withFakeQueueInteractions();
-            $job->handle();
-            $job->assertDeleted();
-            $this->markTestSkipped();
-        }
+        \config(['app.with_ldap' => true]);
 
-        // Create the group in LDAP
-        LDAP::createGroup($group);
+        // Group not LDAP_READY
+        $job = (new \App\Jobs\Group\UpdateJob($group->id))->withFakeQueueInteractions();
+        $job->handle();
+        $job->assertDeleted();
 
-        // Test if group properties (members) actually changed in LDAP
-        $group->members = ['test1@gmail.com'];
+        // Group is LDAP_READY
         $group->status |= Group::STATUS_LDAP_READY;
         $group->save();
 
-        $job = new \App\Jobs\Group\UpdateJob($group->id);
+        LDAP::shouldReceive('connect');
+        LDAP::shouldReceive('getGroup')->once()->with($group->email)->andReturn(['test' => 'test']);
+        LDAP::shouldReceive('updateGroup')->once()->with($group)->andReturn(true);
+        LDAP::shouldReceive('disconnect');
+
+        $job = (new \App\Jobs\Group\UpdateJob($group->id))->withFakeQueueInteractions();
         $job->handle();
-
-        $ldapGroup = LDAP::getGroup($group->email);
-        $root_dn = \config('services.ldap.hosted.root_dn');
-
-        $this->assertSame('uid=test1@gmail.com,ou=People,ou=kolab.org,' . $root_dn, $ldapGroup['uniquemember']);
+        $job->assertNotFailed();
 
         // Test that suspended group is removed from LDAP
         $group->suspend();
 
-        $job = new \App\Jobs\Group\UpdateJob($group->id);
-        $job->handle();
+        LDAP::shouldReceive('connect');
+        LDAP::shouldReceive('getGroup')->once()->with($group->email)->andReturn(['test' => 'test']);
+        LDAP::shouldReceive('deleteGroup')->once()->with($group)->andReturn(true);
+        LDAP::shouldReceive('disconnect');
 
-        $this->assertNull(LDAP::getGroup($group->email));
+        $job = (new \App\Jobs\Group\UpdateJob($group->id))->withFakeQueueInteractions();
+        $job->handle();
+        $job->assertNotFailed();
 
         // Test that unsuspended group is added back to LDAP
         $group->unsuspend();
 
-        $job = new \App\Jobs\Group\UpdateJob($group->id);
-        $job->handle();
+        LDAP::shouldReceive('connect');
+        LDAP::shouldReceive('getGroup')->once()->with($group->email)->andReturn(null);
+        LDAP::shouldReceive('createGroup')->once()->with($group)->andReturn(true);
+        LDAP::shouldReceive('disconnect');
 
-        /** @var array */
-        $ldapGroup = LDAP::getGroup($group->email);
-        $this->assertNotNull($ldapGroup);
-        $this->assertSame($group->email, $ldapGroup['mail']);
-        $this->assertSame('uid=test1@gmail.com,ou=People,ou=kolab.org,' . $root_dn, $ldapGroup['uniquemember']);
+        $job = (new \App\Jobs\Group\UpdateJob($group->id))->withFakeQueueInteractions();
+        $job->handle();
+        $job->assertNotFailed();
     }
 }

@@ -2,7 +2,7 @@
 
 namespace App\Jobs\Group;
 
-use App\Backends\LDAP;
+use App\Support\Facades\LDAP;
 use App\Jobs\GroupJob;
 
 class UpdateJob extends GroupJob

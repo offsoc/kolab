@@ -57,6 +57,6 @@ class AclCleanupJob extends CommonJob
      */
     public function handle()
     {
-        \App\Backends\IMAP::aclCleanup($this->ident, $this->domain);
+        \App\Support\Facades\IMAP::aclCleanup($this->ident, $this->domain);
     }
 }

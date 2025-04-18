@@ -301,8 +301,6 @@ class SharedFoldersTest extends TestCase
     /**
      * Test fetching a shared folder status (GET /api/v4/shared-folders/<folder>/status)
      * and forcing setup process update (?refresh=1)
-     *
-     * @group ldap
      */
     public function testStatus(): void
     {

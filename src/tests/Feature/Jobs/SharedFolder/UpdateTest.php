@@ -2,8 +2,9 @@
 
 namespace Tests\Feature\Jobs\SharedFolder;
 
-use App\Backends\LDAP;
 use App\SharedFolder;
+use App\Support\Facades\IMAP;
+use App\Support\Facades\LDAP;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -31,9 +32,6 @@ class UpdateTest extends TestCase
 
     /**
      * Test job handle
-     *
-     * @group ldap
-     * @group imap
      */
     public function testHandle(): void
     {
@@ -46,28 +44,20 @@ class UpdateTest extends TestCase
 
         $folder = $this->getTestSharedFolder(
             'folder-test@' . \config('app.domain'),
-            ['status' => SharedFolder::STATUS_NEW]
+            ['status' => SharedFolder::STATUS_NEW | SharedFolder::STATUS_IMAP_READY | SharedFolder::STATUS_LDAP_READY]
         );
 
-        // Force with_imap=true, otherwise the folder creation job may fail
         // TODO: Make the test working with various with_imap=false
         \config(['app.with_imap' => true]);
-
-        // Create the folder in LDAP/IMAP
-        $job = new \App\Jobs\SharedFolder\CreateJob($folder->id);
-        $job->handle();
-
-        $folder->refresh();
-
-        $this->assertSame(\config('app.with_ldap'), $folder->isLdapReady());
-        $this->assertTrue($folder->isImapReady());
+        \config(['app.with_ldap' => true]);
 
         // Run the update job
+        IMAP::shouldReceive('updateSharedFolder')->once()->with($folder, [])->andReturn(true);
+        LDAP::shouldReceive('updateSharedFolder')->once()->with($folder)->andReturn(true);
+
         $job = (new \App\Jobs\SharedFolder\UpdateJob($folder->id))->withFakeQueueInteractions();
         $job->handle();
         $job->assertNotFailed();
-
-        // TODO: Assert that it worked on both LDAP and IMAP side
 
         // Test handling deleted folder
         $folder->status |= SharedFolder::STATUS_DELETED;

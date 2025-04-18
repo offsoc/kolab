@@ -3,6 +3,8 @@
 namespace Tests\Feature\Jobs\Resource;
 
 use App\Resource;
+use App\Support\Facades\IMAP;
+use App\Support\Facades\LDAP;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -27,9 +29,6 @@ class CreateTest extends TestCase
 
     /**
      * Test job handle
-     *
-     * @group ldap
-     * @group imap
      */
     public function testHandle(): void
     {
@@ -49,16 +48,25 @@ class CreateTest extends TestCase
         $this->assertFalse($resource->isImapReady());
         $this->assertFalse($resource->isActive());
 
+        // TODO: Make the test working with various with_imap/with_ldap combinations
+        \config(['app.with_imap' => true]);
+        \config(['app.with_ldap' => true]);
+
         // Test resource creation
+        IMAP::shouldReceive('createResource')->once()->with($resource)->andReturn(true);
+        LDAP::shouldReceive('createResource')->once()->with($resource)->andReturn(true);
+
         $job = (new \App\Jobs\Resource\CreateJob($resource->id))->withFakeQueueInteractions();
         $job->handle();
         $job->assertNotFailed();
 
         $resource->refresh();
 
-        $this->assertSame(\config('app.with_ldap'), $resource->isLdapReady());
+        $this->assertTrue($resource->isLdapReady());
         $this->assertTrue($resource->isImapReady());
         $this->assertTrue($resource->isActive());
+
+        // TODO: Test case when IMAP or LDAP method fails
 
         // Test job failures
         $resource->status |= Resource::STATUS_DELETED;

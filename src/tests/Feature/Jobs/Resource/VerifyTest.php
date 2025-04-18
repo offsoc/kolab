@@ -3,6 +3,7 @@
 namespace Tests\Feature\Jobs\Resource;
 
 use App\Resource;
+use App\Support\Facades\IMAP;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -34,8 +35,6 @@ class VerifyTest extends TestCase
 
     /**
      * Test job handle
-     *
-     * @group imap
      */
     public function testHandle(): void
     {
@@ -46,7 +45,6 @@ class VerifyTest extends TestCase
         $job->handle();
         $job->assertFailedWith("Resource 123 could not be found in the database.");
 
-        // Test existing resource
         $resource = $this->getTestResource('resource-test1@kolab.org');
 
         if ($resource->isImapReady()) {
@@ -56,18 +54,24 @@ class VerifyTest extends TestCase
 
         $this->assertFalse($resource->isImapReady());
 
-        for ($i = 0; $i < 10; $i++) {
-            $job = new \App\Jobs\Resource\VerifyJob($resource->id);
-            $job->handle();
+        // Test existing resource (successful verification)
+        IMAP::shouldReceive('verifySharedFolder')->once()->with($resource->getSetting('folder'))->andReturn(true);
 
-            if ($resource->fresh()->isImapReady()) {
-                $this->assertTrue(true);
-                return;
-            }
+        $job = new \App\Jobs\Resource\VerifyJob($resource->id);
+        $job->handle();
 
-            sleep(1);
-        }
+        $resource->refresh();
+        $this->assertTrue($resource->isImapReady());
 
-        $this->assertTrue(false, "Unable to verify the shared folder is set up in time");
+        // Test existing resource (unsuccessful verification)
+        $resource->status ^= Resource::STATUS_IMAP_READY;
+        $resource->save();
+
+        IMAP::shouldReceive('verifySharedFolder')->once()->with($resource->getSetting('folder'))->andReturn(false);
+
+        $job = new \App\Jobs\Resource\VerifyJob($resource->id);
+        $job->handle();
+
+        $this->assertFalse($resource->fresh()->isImapReady());
     }
 }

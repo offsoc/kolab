@@ -20,7 +20,7 @@ class DeleteJob extends DomainJob
         }
 
         // sanity checks
-        if (!$domain->trashed()) {
+        if ($domain->trashed()) {
             $this->fail("Domain {$this->domainId} is not deleted.");
             return;
         }
@@ -31,7 +31,7 @@ class DeleteJob extends DomainJob
         }
 
         if (\config('app.with_ldap') && $domain->isLdapReady()) {
-            \App\Backends\LDAP::deleteDomain($domain);
+            \App\Support\Facades\LDAP::deleteDomain($domain);
 
             $domain->status ^= \App\Domain::STATUS_LDAP_READY;
         }

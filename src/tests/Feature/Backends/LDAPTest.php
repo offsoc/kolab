@@ -31,11 +31,11 @@ class LDAPTest extends TestCase
             'services.ldap.hosts' => \config('services.ldap.hosts'),
         ];
 
-        $this->deleteTestUser('user-ldap-test@' . \config('app.domain'));
-        $this->deleteTestDomain('testldap.com');
-        $this->deleteTestGroup('group@kolab.org');
-        $this->deleteTestResource('test-resource@kolab.org');
-        $this->deleteTestSharedFolder('test-folder@kolab.org');
+        $this->deleteTestUser('user-ldap-test@' . \config('app.domain'), true);
+        $this->deleteTestDomain('testldap.com', true);
+        $this->deleteTestGroup('group@kolab.org', true);
+        $this->deleteTestResource('test-resource@kolab.org', true);
+        $this->deleteTestSharedFolder('test-folder@kolab.org', true);
         // TODO: Remove group members
     }
 
@@ -46,11 +46,11 @@ class LDAPTest extends TestCase
     {
         \config($this->ldap_config);
 
-        $this->deleteTestUser('user-ldap-test@' . \config('app.domain'));
-        $this->deleteTestDomain('testldap.com');
-        $this->deleteTestGroup('group@kolab.org');
-        $this->deleteTestResource('test-resource@kolab.org');
-        $this->deleteTestSharedFolder('test-folder@kolab.org');
+        $this->deleteTestUser('user-ldap-test@' . \config('app.domain'), true);
+        $this->deleteTestDomain('testldap.com', true);
+        $this->deleteTestGroup('group@kolab.org', true);
+        $this->deleteTestResource('test-resource@kolab.org', true);
+        $this->deleteTestSharedFolder('test-folder@kolab.org', true);
         // TODO: Remove group members
 
         parent::tearDown();

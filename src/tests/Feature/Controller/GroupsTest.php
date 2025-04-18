@@ -296,8 +296,6 @@ class GroupsTest extends TestCase
     /**
      * Test fetching group status (GET /api/v4/groups/<group-id>/status)
      * and forcing setup process update (?refresh=1)
-     *
-     * @group ldap
      */
     public function testStatus(): void
     {
@@ -387,8 +385,6 @@ class GroupsTest extends TestCase
 
     /**
      * Test GroupsController::statusInfo()
-     *
-     * @group ldap
      */
     public function testStatusInfo(): void
     {

@@ -3,6 +3,7 @@
 namespace Tests\Feature\Jobs\Domain;
 
 use App\Domain;
+use App\Support\Facades\LDAP;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -27,8 +28,6 @@ class CreateTest extends TestCase
 
     /**
      * Test job handle
-     *
-     * @group ldap
      */
     public function testHandle(): void
     {
@@ -40,21 +39,22 @@ class CreateTest extends TestCase
             ]
         );
 
+        \config(['app.with_ldap' => true]);
+
         $this->assertFalse($domain->isLdapReady());
 
         // Fake the queue, assert that no jobs were pushed...
         Queue::fake();
         Queue::assertNothingPushed();
 
+        LDAP::shouldReceive('createDomain')->once()->with($domain)->andReturn(true);
+
         $job = new \App\Jobs\Domain\CreateJob($domain->id);
         $job->handle();
 
-        if (\config('app.with_ldap')) {
-            $this->assertTrue($domain->fresh()->isLdapReady());
-        }
+        $this->assertTrue($domain->fresh()->isLdapReady());
 
         Queue::assertPushed(\App\Jobs\Domain\VerifyJob::class, 1);
-
         Queue::assertPushed(
             \App\Jobs\Domain\VerifyJob::class,
             function ($job) use ($domain) {

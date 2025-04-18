@@ -34,11 +34,10 @@ class VerifyJob extends UserJob
 
         // the user has a mailbox (or is marked as such)
         if ($user->isImapReady()) {
-            $this->fail("User {$this->userId} is already verified.");
             return;
         }
 
-        if (\App\Backends\IMAP::verifyAccount($user->email)) {
+        if (\App\Support\Facades\IMAP::verifyAccount($user->email)) {
             $user->status |= \App\User::STATUS_IMAP_READY;
             $user->status |= \App\User::STATUS_ACTIVE;
             $user->save();

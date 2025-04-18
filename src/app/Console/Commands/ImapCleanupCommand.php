@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Console\Command;
 use App\Domain;
+use App\Support\Facades\IMAP;
 
 class ImapCleanupCommand extends Command
 {
@@ -34,7 +35,7 @@ class ImapCleanupCommand extends Command
         if (!$domain) {
             foreach (Domain::pluck('namespace')->all() as $domain) {
                 // TODO: Execute this in parallel/background?
-                \App\Backends\IMAP::aclCleanupDomain($domain, $dry_run);
+                IMAP::aclCleanupDomain($domain, $dry_run);
             }
 
             return;
@@ -47,6 +48,6 @@ class ImapCleanupCommand extends Command
             return 1;
         }
 
-        \App\Backends\IMAP::aclCleanupDomain($domain->namespace, $dry_run);
+        IMAP::aclCleanupDomain($domain->namespace, $dry_run);
     }
 }

@@ -29,7 +29,7 @@ class DAVTest extends TestCase
     public function tearDown(): void
     {
         if ($this->user) {
-            $this->deleteTestUser($this->user->email);
+            $this->deleteTestUser($this->user->email, true);
         }
 
         parent::tearDown();

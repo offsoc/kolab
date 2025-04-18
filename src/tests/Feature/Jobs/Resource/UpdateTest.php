@@ -2,8 +2,9 @@
 
 namespace Tests\Feature\Jobs\Resource;
 
-use App\Backends\LDAP;
 use App\Resource;
+use App\Support\Facades\IMAP;
+use App\Support\Facades\LDAP;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -31,9 +32,6 @@ class UpdateTest extends TestCase
 
     /**
      * Test job handle
-     *
-     * @group ldap
-     * @group imap
      */
     public function testHandle(): void
     {
@@ -46,26 +44,21 @@ class UpdateTest extends TestCase
 
         $resource = $this->getTestResource(
             'resource-test@' . \config('app.domain'),
-            ['status' => Resource::STATUS_NEW]
+            ['status' => Resource::STATUS_NEW | Resource::STATUS_LDAP_READY | Resource::STATUS_IMAP_READY]
         );
-
-        // Create the resource in LDAP
-        $job = new \App\Jobs\Resource\CreateJob($resource->id);
-        $job->handle();
 
         // Run the update with some new config
         $resource->setConfig(['invitation_policy' => 'accept']);
 
+        // TODO: Make the test working with various with_imap/with_ldap combinations
+        \config(['app.with_imap' => true]);
+        \config(['app.with_ldap' => true]);
+
+        IMAP::shouldReceive('updateResource')->once()->with($resource, [])->andReturn(true);
+        LDAP::shouldReceive('updateResource')->once()->with($resource)->andReturn(true);
+
         $job = new \App\Jobs\Resource\UpdateJob($resource->id);
         $job->handle();
-
-        if (\config('app.with_ldap')) {
-            $ldap_resource = LDAP::getResource($resource->email);
-
-            $this->assertSame('ACT_ACCEPT', $ldap_resource['kolabinvitationpolicy']);
-        }
-
-        // TODO: Assert IMAP change worked
 
         // Test that the job is being deleted if the resource is not ldap ready or is deleted
         $resource->refresh();

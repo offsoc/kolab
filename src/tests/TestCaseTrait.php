@@ -299,7 +299,7 @@ trait TestCaseTrait
      *
      * @coversNothing
      */
-    protected function deleteTestDomain($name)
+    protected function deleteTestDomain($name, $backends = false)
     {
         Queue::fake();
 
@@ -309,8 +309,9 @@ trait TestCaseTrait
             return;
         }
 
-        $job = new \App\Jobs\Domain\DeleteJob($domain->id);
-        $job->handle();
+        if ($backends && \config('app.with_ldap')) {
+            LDAP::deleteDomain($domain);
+        }
 
         $domain->forceDelete();
     }
@@ -320,7 +321,7 @@ trait TestCaseTrait
      *
      * @coversNothing
      */
-    protected function deleteTestGroup($email)
+    protected function deleteTestGroup($email, $backends = false)
     {
         Queue::fake();
 
@@ -330,7 +331,7 @@ trait TestCaseTrait
             return;
         }
 
-        if (\config('app.with_ldap')) {
+        if ($backends && \config('app.with_ldap')) {
             LDAP::deleteGroup($group);
         }
 
@@ -342,7 +343,7 @@ trait TestCaseTrait
      *
      * @coversNothing
      */
-    protected function deleteTestResource($email)
+    protected function deleteTestResource($email, $backends = false)
     {
         Queue::fake();
 
@@ -352,7 +353,7 @@ trait TestCaseTrait
             return;
         }
 
-        if (\config('app.with_ldap')) {
+        if ($backends && \config('app.with_ldap')) {
             LDAP::deleteResource($resource);
         }
 
@@ -382,7 +383,7 @@ trait TestCaseTrait
      *
      * @coversNothing
      */
-    protected function deleteTestSharedFolder($email)
+    protected function deleteTestSharedFolder($email, $backends = false)
     {
         Queue::fake();
 
@@ -392,7 +393,7 @@ trait TestCaseTrait
             return;
         }
 
-        if (\config('app.with_ldap')) {
+        if ($backends && \config('app.with_ldap')) {
             LDAP::deleteSharedFolder($folder);
         }
 
@@ -404,7 +405,7 @@ trait TestCaseTrait
      *
      * @coversNothing
      */
-    protected function deleteTestUser($email)
+    protected function deleteTestUser($email, $backends = false)
     {
         Queue::fake();
 
@@ -414,10 +415,10 @@ trait TestCaseTrait
             return;
         }
 
-        if (\config('app.with_imap')) {
+        if ($backends && \config('app.with_imap')) {
             IMAP::deleteUser($user);
         }
-        if (\config('app.with_ldap')) {
+        if ($backends && \config('app.with_ldap')) {
             LDAP::deleteUser($user);
         }
 

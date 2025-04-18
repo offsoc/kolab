@@ -433,7 +433,7 @@ class IMAP implements ExporterInterface, ImporterInterface
         $this->imap = new \rcube_imap_generic();
 
         if (\config('app.debug')) {
-            $this->imap->setDebug(true, 'App\Backends\IMAP::logDebug');
+            $this->imap->setDebug(true, 'App\Support\Facades\IMAP::logDebug');
         }
 
         $this->imap->connect(

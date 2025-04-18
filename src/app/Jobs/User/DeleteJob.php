@@ -38,7 +38,7 @@ class DeleteJob extends UserJob
         }
 
         if (\config('app.with_ldap') && $user->isLdapReady()) {
-            \App\Backends\LDAP::deleteUser($user);
+            \App\Support\Facades\LDAP::deleteUser($user);
 
             $user->status ^= \App\User::STATUS_LDAP_READY;
             $user->save();
@@ -46,7 +46,7 @@ class DeleteJob extends UserJob
 
         if ($user->isImapReady()) {
             if (\config('app.with_imap')) {
-                if (!\App\Backends\IMAP::deleteUser($user)) {
+                if (!\App\Support\Facades\IMAP::deleteUser($user)) {
                     throw new \Exception("Failed to delete mailbox for user {$this->userId}.");
                 }
             }

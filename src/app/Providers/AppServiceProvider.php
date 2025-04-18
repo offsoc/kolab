@@ -18,6 +18,13 @@ class AppServiceProvider extends ServiceProvider
     {
         // This must be here, not in PassportServiceProvider
         Passport::ignoreRoutes();
+
+        $this->app->bind('imap', function () {
+            return new \App\Backends\IMAP();
+        });
+        $this->app->bind('ldap', function () {
+            return new \App\Backends\LDAP();
+        });
     }
 
     /**

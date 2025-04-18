@@ -3,6 +3,8 @@
 namespace Tests\Feature\Jobs\SharedFolder;
 
 use App\SharedFolder;
+use App\Support\Facades\LDAP;
+use App\Support\Facades\IMAP;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -27,9 +29,6 @@ class CreateTest extends TestCase
 
     /**
      * Test job handle
-     *
-     * @group ldap
-     * @group imap
      */
     public function testHandle(): void
     {
@@ -49,23 +48,21 @@ class CreateTest extends TestCase
         $this->assertFalse($folder->isImapReady());
         $this->assertFalse($folder->isActive());
 
+        \config(['app.with_imap' => true]);
+        \config(['app.with_ldap' => true]);
+
         // Test shared folder creation
+        IMAP::shouldReceive('createSharedFolder')->once()->with($folder)->andReturn(true);
+        LDAP::shouldReceive('createSharedFolder')->once()->with($folder)->andReturn(true);
+
         $job = (new \App\Jobs\SharedFolder\CreateJob($folder->id))->withFakeQueueInteractions();
         $job->handle();
         $job->assertNotFailed();
 
         $folder->refresh();
 
-        if (\config('app.with_ldap')) {
-            $this->assertTrue($folder->isLdapReady());
-        } else {
-            $this->assertFalse($folder->isLdapReady());
-        }
-        if (\config('app.with_imap')) {
-            $this->assertTrue($folder->isImapReady());
-        } else {
-            $this->assertFalse($folder->isImapReady());
-        }
+        $this->assertTrue($folder->isLdapReady());
+        $this->assertTrue($folder->isImapReady());
         $this->assertTrue($folder->isActive());
 
         // Test job failures

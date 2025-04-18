@@ -3,6 +3,7 @@
 namespace Tests\Feature\Jobs\SharedFolder;
 
 use App\SharedFolder;
+use App\Support\Facades\IMAP;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -34,8 +35,6 @@ class VerifyTest extends TestCase
 
     /**
      * Test job handle
-     *
-     * @group imap
      */
     public function testHandle(): void
     {
@@ -56,18 +55,25 @@ class VerifyTest extends TestCase
 
         $this->assertFalse($folder->isImapReady());
 
-        for ($i = 0; $i < 10; $i++) {
-            $job = new \App\Jobs\SharedFolder\VerifyJob($folder->id);
-            $job->handle();
+        // Test successful verification
+        IMAP::shouldReceive('verifySharedFolder')->once()->with($folder->getSetting('folder'))->andReturn(true);
 
-            if ($folder->fresh()->isImapReady()) {
-                $this->assertTrue(true);
-                return;
-            }
+        $job = new \App\Jobs\SharedFolder\VerifyJob($folder->id);
+        $job->handle();
 
-            sleep(1);
-        }
+        $folder->refresh();
+        $this->assertTrue($folder->isImapReady());
 
-        $this->assertTrue(false, "Unable to verify the shared folder is set up in time");
+        $folder->status ^= SharedFolder::STATUS_IMAP_READY;
+        $folder->save();
+
+        // Test unsuccessful verification
+        IMAP::shouldReceive('verifySharedFolder')->once()->with($folder->getSetting('folder'))->andReturn(false);
+
+        $job = new \App\Jobs\SharedFolder\VerifyJob($folder->id);
+        $job->handle();
+
+        $folder->refresh();
+        $this->assertFalse($folder->isImapReady());
     }
 }

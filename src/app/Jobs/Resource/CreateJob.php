@@ -3,6 +3,8 @@
 namespace App\Jobs\Resource;
 
 use App\Jobs\ResourceJob;
+use App\Support\Facades\IMAP;
+use App\Support\Facades\LDAP;
 
 class CreateJob extends ResourceJob
 {
@@ -51,7 +53,7 @@ class CreateJob extends ResourceJob
         }
 
         if ($withLdap && !$resource->isLdapReady()) {
-            \App\Backends\LDAP::createResource($resource);
+            LDAP::createResource($resource);
 
             $resource->status |= \App\Resource::STATUS_LDAP_READY;
             $resource->save();
@@ -59,13 +61,13 @@ class CreateJob extends ResourceJob
 
         if (!$resource->isImapReady()) {
             if (\config('app.with_imap')) {
-                if (!\App\Backends\IMAP::createResource($resource)) {
+                if (!IMAP::createResource($resource)) {
                     throw new \Exception("Failed to create mailbox for resource {$this->resourceId}.");
                 }
             } else {
                 $folder = $resource->getSetting('folder');
 
-                if ($folder && !\App\Backends\IMAP::verifySharedFolder($folder)) {
+                if ($folder && !IMAP::verifySharedFolder($folder)) {
                     $this->release(15);
                     return;
                 }

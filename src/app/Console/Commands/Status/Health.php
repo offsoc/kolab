@@ -6,12 +6,12 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 use App\Backends\DAV;
-use App\Backends\IMAP;
-use App\Backends\LDAP;
 use App\Backends\OpenExchangeRates;
 use App\Backends\Roundcube;
 use App\Backends\Storage;
 use App\Providers\Payment\Mollie;
+use App\Support\Facades\IMAP;
+use App\Support\Facades\LDAP;
 
 //TODO stripe
 //TODO firebase
@@ -180,7 +180,7 @@ class Health extends Command
         $steps = $this->option('check');
         if (empty($steps)) {
             $steps = [
-                'DB', 'Redis', 'IMAP', 'Roundcube', 'Meet', 'DAV', 'Mollie', 'OpenExchangeRates'
+                'DB', 'Redis', 'Roundcube', 'Meet', 'DAV', 'Mollie', 'OpenExchangeRates'
             ];
             if (!empty($this->option('user'))) {
                 array_unshift($steps, 'Auth');

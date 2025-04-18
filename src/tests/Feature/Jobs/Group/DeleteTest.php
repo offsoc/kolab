@@ -3,6 +3,7 @@
 namespace Tests\Feature\Jobs\Group;
 
 use App\Group;
+use App\Support\Facades\LDAP;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -27,27 +28,18 @@ class DeleteTest extends TestCase
 
     /**
      * Test job handle
-     *
-     * @group ldap
      */
     public function testHandle(): void
     {
         $group = $this->getTestGroup('group@kolab.org', [
                 'members' => [],
-                'status' => Group::STATUS_NEW
+                'status' => Group::STATUS_NEW | Group::STATUS_LDAP_READY
         ]);
 
-        // create to domain first
-        $job = new \App\Jobs\Group\CreateJob($group->id);
-        $job->handle();
+        \config(['app.with_ldap' => true]);
 
-        $group->refresh();
-
-        if (\config('app.with_ldap')) {
-            $this->assertTrue($group->isLdapReady());
-        } else {
-            $this->assertFalse($group->isLdapReady());
-        }
+        $this->assertTrue($group->isLdapReady());
+        $this->assertFalse($group->isDeleted());
 
         // Test group that is not deleted yet
         $job = (new \App\Jobs\Group\DeleteJob($group->id))->withFakeQueueInteractions();
@@ -57,10 +49,13 @@ class DeleteTest extends TestCase
         $group->deleted_at = \now();
         $group->saveQuietly();
 
+        // Deleted group (expect success)
         Queue::fake();
+        LDAP::shouldReceive('deleteGroup')->once()->with($group)->andReturn(true);
 
-        $job = new \App\Jobs\Group\DeleteJob($group->id);
+        $job = (new \App\Jobs\Group\DeleteJob($group->id))->withFakeQueueInteractions();
         $job->handle();
+        $job->assertNotFailed();
 
         $group->refresh();
 

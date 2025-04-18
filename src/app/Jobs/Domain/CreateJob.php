@@ -20,7 +20,7 @@ class CreateJob extends DomainJob
         }
 
         if (\config('app.with_ldap') && !$domain->isLdapReady()) {
-            \App\Backends\LDAP::createDomain($domain);
+            \App\Support\Facades\LDAP::createDomain($domain);
 
             $domain->status |= \App\Domain::STATUS_LDAP_READY;
             $domain->save();

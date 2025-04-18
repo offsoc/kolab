@@ -2,10 +2,10 @@
 
 namespace App\Jobs\User;
 
-use App\Backends\IMAP;
-use App\Backends\LDAP;
 use App\Domain;
 use App\Jobs\UserJob;
+use App\Support\Facades\IMAP;
+use App\Support\Facades\LDAP;
 use App\User;
 
 class ResyncJob extends UserJob

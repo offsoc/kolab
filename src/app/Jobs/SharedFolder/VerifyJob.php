@@ -21,13 +21,12 @@ class VerifyJob extends SharedFolderJob
 
         // the user has a mailbox (or is marked as such)
         if ($folder->isImapReady()) {
-            $this->fail("Shared folder {$this->folderId} is already verified.");
             return;
         }
 
         $folderName = $folder->getSetting('folder');
 
-        if (\App\Backends\IMAP::verifySharedFolder($folderName)) {
+        if (\App\Support\Facades\IMAP::verifySharedFolder($folderName)) {
             $folder->status |= \App\SharedFolder::STATUS_IMAP_READY;
             $folder->status |= \App\SharedFolder::STATUS_ACTIVE;
             $folder->save();

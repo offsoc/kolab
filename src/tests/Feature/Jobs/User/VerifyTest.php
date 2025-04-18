@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Jobs\User;
 
+use App\Support\Facades\IMAP;
 use App\User;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
@@ -34,8 +35,6 @@ class VerifyTest extends TestCase
 
     /**
      * Test job handle
-     *
-     * @group imap
      */
     public function testHandle(): void
     {
@@ -46,7 +45,7 @@ class VerifyTest extends TestCase
         $job->handle();
         $job->assertFailedWith("User 123 could not be found in the database.");
 
-        // Test existing user
+        // Test existing user (verification successful)
         $user = $this->getTestUser('ned@kolab.org');
 
         if ($user->isImapReady()) {
@@ -56,18 +55,23 @@ class VerifyTest extends TestCase
 
         $this->assertFalse($user->isImapReady());
 
-        for ($i = 0; $i < 10; $i++) {
-            $job = new \App\Jobs\User\VerifyJob($user->id);
-            $job->handle();
+        IMAP::shouldReceive('verifyAccount')->once()->with($user->email)->andReturn(true);
 
-            if ($user->fresh()->isImapReady()) {
-                $this->assertTrue(true);
-                return;
-            }
+        $job = new \App\Jobs\User\VerifyJob($user->id);
+        $job->handle();
 
-            sleep(1);
-        }
+        $user->refresh();
+        $this->assertTrue($user->isImapReady());
 
-        $this->assertTrue(false, "Unable to verify the IMAP account is set up in time");
+        // Test existing user (verification not-successful)
+        $user->status ^= User::STATUS_IMAP_READY;
+        $user->save();
+
+        IMAP::shouldReceive('verifyAccount')->once()->with($user->email)->andReturn(false);
+
+        $job = new \App\Jobs\User\VerifyJob($user->id);
+        $job->handle();
+
+        $this->assertFalse($user->fresh()->isImapReady());
     }
 }

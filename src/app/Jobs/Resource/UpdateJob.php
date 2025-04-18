@@ -26,11 +26,11 @@ class UpdateJob extends ResourceJob
         }
 
         if (\config('app.with_ldap') && $resource->isLdapReady()) {
-            \App\Backends\LDAP::updateResource($resource);
+            \App\Support\Facades\LDAP::updateResource($resource);
         }
 
         if (\config('app.with_imap') && $resource->isImapReady()) {
-            if (!\App\Backends\IMAP::updateResource($resource, $this->properties)) {
+            if (!\App\Support\Facades\IMAP::updateResource($resource, $this->properties)) {
                 throw new \Exception("Failed to update mailbox for resource {$this->resourceId}.");
             }
         }

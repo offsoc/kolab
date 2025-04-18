@@ -3,6 +3,8 @@
 namespace Tests\Feature\Jobs\User;
 
 use App\Backends\Roundcube;
+use App\Support\Facades\IMAP;
+use App\Support\Facades\LDAP;
 use App\User;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
@@ -32,8 +34,6 @@ class DeleteTest extends TestCase
     /**
      * Test job handle
      *
-     * @group ldap
-     * @group imap
      * @group roundcube
      */
     public function testHandle(): void
@@ -42,18 +42,18 @@ class DeleteTest extends TestCase
 
         $rcdb = Roundcube::dbh();
 
-        $user = $this->getTestUser('new-job-user@' . \config('app.domain'));
+        $user = $this->getTestUser('new-job-user@' . \config('app.domain'), [
+            'status' => User::STATUS_ACTIVE | User::STATUS_IMAP_READY | User::STATUS_LDAP_READY,
+        ]);
         $rcuser = Roundcube::userId($user->email);
 
-        $job = new \App\Jobs\User\CreateJob($user->id);
-        $job->handle();
-
-        $user->refresh();
-
-        $this->assertSame(\config('app.with_ldap'), $user->isLdapReady());
-        $this->assertSame(\config('app.with_imap'), $user->isImapReady());
+        $this->assertTrue($user->isLdapReady());
+        $this->assertTrue($user->isImapReady());
         $this->assertFalse($user->isDeleted());
         $this->assertNotNull($rcdb->table('users')->where('username', $user->email)->first());
+
+        \config(['app.with_ldap' => true]);
+        \config(['app.with_imap' => true]);
 
         // Test job failure (user not yet deleted)
         $job = (new \App\Jobs\User\DeleteJob($user->id))->withFakeQueueInteractions();
@@ -78,9 +78,8 @@ class DeleteTest extends TestCase
 
         Queue::fake();
 
-        // Note: This user might have been already deleted in the same tests run,
-        // in the same second. If that's the case IMAP DELETE will fail. So, let's wait a second.
-        sleep(1);
+        IMAP::shouldReceive('deleteUser')->once()->with($user)->andReturn(true);
+        LDAP::shouldReceive('deleteUser')->once()->with($user)->andReturn(true);
 
         $job = (new \App\Jobs\User\DeleteJob($user->id))->withFakeQueueInteractions();
         $job->handle();

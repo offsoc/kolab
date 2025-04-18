@@ -31,7 +31,7 @@ class DeleteJob extends SharedFolderJob
         }
 
         if (\config('app.with_ldap') && $folder->isLdapReady()) {
-            \App\Backends\LDAP::deleteSharedFolder($folder);
+            \App\Support\Facades\LDAP::deleteSharedFolder($folder);
 
             $folder->status ^= \App\SharedFolder::STATUS_LDAP_READY;
             // Already save in case of exception below
@@ -40,7 +40,7 @@ class DeleteJob extends SharedFolderJob
 
         if ($folder->isImapReady()) {
             if (\config('app.with_imap')) {
-                if (!\App\Backends\IMAP::deleteSharedFolder($folder)) {
+                if (!\App\Support\Facades\IMAP::deleteSharedFolder($folder)) {
                     throw new \Exception("Failed to delete mailbox for shared folder {$this->folderId}.");
                 }
             }

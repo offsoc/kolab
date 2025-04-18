@@ -28,7 +28,7 @@ class ListCommand extends Command
     public function handle()
     {
         $user = $this->argument('user');
-        foreach (\App\Backends\IMAP::listMailboxes($user) as $mailbox) {
+        foreach (\App\Support\Facades\IMAP::listMailboxes($user) as $mailbox) {
             $this->info("$mailbox");
         }
     }

@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands\Imap;
 
-use App\Backends\IMAP;
 use App\Console\Command;
+use App\Support\Facades\IMAP;
 
 class RenameCommand extends Command
 {

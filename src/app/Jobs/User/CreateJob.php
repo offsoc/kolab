@@ -3,6 +3,8 @@
 namespace App\Jobs\User;
 
 use App\Jobs\UserJob;
+use App\Support\Facades\IMAP;
+use App\Support\Facades\LDAP;
 
 /**
  * Create the \App\User in LDAP.
@@ -89,7 +91,7 @@ class CreateJob extends UserJob
         }
 
         if ($withLdap && !$user->isLdapReady()) {
-            \App\Backends\LDAP::createUser($user);
+            LDAP::createUser($user);
 
             $user->status |= \App\User::STATUS_LDAP_READY;
             $user->save();
@@ -97,11 +99,11 @@ class CreateJob extends UserJob
 
         if (!$user->isImapReady()) {
             if (\config('app.with_imap')) {
-                if (!\App\Backends\IMAP::createUser($user)) {
+                if (!IMAP::createUser($user)) {
                     throw new \Exception("Failed to create mailbox for user {$this->userId}.");
                 }
             } else {
-                if (!\App\Backends\IMAP::verifyAccount($user->email)) {
+                if (!IMAP::verifyAccount($user->email)) {
                     $this->release(15);
                     return;
                 }

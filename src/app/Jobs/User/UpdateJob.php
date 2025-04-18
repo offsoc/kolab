@@ -39,11 +39,11 @@ class UpdateJob extends UserJob implements ShouldBeUniqueUntilProcessing
         }
 
         if (\config('app.with_ldap') && $user->isLdapReady()) {
-            \App\Backends\LDAP::updateUser($user);
+            \App\Support\Facades\LDAP::updateUser($user);
         }
 
         if (\config('app.with_imap') && $user->isImapReady()) {
-            if (!\App\Backends\IMAP::updateUser($user)) {
+            if (!\App\Support\Facades\IMAP::updateUser($user)) {
                 throw new \Exception("Failed to update mailbox for user {$this->userId}.");
             }
         }

@@ -24,6 +24,6 @@ class UpdateJob extends DomainJob
             return;
         }
 
-        \App\Backends\LDAP::updateDomain($domain);
+        \App\Support\Facades\LDAP::updateDomain($domain);
     }
 }

@@ -471,9 +471,6 @@ class UsersTest extends TestCase
     /**
      * Test fetching user status (GET /api/v4/users/<user-id>/status)
      * and forcing setup process update (?refresh=1)
-     *
-     * @group imap
-     * @group dns
      */
     public function testStatus(): void
     {

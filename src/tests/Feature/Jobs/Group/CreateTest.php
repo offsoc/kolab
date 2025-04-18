@@ -3,6 +3,7 @@
 namespace Tests\Feature\Jobs\Group;
 
 use App\Group;
+use App\Support\Facades\LDAP;
 use Tests\TestCase;
 
 class CreateTest extends TestCase
@@ -26,8 +27,6 @@ class CreateTest extends TestCase
 
     /**
      * Test job handle
-     *
-     * @group ldap
      */
     public function testHandle(): void
     {
@@ -35,16 +34,18 @@ class CreateTest extends TestCase
 
         $this->assertFalse($group->isLdapReady());
 
-        $job = new \App\Jobs\Group\CreateJob($group->id);
+        \config(['app.with_ldap' => true]);
+
+        LDAP::shouldReceive('createGroup')->once()->with($group)->andReturn(true);
+
+        $job = (new \App\Jobs\Group\CreateJob($group->id))->withFakeQueueInteractions();
         $job->handle();
+        $job->assertNotFailed();
 
         $group->refresh();
 
-        if (!\config('app.with_ldap')) {
-            $this->assertTrue($group->isActive());
-        } else {
-            $this->assertTrue($group->isLdapReady());
-        }
+        $this->assertTrue($group->isActive());
+        $this->assertTrue($group->isLdapReady());
 
         // Test non-existing group ID
         $job = (new \App\Jobs\Group\CreateJob(123))->withFakeQueueInteractions();
