@@ -267,6 +267,21 @@ trait EntitleableTrait
     }
 
     /**
+     * Get all SKU titles for this object.
+     *
+     * @return array<string>
+     */
+    public function skuTitles(): array
+    {
+        return $this->entitlements()->distinct()
+            ->join('skus', 'skus.id', '=', 'entitlements.sku_id')
+            ->pluck('title')
+            ->sort()
+            ->values()
+            ->all();
+    }
+
+    /**
      * Returns entitleable object title (e.g. email or domain name).
      *
      * @return string|null An object title/name

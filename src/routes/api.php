@@ -117,6 +117,8 @@ Route::group(
         // to prevent an attacker from pairing a new device with a stolen token.
         Route::get('companions/{id}/pairing', [API\V4\CompanionAppsController::class, 'pairing']);
 
+        Route::get('config/webmail', [API\V4\ConfigController::class, 'webmail']);
+
         Route::apiResource('domains', API\V4\DomainsController::class);
         Route::get('domains/{id}/confirm', [API\V4\DomainsController::class, 'confirm']);
         Route::get('domains/{id}/skus', [API\V4\DomainsController::class, 'skus']);

@@ -229,14 +229,7 @@ class UsersController extends RelationController
         $plan = $isController ? $wallet->plan() : null;
 
         $allSkus = Sku::withObjectTenantContext($user)->pluck('title')->all();
-
-        // Get user's entitlements titles
-        $skus = $user->entitlements()->distinct()
-            ->join('skus', 'skus.id', '=', 'entitlements.sku_id')
-            ->pluck('title')
-            ->sort()
-            ->values()
-            ->all();
+        $skus = $user->skuTitles();
 
         $hasBeta = in_array('beta', $skus) || !in_array('beta', $allSkus);
         $hasMeet = !$isDegraded && \config('app.with_meet') && in_array('room', $allSkus);
