@@ -25,6 +25,18 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind('ldap', function () {
             return new \App\Backends\LDAP();
         });
+        $this->app->bind('roundcube', function () {
+            return new \App\Backends\Roundcube();
+        });
+        $this->app->bind('pgp', function () {
+            return new \App\Backends\PGP();
+        });
+        $this->app->bind('filestorage', function () {
+            return new \App\Backends\Storage();
+        });
+        $this->app->bind('openexchangerates', function () {
+            return new \App\Backends\OpenExchangeRates();
+        });
     }
 
     /**

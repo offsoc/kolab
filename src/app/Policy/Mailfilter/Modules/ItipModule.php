@@ -72,7 +72,7 @@ class ItipModule
     /**
      * Get the main event/task from the VCALENDAR object
      */
-    protected static function extractMainComponent(COmponent $vobject): ?Component
+    protected static function extractMainComponent(Component $vobject): ?Component
     {
         foreach ($vobject->getComponents() as $component) {
             if ($component->name == 'VEVENT' || $component->name == 'VTODO') {

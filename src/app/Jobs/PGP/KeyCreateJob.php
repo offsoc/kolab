@@ -64,6 +64,6 @@ class KeyCreateJob extends UserJob
             return;
         }
 
-        \App\Backends\PGP::keypairCreate($user, $this->userEmail);
+        \App\Support\Facades\PGP::keypairCreate($user, $this->userEmail);
     }
 }

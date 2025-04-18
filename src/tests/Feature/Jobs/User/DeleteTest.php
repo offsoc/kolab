@@ -2,9 +2,9 @@
 
 namespace Tests\Feature\Jobs\User;
 
-use App\Backends\Roundcube;
 use App\Support\Facades\IMAP;
 use App\Support\Facades\LDAP;
+use App\Support\Facades\Roundcube;
 use App\User;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
@@ -33,24 +33,18 @@ class DeleteTest extends TestCase
 
     /**
      * Test job handle
-     *
-     * @group roundcube
      */
     public function testHandle(): void
     {
         Queue::fake();
 
-        $rcdb = Roundcube::dbh();
-
         $user = $this->getTestUser('new-job-user@' . \config('app.domain'), [
             'status' => User::STATUS_ACTIVE | User::STATUS_IMAP_READY | User::STATUS_LDAP_READY,
         ]);
-        $rcuser = Roundcube::userId($user->email);
 
         $this->assertTrue($user->isLdapReady());
         $this->assertTrue($user->isImapReady());
         $this->assertFalse($user->isDeleted());
-        $this->assertNotNull($rcdb->table('users')->where('username', $user->email)->first());
 
         \config(['app.with_ldap' => true]);
         \config(['app.with_imap' => true]);
@@ -80,6 +74,7 @@ class DeleteTest extends TestCase
 
         IMAP::shouldReceive('deleteUser')->once()->with($user)->andReturn(true);
         LDAP::shouldReceive('deleteUser')->once()->with($user)->andReturn(true);
+        Roundcube::shouldReceive('deleteUser')->once()->with($user->email);
 
         $job = (new \App\Jobs\User\DeleteJob($user->id))->withFakeQueueInteractions();
         $job->handle();
@@ -90,7 +85,6 @@ class DeleteTest extends TestCase
         $this->assertFalse($user->isLdapReady());
         $this->assertFalse($user->isImapReady());
         $this->assertTrue($user->isDeleted());
-        $this->assertNull($rcdb->table('users')->where('username', $user->email)->first());
 
         Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 0);
 

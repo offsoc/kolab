@@ -2,6 +2,7 @@
 
 namespace App\Auth;
 
+use App\Support\Facades\Roundcube;
 use Illuminate\Support\Facades\Auth;
 use Kolab2FA\Driver\Base as DriverBase;
 use Kolab2FA\Storage\Base as StorageBase;
@@ -170,7 +171,7 @@ class SecondFactor extends StorageBase
             ]
         ];
 
-        self::dbh()->table('users')->updateOrInsert(
+        Roundcube::dbh()->table('users')->updateOrInsert(
             ['username' => $email, 'mail_host' => '127.0.0.1'],
             ['preferences' => serialize($config)]
         );
@@ -282,7 +283,7 @@ class SecondFactor extends StorageBase
      */
     protected function getPrefs()
     {
-        $user = $this->dbh()->table('users')
+        $user = Roundcube::dbh()->table('users')
             ->select('preferences')
             ->where('username', strtolower($this->user->email))
             ->first();
@@ -305,18 +306,10 @@ class SecondFactor extends StorageBase
         $prefs = array_merge($old_prefs, $prefs);
         $prefs = array_filter($prefs, fn($v) => !is_null($v));
 
-        $this->dbh()->table('users')
+        Roundcube::dbh()->table('users')
             ->where('username', strtolower($this->user->email))
             ->update(['preferences' => serialize($prefs)]);
 
         return true;
-    }
-
-    /**
-     * Init connection to the Roundcube database
-     */
-    public static function dbh()
-    {
-        return \App\Backends\Roundcube::dbh();
     }
 }

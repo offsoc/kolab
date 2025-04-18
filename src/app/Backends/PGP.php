@@ -83,7 +83,7 @@ class PGP
     }
 
     /**
-     * Deleta a keypair from DNS and Enigma keyring.
+     * Delete a keypair from DNS and Enigma keyring.
      *
      * @param \App\User $user  User object
      * @param string    $email Email address of the key
@@ -98,6 +98,7 @@ class PGP
         // Remove the whole Enigma keyring (if it's a delete user account)
         if ($user->email === $email) {
             self::homedirCleanup($user);
+            $user->aliases()->pluck('alias')->each(fn ($alias) => self::keyUnregister($alias));
         } else {
             // TODO: remove only the alias key from Enigma keyring
         }

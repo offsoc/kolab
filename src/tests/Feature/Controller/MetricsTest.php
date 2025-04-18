@@ -4,9 +4,6 @@ namespace Tests\Feature\Controller;
 
 use Tests\TestCase;
 
-/**
- * @group files
- */
 class MetricsTest extends TestCase
 {
     /**

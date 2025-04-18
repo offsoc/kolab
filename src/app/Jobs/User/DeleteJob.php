@@ -55,7 +55,7 @@ class DeleteJob extends UserJob
         }
 
         if (\config('database.connections.roundcube')) {
-            \App\Backends\Roundcube::deleteUser($user->email);
+            \App\Support\Facades\Roundcube::deleteUser($user->email);
         }
 
         $user->status |= \App\User::STATUS_DELETED;

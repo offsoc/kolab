@@ -6,12 +6,12 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 use App\Backends\DAV;
-use App\Backends\OpenExchangeRates;
-use App\Backends\Roundcube;
-use App\Backends\Storage;
 use App\Providers\Payment\Mollie;
 use App\Support\Facades\IMAP;
 use App\Support\Facades\LDAP;
+use App\Support\Facades\OpenExchangeRates;
+use App\Support\Facades\Roundcube;
+use App\Support\Facades\Storage;
 
 //TODO stripe
 //TODO firebase
@@ -115,8 +115,7 @@ class Health extends Command
     private function checkRoundcube()
     {
         try {
-            //TODO maybe run a select?
-            Roundcube::dbh();
+            Roundcube::healthcheck();
             return true;
         } catch (\Exception $exception) {
             $this->line($exception);

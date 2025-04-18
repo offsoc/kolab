@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\API\V4;
 
-use App\Backends\Storage;
 use App\Fs\Item;
 use App\Fs\Property;
 use App\Http\Controllers\RelationController;
 use App\Rules\FileName;
+use App\Support\Facades\Storage;
 use App\User;
 use App\Utils;
 use Illuminate\Http\Request;

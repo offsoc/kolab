@@ -5,6 +5,8 @@ namespace Tests\Feature\Console\Status;
 use Tests\TestCase;
 use App\Support\Facades\IMAP;
 use App\Support\Facades\LDAP;
+use App\Support\Facades\Roundcube;
+use App\Support\Facades\Storage;
 
 class HealthTest extends TestCase
 {
@@ -21,6 +23,8 @@ class HealthTest extends TestCase
 
         IMAP::shouldReceive('healthcheck')->once()->andReturn(true);
         LDAP::shouldReceive('healthcheck')->once()->andReturn(true);
+        Roundcube::shouldReceive('healthcheck')->once()->andReturn(true);
+        Storage::shouldReceive('healthcheck')->once()->andReturn(true);
 
         $code = \Artisan::call("status:health");
         $output = trim(\Artisan::output());

@@ -209,6 +209,18 @@ class Roundcube
     }
 
     /**
+     * Check if we can connect to the Roundcube
+     *
+     * @return bool True on success
+     */
+    public static function healthcheck(): bool
+    {
+        // TODO: Make some query? Access the webmail URL?
+        self::dbh();
+        return true;
+    }
+
+    /**
      * Find the Roundcube user identifier for the specified user.
      *
      * @param string $email  User email address

@@ -2,10 +2,10 @@
 
 namespace App\Console\Commands\Fs;
 
-use App\Backends\Storage;
 use App\Console\Command;
 use App\Fs\Chunk;
 use App\Fs\Item;
+use App\Support\Facades\Storage;
 
 class ExpungeCommand extends Command
 {
@@ -47,7 +47,7 @@ class ExpungeCommand extends Command
         // We remove orphaned chunks after upload ttl (while marked as deleted some chunks may still be
         // in the process of uploading a file).
         $chunks = Chunk::withTrashed()
-            ->where('deleted_at', '<', now()->subSeconds(Storage::UPLOAD_TTL))
+            ->where('deleted_at', '<', now()->subSeconds(\App\Backends\Storage::UPLOAD_TTL))
             ->orderBy('deleted_at')
             ->cursor();
 

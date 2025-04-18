@@ -38,6 +38,6 @@ class KeyDeleteJob extends UserJob
             return;
         }
 
-        \App\Backends\PGP::keyDelete($user, $this->userEmail);
+        \App\Support\Facades\PGP::keyDelete($user, $this->userEmail);
     }
 }

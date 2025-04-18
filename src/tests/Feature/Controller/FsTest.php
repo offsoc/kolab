@@ -2,9 +2,9 @@
 
 namespace Tests\Feature\Controller;
 
-use App\Backends\Storage;
 use App\Fs\Item;
 use App\Fs\Property;
+use App\Support\Facades\Storage;
 use App\User;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage as LaravelStorage;

@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\DataMigrator;
 
-use App\Backends\Storage;
 use App\DataMigrator\Account;
 use App\DataMigrator\Driver\Kolab;
 use App\DataMigrator\Driver\Kolab\Tags as KolabTags;
@@ -10,6 +9,7 @@ use App\DataMigrator\Engine;
 use App\DataMigrator\Interface\Folder;
 use App\DataMigrator\Queue as MigratorQueue;
 use App\Fs\Item as FsItem;
+use App\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage as LaravelStorage;
 use Tests\BackendsTrait;
@@ -19,6 +19,7 @@ use Tests\TestCase;
  * @group slow
  * @group dav
  * @group imap
+ * @group files
  */
 class KolabTest extends TestCase
 {
