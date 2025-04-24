@@ -44,7 +44,7 @@ class DAV implements ExporterInterface, ImporterInterface
         $username = $account->username . ($account->loginas ? "**{$account->loginas}" : '');
         $baseUri = preg_replace('|^dav|', 'http', $account->uri);
 
-        $this->client = new DAVClient($username, $account->password, $baseUri);
+        $this->client = DAVClient::getInstance($username, $account->password, $baseUri);
         $this->engine = $engine;
         $this->account = $account;
     }

@@ -75,7 +75,7 @@ class DAVTest extends TestCase
         \config(['services.dav.default_folders' => $dav_folders]);
         DAV::initDefaultFolders($user);
 
-        $dav = new DAV($user->email, $props['password']);
+        $dav = DAV::getInstance($user->email, $props['password']);
 
         $folders = $dav->listFolders(DAV::TYPE_VCARD);
         $this->assertCount(1, $folders);

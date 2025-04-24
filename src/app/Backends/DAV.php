@@ -30,12 +30,43 @@ class DAV
     protected $responseHeaders = [];
     protected $homes;
 
+
     /**
-     * Object constructor
+     * Get object instance for user/password/location
+     *
+     * @param string  $user     Username
+     * @param string  $password Password
+     * @param ?string $url      Server location (defaults to services.dav.uri option value)
+     *
+     * @return DAV DAV client instance
      */
-    public function __construct($user, $password, $url = null)
+    public static function getInstance($user, $password, $url = null): DAV
     {
-        $this->url      = $url ?: \config('services.dav.uri');
+        $dav = new self();
+        $dav->setCredentials($user, $password);
+        $dav->setUrl($url ?: \config('services.dav.uri'));
+
+        return $dav;
+    }
+
+    /**
+     * Set DAV server location
+     *
+     * @param string $url Server location (URL)
+     */
+    public function setUrl($url): void
+    {
+        $this->url = $url;
+    }
+
+    /**
+     * Set user name and password
+     *
+     * @param string $user     Username
+     * @param string $password Password
+     */
+    public function setCredentials($user, $password): void
+    {
         $this->user     = $user;
         $this->password = $password;
     }
@@ -378,7 +409,7 @@ class DAV
             throw new \Exception("Failed to create an authentication token for DAV");
         }
 
-        $dav = new self($user->email, $password);
+        $dav = self::getInstance($user->email, $password);
 
         foreach ($folders as $props) {
             $folder = new DAV\Folder();

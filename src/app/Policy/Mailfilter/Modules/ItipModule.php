@@ -3,6 +3,7 @@
 namespace App\Policy\Mailfilter\Modules;
 
 use App\Backends\DAV;
+use App\Support\Facades\DAV as DAVFacade;
 use App\User;
 use App\Policy\Mailfilter\MailParser;
 use App\Policy\Mailfilter\Result;
@@ -160,7 +161,7 @@ class ItipModule
             $password = \App\Auth\Utils::tokenCreate((string) $user->id, $this->davTTL);
 
             $this->davTokenExpiresOn = now()->addSeconds($this->davTTL - 1);
-            $this->davClient = new DAV($user->email, $password);
+            $this->davClient = DAVFacade::getInstance($user->email, $password);
         }
 
         return $this->davClient;

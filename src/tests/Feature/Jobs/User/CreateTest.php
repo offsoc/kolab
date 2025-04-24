@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Jobs\User;
 
+use App\Support\Facades\DAV;
 use App\Support\Facades\IMAP;
 use App\Support\Facades\LDAP;
 use App\User;
@@ -48,6 +49,7 @@ class CreateTest extends TestCase
         $this->assertFalse($user->isActive());
 
         // Test successful creation
+        DAV::shouldReceive('initDefaultFolders')->once()->with($user);
         IMAP::shouldReceive('createUser')->once()->with($user)->andReturn(true);
         LDAP::shouldReceive('createUser')->once()->with($user)->andReturn(true);
 

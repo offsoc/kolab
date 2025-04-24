@@ -3,6 +3,7 @@
 namespace App\Jobs\User;
 
 use App\Jobs\UserJob;
+use App\Support\Facades\DAV;
 use App\Support\Facades\IMAP;
 use App\Support\Facades\LDAP;
 
@@ -113,7 +114,7 @@ class CreateJob extends UserJob
         }
 
         // FIXME: Should we ignore exceptions on this operation or introduce DAV_READY status?
-        \App\Backends\DAV::initDefaultFolders($user);
+        DAV::initDefaultFolders($user);
 
         // Make user active in non-mandate mode only
         if (

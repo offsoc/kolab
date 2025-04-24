@@ -25,6 +25,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind('ldap', function () {
             return new \App\Backends\LDAP();
         });
+        $this->app->bind('dav', function () {
+            return new \App\Backends\DAV();
+        });
         $this->app->bind('roundcube', function () {
             return new \App\Backends\Roundcube();
         });

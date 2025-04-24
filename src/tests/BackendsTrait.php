@@ -213,7 +213,7 @@ trait BackendsTrait
 
         if (empty($this->clients[$clientId])) {
             $uri = preg_replace('/^dav/', 'http', $account->uri);
-            $this->clients[$clientId] = new DAV($account->username, $account->password, $uri);
+            $this->clients[$clientId] = DAV::getInstance($account->username, $account->password, $uri);
         }
 
         return $this->clients[$clientId];
