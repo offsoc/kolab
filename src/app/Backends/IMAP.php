@@ -10,25 +10,6 @@ use App\Utils;
 
 class IMAP
 {
-    /** @const array Group settings used by the backend */
-    public const GROUP_SETTINGS = [];
-
-    /** @const array Resource settings used by the backend */
-    public const RESOURCE_SETTINGS = [
-        'folder',
-        'invitation_policy',
-    ];
-
-    /** @const array Shared folder settings used by the backend */
-    public const SHARED_FOLDER_SETTINGS = [
-        'folder',
-        'acl',
-    ];
-
-    /** @const array User settings used by the backend */
-    public const USER_SETTINGS = [];
-
-
     /** @const array Maps Kolab permissions to IMAP permissions */
     private const ACL_MAP = [
         'read-only' => 'lrs',

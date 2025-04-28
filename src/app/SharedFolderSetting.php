@@ -26,4 +26,13 @@ class SharedFolderSetting extends Model
     {
         return $this->belongsTo(SharedFolder::class, 'shared_folder_id', 'id');
     }
+
+    /**
+     * Check if the setting is used in any storage backend.
+     */
+    public function isBackendSetting(): bool
+    {
+        return (\config('app.with_imap') || \config('app.with_ldap'))
+            && ($this->key == 'acl' || $this->key == 'folder');
+    }
 }

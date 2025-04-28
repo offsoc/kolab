@@ -26,4 +26,12 @@ class GroupSetting extends Model
     {
         return $this->belongsTo(Group::class, 'group_id', 'id');
     }
+
+    /**
+     * Check if the setting is used in any storage backend.
+     */
+    public function isBackendSetting(): bool
+    {
+        return (\config('app.with_ldap') && $this->key == 'sender_policy');
+    }
 }

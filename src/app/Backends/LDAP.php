@@ -11,30 +11,6 @@ use App\Utils;
 
 class LDAP
 {
-    /** @const array Group settings used by the backend */
-    public const GROUP_SETTINGS = [
-        'sender_policy',
-    ];
-
-    /** @const array Resource settings used by the backend */
-    public const RESOURCE_SETTINGS = [
-        'folder',
-        'invitation_policy',
-    ];
-
-    /** @const array Shared folder settings used by the backend */
-    public const SHARED_FOLDER_SETTINGS = [
-        'folder',
-        'acl',
-    ];
-
-    /** @const array User settings used by the backend */
-    public const USER_SETTINGS = [
-        'first_name',
-        'last_name',
-        'organization',
-    ];
-
     /** @var ?\Net_LDAP3 LDAP connection object */
     protected static $ldap;
 

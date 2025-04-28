@@ -49,10 +49,7 @@ class SharedFolderSettingObserver
      */
     private function dispatchUpdateJob(SharedFolderSetting $folderSetting): void
     {
-        if (
-            (\config('app.with_ldap') && in_array($folderSetting->key, \App\Backends\LDAP::SHARED_FOLDER_SETTINGS))
-            || (\config('app.with_imap') && in_array($folderSetting->key, \App\Backends\IMAP::SHARED_FOLDER_SETTINGS))
-        ) {
+        if ($folderSetting->isBackendSetting()) {
             $props = [$folderSetting->key => $folderSetting->getOriginal('value')];
             \App\Jobs\SharedFolder\UpdateJob::dispatch($folderSetting->shared_folder_id, $props);
         }

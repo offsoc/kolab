@@ -26,4 +26,13 @@ class ResourceSetting extends Model
     {
         return $this->belongsTo(Resource::class, 'resource_id', 'id');
     }
+
+    /**
+     * Check if the setting is used in any storage backend.
+     */
+    public function isBackendSetting(): bool
+    {
+        return (\config('app.with_imap') || \config('app.with_ldap'))
+            && ($this->key == 'invitation_policy' || $this->key == 'folder');
+    }
 }

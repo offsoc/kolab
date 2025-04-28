@@ -49,10 +49,7 @@ class UserSettingObserver
      */
     private function dispatchUpdateJob(UserSetting $userSetting): void
     {
-        if (
-            (\config('app.with_ldap') && in_array($userSetting->key, \App\Backends\LDAP::USER_SETTINGS))
-            || (\config('app.with_imap') && in_array($userSetting->key, \App\Backends\IMAP::USER_SETTINGS))
-        ) {
+        if ($userSetting->isBackendSetting()) {
             \App\Jobs\User\UpdateJob::dispatch($userSetting->user_id);
         }
     }

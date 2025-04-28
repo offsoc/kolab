@@ -49,10 +49,7 @@ class ResourceSettingObserver
      */
     private function dispatchUpdateJob(ResourceSetting $resourceSetting): void
     {
-        if (
-            (\config('app.with_ldap') && in_array($resourceSetting->key, \App\Backends\LDAP::RESOURCE_SETTINGS))
-            || (\config('app.with_imap') && in_array($resourceSetting->key, \App\Backends\IMAP::RESOURCE_SETTINGS))
-        ) {
+        if ($resourceSetting->isBackendSetting()) {
             $props = [$resourceSetting->key => $resourceSetting->getOriginal('value')];
             \App\Jobs\Resource\UpdateJob::dispatch($resourceSetting->resource_id, $props);
         }

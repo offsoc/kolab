@@ -49,10 +49,7 @@ class GroupSettingObserver
      */
     private function dispatchUpdateJob(GroupSetting $groupSetting): void
     {
-        if (
-            (\config('app.with_ldap') && in_array($groupSetting->key, \App\Backends\LDAP::GROUP_SETTINGS))
-            || (\config('app.with_imap') && in_array($groupSetting->key, \App\Backends\IMAP::GROUP_SETTINGS))
-        ) {
+        if ($groupSetting->isBackendSetting()) {
             \App\Jobs\Group\UpdateJob::dispatch($groupSetting->group_id);
         }
     }
