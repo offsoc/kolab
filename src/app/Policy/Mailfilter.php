@@ -1,12 +1,15 @@
 <?php
 
-namespace App\Policy\Mailfilter;
+namespace App\Policy;
 
+use App\Policy\Mailfilter\MailParser;
+use App\Policy\Mailfilter\Modules;
+use App\Policy\Mailfilter\Result;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
-class RequestHandler
+class Mailfilter
 {
     /**
      * SMTP Content Filter

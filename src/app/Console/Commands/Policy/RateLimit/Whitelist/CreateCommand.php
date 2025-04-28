@@ -51,7 +51,7 @@ class CreateCommand extends Command
             $type = \App\User::class;
         }
 
-        \App\Policy\RateLimitWhitelist::create(
+        \App\Policy\RateLimit\Whitelist::create(
             [
                 'whitelistable_id' => $id,
                 'whitelistable_type' => $type

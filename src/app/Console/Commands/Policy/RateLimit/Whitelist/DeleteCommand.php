@@ -51,7 +51,7 @@ class DeleteCommand extends Command
             $type = \App\User::class;
         }
 
-        \App\Policy\RateLimitWhitelist::where(
+        \App\Policy\RateLimit\Whitelist::where(
             [
                 'whitelistable_id' => $id,
                 'whitelistable_type' => $type

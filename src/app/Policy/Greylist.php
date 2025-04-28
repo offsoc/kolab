@@ -1,10 +1,12 @@
 <?php
 
-namespace App\Policy\Greylist;
+namespace App\Policy;
 
+use App\Policy\Greylist\Connect;
+use App\Policy\Greylist\Whitelist;
 use Illuminate\Support\Facades\DB;
 
-class Request
+class Greylist
 {
     protected $connect;
     protected $header;
@@ -84,7 +86,7 @@ class Request
 
         $recipient = $this->recipientFromRequest();
 
-        $this->sender = $this->senderFromRequest();
+        $this->sender = \App\Utils::normalizeAddress($this->request['sender']);
 
         if (strpos($this->sender, '@') !== false) {
             list($this->senderLocal, $this->senderDomain) = explode('@', $this->sender);
@@ -242,10 +244,5 @@ class Request
         $this->recipientHash = hash('sha256', \App\Utils::normalizeAddress($this->request['recipient']));
 
         return $recipient;
-    }
-
-    protected function senderFromRequest()
-    {
-        return \App\Utils::normalizeAddress($this->request['sender']);
     }
 }

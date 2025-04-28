@@ -27,7 +27,7 @@ class ReadCommand extends Command
      */
     public function handle()
     {
-        \App\Policy\RateLimitWhitelist::each(
+        \App\Policy\RateLimit\Whitelist::each(
             function ($item) {
                 $whitelistable = $item->whitelistable;
 

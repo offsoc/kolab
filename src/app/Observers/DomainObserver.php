@@ -63,7 +63,7 @@ class DomainObserver
      */
     public function deleting(Domain $domain)
     {
-        \App\Policy\RateLimitWhitelist::where(
+        \App\Policy\RateLimit\Whitelist::where(
             [
                 'whitelistable_id' => $domain->id,
                 'whitelistable_type' => Domain::class

@@ -1,17 +1,17 @@
 <?php
 
-namespace App\Policy;
+namespace App\Policy\RateLimit;
 
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * The eloquent definition of a RateLimitWhitelist entry.
+ * The eloquent definition of a RateLimit Whitelist entry.
  *
  * @property ?object     $whitelistable      The whitelistable object
  * @property int|string  $whitelistable_id   The whitelistable object identifier
  * @property string      $whitelistable_type The whitelistable object type
  */
-class RateLimitWhitelist extends Model
+class Whitelist extends Model
 {
     /** @var array<int, string> The attributes that are mass assignable */
     protected $fillable = [

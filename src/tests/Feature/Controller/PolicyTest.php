@@ -56,8 +56,6 @@ class PolicyTest extends TestCase
 
     /**
      * Test greylist policy webhook
-     *
-     * @group greylist
      */
     public function testGreylist()
     {
@@ -124,5 +122,99 @@ class PolicyTest extends TestCase
         // TODO: Test rejecting mail
         // TODO: Test two modules that both modify the mail content
         $this->markTestIncomplete();
+    }
+
+    /**
+     * Test ratelimit policy webhook
+     */
+    public function testRatelimit()
+    {
+        // Note: Only basic tests here. More detailed policy handler tests are in another place
+
+        // Test a valid user
+        $post = [
+            'sender' => $this->testUser->email,
+            'recipients' => 'someone@sender.domain',
+        ];
+
+        $response = $this->post('/api/webhooks/policy/ratelimit', $post);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame('DUNNO', $json['response']);
+
+        // Test invalid sender
+        $post['sender'] = 'non-existing';
+        $response = $this->post('/api/webhooks/policy/ratelimit', $post);
+        $response->assertStatus(403);
+
+        $json = $response->json();
+
+        $this->assertSame('HOLD', $json['response']);
+        $this->assertSame('Invalid sender email', $json['reason']);
+
+        // Test unknown sender
+        $post['sender'] = 'non-existing@example.com';
+        $response = $this->post('/api/webhooks/policy/ratelimit', $post);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame('DUNNO', $json['response']);
+
+        // Test alias sender
+        $this->testUser->suspend();
+        $this->testUser->aliases()->create(['alias' => 'alias@test.domain']);
+        $post['sender'] = 'alias@test.domain';
+        $response = $this->post('/api/webhooks/policy/ratelimit', $post);
+        $response->assertStatus(403);
+
+        $json = $response->json();
+
+        $this->assertSame('HOLD', $json['response']);
+        $this->assertSame('Sender deleted or suspended', $json['reason']);
+
+        // Test app.ratelimit_whitelist
+        \config(['app.ratelimit_whitelist' => ['alias@test.domain']]);
+        $response = $this->post('/api/webhooks/policy/ratelimit', $post);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame('DUNNO', $json['response']);
+    }
+
+    /**
+     * Test SPF webhook
+     *
+     * @group data
+     * @group skipci
+     */
+    public function testSenderPolicyFramework(): void
+    {
+        // Note: Only basic tests here. More detailed policy handler tests are in another place
+
+        // TODO: Make a test that does not depend on data/dns (remove skipci)
+
+        // Test a valid user
+        $post = [
+            'instance' => 'test.local.instance',
+            'protocol_state' => 'RCPT',
+            'sender' => 'sender@spf-fail.kolab.org',
+            'client_name' => 'mx.kolabnow.com',
+            'client_address' => '212.103.80.148',
+            'recipient' => $this->testUser->email
+        ];
+
+        $response = $this->post('/api/webhooks/policy/spf', $post);
+        $response->assertStatus(403);
+
+        $json = $response->json();
+
+        $this->assertSame('REJECT', $json['response']);
+        $this->assertSame('Prohibited by Sender Policy Framework', $json['reason']);
+        $this->assertSame(['Received-SPF: Fail identity=mailfrom; client-ip=212.103.80.148;'
+            . ' helo=mx.kolabnow.com; envelope-from=sender@spf-fail.kolab.org;'], $json['prepend']);
     }
 }
