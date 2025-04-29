@@ -39,6 +39,25 @@ class Greylist
     }
 
     /**
+     * Policy request handler
+     *
+     * @param array $data Request data
+     */
+    public static function handle($data): Response
+    {
+        $request = new Greylist($data);
+
+        if ($request->shouldDefer()) {
+            return new Response(Response::ACTION_DEFER_IF_PERMIT, 'Greylisted for 5 minutes. Try again later.', 403);
+        }
+
+        $response = new Response(); // DUNNO
+        $response->prepends[] = $request->headerGreylist();
+
+        return $response;
+    }
+
+    /**
      * Get request state headers (Received-Greylist) - after self::shouldDefer() call
      */
     public function headerGreylist(): string

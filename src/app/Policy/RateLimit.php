@@ -23,6 +23,45 @@ class RateLimit extends Model
     /** @var string Database table name */
     protected $table = 'policy_ratelimit';
 
+    /**
+     * Check the submission request agains rate limits
+     *
+     * @param array $data Request data
+     *
+     * @return Response Policy respone
+     */
+    public static function handle($data): Response
+    {
+        list($local, $domain) = \App\Utils::normalizeAddress($data['sender'], true);
+
+        if (empty($local) || empty($domain)) {
+            return new Response(Response::ACTION_HOLD, 'Invalid sender email', 403);
+        }
+
+        $sender = $local . '@' . $domain;
+
+        if (in_array($sender, \config('app.ratelimit_whitelist', []), true)) {
+            return new Response(); // DUNNO
+        }
+
+        // Find the Kolab user
+        $user = \App\User::withTrashed()->where('email', $sender)->first();
+
+        if (!$user) {
+            $alias = \App\UserAlias::where('alias', $sender)->first();
+
+            if (!$alias) {
+                // TODO: How about sender is a distlist address?
+
+                // external sender through where this policy is applied
+                return new Response(); // DUNNO
+            }
+
+            $user = $alias->user()->withTrashed()->first();
+        }
+
+        return self::verifyRequest($user, (array) $data['recipients']);
+    }
 
     /**
      * Check the submission request agains rate limits

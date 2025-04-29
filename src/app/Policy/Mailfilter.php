@@ -96,7 +96,6 @@ class Mailfilter
             $stream = $parser->getStream();
 
             $response->setCallback(function () use ($stream) {
-
                 fpassthru($stream);
                 fclose($stream);
             });

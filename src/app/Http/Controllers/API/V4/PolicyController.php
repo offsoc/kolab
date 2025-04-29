@@ -18,25 +18,9 @@ class PolicyController extends Controller
      */
     public function greylist()
     {
-        $request = new Greylist(\request()->input());
+        $response = Greylist::handle(\request()->input());
 
-        $shouldDefer = $request->shouldDefer();
-
-        if ($shouldDefer) {
-            return response()->json(
-                ['response' => 'DEFER_IF_PERMIT', 'reason' => "Greylisted for 5 minutes. Try again later."],
-                403
-            );
-        }
-
-        $prependGreylist = $request->headerGreylist();
-
-        $result = [
-            'response' => 'DUNNO',
-            'prepend' => [$prependGreylist]
-        ];
-
-        return response()->json($result, 200);
+        return $response->jsonResponse();
     }
 
     /**
@@ -58,39 +42,9 @@ class PolicyController extends Controller
      */
     public function ratelimit()
     {
-        $data = \request()->input();
+        $response = RateLimit::handle(\request()->input());
 
-        list($local, $domain) = \App\Utils::normalizeAddress($data['sender'], true);
-
-        if (empty($local) || empty($domain)) {
-            return response()->json(['response' => 'HOLD', 'reason' => 'Invalid sender email'], 403);
-        }
-
-        $sender = $local . '@' . $domain;
-
-        if (in_array($sender, \config('app.ratelimit_whitelist', []), true)) {
-            return response()->json(['response' => 'DUNNO'], 200);
-        }
-
-        // Find the Kolab user
-        $user = \App\User::withTrashed()->where('email', $sender)->first();
-
-        if (!$user) {
-            $alias = \App\UserAlias::where('alias', $sender)->first();
-
-            if (!$alias) {
-                // TODO: How about sender is a distlist address?
-
-                // external sender through where this policy is applied
-                return response()->json(['response' => 'DUNNO'], 200);
-            }
-
-            $user = $alias->user()->withTrashed()->first();
-        }
-
-        $result = RateLimit::verifyRequest($user, (array) $data['recipients']);
-
-        return $result->jsonResponse();
+        return $response->jsonResponse();
     }
 
     /*
