@@ -550,7 +550,7 @@ class Mollie extends \App\Providers\PaymentProvider
 
                 return sprintf(
                     '%s (**** **** **** %s)',
-                    $details->cardLabel ?: 'Card', // @phpstan-ignore-line
+                    $details->cardLabel ?: 'Card',
                     $details->cardNumber
                 );
 

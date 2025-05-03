@@ -46,7 +46,7 @@ class VerificationCode extends Model
         'expires_at' => 'datetime',
     ];
 
-    /** @var array<int, string> The attributes that are mass assignable */
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = ['user_id', 'code', 'short_code', 'mode', 'expires_at', 'active'];
 
 
@@ -69,7 +69,6 @@ class VerificationCode extends Model
      */
     public function isExpired()
     {
-        // @phpstan-ignore-next-line
         return $this->expires_at ? Carbon::now()->gte($this->expires_at) : false;
     }
 }

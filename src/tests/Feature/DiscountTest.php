@@ -15,7 +15,7 @@ class DiscountTest extends TestCase
         $discount = new Discount();
         $discount->discount = -1;
 
-        $this->assertTrue($discount->discount == 0);
+        $this->assertTrue($discount->discount == 0); // @phpstan-ignore-line
     }
 
     /**
@@ -26,6 +26,6 @@ class DiscountTest extends TestCase
         $discount = new Discount();
         $discount->discount = 101;
 
-        $this->assertTrue($discount->discount == 100);
+        $this->assertTrue($discount->discount == 100); // @phpstan-ignore-line
     }
 }

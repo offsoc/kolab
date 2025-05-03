@@ -21,7 +21,7 @@ class IP4Net extends Model
     /** @var string Database table name */
     protected $table = "ip4nets";
 
-    /** @var array<int, string> The attributes that are mass assignable */
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = [
         'rir_name',
         'net_number',

@@ -196,7 +196,7 @@ class DomainTest extends TestCase
 
         $domain->status = 115;
 
-        $this->assertTrue($domain->status == 115);
+        $this->assertTrue($domain->status == 115); // @phpstan-ignore-line
 
         // ACTIVE makes not NEW
         $domain = new Domain();

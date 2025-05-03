@@ -40,7 +40,7 @@ class Package extends Model
     /** @var bool Indicates if the model should be timestamped. */
     public $timestamps = false;
 
-    /** @var array<int, string> The attributes that are mass assignable */
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = [
         'description',
         'discount_rate',
@@ -93,7 +93,7 @@ class Package extends Model
     /**
      * SKUs of this package.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<Sku, $this, PackageSku>
      */
     public function skus()
     {

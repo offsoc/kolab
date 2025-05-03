@@ -432,7 +432,6 @@ class Stripe extends \App\Providers\PaymentProvider
 
         if ($mandate_id = $wallet->getSetting('stripe_mandate_id')) {
             $mandate = StripeAPI\SetupIntent::retrieve($mandate_id);
-            // @phpstan-ignore-next-line
             if ($mandate && $mandate->status != 'canceled') {
                 return $mandate;
             }

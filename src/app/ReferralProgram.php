@@ -24,7 +24,7 @@ class ReferralProgram extends Model
     use BelongsToTenantTrait;
     use HasTranslations;
 
-    /** @var array<int, string> The attributes that are mass assignable */
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = [
         'award_amount',
         'award_percent',
@@ -106,7 +106,7 @@ class ReferralProgram extends Model
     /**
      * The referral codes that use this program.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<ReferralCode, $this>
      */
     public function codes()
     {
@@ -116,7 +116,7 @@ class ReferralProgram extends Model
     /**
      * The discount assigned to the program.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Discount, $this>
      */
     public function discount()
     {

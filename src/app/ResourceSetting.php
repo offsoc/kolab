@@ -14,13 +14,13 @@ use Illuminate\Database\Eloquent\Model;
  */
 class ResourceSetting extends Model
 {
-    /** @var array<int, string> The attributes that are mass assignable */
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = ['resource_id', 'key', 'value'];
 
     /**
      * The resource to which this setting belongs.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Resource, $this>
      */
     public function resource()
     {

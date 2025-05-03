@@ -53,7 +53,7 @@ class Domain extends Model
     /**
      * Any DNS records assigned to this domain.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Record, $this>
      */
     public function records()
     {
@@ -63,7 +63,7 @@ class Domain extends Model
     /**
      * Any (additional) properties of this domain.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<DomainSetting, $this>
      */
     public function settings()
     {

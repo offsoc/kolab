@@ -33,7 +33,7 @@ class Sku extends Model
         'units_free' => 'integer'
     ];
 
-    /** @var array<int, string> The attributes that are mass assignable */
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = [
         'active',
         'cost',
@@ -56,7 +56,7 @@ class Sku extends Model
     /**
      * List the entitlements that consume this SKU.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Entitlement, $this>
      */
     public function entitlements()
     {
@@ -66,7 +66,7 @@ class Sku extends Model
     /**
      * List of packages that use this SKU.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<Package, $this, PackageSku>
      */
     public function packages()
     {

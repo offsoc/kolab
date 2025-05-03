@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
  */
 class PackageSku extends Pivot
 {
-    /** @var array<int, string> The attributes that are mass assignable */
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = [
         'package_id',
         'sku_id',
@@ -32,7 +32,7 @@ class PackageSku extends Pivot
         'qty' => 'integer'
     ];
 
-    /** @var array<int, string> The attributes that can be not set */
+    /** @var list<string> The attributes that can be not set */
     protected $nullable = [
         'cost',
     ];
@@ -98,7 +98,7 @@ class PackageSku extends Pivot
     /**
      * The package for this relation.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Package, $this>
      */
     public function package()
     {
@@ -108,7 +108,7 @@ class PackageSku extends Pivot
     /**
      * The SKU for this relation.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Sku, $this>
      */
     public function sku()
     {

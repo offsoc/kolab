@@ -27,7 +27,7 @@ class Item extends Model
     public const TYPE_COLLECTION = 2;
     public const TYPE_INCOMPLETE = 4;
 
-    /** @var array<int, string> The attributes that are mass assignable */
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = ['user_id', 'type'];
 
     /** @var array<string, string> The attributes that should be cast */
@@ -43,7 +43,7 @@ class Item extends Model
     /**
      * Content chunks of this item (file).
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Chunk, $this>
      */
     public function chunks()
     {
@@ -73,7 +73,7 @@ class Item extends Model
     /**
      * Any (additional) properties of this item.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Property, $this>
      */
     public function properties()
     {
@@ -171,7 +171,7 @@ class Item extends Model
     /**
      * All relations for this item
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Relation, $this>
      */
     public function relations()
     {
@@ -183,7 +183,7 @@ class Item extends Model
      *
      * Used to retrieve all items in a collection.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<Item, $this>
      */
     public function children()
     {
@@ -195,7 +195,7 @@ class Item extends Model
      *
      * Used to retrieve all collections of an item.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<Item, $this>
      */
     public function parents()
     {

@@ -96,9 +96,9 @@ class MetricsController extends Controller
 
         // phpcs:disable
         foreach (app(WorkloadRepository::class)->get() as $workloadMetrics) {
-            $queueName = $workloadMetrics['name'] ?? 'unknown'; // @phpstan-ignore-line
-            $queueSize = $workloadMetrics['length'] ?? 0; // @phpstan-ignore-line
-            $queueWaitTime = $workloadMetrics['wait'] ?? 0; // @phpstan-ignore-line
+            $queueName = $workloadMetrics['name'] ?? 'unknown';
+            $queueSize = $workloadMetrics['length'] ?? 0;
+            $queueWaitTime = $workloadMetrics['wait'] ?? 0;
             $text .= <<<EOF
             # HELP kolab_horizon_queue_size Number of jobs in queue
             # TYPE kolab_horizon_queue_size gauge

@@ -32,8 +32,7 @@ class SignupCodeRefactor extends Migration
             }
         );
 
-        DB::table('signup_codes')->get()->each(function ($code) {
-            /** @var \App\SignupCode $code */
+        \App\SignupCode::withTrashed()->get()->each(function ($code) {
             if (empty($code->data)) {
                 return;
             }
@@ -43,8 +42,8 @@ class SignupCodeRefactor extends Migration
             if (!empty($data->email)) {
                 $parts = explode('@', $data->email);
 
-                $data->local_part = $parts[0] ?? null; // @phpstan-ignore-line
-                $data->domain_part = $parts[1] ?? null; // @phpstan-ignore-line
+                $data->local_part = $parts[0] ?? null;
+                $data->domain_part = $parts[1] ?? null;
             }
 
             DB::table('signup_codes')

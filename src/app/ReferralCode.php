@@ -25,7 +25,7 @@ class ReferralCode extends Model
     /** @var string The "type" of the auto-incrementing ID */
     protected $keyType = 'string';
 
-    /** @var array<int, string> The attributes that are mass assignable */
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = [
         // 'code',
         'program_id',
@@ -56,7 +56,7 @@ class ReferralCode extends Model
     /**
      * The referral code owner (user)
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<User, $this>
      */
     public function owner()
     {
@@ -66,7 +66,7 @@ class ReferralCode extends Model
     /**
      * The referral program
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<ReferralProgram, $this>
      */
     public function program()
     {
@@ -76,7 +76,7 @@ class ReferralCode extends Model
     /**
      * The referrals using this code.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Referral, $this>
      */
     public function referrals()
     {

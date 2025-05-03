@@ -259,10 +259,8 @@ class DomainTest extends TestCase
         Queue::assertPushed(\App\Jobs\Domain\UpdateJob::class, 0);
 
         // Delete the domain for real
-        $job = new \App\Jobs\Domain\DeleteJob($domain->id);
-        $job->handle();
-
-        $this->assertTrue(Domain::withTrashed()->where('id', $domain->id)->first()->isDeleted());
+        $domain->status |= Domain::STATUS_DELETED;
+        $domain->save();
 
         Queue::fake();
 

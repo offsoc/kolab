@@ -26,7 +26,7 @@ class Discount extends Model
         'discount' => 'integer',
     ];
 
-    /** @var array<int, string> The attributes that are mass assignable */
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = ['active', 'code', 'description', 'discount'];
 
     /** @var array<int, string> Translatable properties */
@@ -58,7 +58,7 @@ class Discount extends Model
     /**
      * List of wallets with this discount assigned.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Wallet, $this>
      */
     public function wallets()
     {

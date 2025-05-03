@@ -37,7 +37,7 @@ class Wallet extends Model
         'balance' => 0,
     ];
 
-    /** @var array<int, string> The attributes that are mass assignable */
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = [
         'currency',
         'description'
@@ -236,7 +236,7 @@ class Wallet extends Model
     /**
      * Controllers of this wallet.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<User, $this>
      */
     public function controllers()
     {
@@ -278,7 +278,7 @@ class Wallet extends Model
     /**
      * The discount assigned to the wallet.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Discount, $this>
      */
     public function discount()
     {
@@ -288,7 +288,7 @@ class Wallet extends Model
     /**
      * Entitlements billed to this wallet.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Entitlement, $this>
      */
     public function entitlements()
     {
@@ -374,7 +374,7 @@ class Wallet extends Model
     /**
      * The owner of the wallet -- the wallet is in his/her back pocket.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<User, $this>
      */
     public function owner()
     {
@@ -414,7 +414,7 @@ class Wallet extends Model
     /**
      * Payments on this wallet.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Payment, $this>
      */
     public function payments()
     {
@@ -579,7 +579,7 @@ class Wallet extends Model
     /**
      * Retrieve the transactions against this wallet.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Transaction, $this>
      */
     public function transactions()
     {

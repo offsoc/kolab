@@ -17,7 +17,7 @@ class Record extends Model
 
     public function domain()
     {
-        return $this->belongsTo('App\PowerDNS\Domain', 'domain_id', 'id');
+        return $this->belongsTo(\App\PowerDNS\Domain::class, 'domain_id', 'id');
     }
 
     public function toString()

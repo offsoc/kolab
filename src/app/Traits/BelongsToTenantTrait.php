@@ -2,6 +2,8 @@
 
 namespace App\Traits;
 
+use App\Tenant;
+
 trait BelongsToTenantTrait
 {
     /**
@@ -16,14 +18,13 @@ trait BelongsToTenantTrait
         });
     }
 
-
     /**
      * The tenant for this model.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Tenant, $this>
      */
     public function tenant()
     {
-        return $this->belongsTo('App\Tenant', 'tenant_id', 'id');
+        return $this->belongsTo(Tenant::class, 'tenant_id', 'id');
     }
 }

@@ -24,9 +24,9 @@ class UserPassword extends Model
         'created_at' => 'datetime:Y-m-d H:i:s',
     ];
 
-    /** @var array<int, string> The attributes that are mass assignable. */
+    /** @var list<string> The attributes that are mass assignable. */
     protected $fillable = ['user_id', 'password'];
 
-    /** @var array<int, string> The attributes that should be hidden for arrays. */
+    /** @var list<string> The attributes that should be hidden for arrays. */
     protected $hidden = ['password'];
 }

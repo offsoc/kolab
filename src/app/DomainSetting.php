@@ -14,13 +14,13 @@ use Illuminate\Database\Eloquent\Model;
  */
 class DomainSetting extends Model
 {
-    /** @var array<int, string> The attributes that are mass assignable */
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = ['domain_id', 'key', 'value'];
 
     /**
      * The domain to which this setting belongs.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Domain, $this>
      */
     public function domain()
     {

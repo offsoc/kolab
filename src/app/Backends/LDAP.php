@@ -1224,7 +1224,7 @@ class LDAP
      *
      * @return null|array User entry, NULL if not found
      */
-    private static function getUserEntry($ldap, $email, &$dn = null, $full = false)
+    private static function getUserEntry($ldap, $email, &$dn, $full = false)
     {
         $domainName = explode('@', $email, 2)[1];
 

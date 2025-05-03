@@ -29,7 +29,7 @@ class Entitlement extends Model
     use SoftDeletes;
     use UuidStrKeyTrait;
 
-    /** @var array<int, string> The attributes that are mass assignable */
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = [
         'sku_id',
         'wallet_id',
@@ -110,7 +110,7 @@ class Entitlement extends Model
     /**
      * The SKU concerned.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Sku, $this>
      */
     public function sku()
     {
@@ -120,7 +120,7 @@ class Entitlement extends Model
     /**
      * The wallet this entitlement is being billed to
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Wallet, $this>
      */
     public function wallet()
     {

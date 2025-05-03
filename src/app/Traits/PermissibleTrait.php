@@ -21,7 +21,7 @@ trait PermissibleTrait
     /**
      * Permissions for this object.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Permission, $this>
      */
     public function permissions()
     {

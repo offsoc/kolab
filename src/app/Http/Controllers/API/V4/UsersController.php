@@ -603,10 +603,10 @@ class UsersController extends RelationController
     /**
      * Email address validation for use as a user mailbox (login).
      *
-     * @param string                    $email   Email address
-     * @param \App\User                 $user    The account owner
-     * @param null|\App\User|\App\Group $deleted Filled with an instance of a deleted user or group
-     *                                           with the specified email address, if exists
+     * @param string      $email   Email address
+     * @param \App\User   $user    The account owner
+     * @param mixed       $deleted Filled with an instance of a deleted model object
+     *                             with the specified email address, if exists
      *
      * @return ?string Error message on validation error
      */

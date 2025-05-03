@@ -15,7 +15,7 @@ class CompanionApp extends Model
 {
     use UuidStrKeyTrait;
 
-    /** @var array<int, string> The attributes that are mass assignable */
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = [
         'name',
         'user_id',

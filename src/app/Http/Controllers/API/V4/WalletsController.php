@@ -129,17 +129,17 @@ class WalletsController extends ResourceController
             ->where('amount', '<>', 0)
             ->orderBy('ident', 'desc')
             ->groupBy('ident')
+            ->havingRaw('ident <> ?', [date('Y-m')]) // exclude current month
             ->limit($pageSize + 1)
             ->offset($pageSize * ($page - 1))
-            ->get()
-            ->whereNotIn('ident', [date('Y-m')]); // exclude current month
-
+            ->get();
 
         if (count($result) > $pageSize) {
             $result->pop();
             $hasMore = true;
         }
 
+        // @phpstan-ignore argument.unresolvableType
         $result = $result->map(function ($item) use ($wallet) {
             $entry = [
                 'period' => $item->ident, // @phpstan-ignore-line

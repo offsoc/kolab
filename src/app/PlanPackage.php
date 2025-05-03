@@ -19,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
  */
 class PlanPackage extends Pivot
 {
-    /** @var array<int, string> The attributes that are mass assignable */
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = [
         'plan_id',
         'package_id',
@@ -62,7 +62,7 @@ class PlanPackage extends Pivot
     /**
      * The package in this relation.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Package, $this>
      */
     public function package()
     {
@@ -72,7 +72,7 @@ class PlanPackage extends Pivot
     /**
      * The plan in this relation.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Plan, $this>
      */
     public function plan()
     {

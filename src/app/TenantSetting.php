@@ -14,13 +14,13 @@ use Illuminate\Database\Eloquent\Model;
  */
 class TenantSetting extends Model
 {
-    /** @var array<int, string> The attributes that are mass assignable */
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = ['tenant_id', 'key', 'value'];
 
     /**
      * The tenant to which this setting belongs.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Tenant, $this>
      */
     public function tenant()
     {

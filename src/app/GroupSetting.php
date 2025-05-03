@@ -14,13 +14,13 @@ use Illuminate\Database\Eloquent\Model;
  */
 class GroupSetting extends Model
 {
-    /** @var array<int, string> The attributes that are mass assignable */
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = ['group_id', 'key', 'value'];
 
     /**
      * The group to which this setting belongs.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Group, $this>
      */
     public function group()
     {

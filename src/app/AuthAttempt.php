@@ -27,10 +27,10 @@ class AuthAttempt extends Model
     private const STATUS_ACCEPTED  = 'ACCEPTED';
     private const STATUS_DENIED  = 'DENIED';
 
-    /** @var array<int, string> The attributes that can be not set */
+    /** @var list<string> The attributes that can be not set */
     protected $nullable = ['reason'];
 
-    /** @var array<int, string> The attributes that are mass assignable */
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = [
         'ip',
         'user_id',

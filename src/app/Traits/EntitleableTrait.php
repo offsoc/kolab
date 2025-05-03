@@ -177,7 +177,7 @@ trait EntitleableTrait
     /**
      * Entitlements for this object.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Entitlement, $this>
      */
     public function entitlements()
     {

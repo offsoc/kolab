@@ -15,7 +15,7 @@ class Tenant extends Model
 {
     use SettingsTrait;
 
-    /** @var array<int, string> The attributes that are mass assignable */
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = ['id', 'title'];
 
 
@@ -61,7 +61,7 @@ class Tenant extends Model
     /**
      * Discounts assigned to this tenant.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Discount, $this>
      */
     public function discounts()
     {
@@ -71,7 +71,7 @@ class Tenant extends Model
     /**
      * SignupInvitations assigned to this tenant.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<SignupInvitation, $this>
      */
     public function signupInvitations()
     {

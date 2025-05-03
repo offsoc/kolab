@@ -74,7 +74,7 @@ class Domain extends Model
         'type' => 'integer',
     ];
 
-    /** @var array<int, string> The attributes that are mass assignable */
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = ['namespace', 'status', 'type'];
 
     /**

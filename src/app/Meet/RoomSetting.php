@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class RoomSetting extends Model
 {
-    /** @var array<int, string> The attributes that are mass assignable */
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = ['room_id', 'key', 'value'];
 
     /** @var string Database table name */
@@ -23,7 +23,7 @@ class RoomSetting extends Model
     /**
      * The room to which this setting belongs.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Room, $this>
      */
     public function room()
     {

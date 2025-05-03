@@ -27,7 +27,7 @@ class EventLog extends Model
     public const TYPE_COMMENT = 3;
     public const TYPE_MAILSENT = 4;
 
-    /** @var array<int, string> The attributes that are mass assignable */
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = [
         'comment',
         // extra event info (json)
@@ -47,7 +47,7 @@ class EventLog extends Model
         'type' => 'integer',
     ];
 
-    /** @var array<int, string> The attributes that can be not set */
+    /** @var list<string> The attributes that can be not set */
     protected $nullable = ['comment', 'data', 'user_email'];
 
     /** @var string Database table name */

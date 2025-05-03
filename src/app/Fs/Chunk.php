@@ -18,7 +18,7 @@ class Chunk extends Model
 {
     use SoftDeletes;
 
-    /** @var array<int, string> The attributes that are mass assignable */
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = ['item_id', 'chunk_id', 'sequence', 'deleted_at', 'size'];
 
     /** @var string Database table name */
@@ -28,7 +28,7 @@ class Chunk extends Model
     /**
      * The item (file) the chunk belongs to.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Item, $this>
      */
     public function item()
     {

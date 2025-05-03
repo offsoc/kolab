@@ -3,6 +3,9 @@ includes:
 parameters:
     ignoreErrors:
         - '#Access to an undefined property [a-zA-Z\\]+::\$pivot#'
+        - '#Access to an undefined property Illuminate\\Database\\Eloquent\\Model::\$id#'
+        - '#Access to an undefined property Illuminate\\Database\\Eloquent\\Model::\$key#'
+        - '#Access to an undefined property Illuminate\\Database\\Eloquent\\Model::\$value#'
         - '#Access to an undefined property Sabre\\VObject\\(Component|Document)::#'
         - '#Call to an undefined method Tests\\Browser::#'
         - '#Call to an undefined method garethp\\ews\\API\\Type::#'
@@ -17,3 +20,5 @@ parameters:
         - routes/
         - tests/
         - resources/
+    treatPhpDocTypesAsCertain: false
+    noEnvCallsOutsideOfConfig: false

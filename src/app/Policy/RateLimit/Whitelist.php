@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Whitelist extends Model
 {
-    /** @var array<int, string> The attributes that are mass assignable */
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = [
         'whitelistable_id',
         'whitelistable_type',

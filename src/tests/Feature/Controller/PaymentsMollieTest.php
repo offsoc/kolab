@@ -622,7 +622,7 @@ class PaymentsMollieTest extends TestCase
         // Expect no payment if the mandate is disabled
         $wallet->setSetting('mandate_disabled', 1);
         $result = $wallet->topUp();
-        $this->assertFalse($result);
+        $this->assertFalse($result); // @phpstan-ignore-line
         $this->assertCount(2, $wallet->payments()->get());
 
         // Expect no payment if balance is ok

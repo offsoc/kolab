@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Property extends Model
 {
-    /** @var array<int, string> The attributes that are mass assignable */
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = ['item_id', 'key', 'value'];
 
     /** @var string Database table name */
@@ -24,7 +24,7 @@ class Property extends Model
     /**
      * The item to which this property belongs.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Item, $this>
      */
     public function item()
     {

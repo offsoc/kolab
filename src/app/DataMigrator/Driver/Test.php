@@ -46,8 +46,6 @@ class Test implements ExporterInterface, ImporterInterface
 
     /**
      * Check user credentials.
-     *
-     * @throws \Exception
      */
     public function authenticate(): void
     {
@@ -131,8 +129,6 @@ class Test implements ExporterInterface, ImporterInterface
      * used in incremental migration.
      *
      * @param Folder $folder Folder data
-     *
-     * @throws \Exception on error
      */
     public function getItems(Folder $folder): array
     {

@@ -5,7 +5,7 @@ namespace App\DataMigrator\Interface;
 /**
  * Data object representing a set of data items
  */
-class ItemSet implements \Serializable
+class ItemSet
 {
     /** @var array<Item> Items list */
     public $items = [];
@@ -21,7 +21,7 @@ class ItemSet implements \Serializable
         return $obj;
     }
 
-    public function serialize(): ?string
+    public function __serialize(): array
     {
         // Every item has a Folder property, this makes the set
         // needlesly big when serialized. Make the size more compact.
@@ -31,12 +31,12 @@ class ItemSet implements \Serializable
             $item->folder = null;
         }
 
-        return serialize([$folder, $this->items]);
+        return [$folder, $this->items];
     }
 
-    public function unserialize(string $data): void
+    public function __unserialize(array $data): void
     {
-        [$folder, $this->items] = unserialize($data);
+        [$folder, $this->items] = $data;
 
         foreach ($this->items as $item) {
             $item->folder = $folder;

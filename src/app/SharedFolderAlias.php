@@ -13,8 +13,10 @@ use Illuminate\Database\Eloquent\Model;
  */
 class SharedFolderAlias extends Model
 {
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = [
-        'shared_folder_id', 'alias'
+        'alias',
+        'shared_folder_id',
     ];
 
     /**
@@ -30,7 +32,7 @@ class SharedFolderAlias extends Model
     /**
      * The shared folder to which this alias belongs.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<SharedFolder, $this>
      */
     public function sharedFolder()
     {

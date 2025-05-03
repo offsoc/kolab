@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Relation extends Model
 {
-    /** @var array<int, string> The attributes that are mass assignable */
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = ['item_id', 'related_id'];
 
     /** @var string Database table name */

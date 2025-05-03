@@ -70,8 +70,7 @@ class Health extends Command
     private function checkDAV()
     {
         try {
-            DAV::healthcheck();
-            return true;
+            return DAV::healthcheck();
         } catch (\Exception $exception) {
             $this->line($exception);
             return false;

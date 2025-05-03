@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Referral extends Model
 {
-    /** @var array<int, string> The attributes that are mass assignable */
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = [
         'user_id',
         'code',
@@ -32,7 +32,7 @@ class Referral extends Model
     /**
      * The code this referral is assigned to
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<ReferralCode, $this>
      */
     public function code()
     {
@@ -42,7 +42,7 @@ class Referral extends Model
     /**
      * The user this referral is assigned to (referree)
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<User, $this>
      */
     public function user()
     {

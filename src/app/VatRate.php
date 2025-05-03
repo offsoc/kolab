@@ -23,7 +23,7 @@ class VatRate extends Model
         'rate' => 'float'
     ];
 
-    /** @var array<int, string> The attributes that are mass assignable */
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = [
         'country',
         'rate',

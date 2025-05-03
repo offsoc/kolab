@@ -140,16 +140,18 @@ class IMAPTest extends TestCase
         IMAP::aclCleanupDomain('kolab.org');
 
         $acl = $imap->getACL('user/john@kolab.org');
-        $this->assertTrue(is_array($acl) && !isset($acl[$user->email]));
-        $this->assertTrue(is_array($acl) && isset($acl['jack@kolab.org']));
-        $this->assertTrue(is_array($acl) && isset($acl['anyone']));
-        $this->assertTrue(is_array($acl) && isset($acl['john@kolab.org']));
-        // $this->assertTrue(is_array($acl) && !isset($acl[$group->name]));
+        $this->assertTrue(is_array($acl));
+        $this->assertTrue(!isset($acl[$user->email]));
+        $this->assertTrue(isset($acl['jack@kolab.org']));
+        $this->assertTrue(isset($acl['anyone']));
+        $this->assertTrue(isset($acl['john@kolab.org']));
+        // $this->assertTrue(!isset($acl[$group->name]));
 
         $acl = $imap->getACL('shared/Resources/Conference Room #1@kolab.org');
-        $this->assertTrue(is_array($acl) && !isset($acl[$user->email]));
-        $this->assertTrue(is_array($acl) && isset($acl['jack@kolab.org']));
-        $this->assertTrue(is_array($acl) && isset($acl['anyone']));
+        $this->assertTrue(is_array($acl));
+        $this->assertTrue(!isset($acl[$user->email]));
+        $this->assertTrue(isset($acl['jack@kolab.org']));
+        $this->assertTrue(isset($acl['anyone']));
         // $this->assertTrue(is_array($acl) && !isset($acl[$group->name]));
     }
 

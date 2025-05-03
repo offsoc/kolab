@@ -40,7 +40,7 @@ class SignupCodeObserver
                 return !in_array($key, ['cookie', 'referer', 'origin']);
             })
             ->map(function ($value) {
-                return is_array($value) && count($value) == 1 ? $value[0] : $value;
+                return count($value) == 1 ? $value[0] : $value;
             })
             ->all();
 

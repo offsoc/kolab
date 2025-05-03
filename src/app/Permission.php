@@ -22,8 +22,7 @@ class Permission extends Model
     public const WRITE = 2;
     public const ADMIN = 4;
 
-
-    /** @var array<int, string> The attributes that are mass assignable */
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = [
         'permissible_id',
         'permissible_type',

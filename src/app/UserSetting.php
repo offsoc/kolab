@@ -17,7 +17,7 @@ class UserSetting extends Model
 {
     use BelongsToUserTrait;
 
-    /** @var array<int, string> The attributes that are mass assignable */
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = ['user_id', 'key', 'value'];
 
 

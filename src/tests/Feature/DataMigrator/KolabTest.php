@@ -152,7 +152,7 @@ class KolabTest extends TestCase
         $this->assertSame('read-write', $folder->invites['mailto:john@kolab.org']['access']);
 
         // DAV folder properties (color)
-        $this->assertSame('AABB' . sprintf('%2d', date('d')), $folder->color);
+        $this->assertSame('AABB' . sprintf('%02d', date('d')), $folder->color);
 
         // Assert migrated files
         $user = $dst_imap->getUser();
@@ -396,7 +396,7 @@ class KolabTest extends TestCase
             }
         }
         $imap->setACL('Calendar', 'john@kolab.org', 'lrswi');
-        if (!$imap->setMetadata('Calendar', ['/shared/vendor/kolab/color' => 'AABB' . sprintf('%2d', date('d'))])) {
+        if (!$imap->setMetadata('Calendar', ['/shared/vendor/kolab/color' => 'AABB' . sprintf('%02d', date('d'))])) {
             throw new \Exception("Failed to set metadata");
         }
 

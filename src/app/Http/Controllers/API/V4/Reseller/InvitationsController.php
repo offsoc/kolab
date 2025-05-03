@@ -154,7 +154,6 @@ class InvitationsController extends Controller
                 while ($line = fgetcsv($fh)) {
                     $line_number++;
 
-                    // @phpstan-ignore-next-line
                     if (count($line) >= 1 && $line[0]) {
                         $email = trim($line[0]);
 

@@ -52,7 +52,7 @@ class SignupCode extends Model
     /** @var string The "type" of the auto-incrementing ID */
     protected $keyType = 'string';
 
-    /** @var array<int, string> The attributes that are mass assignable */
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = [
         'code',
         'email',
@@ -82,7 +82,6 @@ class SignupCode extends Model
      */
     public function isExpired()
     {
-        // @phpstan-ignore-next-line
         return $this->expires_at ? Carbon::now()->gte($this->expires_at) : false;
     }
 

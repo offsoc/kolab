@@ -21,7 +21,7 @@ class SignupToken extends Model
     /** @var string The "type" of the auto-incrementing ID */
     protected $keyType = 'string';
 
-    /** @var array<int, string> The attributes that are mass assignable */
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = [
         'plan_id',
         'id',
@@ -40,7 +40,7 @@ class SignupToken extends Model
     /**
      * The plan this token applies to
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Plan, $this>
      */
     public function plan()
     {

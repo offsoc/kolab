@@ -62,6 +62,6 @@ class Resource extends Model
         'updated_at' => 'datetime:Y-m-d H:i:s',
     ];
 
-    /** @var array<int, string> The attributes that are mass assignable */
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = ['email', 'name', 'status'];
 }

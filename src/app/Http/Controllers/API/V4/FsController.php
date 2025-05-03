@@ -318,16 +318,15 @@ class FsController extends RelationController
         }
 
         // Process the result
-        $result = $result->map(
-            function ($file) {
-                // TODO: This is going to be 100 SELECT queries (with pageSize=100), we should get
-                // file properties using the main query
-                $result = $this->objectToClient($file);
-                $result['name'] = $file->name; // @phpstan-ignore-line
+        // @phpstan-ignore argument.unresolvableType
+        $result = $result->map(function ($file) {
+            // TODO: This is going to be 100 SELECT queries (with pageSize=100), we should get
+            // file properties using the main query
+            $result = $this->objectToClient($file);
+            $result['name'] = $file->name; // @phpstan-ignore-line
 
-                return $result;
-            }
-        );
+            return $result;
+        });
 
         $result = [
             'list' => $result,

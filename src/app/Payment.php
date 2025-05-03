@@ -54,7 +54,7 @@ class Payment extends Model
         'currency_amount' => 'integer',
     ];
 
-    /** @var array<int,string> The attributes that are mass assignable */
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = [
         'id',
         'wallet_id',
@@ -197,7 +197,7 @@ class Payment extends Model
     /**
      * The wallet to which this payment belongs.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Wallet, $this>
      */
     public function wallet()
     {
@@ -207,7 +207,7 @@ class Payment extends Model
     /**
      * The VAT rate assigned to this payment.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<VatRate, $this>
      */
     public function vatRate()
     {

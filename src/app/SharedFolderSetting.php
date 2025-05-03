@@ -14,13 +14,13 @@ use Illuminate\Database\Eloquent\Model;
  */
 class SharedFolderSetting extends Model
 {
-    /** @var array<int, string> The attributes that are mass assignable */
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = ['shared_folder_id', 'key', 'value'];
 
     /**
      * The folder to which this setting belongs.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<SharedFolder, $this>
      */
     public function folder()
     {

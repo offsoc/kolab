@@ -23,8 +23,8 @@ use Spatie\Translatable\HasTranslations;
  * @property string         $id
  * @property string         $mode           Plan signup mode (Plan::MODE_*)
  * @property string         $name
- * @property datetime       $promo_from
- * @property datetime       $promo_to
+ * @property \DateTime      $promo_from
+ * @property \DateTime      $promo_to
  * @property ?int           $tenant_id
  * @property string         $title
  */
@@ -41,7 +41,7 @@ class Plan extends Model
     /** @var bool Indicates if the model should be timestamped. */
     public $timestamps = false;
 
-    /** @var array<int, string> The attributes that are mass assignable */
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = [
         'title',
         'hidden',
@@ -105,7 +105,7 @@ class Plan extends Model
      * billing) or its maximum (to allow topping out "enterprise" customers on a "small business"
      * plan).
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<Package, $this, PlanPackage>
      */
     public function packages()
     {
@@ -139,7 +139,7 @@ class Plan extends Model
     /**
      * The relationship to signup tokens.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<SignupToken, $this>
      */
     public function signupTokens()
     {

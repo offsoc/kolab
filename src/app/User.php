@@ -79,7 +79,7 @@ class User extends Authenticatable
         self::STATUS_DEGRADED |
         self::STATUS_RESTRICTED;
 
-    /** @var array<int, string> The attributes that are mass assignable */
+    /** @var list<string> The attributes that are mass assignable */
     protected $fillable = [
         'id',
         'email',
@@ -88,7 +88,7 @@ class User extends Authenticatable
         'status',
     ];
 
-    /** @var array<int, string> The attributes that should be hidden for arrays */
+    /** @var list<string> The attributes that should be hidden for arrays */
     protected $hidden = [
         'password',
         'password_ldap',
@@ -114,7 +114,7 @@ class User extends Authenticatable
      *
      * This does not include wallets owned by the user.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<Wallet, $this>
      */
     public function accounts()
     {
@@ -277,7 +277,7 @@ class User extends Authenticatable
     /**
      * Contacts (global addressbook) for this user.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Contact, $this>
      */
     public function contacts()
     {
@@ -397,7 +397,7 @@ class User extends Authenticatable
     /**
      * Storage items for this user.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Fs\Item, $this>
      */
     public function fsItems()
     {
@@ -462,7 +462,7 @@ class User extends Authenticatable
     /**
      * Licenses whis user has.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<License, $this>
      */
     public function licenses()
     {
@@ -492,7 +492,7 @@ class User extends Authenticatable
     /**
      * Old passwords for this user.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<UserPassword, $this>
      */
     public function passwords()
     {
@@ -660,7 +660,7 @@ class User extends Authenticatable
     /**
      * Verification codes for this user.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<VerificationCode, $this>
      */
     public function verificationcodes()
     {
@@ -670,7 +670,7 @@ class User extends Authenticatable
     /**
      * Wallets this user owns.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Wallet, $this>
      */
     public function wallets()
     {

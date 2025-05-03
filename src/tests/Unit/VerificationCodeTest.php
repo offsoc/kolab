@@ -18,7 +18,6 @@ class VerificationCodeTest extends TestCase
 
         $code_length = env('VERIFICATION_CODE_LENGTH', VerificationCode::SHORTCODE_LENGTH);
 
-        $this->assertTrue(is_string($code));
         $this->assertTrue(strlen($code) === $code_length);
         $this->assertTrue(strspn($code, \App\Utils::CHARS) === strlen($code));
     }

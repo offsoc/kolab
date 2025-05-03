@@ -1634,10 +1634,10 @@ class UserTest extends TestCase
         $user->refresh();
         $this->assertTrue($user->password === null);
         $this->assertTrue($user->validatePassword('test'));
-        $this->assertTrue($user->password_ldap == $ldap);
+        $this->assertTrue($user->password_ldap == $ldap); // @phpstan-ignore-line
         $this->assertTrue(strlen($user->password) == strlen($hash)); // @phpstan-ignore-line
         $user->refresh();
-        $this->assertTrue($user->password_ldap == $ldap);
+        $this->assertTrue($user->password_ldap == $ldap); // @phpstan-ignore-line
         $this->assertTrue(strlen($user->password) == strlen($hash)); // @phpstan-ignore-line
 
         // Valid password (in 'password' only)
@@ -1647,10 +1647,10 @@ class UserTest extends TestCase
         $this->assertTrue($user->password_ldap === null);
         $this->assertTrue($user->validatePassword('test'));
         $this->assertTrue(strlen($user->password_ldap) == strlen($ldap)); // @phpstan-ignore-line
-        $this->assertTrue(strlen($user->password) == strlen($hash));
+        $this->assertTrue(strlen($user->password) == strlen($hash)); // @phpstan-ignore-line
         $user->refresh();
-        $this->assertTrue($user->password_ldap == $ldap);
-        $this->assertTrue(strlen($user->password) == strlen($hash));
+        $this->assertTrue($user->password_ldap == $ldap); // @phpstan-ignore-line
+        $this->assertTrue(strlen($user->password) == strlen($hash)); // @phpstan-ignore-line
 
         // TODO: sha1 passwords in password_ldap (or remove this code)
     }
