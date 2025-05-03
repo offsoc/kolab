@@ -17,28 +17,6 @@ class IMAP
         'full' => 'lrswipkxtecdn',
     ];
 
-    /**
-     * Delete a group.
-     *
-     * @param \App\Group $group Group
-     *
-     * @return bool True if a group was deleted successfully, False otherwise
-     * @throws \Exception
-     */
-    public static function deleteGroup(Group $group): bool
-    {
-        $domainName = explode('@', $group->email, 2)[1];
-
-        // Cleanup ACL
-        // FIXME: Since all groups in Kolab4 have email address,
-        //        should we consider using it in ACL instead of the name?
-        //        Also we need to decide what to do and configure IMAP appropriately,
-        //        right now groups in ACL does not work for me at all.
-        // Commented out in favor of a nightly cleanup job, for performance reasons
-        // \App\Jobs\IMAP\AclCleanupJob::dispatch($group->name, $domainName);
-
-        return true;
-    }
 
     /**
      * Create a mailbox.
@@ -118,6 +96,29 @@ class IMAP
             }
             $imap->closeConnection();
         }
+    }
+
+    /**
+     * Delete a group.
+     *
+     * @param \App\Group $group Group
+     *
+     * @return bool True if a group was deleted successfully, False otherwise
+     * @throws \Exception
+     */
+    public static function deleteGroup(Group $group): bool
+    {
+        $domainName = explode('@', $group->email, 2)[1];
+
+        // Cleanup ACL
+        // FIXME: Since all groups in Kolab4 have email address,
+        //        should we consider using it in ACL instead of the name?
+        //        Also we need to decide what to do and configure IMAP appropriately,
+        //        right now groups in ACL does not work for me at all.
+        // Commented out in favor of a nightly cleanup job, for performance reasons
+        // \App\Jobs\IMAP\AclCleanupJob::dispatch($group->name, $domainName);
+
+        return true;
     }
 
     /**
@@ -487,6 +488,131 @@ class IMAP
     public static function toUTF7(string $string): string
     {
         return \mb_convert_encoding($string, 'UTF7-IMAP', 'UTF8');
+    }
+
+    /**
+     * Share default folders.
+     *
+     * @param User  $user Folders' owner
+     * @param User  $to   Delegated user
+     * @param array $acl  ACL Permissions per folder type
+     *
+     * @return bool True on success, False otherwise
+     */
+    public static function shareDefaultFolders(User $user, User $to, array $acl): bool
+    {
+        $folders = [];
+
+        if (!empty($acl['mail'])) {
+            $folders['INBOX'] = $acl['mail'];
+        }
+
+        foreach (\config('services.imap.default_folders') as $folder_name => $props) {
+            [$type, ] = explode('.', $props['metadata']['/private/vendor/kolab/folder-type'] ?? 'mail');
+            if (!empty($acl[$type])) {
+                $folders[$folder_name] = $acl[$type];
+            }
+        }
+
+        if (empty($folders)) {
+            return true;
+        }
+
+        $config = self::getConfig();
+        $imap = self::initIMAP($config, $user->email);
+
+        // Share folders with the delegatee
+        foreach ($folders as $folder => $rights) {
+            $mailbox = self::toUTF7($folder);
+            $rights = self::aclToImap(["{$to->email},{$rights}"])[$to->email];
+            if (!$imap->setACL($mailbox, $to->email, $rights)) {
+                \Log::error("Failed to share {$mailbox} with {$to->email}");
+                $imap->closeConnection();
+                return false;
+            }
+        }
+
+        $imap->closeConnection();
+
+        // Subscribe folders for the delegatee
+        $imap = self::initIMAP($config, $to->email);
+        [$local, ] = explode('@', $user->email);
+
+        foreach ($folders as $folder => $rights) {
+            // Note: This code assumes that "Other Users/" is the namespace prefix
+            // and that user is indicated by the email address's local part.
+            // It may not be sufficient if we ever wanted to do cross-domain sharing.
+            $mailbox = $folder == 'INBOX'
+                ? "Other Users/{$local}"
+                : self::toUTF7("Other Users/{$local}/{$folder}");
+
+            if (!$imap->subscribe($mailbox)) {
+                \Log::error("Failed to subscribe {$mailbox} for {$to->email}");
+                $imap->closeConnection();
+                return false;
+            }
+        }
+
+        $imap->closeConnection();
+        return true;
+    }
+
+    /**
+     * Unshare folders.
+     *
+     * @param User   $user  Folders' owner
+     * @param string $email Delegated user
+     *
+     * @return bool True on success, False otherwise
+     */
+    public static function unshareFolders(User $user, string $email): bool
+    {
+        $config = self::getConfig();
+        $imap = self::initIMAP($config, $user->email);
+
+        // FIXME: should we unshare all or only default folders (ones that we auto-share on delegation)?
+        foreach ($imap->listMailboxes('', '*') as $mailbox) {
+            if (!str_starts_with($mailbox, 'Other Users/')) {
+                if (!$imap->deleteACL($mailbox, $email)) {
+                    \Log::error("Failed to unshare {$mailbox} with {$email}");
+                    $imap->closeConnection();
+                    return false;
+                }
+            }
+        }
+
+        $imap->closeConnection();
+        return true;
+    }
+
+    /**
+     * Unsubscribe folders shared by other users.
+     *
+     * @param User   $user  Account owner
+     * @param string $email Other user email address
+     *
+     * @return bool True on success, False otherwise
+     */
+    public static function unsubscribeSharedFolders(User $user, string $email): bool
+    {
+        $config = self::getConfig();
+        $imap = self::initIMAP($config, $user->email);
+        [$local, ] = explode('@', $email);
+
+        // FIXME: should we unsubscribe all or only default folders (ones that we auto-subscribe on delegation)?
+        $root = "Other Users/{$local}";
+        foreach ($imap->listSubscribed($root, '*') as $mailbox) {
+            if ($mailbox == $root || str_starts_with($mailbox, $root . '/')) {
+                if (!$imap->unsubscribe($mailbox)) {
+                    \Log::error("Failed to unsubscribe {$mailbox} by {$user->email}");
+                    $imap->closeConnection();
+                    return false;
+                }
+            }
+        }
+
+        $imap->closeConnection();
+        return true;
     }
 
     /**

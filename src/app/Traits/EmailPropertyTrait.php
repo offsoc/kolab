@@ -2,6 +2,8 @@
 
 namespace App\Traits;
 
+use App\Domain;
+
 trait EmailPropertyTrait
 {
     /** @var ?string Domain name for the to-be-created object */
@@ -42,19 +44,34 @@ trait EmailPropertyTrait
     /**
      * Returns the object's domain (including soft-deleted).
      *
-     * @return ?\App\Domain The domain to which the object belongs to, NULL if it does not exist
+     * @return ?Domain The domain to which the object belongs to, NULL if it does not exist
      */
-    public function domain(): ?\App\Domain
+    public function domain(): ?Domain
     {
-        if (empty($this->email) && isset($this->domainName)) {
-            $domainName = $this->domainName;
-        } elseif (strpos($this->email, '@')) {
-            list($local, $domainName) = explode('@', $this->email);
-        } else {
-            return null;
+        if ($domain = $this->domainNamespace()) {
+            return Domain::withTrashed()->where('namespace', $domain)->first();
         }
 
-        return \App\Domain::withTrashed()->where('namespace', $domainName)->first();
+        return null;
+    }
+
+    /**
+     * Returns the object's domain namespace.
+     *
+     * @return ?string The domain to which the object belongs to if it has email property is set
+     */
+    public function domainNamespace(): ?string
+    {
+        if (empty($this->email) && isset($this->domainName)) {
+            return $this->domainName;
+        }
+
+        if (strpos($this->email, '@')) {
+            [$local, $domain] = explode('@', $this->email);
+            return $domain;
+        }
+
+        return null;
     }
 
     /**

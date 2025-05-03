@@ -682,6 +682,7 @@ class UsersTest extends TestCase
         $this->assertFalse($result['enableFolders']);
         $this->assertFalse($result['enableDistlists']);
         $this->assertFalse($result['enableResources']);
+        $this->assertTrue($result['enableDelegation']);
     }
 
     /**
@@ -1427,6 +1428,7 @@ class UsersTest extends TestCase
         $this->assertTrue($result['statusInfo']['enableSettings']);
         $this->assertTrue($result['statusInfo']['enableDistlists']);
         $this->assertTrue($result['statusInfo']['enableFolders']);
+        $this->assertTrue($result['statusInfo']['enableDelegation']);
 
         // Ned is John's wallet controller
         $plan = Plan::withEnvTenantContext()->where('title', 'individual')->first();
@@ -1458,6 +1460,7 @@ class UsersTest extends TestCase
         $this->assertTrue($result['statusInfo']['enableSettings']);
         $this->assertTrue($result['statusInfo']['enableDistlists']);
         $this->assertTrue($result['statusInfo']['enableFolders']);
+        $this->assertTrue($result['statusInfo']['enableDelegation']);
 
         // Test discount in a response
         $discount = Discount::where('code', 'TEST')->first();
@@ -1494,6 +1497,7 @@ class UsersTest extends TestCase
         $this->assertFalse($result['statusInfo']['enableSettings']);
         $this->assertFalse($result['statusInfo']['enableDistlists']);
         $this->assertFalse($result['statusInfo']['enableFolders']);
+        $this->assertTrue($result['statusInfo']['enableDelegation']);
         $this->assertFalse($result['isLocked']);
 
         // Test locked user

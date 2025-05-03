@@ -2,6 +2,7 @@
 
 namespace Tests\Browser;
 
+use App\Delegation;
 use App\Discount;
 use App\Entitlement;
 use App\Sku;
@@ -72,8 +73,10 @@ class UsersTest extends TestCaseDusk
 
         $john = User::where('email', 'john@kolab.org')->first();
         $john->setSettings($this->profile);
-        UserAlias::where('user_id', $john->id)
-            ->where('alias', 'john.test@kolab.org')->delete();
+        $john->aliases()->where('alias', 'john.test@kolab.org')->delete();
+        $john->delegators()->each(function ($user) {
+            $user->delegation->delete();
+        });
 
         $activesync_sku = Sku::withEnvTenantContext()->where('title', 'activesync')->first();
         $storage_sku = Sku::withEnvTenantContext()->where('title', 'storage')->first();
@@ -329,7 +332,8 @@ class UsersTest extends TestCaseDusk
                     */
 
                     // Finally submit the form
-                    $browser->click('button[type=submit]')
+                    $browser->scrollTo('button[type=submit]')->pause(500)
+                        ->click('button[type=submit]')
                         ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
 
                     $this->assertSame(1, $jack->verificationcodes()->where('active', true)->count());
@@ -420,7 +424,8 @@ class UsersTest extends TestCaseDusk
                 ->on(new UserInfo())
                 ->assertSeeIn('@nav #tab-settings', 'Settings')
                 ->click('@nav #tab-settings')
-                ->with('@settings', function (Browser $browser) {
+                ->assertSeeIn('@setting-options-head', 'Main Options')
+                ->with('@setting-options', function (Browser $browser) {
                     $browser->assertSeeIn('div.row:nth-child(1) label', 'Greylisting')
                         ->assertMissing('div.row:nth-child(2)') // guam and geo-lockin settings are hidden
                         ->click('div.row:nth-child(1) input[type=checkbox]:checked')
@@ -437,7 +442,7 @@ class UsersTest extends TestCaseDusk
             $browser->refresh()
                 ->on(new UserInfo())
                 ->click('@nav #tab-settings')
-                ->with('@settings', function (Browser $browser) use ($john) {
+                ->with('@setting-options', function (Browser $browser) use ($john) {
                     $browser->assertSeeIn('div.row:nth-child(1) label', 'Greylisting')
                         ->assertSeeIn('div.row:nth-child(2) label', 'IMAP proxy')
                         ->assertNotChecked('div.row:nth-child(2) input')
@@ -853,6 +858,79 @@ class UsersTest extends TestCaseDusk
                             ->assertSeeIn('tbody tr:nth-child(2) .price', '5,00 €/month'); // Lite
                     });
                 });
+        });
+    }
+
+    /**
+     * Test delegation settings
+     */
+    public function testUserDelegation(): void
+    {
+        $jack = $this->getTestUser('jack@kolab.org');
+        $jack->delegatees()->each(function ($user) {
+            $user->delegation->delete();
+        });
+
+        $this->browse(function (Browser $browser) use ($jack) {
+            $browser->visit('/login')
+                ->on(new Home())
+                ->submitLogon($jack->email, 'simple123', true)
+                ->on(new Dashboard())
+                ->click('@links .link-settings')
+                ->on(new UserInfo())
+                ->click('@nav #tab-settings')
+                // Note: Jack should not see Main Options
+                ->assertMissing('@setting-options')
+                ->assertMissing('@setting-options-head')
+                ->assertSeeIn('@setting-delegation-head', 'Delegation')
+                // ->click('@settings .accordion-item:nth-child(2) .accordion-button')
+                ->whenAvailable('@setting-delegation', function (Browser $browser) {
+                    $browser->assertSeeIn('table tfoot td', 'There are no delegates.')
+                        ->assertMissing('table tbody tr');
+                })
+                ->assertSeeIn('@setting-delegation-head .buttons button', 'Add delegate')
+                ->click('@setting-delegation-head .buttons button')
+                ->with(new Dialog('#delegation-create'), function (Browser $browser) {
+                    $browser->assertSeeIn('@title', 'Add delegate')
+                        ->assertFocused('#delegation-email')
+                        ->assertValue('#delegation-email', '')
+                        ->assertSelected('#delegation-mail', '')
+                        ->assertSelectHasOptions('#delegation-mail', ['', 'read-only', 'read-write'])
+                        ->assertSelected('#delegation-event', '')
+                        ->assertSelectHasOptions('#delegation-event', ['', 'read-only', 'read-write'])
+                        ->assertSelected('#delegation-task', '')
+                        ->assertSelectHasOptions('#delegation-task', ['', 'read-only', 'read-write'])
+                        ->assertSelected('#delegation-contact', '')
+                        ->assertSelectHasOptions('#delegation-contact', ['', 'read-only', 'read-write'])
+                        ->assertVisible('.row.form-text')
+                        ->type('#delegation-email', 'john@kolab.org')
+                        ->select('#delegation-mail', 'read-only')
+                        ->select('#delegation-contact', 'read-write')
+                        ->assertSeeIn('@button-cancel', 'Cancel')
+                        ->assertSeeIn('@button-action', 'Save')
+                        ->click('@button-action');
+                })
+                ->waitUntilMissing('#delegation-create')
+                ->assertToast(Toast::TYPE_SUCCESS, 'Delegation created successfully.');
+
+            // TODO: Test error handling
+            // TODO: Test acting as a wallet controller
+
+            $delegatee = $jack->delegatees()->first();
+            $this->assertSame('john@kolab.org', $delegatee->email);
+            $this->assertSame(['mail' => 'read-only', 'contact' => 'read-write'], $delegatee->delegation->options);
+
+            // Remove delegation
+            $browser->waitFor('@setting-delegation table tbody tr')
+                ->whenAvailable('@setting-delegation', function (Browser $browser) {
+                    $browser->assertMissing('table tfoot td')
+                        ->assertSeeIn('table tbody tr td:first-child', 'john@kolab.org')
+                        ->click('table button.text-danger');
+                })
+                ->waitUntilMissing('@setting-delegation table tbody tr')
+                ->assertToast(Toast::TYPE_SUCCESS, 'Delegation deleted successfully.');
+
+            $this->assertSame(0, $jack->delegatees()->count());
         });
     }
 }

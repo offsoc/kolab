@@ -125,6 +125,87 @@ class PolicyTest extends TestCase
     }
 
     /**
+     * Test submission policy webhook
+     */
+    public function testSubmission()
+    {
+        // Note: Only basic tests here. More detailed policy handler tests are in another place
+
+        // Test invalid sender
+        $post = [
+            'sender' => 'sender',
+            'recipients' => ['recipient@gmail.com'],
+        ];
+
+        $response = $this->post('/api/webhooks/policy/submission', $post);
+        $response->assertStatus(403);
+
+        $json = $response->json();
+
+        $this->assertEquals('REJECT', $json['response']);
+        $this->assertEquals("Invalid sender", $json['reason']);
+
+        // Test invalid user
+        $post = [
+            'user' => 'unknown',
+            'sender' => $this->testUser->email,
+            'recipients' => ['recipient@gmail.com'],
+        ];
+
+        $response = $this->post('/api/webhooks/policy/submission', $post);
+        $response->assertStatus(403);
+
+        $json = $response->json();
+
+        $this->assertEquals('REJECT', $json['response']);
+        $this->assertEquals("Invalid user", $json['reason']);
+
+        // Test unknown user
+        $post = [
+            'user' => 'unknown@domain.tld',
+            'sender' => 'john+test@test.domain',
+            'recipients' => ['recipient@gmail.com'],
+        ];
+
+        $response = $this->post('/api/webhooks/policy/submission', $post);
+        $response->assertStatus(403);
+
+        $json = $response->json();
+
+        $this->assertEquals('REJECT', $json['response']);
+        $this->assertEquals("Could not find user {$post['user']}", $json['reason']);
+
+        // Test existing user and an invalid sender address
+        $post = [
+            'user' => 'john@test.domain',
+            'sender' => 'john1@test.domain',
+            'recipients' => ['recipient@gmail.com'],
+        ];
+
+        $response = $this->post('/api/webhooks/policy/submission', $post);
+        $response->assertStatus(403);
+
+        $json = $response->json();
+
+        $this->assertEquals('REJECT', $json['response']);
+        $this->assertEquals("john@test.domain is unauthorized to send mail as john1@test.domain", $json['reason']);
+
+        // Test existing user with a valid sender address
+        $post = [
+            'user' => 'john@test.domain',
+            'sender' => 'john+test@test.domain',
+            'recipients' => ['recipient@gmail.com'],
+        ];
+
+        $response = $this->post('/api/webhooks/policy/submission', $post);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertEquals('PERMIT', $json['response']);
+    }
+
+    /**
      * Test ratelimit policy webhook
      */
     public function testRatelimit()

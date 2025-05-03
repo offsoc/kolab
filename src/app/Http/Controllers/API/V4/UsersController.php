@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API\V4;
 
+use App\Http\Controllers\API\V4\User\DelegationTrait;
 use App\Http\Controllers\RelationController;
 use App\Domain;
 use App\License;
@@ -17,6 +18,8 @@ use Illuminate\Support\Str;
 
 class UsersController extends RelationController
 {
+    use DelegationTrait;
+
     /** @const array List of user setting keys available for modification in UI */
     public const USER_SETTINGS = [
         'billing_address',
@@ -240,6 +243,7 @@ class UsersController extends RelationController
         $result = [
             'skus' => $skus,
             'enableBeta' => $hasBeta,
+            'enableDelegation' => \config('app.with_delegation'),
             'enableDomains' => $isController && ($hasCustomDomain || $plan?->hasDomain()),
             'enableDistlists' => $isController && $hasCustomDomain && \config('app.with_distlists'),
             'enableFiles' => !$isDegraded && $hasBeta && \config('app.with_files'),

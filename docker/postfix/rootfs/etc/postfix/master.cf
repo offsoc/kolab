@@ -172,6 +172,10 @@ smtp-amavis         unix        -       -       n       -       3       smtp
 policy_ratelimit    unix        -       n       n       -       -       spawn
     user=nobody argv=/usr/libexec/postfix/kolab_policy_ratelimit
 
+# Outbound
+policy_submission    unix        -       n       n       -       -       spawn
+    user=nobody argv=/usr/libexec/postfix/kolab_policy_submission
+
 # Inbound
 policy_greylist     unix        -       n       n       -       -       spawn
     user=nobody argv=/usr/libexec/postfix/kolab_policy_greylist

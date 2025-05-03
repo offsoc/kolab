@@ -136,6 +136,8 @@ return [
     'emailinvalid' => 'The specified email address is invalid.',
     'domaininvalid' => 'The specified domain is invalid.',
     'domainnotavailable' => 'The specified domain is not available.',
+    'delegateeinvalid' => 'The specified email address is not a valid delegation target.',
+    'delegationoptioninvalid' => 'The specified delegation options are invalid.',
     'logininvalid' => 'The specified login is invalid.',
     'loginexists' => 'The specified login is not available.',
     'domainexists' => 'The specified domain is not available.',

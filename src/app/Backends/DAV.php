@@ -2,6 +2,7 @@
 
 namespace App\Backends;
 
+use App\User;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 
@@ -17,12 +18,6 @@ class DAV
         self::TYPE_VTODO => 'urn:ietf:params:xml:ns:caldav',
         self::TYPE_VCARD => 'urn:ietf:params:xml:ns:carddav',
     ];
-
-    public const SHARING_READ = 'read';
-    public const SHARING_READ_WRITE = 'read-write';
-    public const SHARING_NO_ACCESS = 'no-access';
-    public const SHARING_OWNER = 'shared-owner';
-    public const SHARING_NOT_SHARED = 'not-shared';
 
     protected $url;
     protected $user;
@@ -208,31 +203,10 @@ class DAV
             return false;
         }
 
-        $ns    = 'xmlns:d="DAV:" xmlns:cs="http://calendarserver.org/ns/"';
-        $props = '';
-
-        if ($component != self::TYPE_VCARD) {
-            $ns .= ' xmlns:c="urn:ietf:params:xml:ns:caldav" xmlns:a="http://apple.com/ns/ical/" xmlns:k="Kolab:"';
-            $props = '<c:supported-calendar-component-set />'
-                . '<a:calendar-color />'
-                . '<k:alarms />';
-        }
-
-        $body = '<?xml version="1.0" encoding="utf-8"?>'
-            . '<d:propfind ' . $ns . '>'
-                . '<d:prop>'
-                    . '<d:resourcetype />'
-                    . '<d:displayname />'
-                    . '<d:owner/>'
-                    . '<cs:getctag />'
-                    . $props
-                . '</d:prop>'
-            . '</d:propfind>';
-
         // Note: Cyrus CardDAV service requires Depth:1 (CalDAV works without it)
         $headers =  ['Depth' => 1, 'Prefer' => 'return-minimal'];
 
-        $response = $this->request($root_href, 'PROPFIND', $body, $headers);
+        $response = $this->request($root_href, 'PROPFIND', DAV\Folder::propfindXML(), $headers);
 
         if (empty($response)) {
             \Log::error("Failed to get folders list from the DAV server.");
@@ -383,13 +357,31 @@ class DAV
     }
 
     /**
+     * Get a single DAV notification
+     *
+     * @param string $location Notification href
+     *
+     * @return ?DAV\Notification Notification data on success
+     */
+    public function getNotification($location)
+    {
+        $response = $this->request($location, 'GET');
+
+        if ($response && ($element = $response->getElementsByTagName('notification')->item(0))) {
+            return DAV\Notification::fromDomElement($element, $location);
+        }
+
+        return null;
+    }
+
+    /**
      * Initialize default DAV folders (collections)
      *
-     * @param \App\User $user User object
+     * @param User $user User object
      *
      * @throws \Exception
      */
-    public static function initDefaultFolders(\App\User $user): void
+    public static function initDefaultFolders(User $user): void
     {
         if (!\config('services.dav.uri')) {
             return;
@@ -400,16 +392,7 @@ class DAV
             return;
         }
 
-        // Cyrus DAV does not support proxy authorization via DAV. Even though it has
-        // the Authorize-As header, it is used only for cummunication with Murder backends.
-        // We use a one-time token instead. It's valid for 10 seconds, assume it's enough time.
-        $password = \App\Auth\Utils::tokenCreate((string) $user->id);
-
-        if ($password === null) {
-            throw new \Exception("Failed to create an authentication token for DAV");
-        }
-
-        $dav = self::getInstance($user->email, $password);
+        $dav = self::getClientForUser($user);
 
         foreach ($folders as $props) {
             $folder = new DAV\Folder();
@@ -439,6 +422,69 @@ class DAV
                 throw new \Exception("Failed to create DAV folder {$folder->href}");
             }
         }
+    }
+
+    /**
+     * Accept/Deny a share invitation (draft-pot-webdav-resource-sharing)
+     *
+     * @param string          $location Notification location
+     * @param DAV\InviteReply $reply    Invite reply
+     *
+     * @return bool True on success, False on error
+     */
+    public function inviteReply($location, $reply): bool
+    {
+        $response = $this->request($location, 'POST', $reply, ['Content-Type' => $reply->contentType]);
+
+        return $response !== false;
+    }
+
+    /**
+     * Fetch DAV notifications
+     *
+     * @param array $types Notification types to return
+     *
+     * @return array<DAV\Notification> Notification objects
+     */
+    public function listNotifications(array $types = []): array
+    {
+        $root_href = $this->getHome(self::TYPE_NOTIFICATION);
+
+        if ($root_href === null) {
+            return [];
+        }
+
+        // FIXME: As far as I can see there's no other way to get only the notifications we're interested in
+
+        $body = DAV\Notification::propfindXML();
+
+        $response = $this->request($root_href, 'PROPFIND', $body, ['Depth' => 1, 'Prefer' => 'return-minimal']);
+
+        if (empty($response)) {
+            return [];
+        }
+
+        $objects = [];
+
+        foreach ($response->getElementsByTagName('response') as $element) {
+            $type = $element->getElementsByTagName('notificationtype')->item(0);
+            if (!$type || !$type->firstChild) {
+                // skip non-notification elements (e.g. a parent folder)
+                continue;
+            }
+
+            $type = $type->firstChild->localName;
+
+            if (empty($types) || in_array($type, $types)) {
+                if ($href = $element->getElementsByTagName('href')->item(0)) {
+                    if ($n = $this->getNotification($href->nodeValue)) {
+                        $objects[] = $n;
+                    }
+                }
+            }
+        }
+
+        return $objects;
     }
 
     /**
@@ -508,55 +554,141 @@ class DAV
     }
 
     /**
-     *  Set folder sharing invites (draft-pot-webdav-resource-sharing)
+     * Share default DAV folders with specified user (delegatee)
      *
-     * @param string $location Resource (folder) location
-     * @param array  $sharees  Map of sharee => privilege
+     * @param User  $user The user
+     * @param User  $to   The delegated user
+     * @param array $acl  ACL Permissions per folder type
+     *
+     * @throws \Exception
+     */
+    public static function shareDefaultFolders(User $user, User $to, array $acl): void
+    {
+        if (!\config('services.dav.uri')) {
+            return;
+        }
+
+        $folders = [];
+        foreach (\config('services.dav.default_folders') as $folder) {
+            if ($folder['type'] == 'addressbook') {
+                $type = 'contact';
+            } elseif (in_array('VTODO', $folder['components'] ?? [])) {
+                $type = 'task';
+            } elseif (in_array('VEVENT', $folder['components'] ?? [])) {
+                $type = 'event';
+            } else {
+                continue;
+            }
+
+            if (!empty($acl[$type])) {
+                $folders[] = [
+                    'href' => $folder['type'] . 's' . '/user/' . $user->email . '/' . $folder['path'],
+                    'acl' => $acl[$type] == 'read-write'
+                        ? DAV\ShareResource::ACCESS_READ_WRITE : DAV\ShareResource::ACCESS_READ,
+                ];
+            }
+        }
+
+        if (empty($folders)) {
+            return;
+        }
+
+        $dav = self::getClientForUser($user);
+
+        // Create sharing invitations
+        foreach ($folders as $folder) {
+            $share_resource = new DAV\ShareResource();
+            $share_resource->href = $folder['href'];
+            $share_resource->sharees = [$dav->principalLocation($to->email) => $folder['acl']];
+            if (!$dav->shareResource($share_resource)) {
+                throw new \Exception("Failed to share DAV folder {$folder['href']}");
+            }
+        }
+
+        // Accept sharing invitations
+        $dav = self::getClientForUser($to);
+
+        // FIXME/TODO: It would be nice to be able to fetch only notifications that are:
+        // - created by the $user
+        // - are invite notification with invite-noresponse, or only these created in last minute
+        // Right now we'll do this filtering here
+        foreach ($dav->listNotifications([DAV\Notification::NOTIFICATION_SHARE_INVITE]) as $n) {
+            if (
+                $n->status == $n::INVITE_NORESPONSE
+                && strpos((string) $n->principal, "/user/{$user->email}")
+            ) {
+                $reply = new DAV\InviteReply();
+                $reply->type = $reply::INVITE_ACCEPTED;
+
+                if (!$dav->inviteReply($n->href, $reply)) {
+                    throw new \Exception("Failed to accept DAV share invitation {$n->href}");
+                }
+            }
+        }
+    }
+
+    /**
+     * Set folder sharing invites (draft-pot-webdav-resource-sharing)
+     *
+     * @param DAV\ShareResource $resource Share resource
      *
      * @return bool True on success, False on error
      */
-    public function shareResource(string $location, array $sharees): bool
+    public function shareResource(DAV\ShareResource $resource): bool
     {
-        // TODO: This might need to be configurable or discovered somehow
-        $path = '/principals/user/';
-        if ($host_path = parse_url($this->url, PHP_URL_PATH)) {
-            $path = '/' . trim($host_path, '/') . $path;
-        }
-
-        $props = '';
-
-        foreach ($sharees as $href => $sharee) {
-            if (!is_array($sharee)) {
-                $sharee = ['access' => $sharee];
-            }
-
-            $href = $path . $href;
-            $props .= '<d:sharee>'
-                . '<d:href>' . htmlspecialchars($href, ENT_XML1, 'UTF-8') . '</d:href>'
-                . '<d:share-access><d:' . ($sharee['access'] ?? self::SHARING_NO_ACCESS) . '/></d:share-access>'
-                . '<d:' . ($sharee['status'] ?? 'noresponse') . '/>';
-
-            if (isset($sharee['comment']) && strlen($sharee['comment'])) {
-                $props .= '<d:comment>' . htmlspecialchars($sharee['comment'], ENT_XML1, 'UTF-8') . '</d:comment>';
-            }
-
-            if (isset($sharee['displayname']) && strlen($sharee['displayname'])) {
-                $props .= '<d:prop><d:displayname>'
-                    . htmlspecialchars($sharee['comment'], ENT_XML1, 'UTF-8')
-                    . '</d:displayname></d:prop>';
-            }
-
-            $props .= '</d:sharee>';
-        }
-
-        $headers = ['Content-Type' => 'application/davsharing+xml; charset=utf-8'];
-
-        $body = '<?xml version="1.0" encoding="utf-8"?>'
-            . '<d:share-resource xmlns:d="DAV:">' . $props . '</d:share-resource>';
-
-        $response = $this->request($location, 'POST', $body, $headers);
+        $response = $this->request($resource->href, 'POST', $resource, ['Content-Type' => $resource->contentType]);
 
         return $response !== false;
+    }
+
+    /**
+     * Unshare folders.
+     *
+     * @param User   $user  Folders' owner
+     * @param string $email Delegated user
+     *
+     * @throws \Exception
+     */
+    public static function unshareFolders(User $user, string $email): void
+    {
+        $dav = self::getClientForUser($user);
+
+        foreach ([self::TYPE_VEVENT, self::TYPE_VTODO, self::TYPE_VCARD] as $type) {
+            foreach ($dav->listFolders($type) as $folder) {
+                if ($folder->owner === $user->email && isset($folder->invites["mailto:{$email}"])) {
+                    $share_resource = new DAV\ShareResource();
+                    $share_resource->href = $folder->href;
+                    $share_resource->sharees = [$dav->principalLocation($email) => $share_resource::ACCESS_NONE];
+                    if (!$dav->shareResource($share_resource)) {
+                        throw new \Exception("Failed to unshare DAV folder {$folder->href}");
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Unsubscribe folders shared by other users.
+     *
+     * @param User   $user  Account owner
+     * @param string $email Other user email address
+     *
+     * @throws \Exception
+     */
+    public static function unsubscribeSharedFolders(User $user, string $email): void
+    {
+        $dav = self::getClientForUser($user);
+
+        foreach ([self::TYPE_VEVENT, self::TYPE_VTODO, self::TYPE_VCARD] as $type) {
+            foreach ($dav->listFolders($type) as $folder) {
+                if ($folder->owner === $email && $user->email != $email) {
+                    $response = $dav->request($folder->href, 'DELETE');
+                    if ($response === false) {
+                        throw new \Exception("Failed to unsubscribe DAV folder {$folder->href}");
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -574,33 +706,13 @@ class DAV
             return [];
         }
 
-        $body = '';
-        foreach ($hrefs as $href) {
-            $body .= '<d:href>' . $href . '</d:href>';
-        }
+        $search = new DAV\Search($component, true, [], true);
+        $search->properties = ['d:getetag'];
+        $search->hrefs = $hrefs;
 
-        $queries = [
-            self::TYPE_VEVENT => 'calendar-multiget',
-            self::TYPE_VTODO => 'calendar-multiget',
-            self::TYPE_VCARD => 'addressbook-multiget',
-        ];
+        $headers = ['Depth' => $search->depth, 'Prefer' => 'return-minimal'];
 
-        $types = [
-            self::TYPE_VEVENT => 'calendar-data',
-            self::TYPE_VTODO => 'calendar-data',
-            self::TYPE_VCARD => 'address-data',
-        ];
-
-        $body = '<?xml version="1.0" encoding="utf-8"?>'
-            . ' <c:' . $queries[$component] . ' xmlns:d="DAV:" xmlns:c="' . self::NAMESPACES[$component] . '">'
-                . '<d:prop>'
-                    . '<d:getetag />'
-                    . '<c:' . $types[$component] . ' />'
-                . '</d:prop>'
-                . $body
-            . '</c:' . $queries[$component] . '>';
-
-        $response = $this->request($location, 'REPORT', $body, ['Depth' => 1, 'Prefer' => 'return-minimal']);
+        $response = $this->request($location, 'REPORT', $search, $headers);
 
         if (empty($response)) {
             \Log::error("Failed to get objects from the DAV server.");
@@ -614,6 +726,23 @@ class DAV
         }
 
         return $objects;
+    }
+
+    /**
+     * Create DAV client instance for a user (using generated auth token as password)
+     */
+    protected static function getClientForUser(User $user): DAV
+    {
+        // Cyrus DAV does not support proxy authorization via DAV. Even though it has
+        // the Authorize-As header, it is used only for cummunication with Murder backends.
+        // We use a one-time token instead. It's valid for 10 seconds, assume it's enough time.
+        $password = \App\Auth\Utils::tokenCreate((string) $user->id);
+
+        if ($password === null) {
+            throw new \Exception("Failed to create an authentication token for DAV");
+        }
+
+        return self::getInstance($user->email, $password);
     }
 
     /**
@@ -692,9 +821,26 @@ class DAV
     }
 
     /**
+     * Convert user email address into a principal location (href)
+     *
+     * @param string $email Email address
+     */
+    public function principalLocation(string $email): string
+    {
+        // TODO: This might need to be configurable or discovered somehow,
+        // maybe get it from current-user-principal property that we read in discover()
+        $path = '/principals/user/';
+        if ($host_path = parse_url($this->url, PHP_URL_PATH)) {
+            $path = '/' . trim($host_path, '/') . $path;
+        }
+
+        return $path . $email;
+    }
+
+    /**
      * Execute HTTP request to a DAV server
      */
-    protected function request($path, $method, $body = '', $headers = [])
+    public function request($path, $method, $body = '', $headers = [])
     {
         $debug = \config('app.debug');
         $url = $this->url;

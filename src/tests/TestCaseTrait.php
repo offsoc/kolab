@@ -574,7 +574,7 @@ trait TestCaseTrait
     {
         Queue::fake();
 
-        $user = User::firstOrCreate(['email' => $email], $attrib);
+        $user = User::withTrashed()->firstOrCreate(['email' => $email], $attrib);
 
         if ($user->trashed()) {
             // Note: we do not want to use user restore here

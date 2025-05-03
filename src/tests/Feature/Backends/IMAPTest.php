@@ -3,7 +3,6 @@
 namespace Tests\Feature\Backends;
 
 use App\Backends\IMAP;
-use App\Backends\LDAP;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -11,6 +10,7 @@ class IMAPTest extends TestCase
 {
     private $imap;
     private $user;
+    private $user2;
     private $group;
     private $resource;
     private $folder;
@@ -40,6 +40,9 @@ class IMAPTest extends TestCase
         if ($this->user) {
             $this->deleteTestUser($this->user->email, true);
         }
+        if ($this->user2) {
+            $this->deleteTestUser($this->user2->email);
+        }
         if ($this->group) {
             $this->deleteTestGroup($this->group->email, true);
         }
@@ -57,20 +60,14 @@ class IMAPTest extends TestCase
      * Test aclCleanup()
      *
      * @group imap
-     * @group ldap
      */
     public function testAclCleanup(): void
     {
         Queue::fake();
 
-        $this->user = $user = $this->getTestUser('test-' . time() . '@kolab.org', [], true);
-        $this->group = $group = $this->getTestGroup('test-group-' . time() . '@kolab.org');
-
-        // SETACL requires that the user/group exists in LDAP
-        if (\config('app.with_ldap')) {
-            LDAP::createUser($user);
-        }
-        // LDAP::createGroup($group);
+        $ts = str_replace('.', '', (string) microtime(true));
+        $this->user = $user = $this->getTestUser("test-{$ts}@kolab.org", [], true);
+        $this->group = $group = $this->getTestGroup("test-group-{$ts}@kolab.org");
 
         // First, set some ACLs that we'll expect to be removed later
         $imap = $this->getImap();
@@ -104,20 +101,14 @@ class IMAPTest extends TestCase
      * Test aclCleanupDomain()
      *
      * @group imap
-     * @group ldap
      */
     public function testAclCleanupDomain(): void
     {
         Queue::fake();
 
-        $this->user = $user = $this->getTestUser('test-' . time() . '@kolab.org', [], true);
-        $this->group = $group = $this->getTestGroup('test-group-' . time() . '@kolab.org');
-
-        // SETACL requires that the user/group exists in LDAP
-        if (\config('app.with_ldap')) {
-            LDAP::createUser($user);
-        }
-        // LDAP::createGroup($group);
+        $ts = str_replace('.', '', (string) microtime(true));
+        $this->user = $user = $this->getTestUser("test-{$ts}@kolab.org", [], true);
+        $this->group = $group = $this->getTestGroup("test-group-{$ts}@kolab.org");
 
         // First, set some ACLs that we'll expect to be removed later
         $imap = $this->getImap();
@@ -159,20 +150,15 @@ class IMAPTest extends TestCase
      * Test creating/updating/deleting an IMAP account
      *
      * @group imap
-     * @group ldap
      */
     public function testUsers(): void
     {
         Queue::fake();
 
-        $this->user = $user = $this->getTestUser('test-' . time() . '@' . \config('app.domain'), []);
+        $ts = str_replace('.', '', (string) microtime(true));
+        $this->user = $user = $this->getTestUser("test-{$ts}@" . \config('app.domain'), []);
         $storage = \App\Sku::withObjectTenantContext($user)->where('title', 'storage')->first();
         $user->assignSku($storage, 1, $user->wallets->first());
-
-        // User must be in ldap, so imap auth works
-        if (\config('app.with_ldap')) {
-            LDAP::createUser($user);
-        }
 
         $expectedQuota = [
             'user/' . $user->email => [
@@ -211,6 +197,76 @@ class IMAPTest extends TestCase
     }
 
     /**
+     * Test sharing and unsharing folders (for delegation)
+     *
+     * @group imap
+     */
+    public function testShareAndUnshareFolders(): void
+    {
+        Queue::fake();
+
+        $ts = str_replace('.', '', (string) microtime(true));
+        $this->user = $user = $this->getTestUser("test-{$ts}@" . \config('app.domain'), []);
+        $this->user2 = $user2 = $this->getTestUser("test2-{$ts}@" . \config('app.domain'), []);
+
+        // Create the mailbox
+        $result = IMAP::createUser($user);
+        $this->assertTrue($result);
+
+        $imap = $this->getImap();
+
+        // Test delegation without mail folders permissions
+        $result = IMAP::shareDefaultFolders($user, $user2, ['event' => 'read-write']);
+        $this->assertTrue($result);
+
+        $acl = $imap->getACL("user/{$user->email}");
+        $this->assertArrayNotHasKey($user2->email, $acl);
+
+        // Test proper delegation case
+        $result = IMAP::shareDefaultFolders($user, $user2, ['mail' => 'read-write']);
+        $this->assertTrue($result);
+
+        $acl = $imap->getACL("user/{$user->email}");
+        $this->assertSame('lrswitedn', implode('', $acl[$user2->email]));
+
+        foreach (array_keys(\config('services.imap.default_folders')) as $folder) {
+            // User folder as seen by cyrus-admin
+            $folder = str_replace('@', "/{$folder}@", "user/{$user->email}");
+            $acl = $imap->getACL($folder);
+            $this->assertSame('lrswitedn', implode('', $acl[$user2->email]));
+        }
+
+        $imap = $this->getImap($user2->email);
+        $subscribed = $imap->listSubscribed('', "Other Users/*");
+        $expected = ["Other Users/test-{$ts}"];
+        foreach (array_keys(\config('services.imap.default_folders')) as $folder) {
+            $expected[] = "Other Users/test-{$ts}/{$folder}";
+        }
+
+        asort($subscribed);
+        asort($expected);
+        $this->assertSame(array_values($expected), array_values($subscribed));
+
+        // Test unsubscribing these folders
+        $result = IMAP::unsubscribeSharedFolders($user2, $user->email);
+        $this->assertTrue($result);
+        $this->assertSame([], $imap->listSubscribed("Other Users/test-{$ts}", '*'));
+
+        $imap->closeConnection();
+        $imap = $this->getImap();
+
+        // Test unsharing these folders
+        $result = IMAP::unshareFolders($user, $user2->email);
+        $this->assertTrue($result);
+        $this->assertNotContains($user2->email, $imap->getACL("user/{$user->email}"));
+        foreach (array_keys(\config('services.imap.default_folders')) as $folder) {
+            // User folder as seen by cyrus-admin
+            $folder = str_replace('@', "/{$folder}@", "user/{$user->email}");
+            $this->assertNotContains($user2->email, $imap->getACL($folder));
+        }
+    }
+
+    /**
      * Test creating/updating/deleting a resource
      *
      * @group imap
@@ -219,9 +275,10 @@ class IMAPTest extends TestCase
     {
         Queue::fake();
 
+        $ts = str_replace('.', '', (string) microtime(true));
         $this->resource = $resource = $this->getTestResource(
-            'test-resource-' . time() . '@kolab.org',
-            ['name' => 'Resource ©' . time()]
+            "test-resource-{$ts}@kolab.org",
+            ['name' => "Resource © {$ts}"]
         );
 
         $resource->setSetting('invitation_policy', 'manual:john@kolab.org');
@@ -236,7 +293,7 @@ class IMAPTest extends TestCase
         $this->assertSame($expectedAcl, $acl);
 
         // Update the resource (rename)
-        $resource->name = 'Resource1 ©' . time();
+        $resource->name = "Resource1 © {$ts}";
         $resource->save();
         $newImapFolder = $resource->getSetting('folder');
 
@@ -265,9 +322,10 @@ class IMAPTest extends TestCase
     {
         Queue::fake();
 
+        $ts = str_replace('.', '', (string) microtime(true));
         $this->folder = $folder = $this->getTestSharedFolder(
-            'test-folder-' . time() . '@kolab.org',
-            ['name' => 'SharedFolder ©' . time()]
+            "test-folder-{$ts}@kolab.org",
+            ['name' => "SharedFolder © {$ts}"]
         );
 
         $folder->setSetting('acl', json_encode(['john@kolab.org, full', 'jack@kolab.org, read-only']));
@@ -302,7 +360,7 @@ class IMAPTest extends TestCase
         $this->assertSame($expectedAcl, $acl);
 
         // Update the shared folder (rename)
-        $folder->name = 'SharedFolder1 ©' . time();
+        $folder->name = "SharedFolder1 © {$ts}";
         $folder->save();
         $newImapFolder = $folder->getSetting('folder');
 
@@ -439,6 +497,7 @@ class IMAPTest extends TestCase
         if ($loginAs) {
             return $init->invokeArgs(null, [$config, $loginAs]);
         }
+
         return $this->imap = $init->invokeArgs(null, [$config]);
     }
 }

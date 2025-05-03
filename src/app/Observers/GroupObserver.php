@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 class GroupObserver
 {
     /**
-     * Handle the group "created" event.
+     * Handle the group "creating" event.
      *
      * @param \App\Group $group The group
      *

@@ -251,6 +251,7 @@ return [
     'with_signup' => (bool) env('APP_WITH_SIGNUP', true),
     'with_subscriptions' => (bool) env('APP_WITH_SUBSCRIPTIONS', true),
     'with_wallet' => (bool) env('APP_WITH_WALLET', true),
+    'with_delegation' => (bool) env('APP_WITH_DELEGATION', true),
 
     'with_distlists' => (bool) env('APP_WITH_DISTLISTS', true),
     'with_shared_folders' => (bool) env('APP_WITH_SHARED_FOLDERS', true),

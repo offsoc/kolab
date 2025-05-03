@@ -9,6 +9,7 @@ parameters:
         - '#Access to an undefined property Sabre\\VObject\\(Component|Document)::#'
         - '#Call to an undefined method Tests\\Browser::#'
         - '#Call to an undefined method garethp\\ews\\API\\Type::#'
+        - '#Method App\\User::delegat.*\(\) should return.*#'
     level: 5
     parallel:
         processTimeout: 300.0

@@ -1,16 +1,15 @@
 #!/usr/bin/python3
 """
-This policy applies rate limitations
+This policy applies submission access policies
 
 To manually test this you can issue something like this (see https://www.postfix.org/SMTPD_POLICY_README.html from more info on the protocol):
-echo -e "request=smtpd_access_policy\nsender=test1@kolab.org\nrecipient=test2@kolab.org\ninstance=testinstance\nprotocol_state=DATA\n\n" | /usr/libexec/postfix/kolab_policy_ratelimit
+echo -e "request=smtpd_access_policy\nsasl_sender=test1@kolab.org\nsender=test1@kolab.org\nrecipient=test2@kolab.org\ninstance=testinstance\nprotocol_state=DATA\n\n" | /usr/libexec/postfix/kolab_policy_submission
 
 """
 
 import json
 import time
 import sys
-
 import requests
 
 
@@ -18,9 +17,9 @@ class PolicyRequest:
     """
         A holder of policy request instances.
     """
-    db = None
     recipients = []
     sender = None
+    user = None
 
     def __init__(self, request):
         """
@@ -30,9 +29,12 @@ class PolicyRequest:
             self.sender = request['sender']
 
         if 'recipient' in request:
-            request['recipient'] = request['recipient']
-
             self.recipients.append(request['recipient'])
+
+        if 'sasl_sender' in request:
+            self.user = request['sasl_sender']
+        elif 'sasl_username' in request:
+            self.user = request['sasl_username']
 
     def add_request(self, request):
         """
@@ -40,16 +42,14 @@ class PolicyRequest:
         """
         # Normalize email addresses (they may contain recipient delimiters)
         if 'recipient' in request:
-            request['recipient'] = request['recipient']
-
             if not request['recipient'].strip() == '':
                 self.recipients.append(request['recipient'])
 
-    def check_rate(self):
+    def check_policy(self):
         """
-            Check the rates at which this sender is hitting our mailserver.
+            Pass the request to Kolab API
         """
-        if self.sender == "":
+        if self.sender == "" or self.user is None:
             return {'response': 'DUNNO'}
 
         try:
@@ -57,7 +57,8 @@ class PolicyRequest:
                 URL,
                 data={
                     'sender': self.sender,
-                    'recipients': self.recipients
+                    'recipients': self.recipients,
+                    'user': self.user
                 },
                 verify=True
             )
@@ -70,14 +71,12 @@ class PolicyRequest:
 
         return response
 
-
 def read_request_input():
     """
         Read a single policy request from sys.stdin, and return a dictionary
         containing the request.
     """
     start_time = time.time()
-
     policy_request = {}
     end_of_request = False
 
@@ -104,7 +103,7 @@ def read_request_input():
 
 
 if __name__ == "__main__":
-    URL = 'https://services.kolabnow.com/api/webhooks/policy/ratelimit'
+    URL = 'https://services.kolabnow.com/api/webhooks/policy/submission'
 
     POLICY_REQUESTS = {}
 
@@ -126,7 +125,7 @@ if __name__ == "__main__":
             sys.stdout.flush()
             sys.exit(0)
         else:
-            RESPONSE = POLICY_REQUESTS[INSTANCE].check_rate()
+            RESPONSE = POLICY_REQUESTS[INSTANCE].check_policy()
 
         try:
             R = json.loads(RESPONSE.text)

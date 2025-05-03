@@ -116,6 +116,16 @@
     & > button + button {
         margin-left: .5em;
     }
+
+    .accordion-header > & {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        top: 0;
+        right: 3.25rem;
+        height: 2.5rem;
+        z-index: 3;
+    }
 }
 
 // Various improvements for mobile

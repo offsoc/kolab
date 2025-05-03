@@ -6,6 +6,7 @@ use App\Backends\DAV as DAVClient;
 use App\Backends\DAV\Opaque as DAVOpaque;
 use App\Backends\DAV\Folder as DAVFolder;
 use App\Backends\DAV\Search as DAVSearch;
+use App\Backends\DAV\ShareResource as DAVShareResource;
 use App\DataMigrator\Account;
 use App\DataMigrator\Engine;
 use App\DataMigrator\Interface\Folder;
@@ -175,15 +176,19 @@ class DAV implements ExporterInterface, ImporterInterface
 
             foreach (User::whereIn('email', $emails)->pluck('email') as $email) {
                 $rights = $folder->acl[$email];
+                $principal = $this->client->principalLocation($email);
                 if (in_array('w', $rights) || in_array('a', $rights)) {
-                    $acl[$email] = DAVClient::SHARING_READ_WRITE;
+                    $acl[$principal] = DAVShareResource::ACCESS_READ_WRITE;
                 } elseif (in_array('r', $rights)) {
-                    $acl[$email] = DAVClient::SHARING_READ;
+                    $acl[$principal] = DAVShareResource::ACCESS_READ;
                 }
             }
 
             if (!empty($acl)) {
-                if ($this->client->shareResource($href, $acl) === false) {
+                $share_resource = new DAVShareResource();
+                $share_resource->href = $href;
+                $share_resource->sharees = $acl;
+                if ($this->client->shareResource($share_resource) === false) {
                     \Log::warning("Failed to set sharees on the folder: {$href}");
                 }
             }

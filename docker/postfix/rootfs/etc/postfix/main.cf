@@ -561,6 +561,7 @@ smtpd_sender_restrictions =
 
 # Outbound
 submission_data_restrictions = 
+    check_policy_service unix:private/policy_submission
     check_policy_service unix:private/policy_ratelimit
 submission_client_restrictions = 
     #reject_unknown_reverse_client_hostname,

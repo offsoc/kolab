@@ -4,6 +4,11 @@ namespace App\Backends\DAV;
 
 class Folder
 {
+    public const SHARE_ACCESS_NONE = 'not-shared';
+    public const SHARE_ACCESS_SHARED = 'shared-owner';
+    public const SHARE_ACCESS_READ = 'read';
+    public const SHARE_ACCESS_READ_WRITE = 'read-write';
+
     /** @var ?string Folder location (href property) */
     public $href;
 
@@ -18,6 +23,9 @@ class Folder
 
     /** @var array Supported resource types (resourcetype property) */
     public $types = [];
+
+    /** @var ?string Access rights on a shared folder (share-access property) */
+    public $shareAccess;
 
     /** @var ?string Folder color (calendar-color property) */
     public $color;
@@ -87,6 +95,13 @@ class Folder
             }
         }
 
+        // 'share-access' from draft-pot-webdav-resource-sharing
+        if ($share = $element->getElementsByTagName('share-access')->item(0)) {
+            if ($share->firstChild) {
+                $folder->shareAccess = $share->firstChild->localName;
+            }
+        }
+
         // 'invite' from draft-pot-webdav-resource-sharing
         if ($invite_element = $element->getElementsByTagName('invite')->item(0)) {
             $invites = [];
@@ -106,7 +121,7 @@ class Folder
                 if ($access = $sharee->getElementsByTagName('share-access')->item(0)) {
                     $access = $access->firstChild->localName;
                 } else {
-                    $access = \App\Backends\DAV::SHARING_NOT_SHARED;
+                    $access = self::SHARE_ACCESS_NONE;
                 }
 
                 $props = [
@@ -198,7 +213,7 @@ class Folder
     {
         $ns = implode(' ', [
             'xmlns:d="DAV:"',
-            // 'xmlns:cs="http://calendarserver.org/ns/"',
+            'xmlns:cs="http://calendarserver.org/ns/"',
             'xmlns:c="urn:ietf:params:xml:ns:caldav"',
             'xmlns:a="http://apple.com/ns/ical/"',
             // 'xmlns:k="Kolab:"'
@@ -210,11 +225,13 @@ class Folder
                 . '<d:prop>'
                     . '<a:calendar-color/>'
                     . '<c:supported-calendar-component-set/>'
-                    // . '<cs:getctag/>'
+                    . '<cs:getctag/>'
                     // . '<d:acl/>'
                     // . '<d:current-user-privilege-set/>'
                     . '<d:resourcetype/>'
                     . '<d:displayname/>'
+                    . '<d:share-access/>' // draft-pot-webdav-resource-sharing-04
+                    . '<d:owner/>'
                     . '<d:invite/>'
                     // . '<k:alarms/>'
                 . '</d:prop>'

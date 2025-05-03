@@ -300,6 +300,31 @@ class User extends Authenticatable
     }
 
     /**
+     * Users that this user is delegatee of.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<User, $this, Delegation>
+     */
+    public function delegators()
+    {
+        return $this->belongsToMany(User::class, 'delegations', 'delegatee_id', 'user_id')
+            ->as('delegation')
+            ->using(Delegation::class);
+    }
+
+    /**
+     * Users that are delegatees of this user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<User, $this, Delegation>
+     */
+    public function delegatees()
+    {
+        return $this->belongsToMany(User::class, 'delegations', 'user_id', 'delegatee_id')
+            ->as('delegation')
+            ->using(Delegation::class)
+            ->withPivot('options');
+    }
+
+    /**
      * List the domains to which this user is entitled.
      *
      * @param bool $with_accounts Include domains assigned to wallets

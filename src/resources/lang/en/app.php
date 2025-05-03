@@ -72,6 +72,9 @@ return [
     'distlist-unsuspend-success' => 'Distribution list unsuspended successfully.',
     'distlist-setconfig-success' => 'Distribution list settings updated successfully.',
 
+    'delegation-create-success' => 'Delegation created successfully.',
+    'delegation-delete-success' => 'Delegation deleted successfully.',
+
     'domain-create-success' => 'Domain created successfully.',
     'domain-delete-success' => 'Domain deleted successfully.',
     'domain-notempty-error' => 'Unable to delete a domain with assigned users or other objects.',

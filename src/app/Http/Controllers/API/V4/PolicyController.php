@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Policy\Greylist;
 use App\Policy\Mailfilter;
 use App\Policy\RateLimit;
+use App\Policy\SmtpAccess;
 use App\Policy\SPF;
 use Illuminate\Http\Request;
 
@@ -55,6 +56,18 @@ class PolicyController extends Controller
     public function senderPolicyFramework()
     {
         $response = SPF::handle(\request()->input());
+
+        return $response->jsonResponse();
+    }
+
+    /*
+     * Validate sender/recipients in an SMTP submission request.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function submission()
+    {
+        $response = SmtpAccess::submission(\request()->input());
 
         return $response->jsonResponse();
     }

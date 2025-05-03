@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Delegation;
 use App\Group;
 use App\User;
 use App\Wallet;
@@ -107,6 +108,24 @@ class UserObserver
                     $group->save();
                 }
             });
+        }
+
+        // Remove delegation relations
+        $ids = Delegation::where('user_id', $user->id)->orWhere('delegatee_id', $user->id)->get()
+            ->map(function ($delegation) use ($user) {
+                $delegator = $delegation->user_id == $user->id
+                    ? $user : $delegation->user()->withTrashed()->first();
+                $delegatee = $delegation->delegatee_id == $user->id
+                    ? $user : $delegation->delegatee()->withTrashed()->first();
+
+                \App\Jobs\User\Delegation\DeleteJob::dispatch($delegator->email, $delegatee->email);
+
+                return $delegation->id;
+            })
+            ->all();
+
+        if (!empty($ids)) {
+            Delegation::whereIn('id', $ids)->delete();
         }
 
         // TODO: Remove Permission records for the user

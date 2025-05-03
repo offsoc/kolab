@@ -64,6 +64,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        \App\Delegation::observe(\App\Observers\DelegationObserver::class);
         \App\Domain::observe(\App\Observers\DomainObserver::class);
         \App\Entitlement::observe(\App\Observers\EntitlementObserver::class);
         \App\EventLog::observe(\App\Observers\EventLogObserver::class);

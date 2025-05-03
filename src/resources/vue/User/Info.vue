@@ -11,7 +11,7 @@
                     </btn>
                 </div>
                 <div class="card-text">
-                    <tabs class="mt-3" :tabs="tabs"></tabs>
+                    <tabs class="mt-3" :tabs="tabs" ref="tabs"></tabs>
                     <div class="tab-content">
                         <div class="tab-pane active" id="general" role="tabpanel" aria-labelledby="tab-general">
                             <form @submit.prevent="submit" class="card-body">
@@ -88,43 +88,57 @@
                                 <btn class="btn-primary" type="submit" icon="check">{{ $t('btn.submit') }}</btn>
                             </form>
                         </div>
-                        <div v-if="isController" class="tab-pane" id="settings" role="tabpanel" aria-labelledby="tab-settings">
-                            <form @submit.prevent="submitSettings" class="card-body">
-                                <div class="row checkbox mb-3">
-                                    <label for="greylist_enabled" class="col-sm-4 col-form-label">{{ $t('user.greylisting') }}</label>
-                                    <div class="col-sm-8 pt-2">
-                                        <input type="checkbox" id="greylist_enabled" name="greylist_enabled" value="1" class="form-check-input d-block mb-2" :checked="user.config.greylist_enabled">
-                                        <small id="greylisting-hint" class="text-muted">
-                                            {{ $t('user.greylisting-text') }}
-                                        </small>
-                                    </div>
-                                </div>
-                                <div v-if="$root.hasPermission('beta')" class="row checkbox mb-3">
-                                    <label for="guam_enabled" class="col-sm-4 col-form-label">
-                                        {{ $t('user.imapproxy') }}
-                                        <sup class="badge bg-primary">{{ $t('dashboard.beta') }}</sup>
-                                    </label>
-                                    <div class="col-sm-8 pt-2">
-                                        <input type="checkbox" id="guam_enabled" name="guam_enabled" value="1" class="form-check-input d-block mb-2" :checked="user.config.guam_enabled">
-                                        <small id="guam-hint" class="text-muted">
-                                            {{ $t('user.imapproxy-text') }}
-                                        </small>
-                                    </div>
-                                </div>
-                                <div v-if="$root.hasPermission('beta')" class="row mb-3">
-                                    <label for="limit_geo" class="col-sm-4 col-form-label">
-                                        {{ $t('user.geolimit') }}
-                                        <sup class="badge bg-primary">{{ $t('dashboard.beta') }}</sup>
-                                    </label>
-                                    <div class="col-sm-8 pt-2">
-                                        <country-select id="limit_geo" v-model="user.config.limit_geo"></country-select>
-                                        <small id="geolimit-hint" class="text-muted">
-                                            {{ $t('user.geolimit-text') }}
-                                        </small>
-                                    </div>
-                                </div>
-                                <btn class="btn-primary" type="submit" icon="check">{{ $t('btn.submit') }}</btn>
-                            </form>
+                        <div v-if="Object.keys(settingsSections).length > 0" class="tab-pane" id="settings" role="tabpanel" aria-labelledby="tab-settings">
+                            <accordion class="mt-3" id="settings-all" :names="settingsSections" :buttons="settingsButtons">
+                                <template #options v-if="settingsSections.options">
+                                    <form @submit.prevent="submitSettings">
+                                        <div class="row checkbox mb-3">
+                                            <label for="greylist_enabled" class="col-sm-4 col-form-label">{{ $t('user.greylisting') }}</label>
+                                            <div class="col-sm-8 pt-2">
+                                                <input type="checkbox" id="greylist_enabled" name="greylist_enabled" value="1" class="form-check-input d-block mb-2" :checked="user.config.greylist_enabled">
+                                                <small id="greylisting-hint" class="text-muted">
+                                                    {{ $t('user.greylisting-text') }}
+                                                </small>
+                                            </div>
+                                        </div>
+                                        <div v-if="$root.hasPermission('beta')" class="row checkbox mb-3">
+                                            <label for="guam_enabled" class="col-sm-4 col-form-label">
+                                                {{ $t('user.imapproxy') }}
+                                                <sup class="badge bg-primary">{{ $t('dashboard.beta') }}</sup>
+                                            </label>
+                                            <div class="col-sm-8 pt-2">
+                                                <input type="checkbox" id="guam_enabled" name="guam_enabled" value="1" class="form-check-input d-block mb-2" :checked="user.config.guam_enabled">
+                                                <small id="guam-hint" class="text-muted">
+                                                    {{ $t('user.imapproxy-text') }}
+                                                </small>
+                                            </div>
+                                        </div>
+                                        <div v-if="$root.hasPermission('beta')" class="row mb-3">
+                                            <label for="limit_geo" class="col-sm-4 col-form-label">
+                                                {{ $t('user.geolimit') }}
+                                                <sup class="badge bg-primary">{{ $t('dashboard.beta') }}</sup>
+                                            </label>
+                                            <div class="col-sm-8 pt-2">
+                                                <country-select id="limit_geo" v-model="user.config.limit_geo"></country-select>
+                                                <small id="geolimit-hint" class="text-muted">
+                                                    {{ $t('user.geolimit-text') }}
+                                                </small>
+                                            </div>
+                                        </div>
+                                        <btn class="btn-primary" type="submit" icon="check">{{ $t('btn.submit') }}</btn>
+                                    </form>
+                                </template>
+                                <template #delegation v-if="settingsSections.delegation">
+                                    <list-table :list="delegations" :setup="delegationListSetup" class="mb-0">
+                                        <template #email="{ item }">
+                                            <svg-icon icon="user-tie"></svg-icon>&nbsp;<span>{{ item.email }}</span>
+                                        </template>
+                                        <template #buttons="{ item }">
+                                            <btn class="text-danger button-delete p-0 ms-1" @click="delegationDelete(item.email)" icon="trash-can" :title="$t('btn.delete')"></btn>
+                                        </template>
+                                    </list-table>
+                                </template>
+                            </accordion>
                         </div>
                         <div class="tab-pane" id="personal" role="tabpanel" aria-labelledby="tab-personal">
                             <form @submit.prevent="submitPersonalSettings" class="card-body">
@@ -191,12 +205,41 @@
             </div>
             <p v-else>{{ $t('user.delete-text') }}</p>
         </modal-dialog>
+        <modal-dialog id="delegation-create" ref="delegationDialog" :buttons="['save']" @click="delegationCreate()" :title="$t('user.delegation-create')">
+            <form class="card-body" data-validation-prefix="delegation-">
+                <div class="row mb-3">
+                    <label for="delegation-email" class="col-sm-4 col-form-label">{{ $t('form.user') }}</label>
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" id="delegation-email" v-model="delegatee" :placeholder="$t('form.email')">
+                    </div>
+                </div>
+                <div class="row">
+                    <label class="col-form-label">{{ $t('user.delegation-perm') }}</label>
+                </div>
+                <div class="row mb-2" v-for="(icon, type) in delegationTypes" :key="`delegation-${type}-row`">
+                    <label for="delegation-" class="col-4 col-form-label">
+                        <svg-icon :icon="icon" class="fs-3 me-2" style="width:1em"></svg-icon>
+                        <span class="align-text-bottom">{{ $t(`user.delegation-${type}`) }}</span>
+                    </label>
+                    <div class="col-8">
+                        <select type="text" class="form-select" :id="`delegation-${type}`">
+                            <option value="" selected>- {{ $t('form.none') }} -</option>
+                            <option value="read-only">{{ $t('form.acl-read-only') }}</option>
+                            <option value="read-write">{{ $t('form.acl-read-write') }}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row form-text"><span>{{ $t('user.delegation-desc') }}</span></div>
+            </form>
+        </modal-dialog>
     </div>
 </template>
 
 <script>
+    import Accordion from '../Widgets/Accordion'
     import CountrySelect from '../Widgets/CountrySelect'
     import ListInput from '../Widgets/ListInput'
+    import { ListTable } from '../Widgets/ListTools'
     import ModalDialog from '../Widgets/ModalDialog'
     import PackageSelect from '../Widgets/PackageSelect'
     import PasswordInput from '../Widgets/PasswordInput'
@@ -207,12 +250,19 @@
 
     library.add(
         require('@fortawesome/free-regular-svg-icons/faClipboard').definition,
+        require('@fortawesome/free-solid-svg-icons/faCalendarCheck').definition,
+        require('@fortawesome/free-solid-svg-icons/faCalendarDays').definition,
+        require('@fortawesome/free-solid-svg-icons/faEnvelope').definition,
+        require('@fortawesome/free-solid-svg-icons/faUserTie').definition,
+        require('@fortawesome/free-solid-svg-icons/faUsers').definition,
     )
 
     export default {
         components: {
+            Accordion,
             CountrySelect,
             ListInput,
+            ListTable,
             ModalDialog,
             PackageSelect,
             PasswordInput,
@@ -222,11 +272,38 @@
         data() {
             return {
                 countries: window.config.countries,
+                delegatee: null,
+                delegations: null,
+                delegationListSetup: {
+                    buttons: true,
+                    columns: [
+                        {
+                            prop: 'email',
+                            contentSlot: 'email'
+                        },
+                    ],
+                    footLabel: 'user.delegation-none'
+                },
+                delegationTypes: {
+                    mail: 'envelope',
+                    event: 'calendar-days',
+                    task: 'calendar-check',
+                    contact: 'users'
+                },
                 isSelf: false,
                 passwordLinkCode: '',
                 passwordMode: '',
                 user_id: null,
                 user: { aliases: [], config: [] },
+                settingsButtons: {
+                    delegation: [
+                        {
+                            icon: 'user-tie',
+                            label: this.$t('user.delegation-create'),
+                            click: () => this.$refs.delegationDialog.show()
+                        }
+                    ],
+                },
                 supportEmail: window.config['app.support_email'],
                 status: {},
                 successRoute: { name: 'users' }
@@ -241,6 +318,16 @@
                     icon: 'trash-can'
                 }
             },
+            settingsSections: function () {
+                let opts = {}
+                if (this.isController) {
+                    opts.options = this.$t('form.mainopts')
+                }
+                if ((this.isController || this.isSelf) && this.$root.authInfo.statusInfo.enableDelegation) {
+                    opts.delegation = this.$t('user.delegation')
+                }
+                return opts
+            },
             isController: function () {
                 return this.$root.hasPermission('users')
             },
@@ -254,7 +341,7 @@
                     return tabs
                 }
 
-                if (this.isController) {
+                if (Object.keys(this.settingsSections).length > 0) {
                     tabs.push('form.settings')
                 }
 
@@ -291,6 +378,20 @@
         },
         mounted() {
             $('#first_name').focus()
+
+            if (this.settingsSections.delegation) {
+                this.$refs.tabs.clickHandler('settings', () => {
+                    if (this.delegations === null) {
+                        this.delegationList()
+                    }
+                })
+            }
+
+            this.$refs.delegationDialog.events({
+                show: (event) => {
+                    this.delegatee = null
+                }
+            })
         },
         methods: {
             passwordLinkCopy() {
@@ -417,6 +518,40 @@
             },
             statusUpdate(user) {
                 this.user = Object.assign({}, this.user, user)
+            },
+            delegationCreate() {
+                let post = {email: this.delegatee, options: {}}
+
+                $('#delegation-create select').each(function () {
+                    post.options[this.id.split('-')[1]] = this.value;
+                });
+
+                axios.post('/api/v4/users/' + this.user_id + '/delegations', post)
+                    .then(response => {
+                        if (response.data.status == 'success') {
+                            this.$toast.success(response.data.message)
+                            this.$refs.delegationDialog.hide();
+                            this.delegationList(true)
+                        }
+                    })
+            },
+            delegationDelete(email) {
+                axios.delete('/api/v4/users/' + this.user_id + '/delegations/' + email)
+                    .then(response => {
+                        if (response.data.status == 'success') {
+                            this.$toast.success(response.data.message)
+                            this.delegationList(true)
+                        }
+                    })
+            },
+            delegationList(reset) {
+                if (reset) {
+                    this.delegations = null
+                }
+                axios.get('/api/v4/users/' + this.user_id + '/delegations', { loader: '#delegation' })
+                    .then(response => {
+                        this.delegations = response.data.list
+                    })
             },
             deleteUser() {
                 // Delete the user from the confirm dialog

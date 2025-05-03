@@ -1,3 +1,10 @@
+/* Colors */
+
+$kolab-blue: #65c2ee;
+$light: #f6f5f3;
+
+$main-color: $kolab-blue;
+
 /* Body */
 
 $body-bg: #fff;
@@ -8,12 +15,12 @@ $font-family-sans-serif: 'Nunito', sans-serif;
 $font-size-base: 0.9rem;
 $line-height-base: 1.5;
 
-/* Colors */
+/* Bootstrap components */
 
-$kolab-blue: #65c2ee;
-$light: #f6f5f3;
-
-$main-color: $kolab-blue;
+$accordion-padding-y: 1rem;
+$accordion-padding-x: 1rem;
+$accordion-button-padding-y: 0.7rem;
+$accordion-button-active-bg: $light;
 
 /* App colors */
 

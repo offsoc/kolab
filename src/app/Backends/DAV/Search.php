@@ -12,17 +12,23 @@ class Search
 
     public $dataProperties = [];
 
+    public $hrefs = [];
+
     public $properties = [];
 
     public $withContent = false;
 
     public $filters = [];
 
-    public function __construct($component, $withContent = false, $filters = [])
+    /** @var bool Is it a multiget report or a query? */
+    public $is_report = false;
+
+    public function __construct($component, $withContent = false, $filters = [], $is_report = false)
     {
         $this->component = $component;
         $this->withContent = $withContent;
         $this->filters = $filters;
+        $this->is_report = $is_report;
     }
 
     /**
@@ -36,6 +42,11 @@ class Search
             'xmlns:d="DAV:"',
             'xmlns:c="' . DAV::NAMESPACES[$this->component] . '"',
         ]);
+
+        $hrefs = '';
+        foreach ($this->hrefs as $href) {
+            $hrefs .= '<d:href>' . $href . '</d:href>';
+        }
 
         // Return properties
         $props = [];
@@ -71,13 +82,17 @@ class Search
         // Search filter
         $filters = $this->filters;
         if ($this->component == DAV::TYPE_VCARD) {
-            $query = 'addressbook-query';
+            $query = $this->is_report ? 'addressbook-multiget' : 'addressbook-query';
         } else {
-            $query = 'calendar-query';
+            $query = $this->is_report ? 'calendar-multiget' : 'calendar-query';
             array_unshift($filters, new SearchCompFilter('VCALENDAR', [new SearchCompFilter($this->component)]));
         }
 
-        $filter = new SearchFilter($filters);
+        if (!$this->is_report) {
+            $filter = new SearchFilter($filters);
+        } else {
+            $filter = '';
+        }
 
         if (empty($props)) {
             $props = '<d:allprop/>';
@@ -86,6 +101,6 @@ class Search
         }
 
         return '<?xml version="1.0" encoding="utf-8"?>'
-            . "<c:{$query} {$ns}>" . $props . $filter . "</c:{$query}>";
+            . "<c:{$query} {$ns}>" . $hrefs . $props . $filter . "</c:{$query}>";
     }
 }

@@ -9,6 +9,7 @@ class Response
     public const ACTION_DEFER_IF_PERMIT = 'DEFER_IF_PERMIT';
     public const ACTION_DUNNO = 'DUNNO';
     public const ACTION_HOLD = 'HOLD';
+    public const ACTION_PERMIT = 'PERMIT';
     public const ACTION_REJECT = 'REJECT';
 
     /** @var string Postfix action */

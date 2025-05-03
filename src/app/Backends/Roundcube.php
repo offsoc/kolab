@@ -2,6 +2,7 @@
 
 namespace App\Backends;
 
+use App\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
@@ -29,6 +30,48 @@ class Roundcube
         }
 
         return DB::connection('roundcube');
+    }
+
+    /**
+     * Create delegator's identities for the delegatee
+     *
+     * @param User $delegatee The delegatee
+     * @param User $delegator The delegator
+     */
+    public static function createDelegatedIdentities(User $delegatee, User $delegator): void
+    {
+        $delegatee_id = self::userId($delegatee->email);
+        $delegator_id = self::userId($delegator->email, false);
+        $delegator_name = $delegator->name();
+        $org_name = $delegator->getSetting('organization');
+
+        $db = self::dbh();
+
+        if ($delegator_id) {
+            // Get signature/name from the delegator's default identity
+            $identity = $db->table(self::IDENTITIES_TABLE)->where('user_id', $delegator_id)
+                ->where('email', $delegator->email)
+                ->orderBy('standard', 'desc')
+                ->first();
+
+            if ($identity) {
+                if ($identity->name) {
+                    $delegator_name = $identity->name;
+                }
+                if ($identity->organization) {
+                    $org_name = $identity->organization;
+                }
+            }
+        }
+
+        // Create the identity
+        $db->table(self::IDENTITIES_TABLE)->insert([
+            'user_id' => $delegatee_id,
+            'email' => $delegator->email,
+            'name' => (string) $delegator_name,
+            'organization' => (string) $org_name,
+            'changed' => now()->toDateTimeString(),
+        ]);
     }
 
     /**
@@ -221,6 +264,33 @@ class Roundcube
     }
 
     /**
+     * Validate user identities, remove these these that user no longer has access to.
+     *
+     * @param User $user User
+     */
+    public static function resetIdentities(User $user): void
+    {
+        $user_id = self::userId($user->email, false);
+
+        if (!$user_id) {
+            return;
+        }
+
+        // Collect email addresses
+        $users = $user->delegators()->pluck('email', 'user_id')->all();
+        $users[$user->id] = $user->email;
+        $aliases = \App\UserAlias::whereIn('user_id', array_keys($users))->pluck('alias')->all();
+        $all_addresses = array_merge(array_values($users), $aliases);
+
+        // Delete excessive identities
+        $db = self::dbh();
+        $db->table(self::IDENTITIES_TABLE)
+            ->where('user_id', $user_id)
+            ->whereNotIn('email', $all_addresses)
+            ->delete();
+    }
+
+    /**
      * Find the Roundcube user identifier for the specified user.
      *
      * @param string $email  User email address
@@ -253,7 +323,7 @@ class Roundcube
                 'user_id'
             );
 
-            $username = \App\User::where('email', $email)->first()->name();
+            $username = User::where('email', $email)->first()->name();
 
             $db->table(self::IDENTITIES_TABLE)->insert([
                     'user_id' => $user_id,

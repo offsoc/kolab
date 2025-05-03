@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Delegation;
 use App\Domain;
 use App\EventLog;
 use App\Group;
@@ -947,6 +948,62 @@ class UserTest extends TestCase
 
         // Twice, one for save() and one for delete() above
         Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 2);
+    }
+
+    /**
+     * Test user deletion regarding delegation relations
+     */
+    public function testDeleteWithDelegation(): void
+    {
+        Queue::fake();
+
+        // Test removing delegatee
+        $userA = $this->getTestUser('UserAccountA@UserAccount.com');
+        $userB = $this->getTestUser('UserAccountB@UserAccount.com');
+
+        $delegation = new Delegation();
+        $delegation->user_id = $userA->id;
+        $delegation->delegatee_id = $userB->id;
+        $delegation->save();
+
+        $userB->delete();
+
+        $this->assertNull(Delegation::find($delegation->id));
+
+        Queue::assertPushed(\App\Jobs\User\Delegation\DeleteJob::class, 1);
+        Queue::assertPushed(
+            \App\Jobs\User\Delegation\DeleteJob::class,
+            function ($job) use ($userA, $userB) {
+                $delegator = TestCase::getObjectProperty($job, 'delegatorEmail');
+                $delegatee = TestCase::getObjectProperty($job, 'delegateeEmail');
+                return $delegator === $userA->email && $delegatee === $userB->email;
+            }
+        );
+
+        $userB->deleted_at = null;
+        $userB->save();
+
+        Queue::fake();
+
+        // Test removing delegator
+        $delegation = new Delegation();
+        $delegation->user_id = $userA->id;
+        $delegation->delegatee_id = $userB->id;
+        $delegation->save();
+
+        $userA->delete();
+
+        $this->assertNull(Delegation::find($delegation->id));
+
+        Queue::assertPushed(\App\Jobs\User\Delegation\DeleteJob::class, 1);
+        Queue::assertPushed(
+            \App\Jobs\User\Delegation\DeleteJob::class,
+            function ($job) use ($userA, $userB) {
+                $delegator = TestCase::getObjectProperty($job, 'delegatorEmail');
+                $delegatee = TestCase::getObjectProperty($job, 'delegateeEmail');
+                return $delegator === $userA->email && $delegatee === $userB->email;
+            }
+        );
     }
 
     /**
