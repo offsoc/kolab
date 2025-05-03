@@ -275,6 +275,16 @@ class User extends Authenticatable
     }
 
     /**
+     * Contacts (global addressbook) for this user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function contacts()
+    {
+        return $this->hasMany(Contact::class);
+    }
+
+    /**
      * Degrade the user
      *
      * @return void

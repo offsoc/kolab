@@ -17,6 +17,56 @@ use Illuminate\Support\Facades\DB;
 class SearchController extends Controller
 {
     /**
+     * Search request for user's contacts
+     *
+     * @param \Illuminate\Http\Request $request The API request.
+     *
+     * @return \Illuminate\Http\JsonResponse The response
+     */
+    public function searchContacts(Request $request)
+    {
+        $user = $this->guard()->user();
+        $search = trim(request()->input('search'));
+        $limit = intval(request()->input('limit'));
+
+        if ($limit <= 0) {
+            $limit = 15;
+        } elseif ($limit > 100) {
+            $limit = 100;
+        }
+
+        $owner = $user->walletOwner();
+
+        if (!$owner) {
+            return $this->errorResponse(500);
+        }
+
+        // Prepare the query
+        $query = $owner->contacts();
+
+        if (strlen($search)) {
+            $query->Where(function ($query) use ($search) {
+                $query->whereLike('name', "%{$search}%")
+                    ->orWhereLike('email', "%{$search}%");
+            });
+        }
+
+        // Execute the query
+        $result = $query->orderBy('email')->limit($limit)->get()
+            ->map(function ($contact) {
+                return [
+                    'email' => $contact->email,
+                    'name' => $contact->name,
+                ];
+            });
+
+        return response()->json([
+            'list' => $result,
+            'count' => count($result),
+        ]);
+    }
+
+    /**
      * Search request for user's email addresses
      *
      * @param \Illuminate\Http\Request $request The API request.

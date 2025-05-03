@@ -180,6 +180,7 @@ Route::group(
         Route::get('payments/status', [API\V4\PaymentsController::class, 'paymentStatus']);
 
         Route::get('search/self', [API\V4\SearchController::class, 'searchSelf']);
+        Route::get('search/contacts', [API\V4\SearchController::class, 'searchContacts']);
         if (\config('app.with_user_search')) {
             Route::get('search/user', [API\V4\SearchController::class, 'searchUser']);
         }
