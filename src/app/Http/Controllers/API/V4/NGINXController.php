@@ -98,6 +98,17 @@ class NGINXController extends Controller
         return $username;
     }
 
+    private function authenticateHTTP($user = null)
+    {
+        $backend = "default";
+        $response = response('')->withHeaders(
+            [
+                "davbackend" => $backend,
+            ]
+        );
+        return $response;
+    }
+
     /**
      * Authentication request from the ngx_http_auth_request_module
      *
@@ -128,7 +139,7 @@ class NGINXController extends Controller
 
         if (empty($username)) {
             // Allow unauthenticated requests
-            return response('');
+            return $this->authenticateHTTP();
         }
 
         if (empty($password)) {
@@ -137,14 +148,14 @@ class NGINXController extends Controller
         }
 
         try {
-            $this->authorizeRequest($username, $password, $ip);
+            $user = $this->authorizeRequest($username, $password, $ip);
         } catch (\Exception $e) {
             \Log::debug("Authentication attempt failed: {$e->getMessage()}");
             return response("", 403);
         }
 
         \Log::debug("Authentication attempt succeeded");
-        return response('');
+        return $this->authenticateHTTP($user);
     }
 
     /**
