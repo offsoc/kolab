@@ -30,7 +30,7 @@ class IP4Net extends Model
         'country',
         'serial',
         'created_at',
-        'updated_at'
+        'updated_at',
     ];
 
     /**
@@ -57,28 +57,24 @@ class IP4Net extends Model
     /**
      * net_number accessor. Internally we store IP addresses
      * in a numeric form, outside they are human-readable.
-     *
-     * @return \Illuminate\Database\Eloquent\Casts\Attribute
      */
     protected function netNumber(): Attribute
     {
         return Attribute::make(
-            get: fn ($ip) => inet_ntop($ip),
-            set: fn ($ip) => inet_pton($ip),
+            get: static fn ($ip) => inet_ntop($ip),
+            set: static fn ($ip) => inet_pton($ip),
         );
     }
 
     /**
      * net_broadcast accessor. Internally we store IP addresses
      * in a numeric form, outside they are human-readable.
-     *
-     * @return \Illuminate\Database\Eloquent\Casts\Attribute
      */
     protected function netBroadcast(): Attribute
     {
         return Attribute::make(
-            get: fn ($ip) => inet_ntop($ip),
-            set: fn ($ip) => inet_pton($ip),
+            get: static fn ($ip) => inet_ntop($ip),
+            set: static fn ($ip) => inet_pton($ip),
         );
     }
 }

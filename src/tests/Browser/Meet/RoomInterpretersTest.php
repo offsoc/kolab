@@ -9,16 +9,13 @@ use Tests\TestCaseDusk;
 
 class RoomInterpretersTest extends TestCaseDusk
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         $this->resetTestRoom();
     }
 
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->resetTestRoom();
         parent::tearDown();
@@ -31,7 +28,7 @@ class RoomInterpretersTest extends TestCaseDusk
      */
     public function testInterpreters(): void
     {
-        $this->browse(function (Browser $owner, Browser $interpreter, Browser $guest) {
+        $this->browse(static function (Browser $owner, Browser $interpreter, Browser $guest) {
             $page = new RoomPage('john');
             // Join the room as an owner (authenticate)
             $owner->visit($page)
@@ -58,7 +55,7 @@ class RoomInterpretersTest extends TestCaseDusk
                 ->waitFor('@session .meet-video:not(.self)')
                 ->assertSeeIn('@session .meet-video:not(.self)', 'Interpreter')
                 ->click('@session .meet-video:not(.self) .meet-nickname')
-                ->whenAvailable('@session .meet-video:not(.self) .dropdown-menu', function ($browser) {
+                ->whenAvailable('@session .meet-video:not(.self) .dropdown-menu', static function ($browser) {
                     $browser->assertVisible('.interpreting')
                         ->assertSeeIn('.interpreting h6', 'Language interpreter')
                         ->select('.interpreting select', 'en');
@@ -100,7 +97,7 @@ class RoomInterpretersTest extends TestCaseDusk
                 ->assertAudioMuted('@session .meet-subscriber:not(.self) video', true) // muted interpreter
                 // select a channel
                 ->click('@menu button.link-channel')
-                ->whenAvailable('#channel-select .dropdown-menu', function ($browser) {
+                ->whenAvailable('#channel-select .dropdown-menu', static function ($browser) {
                     $browser->assertSeeIn('a:first-child.active', '- none -')
                         ->assertSeeIn('a:nth-child(2):not(.active)', 'English')
                         ->assertMissing('a:nth-child(3)')
@@ -112,7 +109,7 @@ class RoomInterpretersTest extends TestCaseDusk
                 ->assertAudioMuted('@session .meet-subscriber:not(.self) video', false) // unmuted interpreter
                 // Unselect a channel
                 ->click('@menu button.link-channel')
-                ->whenAvailable('#channel-select .dropdown-menu', function ($browser) {
+                ->whenAvailable('#channel-select .dropdown-menu', static function ($browser) {
                     $browser->assertVisible('a:first-child:not(.active)')
                         ->assertVisible('a:nth-child(2).active')
                         ->click('a:first-child');
@@ -130,7 +127,7 @@ class RoomInterpretersTest extends TestCaseDusk
                 ->assertAudioMuted('@session .meet-subscriber:nth-child(1) video', true) // muted interpreter
                 // select a channel
                 ->click('@menu button.link-channel')
-                ->whenAvailable('#channel-select .dropdown-menu', function ($browser) {
+                ->whenAvailable('#channel-select .dropdown-menu', static function ($browser) {
                     $browser->assertSeeIn('a:first-child.active', '- none -')
                         ->assertSeeIn('a:nth-child(2):not(.active)', 'English')
                         ->assertMissing('a:nth-child(3)')
@@ -142,7 +139,7 @@ class RoomInterpretersTest extends TestCaseDusk
                 ->assertAudioMuted('@session .meet-subscriber:nth-child(1) video', false) // unmuted interpreter
                 // Unselect a channel
                 ->click('@menu button.link-channel')
-                ->whenAvailable('#channel-select .dropdown-menu', function ($browser) {
+                ->whenAvailable('#channel-select .dropdown-menu', static function ($browser) {
                     $browser->assertVisible('a:first-child:not(.active)')
                         ->assertVisible('a:nth-child(2).active')
                         ->click('a:first-child');
@@ -153,7 +150,7 @@ class RoomInterpretersTest extends TestCaseDusk
 
             // Remove interpreting role
             $owner->click('@session .meet-subscriber:nth-child(1) .meet-nickname')
-                ->whenAvailable('@session .meet-subscriber:nth-child(1) .dropdown-menu', function ($browser) {
+                ->whenAvailable('@session .meet-subscriber:nth-child(1) .dropdown-menu', static function ($browser) {
                     $browser->assertSelected('.interpreting select', 'en')
                         ->select('.interpreting select', '');
                 })

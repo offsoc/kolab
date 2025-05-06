@@ -2,19 +2,16 @@
 
 namespace Tests\Feature\Controller;
 
-use App\User;
 use App\CompanionApp;
-use Laravel\Passport\Token;
+use App\Utils;
 use Laravel\Passport\Passport;
+use Laravel\Passport\Token;
 use Laravel\Passport\TokenRepository;
 use Tests\TestCase;
 
 class CompanionAppsTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -23,10 +20,7 @@ class CompanionAppsTest extends TestCase
         $this->deleteTestCompanionApp('testdevice');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('CompanionAppsTest1@userscontroller.com');
         $this->deleteTestUser('CompanionAppsTest2@userscontroller.com');
@@ -54,10 +48,10 @@ class CompanionAppsTest extends TestCase
         $this->assertSame('success', $json['status']);
         $this->assertSame("Companion app has been created.", $json['message']);
 
-        $companionApp = \App\CompanionApp::where('name', $name)->first();
+        $companionApp = CompanionApp::where('name', $name)->first();
         $this->assertTrue($companionApp != null);
-        $this->assertEquals($name, $companionApp->name);
-        $this->assertFalse((bool)$companionApp->mfa_enabled);
+        $this->assertSame($name, $companionApp->name);
+        $this->assertFalse((bool) $companionApp->mfa_enabled);
     }
 
     /**
@@ -90,7 +84,7 @@ class CompanionAppsTest extends TestCase
             'personal_access_client' => 0,
             'password_client' => 1,
             'revoked' => false,
-            'allowed_scopes' => ["mfa"]
+            'allowed_scopes' => ["mfa"],
         ]);
         $client->save();
         $companionApp->oauth_client_id = $client->id;
@@ -101,13 +95,12 @@ class CompanionAppsTest extends TestCase
             'id' => 'testtoken',
             'revoked' => false,
             'user_id' => $user->id,
-            'client_id' => $client->id
+            'client_id' => $client->id,
         ]);
 
-        //Make sure we have a token to revoke
+        // Make sure we have a token to revoke
         $tokenCount = Token::where('user_id', $user->id)->where('client_id', $client->id)->count();
         $this->assertTrue($tokenCount > 0);
-
 
         $response = $this->actingAs($user2)->delete("api/v4/companions/{$companionApp->id}");
         $response->assertStatus(403);
@@ -122,9 +115,9 @@ class CompanionAppsTest extends TestCase
         $this->assertSame("Companion app has been removed.", $json['message']);
 
         $client->refresh();
-        $this->assertSame((bool)$client->revoked, true);
+        $this->assertSame((bool) $client->revoked, true);
 
-        $companionApp = \App\CompanionApp::where('device_id', 'testdevice')->first();
+        $companionApp = CompanionApp::where('device_id', 'testdevice')->first();
         $this->assertTrue($companionApp == null);
 
         $tokenCount = Token::where('user_id', $user->id)
@@ -228,7 +221,7 @@ class CompanionAppsTest extends TestCase
                 'notificationToken' => $notificationToken,
                 'deviceId' => $deviceId,
                 'name' => $name,
-                'companionId' => $companionApp->id
+                'companionId' => $companionApp->id,
             ]
         );
 
@@ -236,10 +229,10 @@ class CompanionAppsTest extends TestCase
 
         $companionApp->refresh();
         $this->assertTrue($companionApp != null);
-        $this->assertEquals($deviceId, $companionApp->device_id);
-        $this->assertEquals($name, $companionApp->name);
-        $this->assertEquals($notificationToken, $companionApp->notification_token);
-        $this->assertTrue((bool)$companionApp->mfa_enabled);
+        $this->assertSame($deviceId, $companionApp->device_id);
+        $this->assertSame($name, $companionApp->name);
+        $this->assertSame($notificationToken, $companionApp->notification_token);
+        $this->assertTrue((bool) $companionApp->mfa_enabled);
 
         // Companion id required
         $response = $this->actingAs($user)->post(
@@ -256,14 +249,14 @@ class CompanionAppsTest extends TestCase
                 'notificationToken' => $notificationToken,
                 'deviceId' => $deviceId,
                 'name' => $name,
-                'companionId' => $companionApp->id
+                'companionId' => $companionApp->id,
             ]
         );
 
         $response->assertStatus(200);
 
         $companionApp->refresh();
-        $this->assertEquals($notificationToken, $companionApp->notification_token);
+        $this->assertSame($notificationToken, $companionApp->notification_token);
 
         // Failing input valdiation
         $response = $this->actingAs($user)->post(
@@ -280,7 +273,7 @@ class CompanionAppsTest extends TestCase
                 'notificationToken' => $notificationToken,
                 'deviceId' => $deviceId,
                 'name' => $name,
-                'companionId' => $companionApp->id
+                'companionId' => $companionApp->id,
             ]
         );
         $response->assertStatus(403);
@@ -317,7 +310,7 @@ class CompanionAppsTest extends TestCase
         $this->assertSame($companionApp->id, $json['companionId']);
         $this->assertSame($client->id, $json['clientIdentifier']); // TODO: This should be clientId
         $this->assertSame($client->secret, $json['clientSecret']);
-        $this->assertSame(\App\Utils::serviceUrl('', $user->tenant_id), $json['serverUrl']);
+        $this->assertSame(Utils::serviceUrl('', $user->tenant_id), $json['serverUrl']);
         $this->assertArrayHasKey('qrcode', $json);
         $this->assertSame('data:image/svg+xml;base64,', substr($json['qrcode'], 0, 26));
     }

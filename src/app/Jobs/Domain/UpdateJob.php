@@ -3,13 +3,12 @@
 namespace App\Jobs\Domain;
 
 use App\Jobs\DomainJob;
+use App\Support\Facades\LDAP;
 
 class UpdateJob extends DomainJob
 {
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle()
     {
@@ -24,6 +23,6 @@ class UpdateJob extends DomainJob
             return;
         }
 
-        \App\Support\Facades\LDAP::updateDomain($domain);
+        LDAP::updateDomain($domain);
     }
 }

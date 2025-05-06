@@ -1,22 +1,19 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-// phpcs:ignore
 class VerificationCodeActiveColumn extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up()
     {
         Schema::table(
             'verification_codes',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->boolean('active')->default(true);
             }
         );
@@ -24,8 +21,6 @@ class VerificationCodeActiveColumn extends Migration
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
     public function down()
     {
@@ -35,7 +30,7 @@ class VerificationCodeActiveColumn extends Migration
 
         Schema::table(
             'verification_codes',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->dropColumn('active');
             }
         );

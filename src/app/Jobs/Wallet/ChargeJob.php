@@ -2,6 +2,7 @@
 
 namespace App\Jobs\Wallet;
 
+use App\Enums\Queue;
 use App\Jobs\CommonJob;
 use App\Wallet;
 
@@ -11,7 +12,7 @@ class ChargeJob extends CommonJob
     public $tries = 5;
 
     /** @var string|null The name of the queue the job should be sent to. */
-    public $queue = \App\Enums\Queue::Background->value;
+    public $queue = Queue::Background->value;
 
     /** @var string A wallet identifier */
     protected $walletId;
@@ -19,9 +20,7 @@ class ChargeJob extends CommonJob
     /**
      * Create a new job instance.
      *
-     * @param string $walletId The wallet that has been charged.
-     *
-     * @return void
+     * @param string $walletId the wallet that has been charged
      */
     public function __construct(string $walletId)
     {
@@ -30,8 +29,6 @@ class ChargeJob extends CommonJob
 
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle()
     {

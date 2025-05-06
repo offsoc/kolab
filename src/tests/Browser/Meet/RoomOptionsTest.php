@@ -11,16 +11,13 @@ use Tests\TestCaseDusk;
 
 class RoomOptionsTest extends TestCaseDusk
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         $this->resetTestRoom();
     }
 
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->resetTestRoom();
         parent::tearDown();
@@ -109,7 +106,7 @@ class RoomOptionsTest extends TestCaseDusk
                         ->assertElementsCount('#password-input button', 1)
                         ->click('@button-cancel');
 
-                    $this->assertSame(null, $room->fresh()->getSetting('password'));
+                    $this->assertNull($room->fresh()->getSetting('password'));
                 });
         });
     }
@@ -172,7 +169,7 @@ class RoomOptionsTest extends TestCaseDusk
 
             // Test denying the request (this will also test custom toasts)
             $owner
-                ->whenAvailable(new Toast(Toast::TYPE_CUSTOM), function ($browser) {
+                ->whenAvailable(new Toast(Toast::TYPE_CUSTOM), static function ($browser) {
                     $browser->assertToastTitle('Join request')
                         ->assertVisible('.toast-header svg.fa-user')
                         ->assertSeeIn('@message', 'Guest<p> requested to join.')
@@ -232,7 +229,7 @@ class RoomOptionsTest extends TestCaseDusk
                 ->assertButtonDisabled('@setup-button');
 
             $owner
-                ->whenAvailable(new Toast(Toast::TYPE_CUSTOM), function ($browser) {
+                ->whenAvailable(new Toast(Toast::TYPE_CUSTOM), static function ($browser) {
                     $browser->assertToastTitle('Join request')
                         ->assertSeeIn('@message', 'guest requested to join.')
                         ->click('@message button.accept');
@@ -257,11 +254,11 @@ class RoomOptionsTest extends TestCaseDusk
                 ->waitUntilMissing('@session .meet-video:not(.self)');
 
             // Expect a "end of session" dialog on the participant side
-            $guest->with(new Dialog('#leave-dialog'), function (Browser $browser) {
-                    $browser->assertSeeIn('@title', 'Room closed')
-                        ->assertSeeIn('@body', "The session has been closed by the room owner.")
-                        ->assertMissing('@button-action')
-                        ->assertSeeIn('@button-cancel', 'Close');
+            $guest->with(new Dialog('#leave-dialog'), static function (Browser $browser) {
+                $browser->assertSeeIn('@title', 'Room closed')
+                    ->assertSeeIn('@body', "The session has been closed by the room owner.")
+                    ->assertMissing('@button-action')
+                    ->assertSeeIn('@button-cancel', 'Close');
             });
         });
     }
@@ -319,7 +316,7 @@ class RoomOptionsTest extends TestCaseDusk
                         ->assertToast(Toast::TYPE_SUCCESS, "Room configuration updated successfully.")
                         ->click('@button-cancel');
 
-                    $this->assertSame(null, $room->fresh()->getSetting('nomedia'));
+                    $this->assertNull($room->fresh()->getSetting('nomedia'));
                 });
         });
     }

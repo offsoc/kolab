@@ -2,25 +2,21 @@
 
 namespace Tests\Feature\Console\Domain;
 
+use App\Domain;
+use App\Tenant;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class CreateTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestDomain('domain-delete.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestDomain('domain-delete.com');
 
@@ -36,23 +32,23 @@ class CreateTest extends TestCase
 
         // Existing domain
         $ns = \config('app.domain');
-        $code = \Artisan::call("domain:create $ns");
+        $code = \Artisan::call("domain:create {$ns}");
         $output = trim(\Artisan::output());
         $this->assertSame(1, $code);
-        $this->assertSame("Domain $ns already exists.", $output);
+        $this->assertSame("Domain {$ns} already exists.", $output);
 
         // Existing domain (with --force param)
-        $code = \Artisan::call("domain:create $ns --force");
+        $code = \Artisan::call("domain:create {$ns} --force");
         $output = trim(\Artisan::output());
         $this->assertSame(1, $code);
-        $this->assertSame("Domain $ns not marked as deleted... examine more closely", $output);
+        $this->assertSame("Domain {$ns} not marked as deleted... examine more closely", $output);
 
         // A new domain
         $code = \Artisan::call("domain:create domain-delete.com");
         $output = trim(\Artisan::output());
         $this->assertSame(0, $code);
 
-        $domain = \App\Domain::where('namespace', 'domain-delete.com')->first();
+        $domain = Domain::where('namespace', 'domain-delete.com')->first();
 
         $this->assertSame("Domain domain-delete.com created with ID {$domain->id}. "
             . "Remember to assign it to a wallet with 'domain:set-wallet'", $output);
@@ -61,7 +57,7 @@ class CreateTest extends TestCase
         $this->assertNull($domain->wallet());
         $this->assertSame('domain-delete.com', $domain->namespace);
 
-        $domain->status |= \App\Domain::STATUS_ACTIVE;
+        $domain->status |= Domain::STATUS_ACTIVE;
         $domain->save();
         $domain->delete();
 
@@ -86,12 +82,12 @@ class CreateTest extends TestCase
         $this->deleteTestDomain('domain-delete.com');
 
         // Test --tenant option
-        $tenant = \App\Tenant::orderBy('id', 'desc')->first();
+        $tenant = Tenant::orderBy('id', 'desc')->first();
         $code = \Artisan::call("domain:create domain-delete.com --tenant={$tenant->id}");
         $output = trim(\Artisan::output());
         $this->assertSame(0, $code);
 
-        $domain = \App\Domain::where('namespace', 'domain-delete.com')->first();
+        $domain = Domain::where('namespace', 'domain-delete.com')->first();
 
         $this->assertTrue($domain->isNew());
         $this->assertSame($tenant->id, $domain->tenant_id);

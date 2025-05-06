@@ -4,8 +4,8 @@ namespace App\Backends\DAV;
 
 use Illuminate\Support\Str;
 use Sabre\VObject\Component;
-use Sabre\VObject\Reader;
 use Sabre\VObject\Property;
+use Sabre\VObject\Reader;
 use Sabre\VObject\Writer;
 
 class Vevent extends CommonObject
@@ -42,7 +42,6 @@ class Vevent extends CommonObject
 
     private $vobject;
 
-
     /**
      * Create event object from a DOMElement element
      *
@@ -75,7 +74,7 @@ class Vevent extends CommonObject
             return;
         }
 
-        $selfType = strtoupper(class_basename(get_class($this)));
+        $selfType = strtoupper(class_basename(static::class));
 
         if (!empty($this->vobject->PRODID)) {
             $this->prodid = (string) $this->vobject->PRODID;
@@ -133,7 +132,7 @@ class Vevent extends CommonObject
 
         // map other properties
         foreach ($vobject->children() as $prop) {
-            if (!($prop instanceof Property)) {
+            if (!$prop instanceof Property) {
                 continue;
             }
 
@@ -147,7 +146,6 @@ class Vevent extends CommonObject
                     // These are of type Sabre\VObject\Property\ICalendar\DateTime
                     $this->{$key} = $prop;
                     break;
-
                 case 'RRULE':
                     $params = [];
 
@@ -165,13 +163,11 @@ class Vevent extends CommonObject
 
                     $this->rrule = array_filter($params);
                     break;
-
                 case 'EXDATE':
                 case 'RDATE':
                     $key = strtolower($prop->name);
                     $this->{$key}[] = $prop;
                     break;
-
                 case 'ATTENDEE':
                 case 'ORGANIZER':
                     $attendee = [
@@ -189,11 +185,11 @@ class Vevent extends CommonObject
                                 $attendee[$key] = strtolower($value) == 'true';
                                 break;
                             case 'CN':
-                                $attendee[$key] = str_replace('\,', ',', strval($value));
+                                $attendee[$key] = str_replace('\,', ',', (string) $value);
                                 break;
                             default:
                                 if (in_array($name, $attendeeProps)) {
-                                    $attendee[$key] = strval($value);
+                                    $attendee[$key] = (string) $value;
                                 }
                                 break;
                         }
@@ -209,7 +205,6 @@ class Vevent extends CommonObject
                     }
 
                     break;
-
                 default:
                     if (\str_starts_with($prop->name, 'X-')) {
                         $this->custom[$prop->name] = (string) $prop;
@@ -234,12 +229,12 @@ class Vevent extends CommonObject
 
         // Find alarms
         foreach ($vobject->select('VALARM') as $valarm) {
-            $action  = 'DISPLAY';
+            $action = 'DISPLAY';
             $trigger = null;
-            $alarm   = [];
+            $alarm = [];
 
             foreach ($valarm->children() as $prop) {
-                $value = strval($prop);
+                $value = (string) $prop;
 
                 switch ($prop->name) {
                     case 'TRIGGER':
@@ -251,34 +246,30 @@ class Vevent extends CommonObject
                                 $alarm['related'] = $param->getValue();
                             }
                         }
-    /*
-                        if (!$trigger && ($values = libcalendaring::parse_alarm_value($value))) {
-                            $trigger = $values[2];
-                        }
-    */
+                        /*
+                                            if (!$trigger && ($values = libcalendaring::parse_alarm_value($value))) {
+                                                $trigger = $values[2];
+                                            }
+                        */
                         if (empty($alarm['trigger'])) {
-                            $alarm['trigger'] = rtrim(preg_replace('/([A-Z])0[WDHMS]/', '\\1', $value), 'T');
+                            $alarm['trigger'] = rtrim(preg_replace('/([A-Z])0[WDHMS]/', '\1', $value), 'T');
                             // if all 0-values have been stripped, assume 'at time'
                             if ($alarm['trigger'] == 'P') {
                                 $alarm['trigger'] = 'PT0S';
                             }
                         }
                         break;
-
                     case 'ACTION':
                         $action = $alarm['action'] = strtoupper($value);
                         break;
-
                     case 'SUMMARY':
                     case 'DESCRIPTION':
                     case 'DURATION':
                         $alarm[strtolower($prop->name)] = $value;
                         break;
-
                     case 'REPEAT':
                         $alarm['repeat'] = (int) $value;
                         break;
-
                     case 'ATTENDEE':
                         $alarm['attendees'][] = preg_replace('!^mailto:!i', '', $value);
                         break;

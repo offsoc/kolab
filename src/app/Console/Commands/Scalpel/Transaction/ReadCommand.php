@@ -3,13 +3,14 @@
 namespace App\Console\Commands\Scalpel\Transaction;
 
 use App\Console\ObjectReadCommand;
+use App\Transaction;
 
 class ReadCommand extends ObjectReadCommand
 {
     protected $hidden = true;
 
     protected $commandPrefix = 'scalpel';
-    protected $objectClass = \App\Transaction::class;
+    protected $objectClass = Transaction::class;
     protected $objectName = 'transaction';
-    protected $objectTitle = null;
+    protected $objectTitle;
 }

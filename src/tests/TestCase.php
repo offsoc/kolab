@@ -2,9 +2,10 @@
 
 namespace Tests;
 
+use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Routing\Middleware\ThrottleRequests;
-use Illuminate\Contracts\Auth\Authenticatable;
 use Laravel\Passport\Passport;
 
 abstract class TestCase extends BaseTestCase
@@ -13,10 +14,7 @@ abstract class TestCase extends BaseTestCase
 
     public const BASE_DIR = __DIR__;
 
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -24,8 +22,8 @@ abstract class TestCase extends BaseTestCase
         $this->withoutMiddleware(ThrottleRequests::class);
 
         \Mockery::getConfiguration()->setDefaultMatcher(
-            class: \Illuminate\Database\Eloquent\Model::class,
-            matcherClass: \Tests\ModelMatcher::class,
+            class: Model::class,
+            matcherClass: ModelMatcher::class,
         );
     }
 
@@ -55,7 +53,7 @@ abstract class TestCase extends BaseTestCase
                     ['//admin.', '//reseller.', '//services.'],
                     ['//', '//', '//'],
                     \config('app.url')
-                )
+                ),
             ]
         );
 
@@ -112,7 +110,6 @@ abstract class TestCase extends BaseTestCase
         \config(['app.url' => str_replace('//', '//services.', \config('app.url'))]);
         url()->forceRootUrl(config('app.url'));
     }
-
 
     /**
      * The test equivalent of Http::withBody, which is not available for tests.

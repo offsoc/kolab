@@ -6,9 +6,9 @@ use App\DataMigrator\Driver\EWS;
 use App\DataMigrator\Engine;
 use App\DataMigrator\Interface\Folder as FolderInterface;
 use App\DataMigrator\Interface\Item as ItemInterface;
-use App\DataMigrator\Interface\ItemSet as ItemSetInterface;
-use garethp\ews\API;
 use garethp\ews\API\Type;
+use Sabre\VObject\Component\VCalendar;
+use Sabre\VObject\Property\Text;
 
 /**
  * Abstraction for object handlers
@@ -26,7 +26,6 @@ abstract class Item
 
     /** @var string Current item UID */
     protected $uid;
-
 
     /**
      * Object constructor
@@ -78,9 +77,8 @@ abstract class Item
     {
         if ($itemClass = self::lookupClassHandler($item->class)) {
             return new $itemClass($driver, $item->folder);
-        } else {
-            \Log::warning("Encountered unhandled item class {$item->class} ");
         }
+        \Log::warning("Encountered unhandled item class {$item->class} ");
     }
 
     /**
@@ -150,7 +148,7 @@ abstract class Item
                         ['FieldURI' => 'item:LastModifiedTime'],
                     ],
                 ],
-            ]
+            ],
         ];
 
         return $request;
@@ -163,11 +161,11 @@ abstract class Item
     {
         $request = [
             'AttachmentIds' => [
-                $attachment->getAttachmentId()->toXmlObject()
+                $attachment->getAttachmentId()->toXmlObject(),
             ],
             'AttachmentShape' => [
                 'IncludeMimeContent' => true,
-            ]
+            ],
         ];
 
         return $this->driver->api->getClient()->GetAttachment($request);
@@ -207,8 +205,8 @@ abstract class Item
      */
     protected function formatProp($name, $value, array $params = []): string
     {
-        $cal = new \Sabre\VObject\Component\VCalendar();
-        $prop = new \Sabre\VObject\Property\Text($cal, $name, $value, $params);
+        $cal = new VCalendar();
+        $prop = new Text($cal, $name, $value, $params);
 
         $value = $prop->serialize();
 

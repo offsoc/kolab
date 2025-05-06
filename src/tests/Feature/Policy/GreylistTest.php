@@ -3,7 +3,10 @@
 namespace Tests\Feature\Policy;
 
 use App\Domain;
+use App\IP4Net;
 use App\Policy\Greylist;
+use App\User;
+use Carbon\Carbon;
 use Tests\TestCase;
 
 /**
@@ -14,20 +17,20 @@ class GreylistTest extends TestCase
     private $clientAddress;
     private $net;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->clientAddress = '212.103.80.148';
-        $this->net = \App\IP4Net::getNet($this->clientAddress);
+        $this->net = IP4Net::getNet($this->clientAddress);
 
         $this->domainHosted = $this->getTestDomain('test.domain', [
-                'type' => Domain::TYPE_EXTERNAL,
-                'status' => Domain::STATUS_ACTIVE | Domain::STATUS_CONFIRMED | Domain::STATUS_VERIFIED
+            'type' => Domain::TYPE_EXTERNAL,
+            'status' => Domain::STATUS_ACTIVE | Domain::STATUS_CONFIRMED | Domain::STATUS_VERIFIED,
         ]);
         $this->getTestDomain('test2.domain2', [
-                'type' => Domain::TYPE_EXTERNAL,
-                'status' => Domain::STATUS_ACTIVE | Domain::STATUS_CONFIRMED | Domain::STATUS_VERIFIED
+            'type' => Domain::TYPE_EXTERNAL,
+            'status' => Domain::STATUS_ACTIVE | Domain::STATUS_CONFIRMED | Domain::STATUS_VERIFIED,
         ]);
 
         $this->domainOwner = $this->getTestUser('john@test.domain');
@@ -36,7 +39,7 @@ class GreylistTest extends TestCase
         Greylist\Whitelist::where('sender_domain', 'sender.domain')->delete();
     }
 
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         Greylist\Connect::where('sender_domain', 'sender.domain')->delete();
         Greylist\Whitelist::where('sender_domain', 'sender.domain')->delete();
@@ -51,20 +54,20 @@ class GreylistTest extends TestCase
     {
         // Test no net
         $request = new Greylist([
-                'sender' => 'someone@sender.domain',
-                'recipient' => $this->domainOwner->email,
-                'client_address' => '127.128.129.130',
-                'client_name' => 'some.mx'
+            'sender' => 'someone@sender.domain',
+            'recipient' => $this->domainOwner->email,
+            'client_address' => '127.128.129.130',
+            'client_name' => 'some.mx',
         ]);
 
         $this->assertTrue($request->shouldDefer());
 
         // Test IPv6 net
         $request = new Greylist([
-                'sender' => 'someone@sender.domain',
-                'recipient' => $this->domainOwner->email,
-                'client_address' => '2a00:1450:400a:803::2005',
-                'client_name' => 'some.mx'
+            'sender' => 'someone@sender.domain',
+            'recipient' => $this->domainOwner->email,
+            'client_address' => '2a00:1450:400a:803::2005',
+            'client_name' => 'some.mx',
         ]);
 
         $this->assertTrue($request->shouldDefer());
@@ -76,11 +79,11 @@ class GreylistTest extends TestCase
 
         for ($i = 0; $i < 5; $i++) {
             $request = new Greylist([
-                    'sender' => "someone{$i}@sender.domain",
-                    'recipient' => $this->domainOwner->email,
-                    'client_address' => $this->clientAddress,
-                    'client_name' => 'some.mx',
-                    'timestamp' => \Carbon\Carbon::now()->subDays(1)
+                'sender' => "someone{$i}@sender.domain",
+                'recipient' => $this->domainOwner->email,
+                'client_address' => $this->clientAddress,
+                'client_name' => 'some.mx',
+                'timestamp' => Carbon::now()->subDays(1),
             ]);
 
             $this->assertTrue($request->shouldDefer());
@@ -91,11 +94,11 @@ class GreylistTest extends TestCase
         $this->assertNotNull($whitelist);
 
         $request = new Greylist([
-                'sender' => "someone5@sender.domain",
-                'recipient' => $this->domainOwner->email,
-                'client_address' => $this->clientAddress,
-                'client_name' => 'some.mx',
-                'timestamp' => \Carbon\Carbon::now()->subDays(1)
+            'sender' => "someone5@sender.domain",
+            'recipient' => $this->domainOwner->email,
+            'client_address' => $this->clientAddress,
+            'client_name' => 'some.mx',
+            'timestamp' => Carbon::now()->subDays(1),
         ]);
 
         $this->assertFalse($request->shouldDefer());
@@ -106,11 +109,11 @@ class GreylistTest extends TestCase
         // Test a stale whitelist
         for ($i = 0; $i < 5; $i++) {
             $request = new Greylist([
-                    'sender' => "someone{$i}@sender.domain",
-                    'recipient' => $this->domainOwner->email,
-                    'client_address' => $this->clientAddress,
-                    'client_name' => 'some.mx',
-                    'timestamp' => \Carbon\Carbon::now()->subDays(1)
+                'sender' => "someone{$i}@sender.domain",
+                'recipient' => $this->domainOwner->email,
+                'client_address' => $this->clientAddress,
+                'client_name' => 'some.mx',
+                'timestamp' => Carbon::now()->subDays(1),
             ]);
 
             $this->assertTrue($request->shouldDefer());
@@ -121,16 +124,16 @@ class GreylistTest extends TestCase
         $this->assertNotNull($whitelist);
 
         $request = new Greylist([
-                'sender' => "someone5@sender.domain",
-                'recipient' => $this->domainOwner->email,
-                'client_address' => $this->clientAddress,
-                'client_name' => 'some.mx',
-                'timestamp' => \Carbon\Carbon::now()->subDays(1)
+            'sender' => "someone5@sender.domain",
+            'recipient' => $this->domainOwner->email,
+            'client_address' => $this->clientAddress,
+            'client_name' => 'some.mx',
+            'timestamp' => Carbon::now()->subDays(1),
         ]);
 
         $this->assertFalse($request->shouldDefer());
 
-        $whitelist->updated_at = \Carbon\Carbon::now()->subMonthsWithoutOverflow(2);
+        $whitelist->updated_at = Carbon::now()->subMonthsWithoutOverflow(2);
         $whitelist->save(['timestamps' => false]);
 
         $this->assertTrue($request->shouldDefer());
@@ -140,23 +143,23 @@ class GreylistTest extends TestCase
 
         // test retry
         $connect = Greylist\Connect::create([
-                'sender_local' => 'someone',
-                'sender_domain' => 'sender.domain',
-                'recipient_hash' => hash('sha256', $this->domainOwner->email),
-                'recipient_id' => $this->domainOwner->id,
-                'recipient_type' => \App\User::class,
-                'connect_count' => 1,
-                'net_id' => $this->net->id,
-                'net_type' => \App\IP4Net::class
+            'sender_local' => 'someone',
+            'sender_domain' => 'sender.domain',
+            'recipient_hash' => hash('sha256', $this->domainOwner->email),
+            'recipient_id' => $this->domainOwner->id,
+            'recipient_type' => User::class,
+            'connect_count' => 1,
+            'net_id' => $this->net->id,
+            'net_type' => IP4Net::class,
         ]);
 
-        $connect->created_at = \Carbon\Carbon::now()->subMinutes(6);
+        $connect->created_at = Carbon::now()->subMinutes(6);
         $connect->save();
 
         $request = new Greylist([
-                'sender' => 'someone@sender.domain',
-                'recipient' => $this->domainOwner->email,
-                'client_address' => $this->clientAddress
+            'sender' => 'someone@sender.domain',
+            'recipient' => $this->domainOwner->email,
+            'client_address' => $this->clientAddress,
         ]);
 
         $this->assertFalse($request->shouldDefer());
@@ -165,20 +168,20 @@ class GreylistTest extends TestCase
 
         // Test invalid recipient
         $connect = Greylist\Connect::create([
-                'sender_local' => 'someone',
-                'sender_domain' => 'sender.domain',
-                'recipient_hash' => hash('sha256', $this->domainOwner->email),
-                'recipient_id' => 1234,
-                'recipient_type' => \App\Domain::class,
-                'connect_count' => 1,
-                'net_id' => $this->net->id,
-                'net_type' => \App\IP4Net::class
+            'sender_local' => 'someone',
+            'sender_domain' => 'sender.domain',
+            'recipient_hash' => hash('sha256', $this->domainOwner->email),
+            'recipient_id' => 1234,
+            'recipient_type' => Domain::class,
+            'connect_count' => 1,
+            'net_id' => $this->net->id,
+            'net_type' => IP4Net::class,
         ]);
 
         $request = new Greylist([
-                'sender' => 'someone@sender.domain',
-                'recipient' => 'not.someone@that.exists',
-                'client_address' => $this->clientAddress
+            'sender' => 'someone@sender.domain',
+            'recipient' => 'not.someone@that.exists',
+            'client_address' => $this->clientAddress,
         ]);
 
         $this->assertTrue($request->shouldDefer());
@@ -187,22 +190,22 @@ class GreylistTest extends TestCase
 
         // Test user disabled
         $connect = Greylist\Connect::create([
-                'sender_local' => 'someone',
-                'sender_domain' => 'sender.domain',
-                'recipient_hash' => hash('sha256', $this->domainOwner->email),
-                'recipient_id' => $this->domainOwner->id,
-                'recipient_type' => \App\User::class,
-                'connect_count' => 1,
-                'net_id' => $this->net->id,
-                'net_type' => \App\IP4Net::class
+            'sender_local' => 'someone',
+            'sender_domain' => 'sender.domain',
+            'recipient_hash' => hash('sha256', $this->domainOwner->email),
+            'recipient_id' => $this->domainOwner->id,
+            'recipient_type' => User::class,
+            'connect_count' => 1,
+            'net_id' => $this->net->id,
+            'net_type' => IP4Net::class,
         ]);
 
         $this->domainOwner->setSetting('greylist_enabled', 'false');
 
         $request = new Greylist([
-                'sender' => 'someone@sender.domain',
-                'recipient' => $this->domainOwner->email,
-                'client_address' => $this->clientAddress
+            'sender' => 'someone@sender.domain',
+            'recipient' => $this->domainOwner->email,
+            'client_address' => $this->clientAddress,
         ]);
 
         $this->assertFalse($request->shouldDefer());
@@ -211,9 +214,9 @@ class GreylistTest extends TestCase
         $this->domainOwner->setAliases(['alias1@test2.domain2']);
 
         $request = new Greylist([
-                'sender' => 'someone@sender.domain',
-                'recipient' => 'alias1@test2.domain2',
-                'client_address' => $this->clientAddress
+            'sender' => 'someone@sender.domain',
+            'recipient' => 'alias1@test2.domain2',
+            'client_address' => $this->clientAddress,
         ]);
 
         $this->assertFalse($request->shouldDefer());
@@ -222,27 +225,27 @@ class GreylistTest extends TestCase
 
         // Test user enabled
         $connect = Greylist\Connect::create([
-                'sender_local' => 'someone',
-                'sender_domain' => 'sender.domain',
-                'recipient_hash' => hash('sha256', $this->domainOwner->email),
-                'recipient_id' => $this->domainOwner->id,
-                'recipient_type' => \App\User::class,
-                'connect_count' => 1,
-                'net_id' => $this->net->id,
-                'net_type' => \App\IP4Net::class
+            'sender_local' => 'someone',
+            'sender_domain' => 'sender.domain',
+            'recipient_hash' => hash('sha256', $this->domainOwner->email),
+            'recipient_id' => $this->domainOwner->id,
+            'recipient_type' => User::class,
+            'connect_count' => 1,
+            'net_id' => $this->net->id,
+            'net_type' => IP4Net::class,
         ]);
 
         $this->domainOwner->setSetting('greylist_enabled', 'true');
 
         $request = new Greylist([
-                'sender' => 'someone@sender.domain',
-                'recipient' => $this->domainOwner->email,
-                'client_address' => $this->clientAddress
+            'sender' => 'someone@sender.domain',
+            'recipient' => $this->domainOwner->email,
+            'client_address' => $this->clientAddress,
         ]);
 
         $this->assertTrue($request->shouldDefer());
 
-        $connect->created_at = \Carbon\Carbon::now()->subMinutes(6);
+        $connect->created_at = Carbon::now()->subMinutes(6);
         $connect->save();
 
         $this->assertFalse($request->shouldDefer());
@@ -254,7 +257,7 @@ class GreylistTest extends TestCase
             'sender' => 'someone@sender.domain',
             'recipient' => $this->domainOwner->email,
             'client_address' => $this->clientAddress,
-            'client_name' => 'some.mx'
+            'client_name' => 'some.mx',
         ]);
 
         $this->assertTrue($request->shouldDefer());
@@ -264,24 +267,24 @@ class GreylistTest extends TestCase
 
         // test controller not new
         $connect = Greylist\Connect::create([
-                'sender_local' => 'someone',
-                'sender_domain' => 'sender.domain',
-                'recipient_hash' => hash('sha256', $this->domainOwner->email),
-                'recipient_id' => $this->domainOwner->id,
-                'recipient_type' => \App\User::class,
-                'connect_count' => 1,
-                'net_id' => $this->net->id,
-                'net_type' => \App\IP4Net::class
+            'sender_local' => 'someone',
+            'sender_domain' => 'sender.domain',
+            'recipient_hash' => hash('sha256', $this->domainOwner->email),
+            'recipient_id' => $this->domainOwner->id,
+            'recipient_type' => User::class,
+            'connect_count' => 1,
+            'net_id' => $this->net->id,
+            'net_type' => IP4Net::class,
         ]);
 
-        $connect->created_at = \Carbon\Carbon::now()->subMinutes(6);
+        $connect->created_at = Carbon::now()->subMinutes(6);
         $connect->save();
 
         $request = new Greylist([
             'sender' => 'someone@sender.domain',
             'recipient' => $this->domainOwner->email,
             'client_address' => $this->clientAddress,
-            'client_name' => 'some.mx'
+            'client_name' => 'some.mx',
         ]);
 
         $this->assertFalse($request->shouldDefer());
@@ -295,21 +298,21 @@ class GreylistTest extends TestCase
         $this->setUpTest();
 
         $request = new Greylist([
-                'sender' => 'someone@sender.domain',
-                'recipient' => $this->domainOwner->email,
-                'client_address' => $this->clientAddress
+            'sender' => 'someone@sender.domain',
+            'recipient' => $this->domainOwner->email,
+            'client_address' => $this->clientAddress,
         ]);
 
         foreach ($this->domainUsers as $user) {
             Greylist\Connect::create([
-                    'sender_local' => 'someone',
-                    'sender_domain' => 'sender.domain',
-                    'recipient_hash' => hash('sha256', $user->email),
-                    'recipient_id' => $user->id,
-                    'recipient_type' => \App\User::class,
-                    'connect_count' => 1,
-                    'net_id' => $this->net->id,
-                    'net_type' => \App\IP4Net::class
+                'sender_local' => 'someone',
+                'sender_domain' => 'sender.domain',
+                'recipient_hash' => hash('sha256', $user->email),
+                'recipient_id' => $user->id,
+                'recipient_type' => User::class,
+                'connect_count' => 1,
+                'net_id' => $this->net->id,
+                'net_type' => IP4Net::class,
             ]);
 
             $user->setSetting('greylist_enabled', 'false');
@@ -319,9 +322,9 @@ class GreylistTest extends TestCase
             }
 
             $request = new Greylist([
-                    'sender' => 'someone@sender.domain',
-                    'recipient' => $user->email,
-                    'client_address' => $this->clientAddress
+                'sender' => 'someone@sender.domain',
+                'recipient' => $user->email,
+                'client_address' => $this->clientAddress,
             ]);
 
             $this->assertFalse($request->shouldDefer());
@@ -336,21 +339,21 @@ class GreylistTest extends TestCase
         $this->setUpTest();
 
         $request = new Greylist([
-                'sender' => 'someone@sender.domain',
-                'recipient' => $this->domainOwner->email,
-                'client_address' => $this->clientAddress
+            'sender' => 'someone@sender.domain',
+            'recipient' => $this->domainOwner->email,
+            'client_address' => $this->clientAddress,
         ]);
 
         foreach ($this->domainUsers as $user) {
             Greylist\Connect::create([
-                    'sender_local' => 'someone',
-                    'sender_domain' => 'sender.domain',
-                    'recipient_hash' => hash('sha256', $user->email),
-                    'recipient_id' => $user->id,
-                    'recipient_type' => \App\User::class,
-                    'connect_count' => 1,
-                    'net_id' => $this->net->id,
-                    'net_type' => \App\IP4Net::class
+                'sender_local' => 'someone',
+                'sender_domain' => 'sender.domain',
+                'recipient_hash' => hash('sha256', $user->email),
+                'recipient_id' => $user->id,
+                'recipient_type' => User::class,
+                'connect_count' => 1,
+                'net_id' => $this->net->id,
+                'net_type' => IP4Net::class,
             ]);
 
             $user->setSetting('greylist_enabled', ($user->id == $this->jack->id) ? 'true' : 'false');
@@ -360,9 +363,9 @@ class GreylistTest extends TestCase
             }
 
             $request = new Greylist([
-                    'sender' => 'someone@sender.domain',
-                    'recipient' => $user->email,
-                    'client_address' => $this->clientAddress
+                'sender' => 'someone@sender.domain',
+                'recipient' => $user->email,
+                'client_address' => $this->clientAddress,
             ]);
 
             if ($user->id == $this->jack->id) {

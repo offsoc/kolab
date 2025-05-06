@@ -5,22 +5,24 @@ namespace App;
 use App\Traits\BelongsToTenantTrait;
 use App\Traits\UuidStrKeyTrait;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Translatable\HasTranslations;
 
 /**
  * The eloquent definition of a Stock Keeping Unit (SKU).
  *
- * @property bool    $active
- * @property int     $cost
- * @property string  $description
- * @property int     $fee           The fee that the tenant pays to us
- * @property string  $handler_class
- * @property string  $id
- * @property string  $name
- * @property string  $period
- * @property ?int    $tenant_id
- * @property string  $title
- * @property int     $units_free
+ * @property bool   $active
+ * @property int    $cost
+ * @property string $description
+ * @property int    $fee           The fee that the tenant pays to us
+ * @property string $handler_class
+ * @property string $id
+ * @property string $name
+ * @property string $period
+ * @property ?int   $tenant_id
+ * @property string $title
+ * @property int    $units_free
  */
 class Sku extends Model
 {
@@ -30,7 +32,7 @@ class Sku extends Model
 
     /** @var array<string, string> The attributes that should be cast */
     protected $casts = [
-        'units_free' => 'integer'
+        'units_free' => 'integer',
     ];
 
     /** @var list<string> The attributes that are mass assignable */
@@ -56,7 +58,7 @@ class Sku extends Model
     /**
      * List the entitlements that consume this SKU.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Entitlement, $this>
+     * @return HasMany<Entitlement, $this>
      */
     public function entitlements()
     {
@@ -66,7 +68,7 @@ class Sku extends Model
     /**
      * List of packages that use this SKU.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<Package, $this, PackageSku>
+     * @return BelongsToMany<Package, $this, PackageSku>
      */
     public function packages()
     {

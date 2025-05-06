@@ -11,37 +11,36 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * The eloquent definition of a SignupCode.
  *
- * @property string         $code        The full code identifier
- * @property \Carbon\Carbon $created_at  The creation timestamp
- * @property \Carbon\Carbon $deleted_at  The deletion timestamp
- * @property ?string        $domain_part Email domain
- * @property ?string        $email       Email address
- * @property \Carbon\Carbon $expires_at  The code expiration timestamp
- * @property ?string        $first_name  Firstname
- * @property string         $ip_address  IP address the request came from
- * @property ?string        $last_name   Lastname
- * @property ?string        $local_part  Email local part
- * @property ?string        $plan        Plan title
- * @property ?string        $referral    Referral code
- * @property string         $short_code  Short validation code
- * @property \Carbon\Carbon $updated_at  The update timestamp
- * @property string         $submit_ip_address IP address the final signup submit request came from
- * @property ?int           $tenant_id   Tenant identifier
- * @property string         $verify_ip_address IP address the code verify request came from
- * @property ?string        $voucher     Voucher discount code
+ * @property string  $code              The full code identifier
+ * @property Carbon  $created_at        The creation timestamp
+ * @property Carbon  $deleted_at        The deletion timestamp
+ * @property ?string $domain_part       Email domain
+ * @property ?string $email             Email address
+ * @property Carbon  $expires_at        The code expiration timestamp
+ * @property ?string $first_name        Firstname
+ * @property string  $ip_address        IP address the request came from
+ * @property ?string $last_name         Lastname
+ * @property ?string $local_part        Email local part
+ * @property ?string $plan              Plan title
+ * @property ?string $referral          Referral code
+ * @property string  $short_code        Short validation code
+ * @property Carbon  $updated_at        The update timestamp
+ * @property string  $submit_ip_address IP address the final signup submit request came from
+ * @property ?int    $tenant_id         Tenant identifier
+ * @property string  $verify_ip_address IP address the code verify request came from
+ * @property ?string $voucher           Voucher discount code
  */
 class SignupCode extends Model
 {
-    use SoftDeletes;
     use BelongsToTenantTrait;
     use BelongsToUserTrait;
+    use SoftDeletes;
 
-    public const SHORTCODE_LENGTH  = 5;
-    public const CODE_LENGTH       = 32;
+    public const SHORTCODE_LENGTH = 5;
+    public const CODE_LENGTH = 32;
 
     // Code expires after so many hours
-    public const CODE_EXP_HOURS    = 24;
-
+    public const CODE_EXP_HOURS = 24;
 
     /** @var string The primary key associated with the table */
     protected $primaryKey = 'code';
@@ -71,9 +70,8 @@ class SignupCode extends Model
         'deleted_at' => 'datetime:Y-m-d H:i:s',
         'updated_at' => 'datetime:Y-m-d H:i:s',
         'expires_at' => 'datetime:Y-m-d H:i:s',
-        'headers' => 'array'
+        'headers' => 'array',
     ];
-
 
     /**
      * Check if code is expired.
@@ -87,13 +85,11 @@ class SignupCode extends Model
 
     /**
      * Generate a short code (for human).
-     *
-     * @return string
      */
     public static function generateShortCode(): string
     {
         $code_length = env('SIGNUP_CODE_LENGTH', self::SHORTCODE_LENGTH);
 
-        return \App\Utils::randStr($code_length);
+        return Utils::randStr($code_length);
     }
 }

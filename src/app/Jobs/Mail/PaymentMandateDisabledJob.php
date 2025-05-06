@@ -2,28 +2,27 @@
 
 namespace App\Jobs\Mail;
 
+use App\Jobs\MailJob;
+use App\Mail\Helper;
 use App\Mail\PaymentMandateDisabled;
 use App\User;
 use App\Wallet;
 
-class PaymentMandateDisabledJob extends \App\Jobs\MailJob
+class PaymentMandateDisabledJob extends MailJob
 {
-    /** @var \App\Wallet A wallet object */
+    /** @var Wallet A wallet object */
     protected $wallet;
 
-    /** @var ?\App\User A wallet controller */
+    /** @var ?User A wallet controller */
     protected $controller;
-
 
     /**
      * Create a new job instance.
      *
-     * @param \App\Wallet $wallet     A wallet object
-     * @param \App\User   $controller An email recipient (wallet controller)
-     *
-     * @return void
+     * @param Wallet $wallet     A wallet object
+     * @param User   $controller An email recipient (wallet controller)
      */
-    public function __construct(Wallet $wallet, User $controller = null)
+    public function __construct(Wallet $wallet, ?User $controller = null)
     {
         $this->wallet = $wallet;
         $this->controller = $controller;
@@ -31,8 +30,6 @@ class PaymentMandateDisabledJob extends \App\Jobs\MailJob
 
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle()
     {
@@ -46,7 +43,7 @@ class PaymentMandateDisabledJob extends \App\Jobs\MailJob
 
         $mail = new PaymentMandateDisabled($this->wallet, $this->controller);
 
-        list($to, $cc) = \App\Mail\Helper::userEmails($this->controller);
+        [$to, $cc] = Helper::userEmails($this->controller);
 
         if (!empty($to) || !empty($cc)) {
             $params = [
@@ -55,7 +52,7 @@ class PaymentMandateDisabledJob extends \App\Jobs\MailJob
                 'add' => " for {$this->wallet->id}",
             ];
 
-            \App\Mail\Helper::sendMail($mail, $this->controller->tenant_id, $params);
+            Helper::sendMail($mail, $this->controller->tenant_id, $params);
         }
 
         /*

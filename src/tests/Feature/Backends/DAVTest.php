@@ -12,10 +12,7 @@ class DAVTest extends TestCase
     private $user;
     private $user2;
 
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -24,10 +21,7 @@ class DAVTest extends TestCase
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         if ($this->user) {
             $this->deleteTestUser($this->user->email, true);
@@ -38,6 +32,7 @@ class DAVTest extends TestCase
 
         parent::tearDown();
     }
+
     /**
      * Test initializing default folders for a user.
      *
@@ -87,7 +82,7 @@ class DAVTest extends TestCase
         $this->assertSame('Contacts-Test', $folders[0]->name);
 
         $folders = $dav->listFolders(DAV::TYPE_VEVENT);
-        $folders = array_filter($folders, function ($f) {
+        $folders = array_filter($folders, static function ($f) {
             return $f->name != 'Inbox' && $f->name != 'Outbox';
         });
         $folders = array_values($folders);
@@ -97,7 +92,7 @@ class DAVTest extends TestCase
         $this->assertSame('Calendar-Test', $folders[0]->name);
 
         $folders = $dav->listFolders(DAV::TYPE_VTODO);
-        $folders = array_filter($folders, function ($f) {
+        $folders = array_filter($folders, static function ($f) {
             return $f->name != 'Inbox' && $f->name != 'Outbox';
         });
         $folders = array_values($folders);
@@ -113,6 +108,7 @@ class DAVTest extends TestCase
      * Test sharing/unsharing folders for a user (delegation).
      *
      * @depends testInitDefaultFolders
+     *
      * @group imap
      * @group dav
      */
@@ -141,21 +137,21 @@ class DAVTest extends TestCase
 
         $folders = array_values(array_filter(
             $dav->listFolders(DAV::TYPE_VCARD),
-            fn ($folder) => $folder->owner === $user->email
+            static fn ($folder) => $folder->owner === $user->email
         ));
         $this->assertCount(1, $folders);
         $this->assertSame('read-write', $folders[0]->shareAccess);
 
         $folders = array_values(array_filter(
             $dav->listFolders(DAV::TYPE_VEVENT),
-            fn ($folder) => $folder->owner === $user->email
+            static fn ($folder) => $folder->owner === $user->email
         ));
         $this->assertCount(1, $folders);
         $this->assertSame('read', $folders[0]->shareAccess);
 
         $folders = array_values(array_filter(
             $dav->listFolders(DAV::TYPE_VTODO),
-            fn ($folder) => $folder->owner === $user->email
+            static fn ($folder) => $folder->owner === $user->email
         ));
         $this->assertCount(0, $folders);
 
@@ -166,13 +162,13 @@ class DAVTest extends TestCase
 
         $folders = array_values(array_filter(
             $dav->listFolders(DAV::TYPE_VCARD),
-            fn ($folder) => $folder->owner === $user->email
+            static fn ($folder) => $folder->owner === $user->email
         ));
         $this->assertCount(0, $folders);
 
         $folders = array_values(array_filter(
             $dav->listFolders(DAV::TYPE_VEVENT),
-            fn ($folder) => $folder->owner === $user->email
+            static fn ($folder) => $folder->owner === $user->email
         ));
         $this->assertCount(0, $folders);
 
@@ -183,7 +179,7 @@ class DAVTest extends TestCase
 
         $folders = array_values(array_filter(
             $dav->listFolders(DAV::TYPE_VCARD),
-            fn ($folder) => $folder->owner != $user->email
+            static fn ($folder) => $folder->owner != $user->email
                 || $folder->shareAccess != DAV\Folder::SHARE_ACCESS_NONE
                 || !empty($folder->invites)
         ));
@@ -191,7 +187,7 @@ class DAVTest extends TestCase
 
         $folders = array_values(array_filter(
             $dav->listFolders(DAV::TYPE_VEVENT),
-            fn ($folder) => $folder->owner != $user->email
+            static fn ($folder) => $folder->owner != $user->email
                 || $folder->shareAccess != DAV\Folder::SHARE_ACCESS_NONE
                 || !empty($folder->invites)
         ));

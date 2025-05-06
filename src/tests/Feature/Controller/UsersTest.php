@@ -5,23 +5,22 @@ namespace Tests\Feature\Controller;
 use App\Discount;
 use App\Domain;
 use App\Http\Controllers\API\V4\UsersController;
+use App\Jobs\User\CreateJob;
 use App\Package;
 use App\Plan;
 use App\Sku;
 use App\Tenant;
 use App\User;
+use App\UserAlias;
+use App\VerificationCode;
 use App\Wallet;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Queue;
-use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class UsersTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -53,10 +52,7 @@ class UsersTest extends TestCase
         $user->setSettings(['plan_id' => null]);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->clearBetaEntitlements();
         $this->deleteTestUser('jane@kolabnow.com');
@@ -94,16 +90,16 @@ class UsersTest extends TestCase
     public function testDestroy(): void
     {
         // First create some users/accounts to delete
-        $package_kolab = \App\Package::where('title', 'kolab')->first();
-        $package_domain = \App\Package::where('title', 'domain-hosting')->first();
+        $package_kolab = Package::where('title', 'kolab')->first();
+        $package_domain = Package::where('title', 'domain-hosting')->first();
 
         $john = $this->getTestUser('john@kolab.org');
         $user1 = $this->getTestUser('UsersControllerTest1@userscontroller.com');
         $user2 = $this->getTestUser('UsersControllerTest2@userscontroller.com');
         $user3 = $this->getTestUser('UsersControllerTest3@userscontroller.com');
         $domain = $this->getTestDomain('userscontroller.com', [
-                'status' => Domain::STATUS_NEW,
-                'type' => Domain::TYPE_PUBLIC,
+            'status' => Domain::STATUS_NEW,
+            'type' => Domain::TYPE_PUBLIC,
         ]);
         $user1->assignPackage($package_kolab);
         $domain->assignPackage($package_domain, $user1);
@@ -135,8 +131,8 @@ class UsersTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertEquals('success', $json['status']);
-        $this->assertEquals('User deleted successfully.', $json['message']);
+        $this->assertSame('success', $json['status']);
+        $this->assertSame('User deleted successfully.', $json['message']);
 
         // Test removing self (an account with users)
         $response = $this->actingAs($user1)->delete("api/v4/users/{$user1->id}");
@@ -144,8 +140,8 @@ class UsersTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertEquals('success', $json['status']);
-        $this->assertEquals('User deleted successfully.', $json['message']);
+        $this->assertSame('success', $json['status']);
+        $this->assertSame('User deleted successfully.', $json['message']);
     }
 
     /**
@@ -154,14 +150,14 @@ class UsersTest extends TestCase
     public function testDestroyByController(): void
     {
         // Create an account with additional controller - $user2
-        $package_kolab = \App\Package::where('title', 'kolab')->first();
-        $package_domain = \App\Package::where('title', 'domain-hosting')->first();
+        $package_kolab = Package::where('title', 'kolab')->first();
+        $package_domain = Package::where('title', 'domain-hosting')->first();
         $user1 = $this->getTestUser('UsersControllerTest1@userscontroller.com');
         $user2 = $this->getTestUser('UsersControllerTest2@userscontroller.com');
         $user3 = $this->getTestUser('UsersControllerTest3@userscontroller.com');
         $domain = $this->getTestDomain('userscontroller.com', [
-                'status' => Domain::STATUS_NEW,
-                'type' => Domain::TYPE_PUBLIC,
+            'status' => Domain::STATUS_NEW,
+            'type' => Domain::TYPE_PUBLIC,
         ]);
         $user1->assignPackage($package_kolab);
         $domain->assignPackage($package_domain, $user1);
@@ -176,8 +172,8 @@ class UsersTest extends TestCase
         //   However, this is not 0-regression scenario as we
         //   do not fully support additional controllers.
 
-        //$response = $this->actingAs($user2)->delete("api/v4/users/{$user2->id}");
-        //$response->assertStatus(403);
+        // $response = $this->actingAs($user2)->delete("api/v4/users/{$user2->id}");
+        // $response->assertStatus(403);
 
         $response = $this->actingAs($user2)->delete("api/v4/users/{$user3->id}");
         $response->assertStatus(200);
@@ -211,7 +207,7 @@ class UsersTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertSame(false, $json['hasMore']);
+        $this->assertFalse($json['hasMore']);
         $this->assertSame(0, $json['count']);
         $this->assertCount(0, $json['list']);
 
@@ -220,7 +216,7 @@ class UsersTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertSame(false, $json['hasMore']);
+        $this->assertFalse($json['hasMore']);
         $this->assertSame(4, $json['count']);
         $this->assertCount(4, $json['list']);
         $this->assertSame($jack->email, $json['list'][0]['email']);
@@ -246,7 +242,7 @@ class UsersTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertSame(false, $json['hasMore']);
+        $this->assertFalse($json['hasMore']);
         $this->assertSame(4, $json['count']);
         $this->assertCount(4, $json['list']);
         $this->assertSame($jack->email, $json['list'][0]['email']);
@@ -260,7 +256,7 @@ class UsersTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertSame(false, $json['hasMore']);
+        $this->assertFalse($json['hasMore']);
         $this->assertSame(1, $json['count']);
         $this->assertCount(1, $json['list']);
         $this->assertSame($jack->email, $json['list'][0]['email']);
@@ -271,7 +267,7 @@ class UsersTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertSame(false, $json['hasMore']);
+        $this->assertFalse($json['hasMore']);
         $this->assertSame(1, $json['count']);
         $this->assertCount(1, $json['list']);
         $this->assertSame($joe->email, $json['list'][0]['email']);
@@ -282,7 +278,7 @@ class UsersTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertSame(false, $json['hasMore']);
+        $this->assertFalse($json['hasMore']);
         $this->assertSame(1, $json['count']);
         $this->assertCount(1, $json['list']);
         $this->assertSame($ned->email, $json['list'][0]['email']);
@@ -303,8 +299,8 @@ class UsersTest extends TestCase
         $json = $response->json();
 
         $response->assertStatus(200);
-        $this->assertEquals($userA->id, $json['id']);
-        $this->assertEquals($userA->email, $json['email']);
+        $this->assertSame($userA->id, $json['id']);
+        $this->assertSame($userA->email, $json['email']);
         $this->assertTrue(is_array($json['statusInfo']));
         $this->assertTrue(is_array($json['settings']));
         $this->assertTrue($json['config']['greylist_enabled']);
@@ -360,7 +356,7 @@ class UsersTest extends TestCase
         $this->assertCount(5, $json['skus']);
 
         $this->assertSame(5, $json['skus'][$storage_sku->id]['count']);
-        $this->assertSame([0,0,0,0,0], $json['skus'][$storage_sku->id]['costs']);
+        $this->assertSame([0, 0, 0, 0, 0], $json['skus'][$storage_sku->id]['costs']);
         $this->assertSame(1, $json['skus'][$groupware_sku->id]['count']);
         $this->assertSame([490], $json['skus'][$groupware_sku->id]['costs']);
         $this->assertSame(1, $json['skus'][$mailbox_sku->id]['count']);
@@ -384,12 +380,12 @@ class UsersTest extends TestCase
 
         // Create an sku for another tenant, to make sure it is not included in the result
         $nsku = Sku::create([
-                'title' => 'test',
-                'name' => 'Test',
-                'description' => '',
-                'active' => true,
-                'cost' => 100,
-                'handler_class' => 'Mailbox',
+            'title' => 'test',
+            'name' => 'Test',
+            'description' => '',
+            'active' => true,
+            'cost' => 100,
+            'handler_class' => 'Mailbox',
         ]);
         $tenant = Tenant::whereNotIn('id', [\config('app.tenant_id')])->first();
         $nsku->tenant_id = $tenant->id;
@@ -403,50 +399,50 @@ class UsersTest extends TestCase
         $this->assertCount(5, $json);
 
         $this->assertSkuElement('mailbox', $json[0], [
-                'prio' => 100,
-                'type' => 'user',
-                'handler' => 'Mailbox',
-                'enabled' => true,
-                'readonly' => true,
+            'prio' => 100,
+            'type' => 'user',
+            'handler' => 'Mailbox',
+            'enabled' => true,
+            'readonly' => true,
         ]);
 
         $this->assertSkuElement('storage', $json[1], [
-                'prio' => 90,
-                'type' => 'user',
-                'handler' => 'Storage',
-                'enabled' => true,
-                'readonly' => true,
-                'range' => [
-                    'min' => 5,
-                    'max' => 100,
-                    'unit' => 'GB',
-                ]
+            'prio' => 90,
+            'type' => 'user',
+            'handler' => 'Storage',
+            'enabled' => true,
+            'readonly' => true,
+            'range' => [
+                'min' => 5,
+                'max' => 100,
+                'unit' => 'GB',
+            ],
         ]);
 
         $this->assertSkuElement('groupware', $json[2], [
-                'prio' => 80,
-                'type' => 'user',
-                'handler' => 'Groupware',
-                'enabled' => false,
-                'readonly' => false,
+            'prio' => 80,
+            'type' => 'user',
+            'handler' => 'Groupware',
+            'enabled' => false,
+            'readonly' => false,
         ]);
 
         $this->assertSkuElement('activesync', $json[3], [
-                'prio' => 70,
-                'type' => 'user',
-                'handler' => 'Activesync',
-                'enabled' => false,
-                'readonly' => false,
-                'required' => ['Groupware'],
+            'prio' => 70,
+            'type' => 'user',
+            'handler' => 'Activesync',
+            'enabled' => false,
+            'readonly' => false,
+            'required' => ['Groupware'],
         ]);
 
         $this->assertSkuElement('2fa', $json[4], [
-                'prio' => 60,
-                'type' => 'user',
-                'handler' => 'Auth2F',
-                'enabled' => false,
-                'readonly' => false,
-                'forbidden' => ['Activesync'],
+            'prio' => 60,
+            'type' => 'user',
+            'handler' => 'Auth2F',
+            'enabled' => false,
+            'readonly' => false,
+            'forbidden' => ['Activesync'],
         ]);
 
         // Test inclusion of beta SKUs
@@ -460,11 +456,11 @@ class UsersTest extends TestCase
         $this->assertCount(6, $json);
 
         $this->assertSkuElement('beta', $json[5], [
-                'prio' => 10,
-                'type' => 'user',
-                'handler' => 'Beta',
-                'enabled' => false,
-                'readonly' => false,
+            'prio' => 10,
+            'type' => 'user',
+            'handler' => 'Beta',
+            'enabled' => false,
+            'readonly' => false,
         ]);
     }
 
@@ -530,15 +526,15 @@ class UsersTest extends TestCase
         if (\config('app.with_ldap')) {
             $this->assertFalse($json['isLdapReady']);
             $this->assertSame('user-ldap-ready', $json['process'][1]['label']);
-            $this->assertSame(false, $json['process'][1]['state']);
+            $this->assertFalse($json['process'][1]['state']);
             $this->assertSame('user-imap-ready', $json['process'][2]['label']);
-            $this->assertSame(false, $json['process'][2]['state']);
+            $this->assertFalse($json['process'][2]['state']);
         } else {
             $this->assertSame('user-imap-ready', $json['process'][1]['label']);
-            $this->assertSame(false, $json['process'][1]['state']);
+            $this->assertFalse($json['process'][1]['state']);
         }
 
-        Queue::assertPushed(\App\Jobs\User\CreateJob::class, 1);
+        Queue::assertPushed(CreateJob::class, 1);
     }
 
     /**
@@ -548,8 +544,8 @@ class UsersTest extends TestCase
     {
         $user = $this->getTestUser('UsersControllerTest1@userscontroller.com');
         $domain = $this->getTestDomain('userscontroller.com', [
-                'status' => Domain::STATUS_NEW,
-                'type' => Domain::TYPE_PUBLIC,
+            'status' => Domain::STATUS_NEW,
+            'type' => Domain::TYPE_PUBLIC,
         ]);
 
         $user->created_at = Carbon::now();
@@ -563,16 +559,16 @@ class UsersTest extends TestCase
         if (\config('app.with_ldap')) {
             $this->assertCount(3, $result['process']);
             $this->assertSame('user-ldap-ready', $result['process'][1]['label']);
-            $this->assertSame(false, $result['process'][1]['state']);
+            $this->assertFalse($result['process'][1]['state']);
             $this->assertSame('user-imap-ready', $result['process'][2]['label']);
-            $this->assertSame(false, $result['process'][2]['state']);
+            $this->assertFalse($result['process'][2]['state']);
         } else {
             $this->assertCount(2, $result['process']);
             $this->assertSame('user-imap-ready', $result['process'][1]['label']);
-            $this->assertSame(false, $result['process'][1]['state']);
+            $this->assertFalse($result['process'][1]['state']);
         }
         $this->assertSame('user-new', $result['process'][0]['label']);
-        $this->assertSame(true, $result['process'][0]['state']);
+        $this->assertTrue($result['process'][0]['state']);
         $this->assertSame('running', $result['processState']);
         $this->assertTrue($result['enableRooms']);
         $this->assertFalse($result['enableBeta']);
@@ -594,16 +590,16 @@ class UsersTest extends TestCase
         if (\config('app.with_ldap')) {
             $this->assertCount(3, $result['process']);
             $this->assertSame('user-ldap-ready', $result['process'][1]['label']);
-            $this->assertSame(true, $result['process'][1]['state']);
+            $this->assertTrue($result['process'][1]['state']);
             $this->assertSame('user-imap-ready', $result['process'][2]['label']);
-            $this->assertSame(true, $result['process'][2]['state']);
+            $this->assertTrue($result['process'][2]['state']);
         } else {
             $this->assertCount(2, $result['process']);
             $this->assertSame('user-imap-ready', $result['process'][1]['label']);
-            $this->assertSame(true, $result['process'][1]['state']);
+            $this->assertTrue($result['process'][1]['state']);
         }
         $this->assertSame('user-new', $result['process'][0]['label']);
-        $this->assertSame(true, $result['process'][0]['state']);
+        $this->assertTrue($result['process'][0]['state']);
 
         $domain->status |= Domain::STATUS_VERIFIED;
         $domain->type = Domain::TYPE_EXTERNAL;
@@ -616,30 +612,30 @@ class UsersTest extends TestCase
         if (\config('app.with_ldap')) {
             $this->assertCount(7, $result['process']);
             $this->assertSame('user-ldap-ready', $result['process'][1]['label']);
-            $this->assertSame(true, $result['process'][1]['state']);
+            $this->assertTrue($result['process'][1]['state']);
             $this->assertSame('user-imap-ready', $result['process'][2]['label']);
-            $this->assertSame(true, $result['process'][2]['state']);
+            $this->assertTrue($result['process'][2]['state']);
             $this->assertSame('domain-new', $result['process'][3]['label']);
-            $this->assertSame(true, $result['process'][3]['state']);
+            $this->assertTrue($result['process'][3]['state']);
             $this->assertSame('domain-ldap-ready', $result['process'][4]['label']);
-            $this->assertSame(false, $result['process'][4]['state']);
+            $this->assertFalse($result['process'][4]['state']);
             $this->assertSame('domain-verified', $result['process'][5]['label']);
-            $this->assertSame(true, $result['process'][5]['state']);
+            $this->assertTrue($result['process'][5]['state']);
             $this->assertSame('domain-confirmed', $result['process'][6]['label']);
-            $this->assertSame(false, $result['process'][6]['state']);
+            $this->assertFalse($result['process'][6]['state']);
         } else {
             $this->assertCount(5, $result['process']);
             $this->assertSame('user-imap-ready', $result['process'][1]['label']);
-            $this->assertSame(true, $result['process'][1]['state']);
+            $this->assertTrue($result['process'][1]['state']);
             $this->assertSame('domain-new', $result['process'][2]['label']);
-            $this->assertSame(true, $result['process'][2]['state']);
+            $this->assertTrue($result['process'][2]['state']);
             $this->assertSame('domain-verified', $result['process'][3]['label']);
-            $this->assertSame(true, $result['process'][3]['state']);
+            $this->assertTrue($result['process'][3]['state']);
             $this->assertSame('domain-confirmed', $result['process'][4]['label']);
-            $this->assertSame(false, $result['process'][4]['state']);
+            $this->assertFalse($result['process'][4]['state']);
         }
         $this->assertSame('user-new', $result['process'][0]['label']);
-        $this->assertSame(true, $result['process'][0]['state']);
+        $this->assertTrue($result['process'][0]['state']);
 
         // Test 'skus' property
         $user->assignSku(Sku::withEnvTenantContext()->where('title', 'beta')->first());
@@ -770,7 +766,7 @@ class UsersTest extends TestCase
         $this->assertSame('User settings updated successfully.', $json['message']);
 
         $this->assertSame('false', $john->fresh()->getSetting('greylist_enabled'));
-        $this->assertSame(null, $john->fresh()->getSetting('guam_enabled'));
+        $this->assertNull($john->fresh()->getSetting('guam_enabled'));
         $this->assertSame('min:10,max:255,upper,last:1', $john->fresh()->getSetting('password_policy'));
     }
 
@@ -839,8 +835,8 @@ class UsersTest extends TestCase
         $this->assertCount(2, $json);
         $this->assertSame('The specified email is not available.', $json['errors']['email']);
 
-        $package_kolab = \App\Package::withEnvTenantContext()->where('title', 'kolab')->first();
-        $package_domain = \App\Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
+        $package_kolab = Package::withEnvTenantContext()->where('title', 'kolab')->first();
+        $package_domain = Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
 
         $post = [
             'password' => 'simple123',
@@ -915,7 +911,7 @@ class UsersTest extends TestCase
         $this->assertSame('Doe2', $user->getSetting('last_name'));
         $this->assertSame('TestOrg', $user->getSetting('organization'));
         $this->assertFalse($user->isRestricted());
-        /** @var \App\UserAlias[] $aliases */
+        /** @var UserAlias[] $aliases */
         $aliases = $user->aliases()->orderBy('alias')->get();
         $this->assertCount(2, $aliases);
         $this->assertSame('deleted@kolab.org', $aliases[0]->alias);
@@ -951,7 +947,7 @@ class UsersTest extends TestCase
             'storage', 'storage', 'storage', 'storage', 'storage']);
 
         // Test password reset link "mode"
-        $code = new \App\VerificationCode(['mode' => 'password-reset', 'active' => false]);
+        $code = new VerificationCode(['mode' => 'password-reset', 'active' => false]);
         $john->verificationcodes()->save($code);
 
         $post = [
@@ -1069,7 +1065,7 @@ class UsersTest extends TestCase
             'billing_address' => 'billing',
             'country' => 'CH',
             'currency' => 'CHF',
-            'aliases' => ['useralias1@' . \config('app.domain'), 'useralias2@' . \config('app.domain')]
+            'aliases' => ['useralias1@' . \config('app.domain'), 'useralias2@' . \config('app.domain')],
         ];
 
         $response = $this->actingAs($userA)->put("/api/v4/users/{$userA->id}", $post);
@@ -1101,7 +1097,7 @@ class UsersTest extends TestCase
             'billing_address' => '',
             'country' => '',
             'currency' => '',
-            'aliases' => ['useralias2@' . \config('app.domain')]
+            'aliases' => ['useralias2@' . \config('app.domain')],
         ];
 
         $response = $this->actingAs($userA)->put("/api/v4/users/{$userA->id}", $post);
@@ -1128,7 +1124,7 @@ class UsersTest extends TestCase
                 'useralias2@' . \config('app.domain'),
                 'useralias1@kolab.org',
                 '@kolab.org',
-            ]
+            ],
         ];
 
         $response = $this->actingAs($userA)->put("/api/v4/users/{$userA->id}", $post);
@@ -1212,7 +1208,7 @@ class UsersTest extends TestCase
         $this->assertTrue(empty($json['statusInfo']));
 
         // Test password reset link "mode"
-        $code = new \App\VerificationCode(['mode' => 'password-reset', 'active' => false]);
+        $code = new VerificationCode(['mode' => 'password-reset', 'active' => false]);
         $owner->verificationcodes()->save($code);
 
         $post = ['passwordLinkCode' => $code->short_code . '-' . $code->code];
@@ -1251,8 +1247,8 @@ class UsersTest extends TestCase
                 $mailbox->id => 1,
                 $groupware->id => 1,
                 $storage->id => 7,
-                $activesync->id => 1
-            ]
+                $activesync->id => 1,
+            ],
         ];
 
         $response = $this->actingAs($jane)->put("/api/v4/users/{$jane->id}", $post);
@@ -1270,7 +1266,7 @@ class UsersTest extends TestCase
                 'storage',
                 'storage',
                 'storage',
-                'storage'
+                'storage',
             ]
         );
 
@@ -1280,8 +1276,8 @@ class UsersTest extends TestCase
                 $mailbox->id => 1,
                 $groupware->id => 1,
                 $storage->id => 9,
-                $activesync->id => 0
-            ]
+                $activesync->id => 0,
+            ],
         ];
 
         $response = $this->actingAs($jane)->put("/api/v4/users/{$jane->id}", $post);
@@ -1300,7 +1296,7 @@ class UsersTest extends TestCase
                 'storage',
                 'storage',
                 'storage',
-                'storage'
+                'storage',
             ]
         );
 
@@ -1310,8 +1306,8 @@ class UsersTest extends TestCase
                 $mailbox->id => 2,
                 $groupware->id => 1,
                 $storage->id => 9,
-                $activesync->id => 0
-            ]
+                $activesync->id => 0,
+            ],
         ];
 
         $response = $this->actingAs($jane)->put("/api/v4/users/{$jane->id}", $post);
@@ -1330,7 +1326,7 @@ class UsersTest extends TestCase
                 'storage',
                 'storage',
                 'storage',
-                'storage'
+                'storage',
             ]
         );
 
@@ -1340,8 +1336,8 @@ class UsersTest extends TestCase
                 $mailbox->id => 0,
                 $groupware->id => 1,
                 $storage->id => 9,
-                $activesync->id => 0
-            ]
+                $activesync->id => 0,
+            ],
         ];
 
         $response = $this->actingAs($jane)->put("/api/v4/users/{$jane->id}", $post);
@@ -1360,7 +1356,7 @@ class UsersTest extends TestCase
                 'storage',
                 'storage',
                 'storage',
-                'storage'
+                'storage',
             ]
         );
 
@@ -1370,8 +1366,8 @@ class UsersTest extends TestCase
                 $mailbox->id => 1,
                 $groupware->id => 1,
                 $storage->id => 1,
-                $activesync->id => 0
-            ]
+                $activesync->id => 0,
+            ],
         ];
 
         $response = $this->actingAs($jane)->put("/api/v4/users/{$jane->id}", $post);
@@ -1386,7 +1382,7 @@ class UsersTest extends TestCase
                 'storage',
                 'storage',
                 'storage',
-                'storage'
+                'storage',
             ]
         );
     }
@@ -1403,9 +1399,9 @@ class UsersTest extends TestCase
         $wallet->owner->setSettings(['plan_id' => null]);
         $result = $this->invokeMethod(new UsersController(), 'userResponse', [$john]);
 
-        $this->assertEquals($john->id, $result['id']);
-        $this->assertEquals($john->email, $result['email']);
-        $this->assertEquals($john->status, $result['status']);
+        $this->assertSame($john->id, $result['id']);
+        $this->assertSame($john->email, $result['email']);
+        $this->assertSame($john->status, $result['status']);
         $this->assertTrue(is_array($result['statusInfo']));
 
         $this->assertTrue(is_array($result['settings']));
@@ -1439,8 +1435,8 @@ class UsersTest extends TestCase
         $ned_wallet = $ned->wallets()->first();
         $result = $this->invokeMethod(new UsersController(), 'userResponse', [$ned]);
 
-        $this->assertEquals($ned->id, $result['id']);
-        $this->assertEquals($ned->email, $result['email']);
+        $this->assertSame($ned->id, $result['id']);
+        $this->assertSame($ned->email, $result['email']);
         $this->assertTrue(is_array($result['accounts']));
         $this->assertTrue(is_array($result['wallets']));
         $this->assertCount(1, $result['accounts']);
@@ -1472,7 +1468,7 @@ class UsersTest extends TestCase
 
         $result = $this->invokeMethod(new UsersController(), 'userResponse', [$john]);
 
-        $this->assertEquals($john->id, $result['id']);
+        $this->assertSame($john->id, $result['id']);
         $this->assertSame($discount->id, $result['wallet']['discount_id']);
         $this->assertSame($discount->discount, $result['wallet']['discount']);
         $this->assertSame($discount->description, $result['wallet']['discount_description']);
@@ -1540,20 +1536,20 @@ class UsersTest extends TestCase
             ["admin@kolab.org", $john, null],
 
             // valid (public domain)
-            ["test.test@$domain", $john, null],
+            ["test.test@{$domain}", $john, null],
 
             // Invalid format
-            ["$domain", $john, 'The specified email is invalid.'],
-            [".@$domain", $john, 'The specified email is invalid.'],
+            ["{$domain}", $john, 'The specified email is invalid.'],
+            [".@{$domain}", $john, 'The specified email is invalid.'],
             ["test123456@localhost", $john, 'The specified domain is invalid.'],
             ["test123456@unknown-domain.org", $john, 'The specified domain is invalid.'],
 
-            ["$domain", $john, 'The specified email is invalid.'],
-            [".@$domain", $john, 'The specified email is invalid.'],
+            ["{$domain}", $john, 'The specified email is invalid.'],
+            [".@{$domain}", $john, 'The specified email is invalid.'],
 
             // forbidden local part on public domains
-            ["admin@$domain", $john, 'The specified email is not available.'],
-            ["administrator@$domain", $john, 'The specified email is not available.'],
+            ["admin@{$domain}", $john, 'The specified email is not available.'],
+            ["administrator@{$domain}", $john, 'The specified email is not available.'],
 
             // forbidden (other user's domain)
             ["testtest@kolab.org", $user, 'The specified domain is not available.'],
@@ -1583,7 +1579,7 @@ class UsersTest extends TestCase
         ];
 
         foreach ($cases as $idx => $case) {
-            list($email, $user, $expected) = $case;
+            [$email, $user, $expected] = $case;
 
             $deleted = null;
             $result = UsersController::validateEmail($email, $user, $deleted);
@@ -1610,16 +1606,16 @@ class UsersTest extends TestCase
         $deleted_pub->delete();
 
         $result = UsersController::validateEmail('deleted@kolab.org', $john, $deleted);
-        $this->assertSame(null, $result);
+        $this->assertNull($result);
         $this->assertSame($deleted_priv->id, $deleted->id);
 
         $result = UsersController::validateEmail('deleted@kolabnow.com', $john, $deleted);
         $this->assertSame('The specified email is not available.', $result);
-        $this->assertSame(null, $deleted);
+        $this->assertNull($deleted);
 
         $result = UsersController::validateEmail('jack@kolab.org', $john, $deleted);
         $this->assertSame('The specified email is not available.', $result);
-        $this->assertSame(null, $deleted);
+        $this->assertNull($deleted);
 
         $pub_group = $this->getTestGroup('group-test@kolabnow.com');
         $priv_group = $this->getTestGroup('group-test@kolab.org');
@@ -1645,7 +1641,7 @@ class UsersTest extends TestCase
 
         // A group in a private domain, deleted
         $result = UsersController::validateEmail($priv_group->email, $john, $deleted);
-        $this->assertSame(null, $result);
+        $this->assertNull($result);
         $this->assertSame($priv_group->id, $deleted->id);
 
         // TODO: Test the same with a resource and shared folder
@@ -1685,17 +1681,17 @@ class UsersTest extends TestCase
 
         $cases = [
             // Invalid format
-            ["$domain", $john, 'The specified alias is invalid.'],
-            [".@$domain", $john, 'The specified alias is invalid.'],
+            ["{$domain}", $john, 'The specified alias is invalid.'],
+            [".@{$domain}", $john, 'The specified alias is invalid.'],
             ["test123456@localhost", $john, 'The specified domain is invalid.'],
             ["test123456@unknown-domain.org", $john, 'The specified domain is invalid.'],
 
-            ["$domain", $john, 'The specified alias is invalid.'],
-            [".@$domain", $john, 'The specified alias is invalid.'],
+            ["{$domain}", $john, 'The specified alias is invalid.'],
+            [".@{$domain}", $john, 'The specified alias is invalid.'],
 
             // forbidden local part on public domains
-            ["admin@$domain", $john, 'The specified alias is not available.'],
-            ["administrator@$domain", $john, 'The specified alias is not available.'],
+            ["admin@{$domain}", $john, 'The specified alias is not available.'],
+            ["administrator@{$domain}", $john, 'The specified alias is not available.'],
 
             // forbidden (other user's domain)
             ["testtest@kolab.org", $user, 'The specified domain is not available.'],
@@ -1710,7 +1706,7 @@ class UsersTest extends TestCase
             ["admin@kolab.org", $john, null],
 
             // valid (public domain)
-            ["test.test@$domain", $john, null],
+            ["test.test@{$domain}", $john, null],
 
             // An alias that was a user email before is allowed, but only for custom domains
             ["deleted@kolab.org", $john, null],
@@ -1740,7 +1736,7 @@ class UsersTest extends TestCase
         ];
 
         foreach ($cases as $idx => $case) {
-            list($alias, $user, $expected) = $case;
+            [$alias, $user, $expected] = $case;
             $result = UsersController::validateAlias($alias, $user);
             $this->assertSame($expected, $result, "Case {$alias}");
         }

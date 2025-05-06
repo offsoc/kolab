@@ -4,19 +4,16 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-// phpcs:ignore
 class CreatePolicyRatelimitTables extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up()
     {
         Schema::create(
             'policy_ratelimit',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->bigInteger('user_id');
                 $table->bigInteger('owner_id');
@@ -35,7 +32,7 @@ class CreatePolicyRatelimitTables extends Migration
 
         Schema::create(
             'policy_ratelimit_wl',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->bigInteger('whitelistable_id');
                 $table->string('whitelistable_type');
@@ -49,8 +46,6 @@ class CreatePolicyRatelimitTables extends Migration
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
     public function down()
     {

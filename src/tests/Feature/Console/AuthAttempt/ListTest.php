@@ -7,19 +7,13 @@ use Tests\TestCase;
 
 class ListTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         AuthAttempt::truncate();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         AuthAttempt::truncate();
         parent::tearDown();
@@ -39,13 +33,13 @@ class ListTest extends TestCase
 
         $user = $this->getTestUser('john@kolab.org');
         $authAttempt = AuthAttempt::recordAuthAttempt($user, '10.0.0.1');
-        //For up-to date timestamps and whatnot
+        // For up-to date timestamps and whatnot
         $authAttempt->refresh();
 
         $code = \Artisan::call('authattempts');
         $output = trim(\Artisan::output());
         $this->assertSame(0, $code);
 
-        $this->assertSame($authAttempt->toJson(JSON_PRETTY_PRINT), $output);
+        $this->assertSame($authAttempt->toJson(\JSON_PRETTY_PRINT), $output);
     }
 }

@@ -3,42 +3,40 @@
 namespace Tests\Feature\Controller;
 
 use App\Auth\Utils as AuthUtils;
+use App\AuthAttempt;
+use App\CompanionApp;
+use App\IP4Net;
+use App\Utils;
 use Tests\TestCase;
 
 class NGINXTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $john = $this->getTestUser('john@kolab.org');
-        \App\CompanionApp::where('user_id', $john->id)->delete();
-        \App\AuthAttempt::where('user_id', $john->id)->delete();
+        CompanionApp::where('user_id', $john->id)->delete();
+        AuthAttempt::where('user_id', $john->id)->delete();
         $john->setSettings([
-                'limit_geo' => null,
-                'guam_enabled' => null,
+            'limit_geo' => null,
+            'guam_enabled' => null,
         ]);
-        \App\IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
+        IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
 
         $this->useServicesUrl();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $john = $this->getTestUser('john@kolab.org');
-        \App\CompanionApp::where('user_id', $john->id)->delete();
-        \App\AuthAttempt::where('user_id', $john->id)->delete();
+        CompanionApp::where('user_id', $john->id)->delete();
+        AuthAttempt::where('user_id', $john->id)->delete();
         $john->setSettings([
-                'limit_geo' => null,
-                'guam_enabled' => null,
+            'limit_geo' => null,
+            'guam_enabled' => null,
         ]);
-        \App\IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
+        IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
 
         parent::tearDown();
     }
@@ -54,7 +52,7 @@ class NGINXTest extends TestCase
         $response->assertStatus(200);
         $response->assertHeader('auth-status', 'authentication failure');
 
-        $pass = \App\Utils::generatePassphrase();
+        $pass = Utils::generatePassphrase();
         $headers = [
             'Auth-Login-Attempt' => '1',
             'Auth-Method' => 'plain',
@@ -69,7 +67,7 @@ class NGINXTest extends TestCase
             'Auth-SSL-Subject' => '/CN=example.com',
             'Auth-SSL-Issuer' => '/CN=example.com',
             'Auth-SSL-Serial' => 'C07AD56B846B5BFF',
-            'Auth-SSL-Fingerprint' => '29d6a80a123d13355ed16b4b04605e29cb55a5ad'
+            'Auth-SSL-Fingerprint' => '29d6a80a123d13355ed16b4b04605e29cb55a5ad',
         ];
 
         // Pass
@@ -150,7 +148,7 @@ class NGINXTest extends TestCase
         );
 
         // 2-FA with accepted auth attempt
-        $authAttempt = \App\AuthAttempt::recordAuthAttempt($john, "127.0.0.1");
+        $authAttempt = AuthAttempt::recordAuthAttempt($john, "127.0.0.1");
         $authAttempt->accept();
 
         $response = $this->withHeaders($headers)->get("api/webhooks/nginx");
@@ -179,25 +177,25 @@ class NGINXTest extends TestCase
         $response->assertStatus(200);
         $response->assertHeader('auth-status', 'authentication failure');
 
-        $authAttempt = \App\AuthAttempt::where('ip', $headers['Client-Ip'])->where('user_id', $john->id)->first();
+        $authAttempt = AuthAttempt::where('ip', $headers['Client-Ip'])->where('user_id', $john->id)->first();
         $this->assertSame('geolocation', $authAttempt->reason);
-        \App\AuthAttempt::where('user_id', $john->id)->delete();
+        AuthAttempt::where('user_id', $john->id)->delete();
 
         // Geo-lockin (success)
-        \App\IP4Net::create([
-                'net_number' => '127.0.0.0',
-                'net_broadcast' => '127.255.255.255',
-                'net_mask' => 8,
-                'country' => 'US',
-                'rir_name' => 'test',
-                'serial' => 1,
+        IP4Net::create([
+            'net_number' => '127.0.0.0',
+            'net_broadcast' => '127.255.255.255',
+            'net_mask' => 8,
+            'country' => 'US',
+            'rir_name' => 'test',
+            'serial' => 1,
         ]);
 
         $response = $this->withHeaders($headers)->get("api/webhooks/nginx");
         $response->assertStatus(200);
         $response->assertHeader('auth-status', 'OK');
 
-        $this->assertCount(0, \App\AuthAttempt::where('user_id', $john->id)->get());
+        $this->assertCount(0, AuthAttempt::where('user_id', $john->id)->get());
 
         // Token auth (valid)
         $modifiedHeaders['Auth-Pass'] = AuthUtils::tokenCreate($john->id);
@@ -223,7 +221,7 @@ class NGINXTest extends TestCase
         $response = $this->get("api/webhooks/nginx-httpauth");
         $response->assertStatus(200);
 
-        $pass = \App\Utils::generatePassphrase();
+        $pass = Utils::generatePassphrase();
         $headers = [
             'Php-Auth-Pw' => $pass,
             'Php-Auth-User' => 'john@kolab.org',
@@ -284,7 +282,7 @@ class NGINXTest extends TestCase
         );
 
         // 2-FA with accepted auth attempt
-        $authAttempt = \App\AuthAttempt::recordAuthAttempt($john, "127.0.0.1");
+        $authAttempt = AuthAttempt::recordAuthAttempt($john, "127.0.0.1");
         $authAttempt->accept();
 
         $response = $this->withHeaders($headers)->get("api/webhooks/nginx-httpauth");
@@ -314,14 +312,14 @@ class NGINXTest extends TestCase
      */
     public function testCyrusSaslHook(): void
     {
-        $pass = \App\Utils::generatePassphrase();
+        $pass = Utils::generatePassphrase();
 
         // Pass
-        $response = $this->postWithBody("api/webhooks/cyrus-sasl", "john kolab.org $pass");
+        $response = $this->postWithBody("api/webhooks/cyrus-sasl", "john kolab.org {$pass}");
         $response->assertStatus(200);
 
         // Pass without realm
-        $response = $this->postWithBody("api/webhooks/cyrus-sasl", "john@kolab.org  $pass");
+        $response = $this->postWithBody("api/webhooks/cyrus-sasl", "john@kolab.org  {$pass}");
         $response->assertStatus(200);
 
         // Invalid password
@@ -332,15 +330,15 @@ class NGINXTest extends TestCase
         $pass = \config('services.imap.admin_password');
 
         // cyrus-admin Pass
-        $response = $this->postWithBody("api/webhooks/cyrus-sasl", "$cyrusAdmin  $pass");
+        $response = $this->postWithBody("api/webhooks/cyrus-sasl", "{$cyrusAdmin}  {$pass}");
         $response->assertStatus(200);
 
         // cyrus-admin fail
-        $response = $this->postWithBody("api/webhooks/cyrus-sasl", "$cyrusAdmin  fail");
+        $response = $this->postWithBody("api/webhooks/cyrus-sasl", "{$cyrusAdmin}  fail");
         $response->assertStatus(403);
 
         // unknown user fail
-        $response = $this->postWithBody("api/webhooks/cyrus-sasl", "missing@kolab.org  $pass");
+        $response = $this->postWithBody("api/webhooks/cyrus-sasl", "missing@kolab.org  {$pass}");
         $response->assertStatus(403);
     }
 }

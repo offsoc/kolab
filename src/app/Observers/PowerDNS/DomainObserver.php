@@ -3,12 +3,15 @@
 namespace App\Observers\PowerDNS;
 
 use App\PowerDNS\Domain;
+use App\PowerDNS\DomainSetting;
+use App\PowerDNS\Record;
+use Carbon\Carbon;
 
 class DomainObserver
 {
     public function created(Domain $domain)
     {
-        \App\PowerDNS\Record::create(
+        Record::create(
             [
                 'domain_id' => $domain->id,
                 'name' => $domain->name,
@@ -17,42 +20,42 @@ class DomainObserver
                     "ns.%s. hostmaster.%s. %s 1200 600 1814400 60",
                     $domain->name,
                     $domain->name,
-                    \Carbon\Carbon::now()->format('Ymd') . '01'
-                )
+                    Carbon::now()->format('Ymd') . '01'
+                ),
             ]
         );
 
-        \App\PowerDNS\Record::withoutEvents(
-            function () use ($domain) {
-                \App\PowerDNS\Record::create(
+        Record::withoutEvents(
+            static function () use ($domain) {
+                Record::create(
                     [
                         'domain_id' => $domain->id,
                         'name' => $domain->name,
                         'type' => "NS",
-                        'content' => \config('app.woat_ns1')
+                        'content' => \config('app.woat_ns1'),
                     ]
                 );
             }
         );
 
-        \App\PowerDNS\Record::withoutEvents(
-            function () use ($domain) {
-                \App\PowerDNS\Record::create(
+        Record::withoutEvents(
+            static function () use ($domain) {
+                Record::create(
                     [
                         'domain_id' => $domain->id,
                         'name' => $domain->name,
                         'type' => "NS",
-                        'content' => \config('app.woat_ns2')
+                        'content' => \config('app.woat_ns2'),
                     ]
                 );
             }
         );
 
-        \App\PowerDNS\DomainSetting::create(
+        DomainSetting::create(
             [
                 'domain_id' => $domain->id,
                 'kind' => 'ENABLE-LUA-RECORDS',
-                'content' => "0"
+                'content' => "0",
             ]
         );
     }

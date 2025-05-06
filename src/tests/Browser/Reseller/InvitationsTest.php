@@ -3,10 +3,10 @@
 namespace Tests\Browser\Reseller;
 
 use App\SignupInvitation;
+use App\Utils;
 use Illuminate\Support\Facades\Queue;
 use Tests\Browser;
 use Tests\Browser\Components\Dialog;
-use Tests\Browser\Components\Menu;
 use Tests\Browser\Components\Toast;
 use Tests\Browser\Pages\Dashboard;
 use Tests\Browser\Pages\Home;
@@ -15,10 +15,7 @@ use Tests\TestCaseDusk;
 
 class InvitationsTest extends TestCaseDusk
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         self::useResellerUrl();
@@ -31,7 +28,7 @@ class InvitationsTest extends TestCaseDusk
     public function testInvitationsUnauth(): void
     {
         // Test that the page requires authentication
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit('/invitations')->on(new Home());
         });
     }
@@ -41,11 +38,11 @@ class InvitationsTest extends TestCaseDusk
      */
     public function testInvitationCreate(): void
     {
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $date_regexp = '/^20[0-9]{2}-/';
 
             $browser->visit(new Home())
-                ->submitLogon('reseller@' . \config('app.domain'), \App\Utils::generatePassphrase(), true)
+                ->submitLogon('reseller@' . \config('app.domain'), Utils::generatePassphrase(), true)
                 ->on(new Dashboard())
                 ->assertSeeIn('@links .link-invitations', 'Invitations')
                 ->click('@links .link-invitations')
@@ -57,7 +54,7 @@ class InvitationsTest extends TestCaseDusk
 
             // Create a single invite with email address input
             $browser->click('@create-button')
-                ->with(new Dialog('#invite-create'), function (Browser $browser) {
+                ->with(new Dialog('#invite-create'), static function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Invite for a signup')
                         ->assertFocused('@body input#email')
                         ->assertValue('@body input#email', '')
@@ -88,7 +85,7 @@ class InvitationsTest extends TestCaseDusk
 
             // Create invites from a file
             $browser->click('@create-button')
-                ->with(new Dialog('#invite-create'), function (Browser $browser) {
+                ->with(new Dialog('#invite-create'), static function (Browser $browser) {
                     $browser->assertFocused('@body input#email')
                         ->assertValue('@body input#email', '')
                         ->assertMissing('@body input#email.is-invalid')
@@ -119,7 +116,7 @@ class InvitationsTest extends TestCaseDusk
      */
     public function testInvitationDeleteAndResend(): void
     {
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             Queue::fake();
             $i1 = SignupInvitation::create(['email' => 'test1@domain.org']);
             $i2 = SignupInvitation::create(['email' => 'test2@domain.org']);
@@ -150,7 +147,7 @@ class InvitationsTest extends TestCaseDusk
      */
     public function testInvitationsList(): void
     {
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             Queue::fake();
             $i1 = SignupInvitation::create(['email' => 'email1@ext.com']);
             $i2 = SignupInvitation::create(['email' => 'email2@ext.com']);
@@ -178,7 +175,7 @@ class InvitationsTest extends TestCaseDusk
                 // ->submitLogon('reseller@' . \config('app.domain'), \App\Utils::generatePassphrase(), true)
                 ->assertElementsCount('@table tbody tr', 10)
                 ->assertSeeIn('.more-loader button', 'Load more')
-                ->with('@table tbody', function ($browser) use ($i1, $i2, $i3) {
+                ->with('@table tbody', static function ($browser) use ($i1, $i2, $i3) {
                     $browser->assertSeeIn('tr:nth-child(1) td.email', $i1->email)
                         ->assertText('tr:nth-child(1) td.email svg.text-danger title', 'Sending failed')
                         ->assertVisible('tr:nth-child(1) td.buttons button.button-delete')
@@ -196,7 +193,7 @@ class InvitationsTest extends TestCaseDusk
                         ->assertVisible('tr:nth-child(4) td.buttons button.button-resend:disabled');
                 })
                 ->click('.more-loader button')
-                ->whenAvailable('@table tbody tr:nth-child(11)', function ($browser) use ($i11) {
+                ->whenAvailable('@table tbody tr:nth-child(11)', static function ($browser) use ($i11) {
                     $browser->assertSeeIn('td.email', $i11->email);
                 })
                 ->assertMissing('.more-loader button');

@@ -27,7 +27,7 @@ class Account
     /** @var string Full account location URI (w/o parameters) */
     public $uri;
 
-    /** @var string Username for proxy auth */
+    /** @var ?string Username for proxy auth */
     public $loginas;
 
     /** @var array Additional parameters from the input */
@@ -41,7 +41,6 @@ class Account
 
     /** @var ?User User object */
     protected $user;
-
 
     /**
      * Object constructor

@@ -1,22 +1,19 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-// phpcs:ignore
 class CreateGroupSettingsTable extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up()
     {
         Schema::create(
             'group_settings',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->bigInteger('group_id');
                 $table->string('key');
@@ -34,8 +31,6 @@ class CreateGroupSettingsTable extends Migration
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
     public function down()
     {

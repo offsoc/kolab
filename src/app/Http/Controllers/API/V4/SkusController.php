@@ -2,18 +2,20 @@
 
 namespace App\Http\Controllers\API\V4;
 
+use App\Entitlement;
+use App\Handlers\Mailbox;
 use App\Http\Controllers\ResourceController;
 use App\Sku;
-use Illuminate\Http\Request;
+use App\Wallet;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 
 class SkusController extends ResourceController
 {
     /**
      * Get a list of active SKUs.
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function index()
     {
@@ -25,7 +27,7 @@ class SkusController extends ResourceController
             ->transform(function ($sku) {
                 return $this->skuElement($sku);
             })
-            ->filter(function ($sku) use ($type) {
+            ->filter(static function ($sku) use ($type) {
                 return $sku && (!$type || $sku['type'] === $type);
             })
             ->sortByDesc('prio')
@@ -35,7 +37,7 @@ class SkusController extends ResourceController
             $wallet = $this->guard()->user()->wallet();
 
             // Figure out the cost for a new object of the specified type
-            $response = $response->map(function ($sku) use ($wallet) {
+            $response = $response->map(static function ($sku) use ($wallet) {
                 $sku['nextCost'] = $sku['cost'];
                 if ($sku['cost'] && $sku['units_free']) {
                     $count = $wallet->entitlements()->where('sku_id', $sku['id'])->count();
@@ -57,7 +59,7 @@ class SkusController extends ResourceController
      *
      * @param object $object Entitleable object
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public static function objectSkus($object)
     {
@@ -91,8 +93,8 @@ class SkusController extends ResourceController
             }
         }
 
-        usort($response, function ($a, $b) {
-            return ($b['prio'] <=> $a['prio']);
+        usort($response, static function ($a, $b) {
+            return $b['prio'] <=> $a['prio'];
         });
 
         return response()->json($response);
@@ -107,7 +109,7 @@ class SkusController extends ResourceController
     public static function objectEntitlements($object, &$response = []): void
     {
         // Object's entitlements information
-        $response['skus'] = \App\Entitlement::objectEntitlementsSummary($object);
+        $response['skus'] = Entitlement::objectEntitlementsSummary($object);
 
         // Some basic information about the object's wallet
         $wallet = $object->wallet();
@@ -121,9 +123,9 @@ class SkusController extends ResourceController
     /**
      * Update object entitlements.
      *
-     * @param object       $object The object for update
-     * @param array        $rSkus  List of SKU IDs requested for the object in the form [id=>qty]
-     * @param ?\App\Wallet $wallet The target wallet
+     * @param object  $object The object for update
+     * @param array   $rSkus  List of SKU IDs requested for the object in the form [id=>qty]
+     * @param ?Wallet $wallet The target wallet
      */
     public static function updateEntitlements($object, $rSkus, $wallet = null): void
     {
@@ -137,14 +139,14 @@ class SkusController extends ResourceController
 
         // available SKUs, [id => obj]
         $skus = Sku::withObjectTenantContext($object)->get()->mapWithKeys(
-            function ($sku) {
+            static function ($sku) {
                 return [$sku->id => $sku];
             }
         );
 
         // existing object SKUs, [id => total]
         $eSkus = $object->entitlements()->groupBy('sku_id')->selectRaw('count(*) as total, sku_id')->get()->mapWithKeys(
-            function ($e) {
+            static function ($e) {
                 return [$e->sku_id => $e->total];
             }
         )->all();
@@ -158,7 +160,7 @@ class SkusController extends ResourceController
                 continue;
             }
 
-            if ($sku->handler_class == \App\Handlers\Mailbox::class) {
+            if ($sku->handler_class == Mailbox::class) {
                 if ($r != 1) {
                     throw new \Exception("Invalid quantity of mailboxes");
                 }
@@ -166,10 +168,10 @@ class SkusController extends ResourceController
 
             if ($e > $r) {
                 // remove those entitled more than existing
-                $object->removeSku($sku, ($e - $r));
+                $object->removeSku($sku, $e - $r);
             } elseif ($e < $r) {
                 // add those requested more than entitled
-                $object->assignSku($sku, ($r - $e), $wallet);
+                $object->assignSku($sku, $r - $e, $wallet);
             }
         }
     }
@@ -178,7 +180,7 @@ class SkusController extends ResourceController
      * Convert SKU information to metadata used by UI to
      * display the form control
      *
-     * @param \App\Sku $sku SKU object
+     * @param Sku $sku SKU object
      *
      * @return array|null Metadata
      */

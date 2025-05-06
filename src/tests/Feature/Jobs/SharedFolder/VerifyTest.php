@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Jobs\SharedFolder;
 
+use App\Jobs\SharedFolder\VerifyJob;
 use App\SharedFolder;
 use App\Support\Facades\IMAP;
 use Illuminate\Support\Facades\Queue;
@@ -9,10 +10,7 @@ use Tests\TestCase;
 
 class VerifyTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -21,10 +19,7 @@ class VerifyTest extends TestCase
         $folder->save();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $folder = $this->getTestSharedFolder('folder-event@kolab.org');
         $folder->status |= SharedFolder::STATUS_IMAP_READY;
@@ -41,7 +36,7 @@ class VerifyTest extends TestCase
         Queue::fake();
 
         // Test non-existing folder ID
-        $job = (new \App\Jobs\SharedFolder\VerifyJob(123))->withFakeQueueInteractions();
+        $job = (new VerifyJob(123))->withFakeQueueInteractions();
         $job->handle();
         $job->assertFailedWith("Shared folder 123 could not be found in the database.");
 
@@ -58,7 +53,7 @@ class VerifyTest extends TestCase
         // Test successful verification
         IMAP::shouldReceive('verifySharedFolder')->once()->with($folder->getSetting('folder'))->andReturn(true);
 
-        $job = new \App\Jobs\SharedFolder\VerifyJob($folder->id);
+        $job = new VerifyJob($folder->id);
         $job->handle();
 
         $folder->refresh();
@@ -70,7 +65,7 @@ class VerifyTest extends TestCase
         // Test unsuccessful verification
         IMAP::shouldReceive('verifySharedFolder')->once()->with($folder->getSetting('folder'))->andReturn(false);
 
-        $job = new \App\Jobs\SharedFolder\VerifyJob($folder->id);
+        $job = new VerifyJob($folder->id);
         $job->handle();
 
         $folder->refresh();

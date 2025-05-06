@@ -5,8 +5,8 @@ namespace App\DataMigrator\Driver;
 use App\DataMigrator\Account;
 use App\DataMigrator\Engine;
 use App\DataMigrator\Interface\ExporterInterface;
-use App\DataMigrator\Interface\ImporterInterface;
 use App\DataMigrator\Interface\Folder;
+use App\DataMigrator\Interface\ImporterInterface;
 use App\DataMigrator\Interface\Item;
 use App\DataMigrator\Interface\ItemSet;
 use App\DataMigrator\Queue;
@@ -97,7 +97,6 @@ class EWS implements ExporterInterface
     /** @var Engine Data migrator engine */
     protected $engine;
 
-
     /**
      * Object constructor
      */
@@ -155,11 +154,11 @@ class EWS implements ExporterInterface
     /**
      * Autodiscover the server and authenticate the user
      */
-    protected function authenticateWithPassword(string $server, string $user, string $password, string $loginas = null)
+    protected function authenticateWithPassword(string $server, string $user, string $password, ?string $loginas = null)
     {
         // Note: Since 2023-01-01 EWS at Office365 requires OAuth2, no way back to basic auth.
 
-        \Log::debug("[EWS] Using basic authentication on $server...");
+        \Log::debug("[EWS] Using basic authentication on {$server}...");
 
         $options = [];
 
@@ -180,7 +179,7 @@ class EWS implements ExporterInterface
      */
     protected function authenticateWithToken(string $server, string $user, string $token, $expires_at = null)
     {
-        \Log::debug("[EWS] Using token authentication on $server...");
+        \Log::debug("[EWS] Using token authentication on {$server}...");
 
         $options = ['impersonation' => $user];
 
@@ -208,7 +207,7 @@ class EWS implements ExporterInterface
         // See https://github.com/Garethp/php-ews/issues/236#issuecomment-1292521527
         // To register OAuth2 app goto https://entra.microsoft.com > Applications > App registrations
 
-        \Log::debug("[EWS] Fetching OAuth2 token from $server...");
+        \Log::debug("[EWS] Fetching OAuth2 token from {$server}...");
 
         $scope = 'https://outlook.office365.com/.default';
         $token_uri = "https://login.microsoftonline.com/{$tenant_id}/oauth2/v2.0/token";
@@ -292,7 +291,7 @@ class EWS implements ExporterInterface
             // FIXME: Is there a better way to distinguish user folders from system ones?
             if (
                 in_array($fullname, $this->folder_exceptions)
-                || strpos($fullname, 'OwaFV15.1All') === 0
+                || str_starts_with($fullname, 'OwaFV15.1All')
             ) {
                 continue;
             }
@@ -344,7 +343,7 @@ class EWS implements ExporterInterface
         $existingIndex = [];
         array_walk(
             $existing,
-            function (&$item, $idx) use (&$existingIndex) {
+            static function (&$item, $idx) use (&$existingIndex) {
                 if (!empty($item['x-ms-id'])) {
                     [$id, $changeKey] = explode('!', $item['x-ms-id']);
                     $item['changeKey'] = $changeKey;
@@ -367,7 +366,7 @@ class EWS implements ExporterInterface
                     'FieldURI' => [
                         ['FieldURI' => 'item:ItemClass'],
                         // ['FieldURI' => 'item:Size'],
-                        ['FieldURI' => 'message:InternetMessageId'], //For mail only?
+                        ['FieldURI' => 'message:InternetMessageId'], // For mail only?
                     ],
                 ],
             ],
@@ -420,7 +419,7 @@ class EWS implements ExporterInterface
         if (count($set->items)) {
             $callback($set);
         }
-        \Log::debug("[EWS] Processed $itemCount items");
+        \Log::debug("[EWS] Processed {$itemCount} items");
 
         // TODO: Delete items that do not exist anymore?
     }
@@ -470,7 +469,7 @@ class EWS implements ExporterInterface
             $idx = $existingIndex[$id['Id']];
 
             if ($existing[$idx]['changeKey'] == $id['ChangeKey']) {
-                \Log::debug("[EWS] Skipping over already existing message $idx with class {$item->getItemClass()}...");
+                \Log::debug("[EWS] Skipping over already existing message {$idx} with class {$item->getItemClass()}...");
                 return null;
             }
 
@@ -480,14 +479,14 @@ class EWS implements ExporterInterface
             try {
                 $msgid = $item->getInternetMessageId();
             } catch (\Exception $e) {
-                //Ignore
+                // Ignore
             }
             if (isset($existingIndex[$msgid])) {
                 // If the messageid already exists, we assume it's the same email.
                 // Flag/size changes are ignored for now.
                 // Otherwise we should set uid/size/flags on exists, so the IMAP implementation can pick it up.
                 \Log::debug(
-                    "[EWS] Skipping over already existing message $msgid with class {$item->getItemClass()}..."
+                    "[EWS] Skipping over already existing message {$msgid} with class {$item->getItemClass()}..."
                 );
                 return null;
             }

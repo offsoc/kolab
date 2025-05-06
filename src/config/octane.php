@@ -22,7 +22,6 @@ use Laravel\Octane\Listeners\StopWorkerIfNecessary;
 use Laravel\Octane\Octane;
 
 return [
-
     /*
     |--------------------------------------------------------------------------
     | Octane Server
@@ -71,11 +70,9 @@ return [
         RequestReceived::class => [
             ...Octane::prepareApplicationForNextOperation(),
             ...Octane::prepareApplicationForNextRequest(),
-            //
         ],
 
         RequestHandled::class => [
-            //
         ],
 
         RequestTerminated::class => [
@@ -84,20 +81,16 @@ return [
 
         TaskReceived::class => [
             ...Octane::prepareApplicationForNextOperation(),
-            //
         ],
 
         TaskTerminated::class => [
-            //
         ],
 
         TickReceived::class => [
             ...Octane::prepareApplicationForNextOperation(),
-            //
         ],
 
         TickTerminated::class => [
-            //
         ],
 
         OperationTerminated::class => [
@@ -112,7 +105,6 @@ return [
         ],
 
         WorkerStopping::class => [
-            //
         ],
     ],
 
@@ -162,7 +154,7 @@ return [
     */
 
     'tables' => [
-/*
+        /*
         'example:1000' => [
             'name' => 'string:1000',
             'votes' => 'int',
@@ -239,10 +231,10 @@ return [
             'upload_max_filesize' => env('SWOOLE_UPLOAD_MAX_FILESIZE', 10 * 1024 * 1024),
 
             'enable_coroutine' => false,
-            //FIXME the daemonize option does not work
+            // FIXME the daemonize option does not work
             // 'daemonize' => env('OCTANE_DAEMONIZE', true),
-            //FIXME accessing app()->environment in here renders artisan disfunctional. I suppose it's too early.
-            //'log_level' => app()->environment('local') ? SWOOLE_LOG_INFO : SWOOLE_LOG_ERROR,
+            // FIXME accessing app()->environment in here renders artisan disfunctional. I suppose it's too early.
+            // 'log_level' => app()->environment('local') ? SWOOLE_LOG_INFO : SWOOLE_LOG_ERROR,
             // 'reactor_num' => , // number of available cpus by default
             'send_yield' => true,
             'socket_buffer_size' => 10 * 1024 * 1024,

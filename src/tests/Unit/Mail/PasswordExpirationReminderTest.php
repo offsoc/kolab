@@ -24,10 +24,10 @@ class PasswordExpirationReminderTest extends TestCase
         $plain = $mail['plain'];
 
         $url = Utils::serviceUrl('profile');
-        $link = "<a href=\"$url\">$url</a>";
+        $link = "<a href=\"{$url}\">{$url}</a>";
         $appName = \config('app.name');
 
-        $this->assertSame("$appName password expires on $expiresOn", $mail['subject']);
+        $this->assertSame("{$appName} password expires on {$expiresOn}", $mail['subject']);
 
         $this->assertStringStartsWith('<!DOCTYPE html>', $html);
         $this->assertTrue(strpos($html, $link) > 0);
@@ -52,7 +52,7 @@ class PasswordExpirationReminderTest extends TestCase
 
         $mail = new PasswordExpirationReminder($user, $expiresOn);
 
-        $this->assertSame("$appName password expires on $expiresOn", $mail->getSubject());
+        $this->assertSame("{$appName} password expires on {$expiresOn}", $mail->getSubject());
         $this->assertSame($user, $mail->getUser());
     }
 }

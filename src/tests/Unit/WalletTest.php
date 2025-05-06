@@ -2,6 +2,9 @@
 
 namespace Tests\Unit;
 
+use App\Discount;
+use App\Entitlement;
+use App\User;
 use App\Wallet;
 use Carbon\Carbon;
 use Tests\TestCase;
@@ -32,15 +35,15 @@ class WalletTest extends TestCase
      */
     public function testEntitlementCosts()
     {
-        $discount = \App\Discount::where('discount', 30)->first();
+        $discount = Discount::where('discount', 30)->first();
         $wallet = new Wallet(['currency' => 'CHF', 'id' => 123]);
-        $ent = new \App\Entitlement([
-                'wallet_id' => $wallet->id,
-                'sku_id' => 456,
-                'cost' => 100,
-                'fee' => 50,
-                'entitleable_id' => 789,
-                'entitleable_type' => \App\User::class,
+        $ent = new Entitlement([
+            'wallet_id' => $wallet->id,
+            'sku_id' => 456,
+            'cost' => 100,
+            'fee' => 50,
+            'entitleable_id' => 789,
+            'entitleable_type' => User::class,
         ]);
 
         $wallet->discount = $discount; // @phpstan-ignore-line

@@ -3,9 +3,9 @@
 namespace Tests\Browser\Admin;
 
 use App\Resource;
+use App\Utils;
 use Illuminate\Support\Facades\Queue;
 use Tests\Browser;
-use Tests\Browser\Components\Toast;
 use Tests\Browser\Pages\Admin\Resource as ResourcePage;
 use Tests\Browser\Pages\Admin\User as UserPage;
 use Tests\Browser\Pages\Dashboard;
@@ -14,19 +14,13 @@ use Tests\TestCaseDusk;
 
 class ResourceTest extends TestCaseDusk
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         self::useAdminUrl();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         parent::tearDown();
     }
@@ -65,7 +59,7 @@ class ResourceTest extends TestCaseDusk
 
             // Goto the resource page
             $browser->visit(new Home())
-                ->submitLogon('jeroen@jeroen.jeroen', \App\Utils::generatePassphrase(), true)
+                ->submitLogon('jeroen@jeroen.jeroen', Utils::generatePassphrase(), true)
                 ->on(new Dashboard())
                 ->visit($user_page)
                 ->on($user_page)
@@ -74,7 +68,7 @@ class ResourceTest extends TestCaseDusk
                 ->click('@user-resources table tbody tr:first-child td:first-child a')
                 ->on($resource_page)
                 ->assertSeeIn('@resource-info .card-title', $resource->email)
-                ->with('@resource-info form', function (Browser $browser) use ($resource) {
+                ->with('@resource-info form', static function (Browser $browser) use ($resource) {
                     $browser->assertElementsCount('.row', 3)
                         ->assertSeeIn('.row:nth-child(1) label', 'ID (Created)')
                         ->assertSeeIn('.row:nth-child(1) #resourceid', "{$resource->id} ({$resource->created_at})")
@@ -85,7 +79,7 @@ class ResourceTest extends TestCaseDusk
                 })
                 ->assertElementsCount('ul.nav-tabs', 1)
                 ->assertSeeIn('ul.nav-tabs .nav-link', 'Settings')
-                ->with('@resource-settings form', function (Browser $browser) {
+                ->with('@resource-settings form', static function (Browser $browser) {
                     $browser->assertElementsCount('.row', 1)
                         ->assertSeeIn('.row:nth-child(1) label', 'Invitation policy')
                         ->assertSeeIn('.row:nth-child(1) #invitation_policy', 'accept');

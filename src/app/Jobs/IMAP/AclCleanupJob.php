@@ -3,6 +3,7 @@
 namespace App\Jobs\IMAP;
 
 use App\Jobs\CommonJob;
+use App\Support\Facades\IMAP;
 
 /**
  * Remove ACL for a specified user/group anywhere in IMAP
@@ -33,14 +34,11 @@ class AclCleanupJob extends CommonJob
     /** @var int The number of tries for this Job. */
     public $tries = 3;
 
-
     /**
      * Create a new job instance.
      *
      * @param string $ident  ACL identifier
      * @param string $domain ACL domain
-     *
-     * @return void
      */
     public function __construct(string $ident, string $domain = '')
     {
@@ -51,12 +49,10 @@ class AclCleanupJob extends CommonJob
     /**
      * Execute the job.
      *
-     * @return void
-     *
      * @throws \Exception
      */
     public function handle()
     {
-        \App\Support\Facades\IMAP::aclCleanup($this->ident, $this->domain);
+        IMAP::aclCleanup($this->ident, $this->domain);
     }
 }

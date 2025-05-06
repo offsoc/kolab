@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Console\Command;
+use App\Jobs\Mail\PasswordRetentionJob;
 use App\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -45,7 +46,7 @@ class PasswordRetentionCommand extends Command
                         . ") as password_update")
                 )
                 ->get()
-                ->each(function ($user) use ($account) {
+                ->each(static function ($user) use ($account) {
                     /** @var User $user */
                     // Skip incomplete or suspended users
                     if (!$user->isImapReady() || $user->isSuspended()) {
@@ -77,7 +78,7 @@ class PasswordRetentionCommand extends Command
                         // Send a warning if it wasn't sent yet or 7 days passed since the last warning.
                         // Which means that we send the email 14 and 7 days before the password expires.
                         if (empty($warnedOn) || $warnedOn->diffInDays(Carbon::now(), false) > 7) {
-                            \App\Jobs\Mail\PasswordRetentionJob::dispatch($user, $nextUpdate->toDateString());
+                            PasswordRetentionJob::dispatch($user, $nextUpdate->toDateString());
                         }
                     }
                 });

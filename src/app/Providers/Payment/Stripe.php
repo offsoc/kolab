@@ -2,15 +2,16 @@
 
 namespace App\Providers\Payment;
 
+use App\Jobs\Mail\PaymentJob;
+use App\Jobs\Wallet\ChargeJob;
 use App\Payment;
-use App\Utils;
+use App\Providers\PaymentProvider;
 use App\Wallet;
-use App\WalletSetting;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Request;
 use Stripe as StripeAPI;
 
-class Stripe extends \App\Providers\PaymentProvider
+class Stripe extends PaymentProvider
 {
     /**
      * Class constructor.
@@ -23,7 +24,7 @@ class Stripe extends \App\Providers\PaymentProvider
     /**
      * Get a link to the customer in the provider's control panel
      *
-     * @param \App\Wallet $wallet The wallet
+     * @param Wallet $wallet The wallet
      *
      * @return string|null The string representing <a> tag
      */
@@ -39,7 +40,7 @@ class Stripe extends \App\Providers\PaymentProvider
 
         $key = \config('services.stripe.key');
 
-        if (strpos($key, 'sk_test_') === 0) {
+        if (str_starts_with($key, 'sk_test_')) {
             $location .= '/test';
         }
 
@@ -54,12 +55,12 @@ class Stripe extends \App\Providers\PaymentProvider
     /**
      * Create a new auto-payment mandate for a wallet.
      *
-     * @param \App\Wallet $wallet  The wallet
-     * @param array       $payment Payment data:
-     *                             - amount: Value in cents (not used)
-     *                             - currency: The operation currency
-     *                             - description: Operation desc.
-     *                             - redirectUrl: The location to goto after checkout
+     * @param Wallet $wallet  The wallet
+     * @param array  $payment Payment data:
+     *                        - amount: Value in cents (not used)
+     *                        - currency: The operation currency
+     *                        - description: Operation desc.
+     *                        - redirectUrl: The location to goto after checkout
      *
      * @return array Provider payment/session data:
      *               - id: Session identifier
@@ -100,7 +101,7 @@ class Stripe extends \App\Providers\PaymentProvider
     /**
      * Revoke the auto-payment mandate.
      *
-     * @param \App\Wallet $wallet The wallet
+     * @param Wallet $wallet The wallet
      *
      * @return bool True on success, False on failure
      */
@@ -124,7 +125,7 @@ class Stripe extends \App\Providers\PaymentProvider
     /**
      * Get a auto-payment mandate for a wallet.
      *
-     * @param \App\Wallet $wallet The wallet
+     * @param Wallet $wallet The wallet
      *
      * @return array|null Mandate information:
      *                    - id: Mandate identifier
@@ -147,7 +148,7 @@ class Stripe extends \App\Providers\PaymentProvider
             'id' => $mandate->id,
             'isPending' => $mandate->status != 'succeeded' && $mandate->status != 'canceled',
             'isValid' => $mandate->status == 'succeeded',
-            'method' => self::paymentMethod($pm, 'Unknown method')
+            'method' => self::paymentMethod($pm, 'Unknown method'),
         ];
 
         return $result;
@@ -166,12 +167,12 @@ class Stripe extends \App\Providers\PaymentProvider
     /**
      * Create a new payment.
      *
-     * @param \App\Wallet $wallet  The wallet
-     * @param array       $payment Payment data:
-     *                             - amount: Value in cents
-     *                             - currency: The operation currency
-     *                             - type: first/oneoff/recurring
-     *                             - description: Operation desc.
+     * @param Wallet $wallet  The wallet
+     * @param array  $payment payment data:
+     *                        - amount: Value in cents
+     *                        - currency: The operation currency
+     *                        - type: first/oneoff/recurring
+     *                        - description: Operation desc
      *
      * @return array Provider payment/session data:
      *               - id: Session identifier
@@ -200,8 +201,8 @@ class Stripe extends \App\Providers\PaymentProvider
                     'amount' => $amount,
                     'currency' => \strtolower($payment['currency']),
                     'quantity' => 1,
-                ]
-            ]
+                ],
+            ],
         ];
 
         $session = StripeAPI\Checkout\Session::create($request);
@@ -219,8 +220,8 @@ class Stripe extends \App\Providers\PaymentProvider
     /**
      * Create a new automatic payment operation.
      *
-     * @param \App\Wallet $wallet  The wallet
-     * @param array       $payment Payment data (see self::payment())
+     * @param Wallet $wallet  The wallet
+     * @param array  $payment Payment data (see self::payment())
      *
      * @return array Provider payment/session data:
      *               - id: Session identifier
@@ -337,14 +338,13 @@ class Stripe extends \App\Providers\PaymentProvider
                         }
 
                         // Notify the user
-                        \App\Jobs\Mail\PaymentJob::dispatch($payment);
+                        PaymentJob::dispatch($payment);
                     }
                 }
 
                 DB::commit();
 
                 break;
-
             case StripeAPI\Event::SETUP_INTENT_SUCCEEDED:
             case StripeAPI\Event::SETUP_INTENT_SETUP_FAILED:
             case StripeAPI\Event::SETUP_INTENT_CANCELED:
@@ -375,7 +375,7 @@ class Stripe extends \App\Providers\PaymentProvider
 
                     // Top-up the wallet if balance is below the threshold
                     if ($payment->wallet->balance < $threshold && $payment->status != Payment::STATUS_PAID) {
-                        \App\Jobs\Wallet\ChargeJob::dispatch($payment->wallet->id);
+                        ChargeJob::dispatch($payment->wallet->id);
                     }
                 }
 
@@ -383,7 +383,6 @@ class Stripe extends \App\Providers\PaymentProvider
                 $payment->save();
 
                 break;
-
             default:
                 \Log::debug("Unhandled Stripe event: " . var_export($payload, true));
                 break;
@@ -396,8 +395,8 @@ class Stripe extends \App\Providers\PaymentProvider
      * Get Stripe customer identifier for specified wallet.
      * Create one if does not exist yet.
      *
-     * @param \App\Wallet $wallet The wallet
-     * @param bool        $create Create the customer if does not exist yet
+     * @param Wallet $wallet The wallet
+     * @param bool   $create Create the customer if does not exist yet
      *
      * @return string|null Stripe customer identifier
      */
@@ -408,11 +407,11 @@ class Stripe extends \App\Providers\PaymentProvider
         // Register the user in Stripe
         if (empty($customer_id) && $create) {
             $customer = StripeAPI\Customer::create([
-                    'name'  => $wallet->owner->name(),
-                    // Stripe will display the email on Checkout page, editable,
-                    // and use it to send the receipt (?), use the user email here
-                    // 'email' => $wallet->id . '@private.' . \config('app.domain'),
-                    'email' => $wallet->owner->email,
+                'name' => $wallet->owner->name(),
+                // Stripe will display the email on Checkout page, editable,
+                // and use it to send the receipt (?), use the user email here
+                // 'email' => $wallet->id . '@private.' . \config('app.domain'),
+                'email' => $wallet->owner->email,
             ]);
 
             $customer_id = $customer->id;
@@ -478,7 +477,7 @@ class Stripe extends \App\Providers\PaymentProvider
     /**
      * List supported payment methods.
      *
-     * @param string $type     The payment type for which we require a method (oneoff/recurring).
+     * @param string $type     the payment type for which we require a method (oneoff/recurring)
      * @param string $currency Currency code
      *
      * @return array Array of array with available payment methods:
@@ -491,7 +490,7 @@ class Stripe extends \App\Providers\PaymentProvider
      */
     public function providerPaymentMethods(string $type, string $currency): array
     {
-        //TODO get this from the stripe API?
+        // TODO get this from the stripe API?
         $availableMethods = [];
         switch ($type) {
             case Payment::TYPE_ONEOFF:
@@ -501,15 +500,15 @@ class Stripe extends \App\Providers\PaymentProvider
                         'name' => "Credit Card",
                         'minimumAmount' => Payment::MIN_AMOUNT,
                         'currency' => $currency,
-                        'exchangeRate' => 1.0
+                        'exchangeRate' => 1.0,
                     ],
                     self::METHOD_PAYPAL => [
                         'id' => self::METHOD_PAYPAL,
                         'name' => "PayPal",
                         'minimumAmount' => Payment::MIN_AMOUNT,
                         'currency' => $currency,
-                        'exchangeRate' => 1.0
-                    ]
+                        'exchangeRate' => 1.0,
+                    ],
                 ];
                 break;
             case Payment::TYPE_RECURRING:
@@ -519,8 +518,8 @@ class Stripe extends \App\Providers\PaymentProvider
                         'name' => "Credit Card",
                         'minimumAmount' => Payment::MIN_AMOUNT, // Converted to cents,
                         'currency' => $currency,
-                        'exchangeRate' => 1.0
-                    ]
+                        'exchangeRate' => 1.0,
+                    ],
                 ];
                 break;
         }
@@ -534,10 +533,10 @@ class Stripe extends \App\Providers\PaymentProvider
      * @param string $paymentId Payment identifier
      *
      * @return array Payment information:
-     *                    - id: Payment identifier
-     *                    - status: Payment status
-     *                    - isCancelable: The payment can be canceled
-     *                    - checkoutUrl: The checkout url to complete the payment or null if none
+     *               - id: Payment identifier
+     *               - status: Payment status
+     *               - isCancelable: The payment can be canceled
+     *               - checkoutUrl: The checkout url to complete the payment or null if none
      */
     public function getPayment($paymentId): array
     {
@@ -548,7 +547,7 @@ class Stripe extends \App\Providers\PaymentProvider
             'id' => $payment->id,
             'status' => $payment->status,
             'isCancelable' => false,
-            'checkoutUrl' => null
+            'checkoutUrl' => null,
         ];
     }
 }

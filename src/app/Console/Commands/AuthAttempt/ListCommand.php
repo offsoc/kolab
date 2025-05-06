@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands\AuthAttempt;
 
-use App\Console\Command;
 use App\AuthAttempt;
+use App\Console\Command;
 
 class ListCommand extends Command
 {
@@ -32,7 +32,7 @@ class ListCommand extends Command
 
         $authAttempts->each(
             function ($authAttempt) {
-                $this->info($authAttempt->toJson(JSON_PRETTY_PRINT));
+                $this->info($authAttempt->toJson(\JSON_PRETTY_PRINT));
             }
         );
     }

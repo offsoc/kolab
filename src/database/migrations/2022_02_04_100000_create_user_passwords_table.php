@@ -1,22 +1,19 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-// phpcs:ignore
 class CreateUserPasswordsTable extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up()
     {
         Schema::create(
             'user_passwords',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->bigInteger('user_id');
                 $table->string('password');
@@ -32,8 +29,6 @@ class CreateUserPasswordsTable extends Migration
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
     public function down()
     {

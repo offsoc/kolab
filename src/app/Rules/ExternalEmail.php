@@ -17,8 +17,6 @@ class ExternalEmail implements Rule
      *
      * @param string $attribute Attribute name
      * @param mixed  $email     Email address input
-     *
-     * @return bool
      */
     public function passes($attribute, $email): bool
     {
@@ -29,10 +27,10 @@ class ExternalEmail implements Rule
             return false;
         }
 
-        list($local, $domain) = explode('@', $email);
+        [$local, $domain] = explode('@', $email);
 
         // don't allow @localhost and other no-fqdn
-        if (strpos($domain, '.') === false) {
+        if (!str_contains($domain, '.')) {
             $this->message = \trans('validation.emailinvalid');
             return false;
         }
@@ -42,8 +40,6 @@ class ExternalEmail implements Rule
 
     /**
      * Get the validation error message.
-     *
-     * @return string
      */
     public function message(): ?string
     {

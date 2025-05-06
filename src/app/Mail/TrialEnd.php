@@ -11,9 +11,7 @@ class TrialEnd extends Mailable
     /**
      * Create a new message instance.
      *
-     * @param \App\User $user An account owner
-     *
-     * @return void
+     * @param User $user An account owner
      */
     public function __construct(User $user)
     {
@@ -40,9 +38,9 @@ class TrialEnd extends Mailable
             ->text('emails.plain.trial_end')
             ->subject(\trans('mail.trialend-subject', $vars))
             ->with([
-                    'vars' => $vars,
-                    'paymentUrl' => $paymentUrl,
-                    'supportUrl' => Utils::serviceUrl($supportUrl, $this->user->tenant_id),
+                'vars' => $vars,
+                'paymentUrl' => $paymentUrl,
+                'supportUrl' => Utils::serviceUrl($supportUrl, $this->user->tenant_id),
             ]);
 
         return $this;

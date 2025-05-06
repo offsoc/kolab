@@ -2,17 +2,18 @@
 
 namespace App\Observers;
 
+use App\EventLog;
 use App\Group;
-use Illuminate\Support\Facades\DB;
+use App\Jobs\Group\CreateJob;
+use App\Jobs\Group\DeleteJob;
+use App\Jobs\Group\UpdateJob;
 
 class GroupObserver
 {
     /**
      * Handle the group "creating" event.
      *
-     * @param \App\Group $group The group
-     *
-     * @return void
+     * @param Group $group The group
      */
     public function creating(Group $group): void
     {
@@ -26,54 +27,46 @@ class GroupObserver
     /**
      * Handle the group "created" event.
      *
-     * @param \App\Group $group The group
-     *
-     * @return void
+     * @param Group $group The group
      */
     public function created(Group $group)
     {
-        \App\Jobs\Group\CreateJob::dispatch($group->id);
+        CreateJob::dispatch($group->id);
     }
 
     /**
      * Handle the group "deleted" event.
      *
-     * @param \App\Group $group The group
-     *
-     * @return void
+     * @param Group $group The group
      */
     public function deleted(Group $group)
     {
         if ($group->isForceDeleting()) {
             // Remove EventLog records
-            \App\EventLog::where('object_id', $group->id)->where('object_type', Group::class)->delete();
+            EventLog::where('object_id', $group->id)->where('object_type', Group::class)->delete();
 
             return;
         }
 
-        \App\Jobs\Group\DeleteJob::dispatch($group->id);
+        DeleteJob::dispatch($group->id);
     }
 
     /**
      * Handle the group "updated" event.
      *
-     * @param \App\Group $group The group
-     *
-     * @return void
+     * @param Group $group The group
      */
     public function updated(Group $group)
     {
         if (!$group->trashed()) {
-            \App\Jobs\Group\UpdateJob::dispatch($group->id);
+            UpdateJob::dispatch($group->id);
         }
     }
 
     /**
      * Handle the group "restoring" event.
      *
-     * @param \App\Group $group The group
-     *
-     * @return void
+     * @param Group $group The group
      */
     public function restoring(Group $group)
     {
@@ -86,12 +79,10 @@ class GroupObserver
     /**
      * Handle the group "restored" event.
      *
-     * @param \App\Group $group The group
-     *
-     * @return void
+     * @param Group $group The group
      */
     public function restored(Group $group)
     {
-        \App\Jobs\Group\CreateJob::dispatch($group->id);
+        CreateJob::dispatch($group->id);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\User;
 use Illuminate\Support\Facades\Validator;
 
 trait SharedFolderConfigTrait
@@ -56,7 +57,7 @@ trait SharedFolderConfigTrait
                     if (!is_string($v) || empty($v) || !substr_count($v, ',')) {
                         $errors[$key][$i] = \trans('validation.acl-entry-invalid');
                     } else {
-                        list($user, $acl) = explode(',', $v, 2);
+                        [$user, $acl] = explode(',', $v, 2);
                         $user = trim($user);
                         $acl = trim($acl);
                         $error = null;
@@ -69,7 +70,7 @@ trait SharedFolderConfigTrait
                             $errors[$key][$i] = $error ?: \trans('validation.acl-entry-invalid');
                         }
 
-                        $value[$i] = "$user, $acl";
+                        $value[$i] = "{$user}, {$acl}";
                         $users[] = $user;
                     }
                 }
@@ -104,7 +105,7 @@ trait SharedFolderConfigTrait
             return \trans('validation.emailinvalid');
         }
 
-        $user = \App\User::where('email', \strtolower($identifier))->first();
+        $user = User::where('email', \strtolower($identifier))->first();
 
         // The user and shared folder must be in the same wallet
         if ($user && ($wallet = $user->wallet())) {

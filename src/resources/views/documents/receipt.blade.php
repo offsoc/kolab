@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <style>
-<?php include public_path('/themes/' . config('app.theme') . '/document.css') ?>
+<?php include public_path('/themes/' . config('app.theme') . '/document.css'); ?>
         </style>
     </head>
     <body>

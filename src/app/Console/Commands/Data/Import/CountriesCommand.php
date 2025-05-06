@@ -3,6 +3,7 @@
 namespace App\Console\Commands\Data\Import;
 
 use App\Console\Command;
+use App\Utils;
 use Carbon\Carbon;
 
 class CountriesCommand extends Command
@@ -45,7 +46,7 @@ class CountriesCommand extends Command
         //
         $file = storage_path("countries-{$today}.json");
 
-        \App\Utils::downloadFile($countrySource, $file);
+        Utils::downloadFile($countrySource, $file);
 
         $countryJson = file_get_contents($file);
 
@@ -66,7 +67,7 @@ class CountriesCommand extends Command
         //
         $file = storage_path("currencies-{$today}.json");
 
-        \App\Utils::downloadFile($currencySource, $file);
+        Utils::downloadFile($currencySource, $file);
 
         // fetch currency table and create an index by country page url
         $currencyJson = file_get_contents($file);

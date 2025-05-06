@@ -4,7 +4,7 @@ namespace App\Http\Controllers\API\V4;
 
 use App\Http\Controllers\Controller;
 use App\License;
-use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -15,7 +15,7 @@ class LicenseController extends Controller
      *
      * @param string $type License type
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function license(Request $request, string $type)
     {
@@ -49,11 +49,11 @@ class LicenseController extends Controller
         }
 
         // Slim down the result set
-        $licenses = $licenses->map(function ($license) {
-                return [
-                    'key' => $license->key,
-                    'type' => $license->type,
-                ];
+        $licenses = $licenses->map(static function ($license) {
+            return [
+                'key' => $license->key,
+                'type' => $license->type,
+            ];
         });
 
         return response()->json([

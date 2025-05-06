@@ -2,8 +2,6 @@
 
 namespace App\Backends\DAV;
 
-use App\Backends\DAV;
-
 class SearchPropFilter
 {
     public const IS_NOT_DEFINED = 'is-not-defined';
@@ -18,7 +16,6 @@ class SearchPropFilter
     public $collation;
     public $negate = false;
     public $value;
-
 
     public function __construct(string $name, string $type, ?string $value = null, ?string $collation = null)
     {
@@ -50,7 +47,7 @@ class SearchPropFilter
                 $filter .= ' negate-condition="yes"';
             }
 
-            $filter .= '>' . htmlspecialchars($this->value, ENT_XML1, 'UTF-8') . '</c:text-match>';
+            $filter .= '>' . htmlspecialchars($this->value, \ENT_XML1, 'UTF-8') . '</c:text-match>';
         }
 
         $filter .= '</c:prop-filter>';

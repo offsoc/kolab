@@ -4,23 +4,19 @@ namespace Tests\Browser\Meet;
 
 use App\Meet\Room;
 use Tests\Browser;
-use Tests\Browser\Components\Dialog;
 use Tests\Browser\Components\Menu;
 use Tests\Browser\Pages\Meet\Room as RoomPage;
 use Tests\TestCaseDusk;
 
 class RoomModeratorTest extends TestCaseDusk
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         $this->resetTestRoom();
     }
 
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->resetTestRoom();
         parent::tearDown();
@@ -33,7 +29,7 @@ class RoomModeratorTest extends TestCaseDusk
      */
     public function testModeratorPromotion(): void
     {
-        $this->browse(function (Browser $browser, Browser $guest1, Browser $guest2) {
+        $this->browse(static function (Browser $browser, Browser $guest1, Browser $guest2) {
             // In one browser window join as a room owner
             $browser->visit(new RoomPage('john'))
                 ->click('@setup-button')
@@ -78,7 +74,7 @@ class RoomModeratorTest extends TestCaseDusk
                 ->assertMissing('@session div.meet-subscriber:not(.self) svg.user') // owner
                 ->assertVisible('@session div.meet-subscriber:not(.self) svg.moderator') // owner
                 ->click('@session div.meet-subscriber.self .meet-nickname')
-                ->whenAvailable('@session div.meet-subscriber.self .dropdown-menu', function (Browser $browser) {
+                ->whenAvailable('@session div.meet-subscriber.self .dropdown-menu', static function (Browser $browser) {
                     $browser->assertMissing('.permissions');
                 })
                 ->click('@session div.meet-subscriber:not(.self) .meet-nickname')
@@ -99,12 +95,12 @@ class RoomModeratorTest extends TestCaseDusk
                 ->assertMissing('@session div.meet-subscriber.self svg.user') // self
                 ->assertVisible('@session div.meet-subscriber.self svg.moderator') // self
                 ->click('@session div.meet-subscriber.self .meet-nickname')
-                ->whenAvailable('@session div.meet-subscriber.self .dropdown-menu', function (Browser $browser) {
+                ->whenAvailable('@session div.meet-subscriber.self .dropdown-menu', static function (Browser $browser) {
                     $browser->assertChecked('.action-role-moderator input')
                         ->assertDisabled('.action-role-moderator input');
                 })
                 ->click('@session div.meet-subscriber:not(.self) .meet-nickname')
-                ->whenAvailable('@session div.meet-subscriber:not(.self) .dropdown-menu', function (Browser $browser) {
+                ->whenAvailable('@session div.meet-subscriber:not(.self) .dropdown-menu', static function (Browser $browser) {
                     $browser->assertNotChecked('.action-role-moderator input')
                         ->click('.action-role-moderator input');
                 });
@@ -122,7 +118,7 @@ class RoomModeratorTest extends TestCaseDusk
                 ->click('@session div.meet-subscriber:not(.self) .meet-nickname') // owner
                 ->assertMissing('@session div.meet-subscriber:not(.self) .dropdown-menu')
                 ->click('@session div.meet-subscriber.self .meet-nickname')
-                ->whenAvailable('@session div.meet-subscriber.self .dropdown-menu', function (Browser $browser) {
+                ->whenAvailable('@session div.meet-subscriber.self .dropdown-menu', static function (Browser $browser) {
                     $browser->assertChecked('.action-role-moderator input')
                         ->assertEnabled('.action-role-moderator input')
                         ->assertNotChecked('.action-role-publisher input')
@@ -134,7 +130,7 @@ class RoomModeratorTest extends TestCaseDusk
 
             // Check if a moderator can unpublish another user
             $guest1->click('@session div.meet-video .meet-nickname')
-                ->whenAvailable('@session div.meet-video .dropdown-menu', function (Browser $browser) {
+                ->whenAvailable('@session div.meet-video .dropdown-menu', static function (Browser $browser) {
                     $browser->assertNotChecked('.action-role-moderator input')
                         ->assertEnabled('.action-role-moderator input')
                         ->assertChecked('.action-role-publisher input')
@@ -149,7 +145,7 @@ class RoomModeratorTest extends TestCaseDusk
             $browser->waitFor('@session div.meet-subscriber:nth-child(3)')
                 ->click('@session') // somehow needed to make the next line invoke the menu
                 ->click('@session div.meet-subscriber:nth-child(2) .meet-nickname')
-                ->whenAvailable('@session div.meet-subscriber:nth-child(2) .dropdown-menu', function ($browser) {
+                ->whenAvailable('@session div.meet-subscriber:nth-child(2) .dropdown-menu', static function ($browser) {
                     $browser->assertChecked('.action-role-moderator input')
                         ->click('.action-role-moderator input');
                 })
@@ -159,7 +155,7 @@ class RoomModeratorTest extends TestCaseDusk
             $guest1->waitFor('@session div.meet-subscriber.self svg.user')
                 ->assertMissing('@session div.meet-subscriber.self svg.moderator')
                 ->click('@session div.meet-subscriber.self .meet-nickname')
-                ->whenAvailable('@session .dropdown-menu', function (Browser $browser) {
+                ->whenAvailable('@session .dropdown-menu', static function (Browser $browser) {
                     $browser->assertMissing('.permissions');
                 });
         });

@@ -46,7 +46,7 @@ trait DomainConfigTrait
 
                     $value[$i] = $v;
 
-                    if ($v[0] !== '.' || !filter_var(substr($v, 1), FILTER_VALIDATE_DOMAIN)) {
+                    if ($v[0] !== '.' || !filter_var(substr($v, 1), \FILTER_VALIDATE_DOMAIN)) {
                         $errors[$key][$i] = \trans('validation.spf-entry-invalid');
                     }
                 }

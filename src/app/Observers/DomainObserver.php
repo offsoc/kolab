@@ -3,16 +3,18 @@
 namespace App\Observers;
 
 use App\Domain;
-use Illuminate\Support\Facades\DB;
+use App\EventLog;
+use App\Jobs\Domain\CreateJob;
+use App\Jobs\Domain\DeleteJob;
+use App\Jobs\Domain\UpdateJob;
+use App\Policy\RateLimit\Whitelist;
 
 class DomainObserver
 {
     /**
      * Handle the domain "created" event.
      *
-     * @param \App\Domain $domain The domain.
-     *
-     * @return void
+     * @param Domain $domain the domain
      */
     public function creating(Domain $domain): void
     {
@@ -24,49 +26,43 @@ class DomainObserver
     /**
      * Handle the domain "created" event.
      *
-     * @param \App\Domain $domain The domain.
-     *
-     * @return void
+     * @param Domain $domain the domain
      */
     public function created(Domain $domain)
     {
         // Create domain record in LDAP
         // Note: DomainCreate job will dispatch DomainVerify job
-        \App\Jobs\Domain\CreateJob::dispatch($domain->id);
+        CreateJob::dispatch($domain->id);
     }
 
     /**
      * Handle the domain "deleted" event.
      *
-     * @param \App\Domain $domain The domain.
-     *
-     * @return void
+     * @param Domain $domain the domain
      */
     public function deleted(Domain $domain)
     {
         if ($domain->isForceDeleting()) {
             // Remove EventLog records
-            \App\EventLog::where('object_id', $domain->id)->where('object_type', Domain::class)->delete();
+            EventLog::where('object_id', $domain->id)->where('object_type', Domain::class)->delete();
 
             return;
         }
 
-        \App\Jobs\Domain\DeleteJob::dispatch($domain->id);
+        DeleteJob::dispatch($domain->id);
     }
 
     /**
      * Handle the domain "deleting" event.
      *
-     * @param \App\Domain $domain The domain.
-     *
-     * @return void
+     * @param Domain $domain the domain
      */
     public function deleting(Domain $domain)
     {
-        \App\Policy\RateLimit\Whitelist::where(
+        Whitelist::where(
             [
                 'whitelistable_id' => $domain->id,
-                'whitelistable_type' => Domain::class
+                'whitelistable_type' => Domain::class,
             ]
         )->delete();
     }
@@ -74,23 +70,19 @@ class DomainObserver
     /**
      * Handle the domain "updated" event.
      *
-     * @param \App\Domain $domain The domain.
-     *
-     * @return void
+     * @param Domain $domain the domain
      */
     public function updated(Domain $domain)
     {
         if (!$domain->trashed()) {
-            \App\Jobs\Domain\UpdateJob::dispatch($domain->id);
+            UpdateJob::dispatch($domain->id);
         }
     }
 
     /**
      * Handle the domain "restoring" event.
      *
-     * @param \App\Domain $domain The domain.
-     *
-     * @return void
+     * @param Domain $domain the domain
      */
     public function restoring(Domain $domain)
     {
@@ -103,13 +95,11 @@ class DomainObserver
     /**
      * Handle the domain "restored" event.
      *
-     * @param \App\Domain $domain The domain.
-     *
-     * @return void
+     * @param Domain $domain the domain
      */
     public function restored(Domain $domain)
     {
         // Create the domain in LDAP again
-        \App\Jobs\Domain\CreateJob::dispatch($domain->id);
+        CreateJob::dispatch($domain->id);
     }
 }

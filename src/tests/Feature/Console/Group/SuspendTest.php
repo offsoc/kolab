@@ -9,10 +9,7 @@ use Tests\TestCase;
 
 class SuspendTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -20,10 +17,7 @@ class SuspendTest extends TestCase
         EventLog::truncate();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestGroup('group-test@kolabnow.com');
         EventLog::truncate();
@@ -55,7 +49,7 @@ class SuspendTest extends TestCase
         $this->assertSame("", $output);
         $this->assertTrue($group->fresh()->isSuspended());
         $event = EventLog::where('object_id', $group->id)->where('object_type', Group::class)->first();
-        $this->assertSame(null, $event->comment);
+        $this->assertNull($event->comment);
         $this->assertSame(EventLog::TYPE_SUSPENDED, $event->type);
 
         $group->unsuspend();

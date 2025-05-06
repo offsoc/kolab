@@ -8,10 +8,7 @@ use Tests\TestCase;
 
 class CollectorTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -19,10 +16,7 @@ class CollectorTest extends TestCase
         DB::table('transactions')->truncate();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         DB::table('stats')->truncate();
         DB::table('transactions')->truncate();
@@ -57,8 +51,8 @@ class CollectorTest extends TestCase
 
         $this->assertSame(1, $stats->count());
         $this->assertSame(StatsController::TYPE_PAYERS, $stats[0]->type);
-        $this->assertEquals(\config('app.tenant_id'), $stats[0]->tenant_id);
-        $this->assertEquals(4, $stats[0]->value); // there's 4 users in john's wallet
+        $this->assertSame((int) \config('app.tenant_id'), (int) $stats[0]->tenant_id);
+        $this->assertSame(4, $stats[0]->value); // there's 4 users in john's wallet
 
         // TODO: More precise tests (degraded users)
     }

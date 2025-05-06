@@ -61,7 +61,7 @@ class CancelHandlerTest extends TestCase
         Notification::assertCount(1);
         Notification::assertSentTo(
             $user,
-            function (ItipNotification $notification, array $channels, object $notifiable) use ($user) {
+            static function (ItipNotification $notification, array $channels, object $notifiable) use ($user) {
                 return $notifiable->id == $user->id
                     && $notification->params->mode == 'cancel'
                     && $notification->params->senderEmail == 'jack@kolab.org'
@@ -108,7 +108,7 @@ class CancelHandlerTest extends TestCase
         Notification::assertCount(1);
         Notification::assertSentTo(
             $user,
-            function (ItipNotification $notification, array $channels, object $notifiable) use ($user) {
+            static function (ItipNotification $notification, array $channels, object $notifiable) use ($user) {
                 return $notifiable->id == $user->id
                     && $notification->params->mode == 'cancel'
                     && $notification->params->senderEmail == 'jack@kolab.org'

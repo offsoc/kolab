@@ -2,6 +2,8 @@
 
 namespace App\Traits;
 
+use App\Utils;
+
 trait UuidIntKeyTrait
 {
     /**
@@ -9,18 +11,18 @@ trait UuidIntKeyTrait
      */
     protected static function bootUuidIntKeyTrait()
     {
-        static::creating(function ($model) {
+        static::creating(static function ($model) {
             if (empty($model->{$model->getKeyName()})) {
-                $allegedly_unique = \App\Utils::uuidInt();
+                $allegedly_unique = Utils::uuidInt();
 
                 // Verify if unique
                 if (in_array('Illuminate\Database\Eloquent\SoftDeletes', class_uses($model))) {
                     while ($model->withTrashed()->find($allegedly_unique)) {
-                        $allegedly_unique = \App\Utils::uuidInt();
+                        $allegedly_unique = Utils::uuidInt();
                     }
                 } else {
                     while ($model->find($allegedly_unique)) {
-                        $allegedly_unique = \App\Utils::uuidInt();
+                        $allegedly_unique = Utils::uuidInt();
                     }
                 }
 

@@ -2,6 +2,9 @@
 
 namespace Tests\Feature\Console\Wallet;
 
+use App\Jobs\Mail\TrialEndJob;
+use App\Package;
+use App\Plan;
 use App\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
@@ -9,10 +12,7 @@ use Tests\TestCase;
 
 class TrialEndTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -20,10 +20,7 @@ class TrialEndTest extends TestCase
         $this->deleteTestUser('test-user2@kolabnow.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('test-user1@kolabnow.com');
         $this->deleteTestUser('test-user2@kolabnow.com');
@@ -38,9 +35,9 @@ class TrialEndTest extends TestCase
     {
         Queue::fake();
 
-        $plan = \App\Plan::withEnvTenantContext()->where('title', 'individual')->first();
+        $plan = Plan::withEnvTenantContext()->where('title', 'individual')->first();
         $user = $this->getTestUser('test-user1@kolabnow.com', [
-                'status' => User::STATUS_IMAP_READY | User::STATUS_LDAP_READY | User::STATUS_ACTIVE,
+            'status' => User::STATUS_IMAP_READY | User::STATUS_LDAP_READY | User::STATUS_ACTIVE,
         ]);
         $wallet = $user->wallets()->first();
         $user->assignPlan($plan);
@@ -66,8 +63,8 @@ class TrialEndTest extends TestCase
 
         Queue::fake();
         $code = \Artisan::call("wallet:trial-end");
-        Queue::assertPushed(\App\Jobs\Mail\TrialEndJob::class, 1);
-        Queue::assertPushed(\App\Jobs\Mail\TrialEndJob::class, function ($job) use ($user) {
+        Queue::assertPushed(TrialEndJob::class, 1);
+        Queue::assertPushed(TrialEndJob::class, static function ($job) use ($user) {
             $job_user = TestCase::getObjectProperty($job, 'account');
             return $job_user->id === $user->id;
         });
@@ -102,9 +99,9 @@ class TrialEndTest extends TestCase
 
         // Make sure the non-controller users are omitted
         $user2 = $this->getTestUser('test-user2@kolabnow.com', [
-                'status' => User::STATUS_IMAP_READY | User::STATUS_LDAP_READY | User::STATUS_ACTIVE,
+            'status' => User::STATUS_IMAP_READY | User::STATUS_LDAP_READY | User::STATUS_ACTIVE,
         ]);
-        $package = \App\Package::withEnvTenantContext()->where('title', 'lite')->first();
+        $package = Package::withEnvTenantContext()->where('title', 'lite')->first();
         $user->assignPackage($package, $user2);
         $user2->created_at = \now()->clone()->subMonthsNoOverflow(1);
         $user2->save();

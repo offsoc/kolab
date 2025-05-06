@@ -3,6 +3,7 @@
 namespace App\Traits;
 
 use App\Tenant;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 trait BelongsToTenantTrait
 {
@@ -11,7 +12,7 @@ trait BelongsToTenantTrait
      */
     protected static function bootBelongsToTenantTrait()
     {
-        static::creating(function ($model) {
+        static::creating(static function ($model) {
             if (empty($model->tenant_id)) {
                 $model->tenant_id = \config('app.tenant_id');
             }
@@ -21,7 +22,7 @@ trait BelongsToTenantTrait
     /**
      * The tenant for this model.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Tenant, $this>
+     * @return BelongsTo<Tenant, $this>
      */
     public function tenant()
     {

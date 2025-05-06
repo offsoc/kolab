@@ -8,20 +8,14 @@ use Tests\TestCase;
 
 class ForceDeleteTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestGroup('group-test@kolabnow.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestGroup('group-test@kolabnow.com');
 

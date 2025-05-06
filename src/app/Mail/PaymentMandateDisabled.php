@@ -9,17 +9,14 @@ use App\Wallet;
 
 class PaymentMandateDisabled extends Mailable
 {
-    /** @var \App\Wallet A wallet for which the mandate has been disabled */
+    /** @var Wallet A wallet for which the mandate has been disabled */
     protected $wallet;
-
 
     /**
      * Create a new message instance.
      *
-     * @param \App\Wallet $wallet A wallet that has been charged
-     * @param \App\User   $user   A wallet controller to whom the email is being sent
-     *
-     * @return void
+     * @param Wallet $wallet A wallet that has been charged
+     * @param User   $user   A wallet controller to whom the email is being sent
      */
     public function __construct(Wallet $wallet, User $user)
     {
@@ -47,9 +44,9 @@ class PaymentMandateDisabled extends Mailable
             ->text('emails.plain.payment_mandate_disabled')
             ->subject(\trans('mail.paymentmandatedisabled-subject', $vars))
             ->with([
-                    'vars' => $vars,
-                    'walletUrl' => Utils::serviceUrl('/wallet', $this->user->tenant_id),
-                    'supportUrl' => Utils::serviceUrl($supportUrl, $this->user->tenant_id),
+                'vars' => $vars,
+                'walletUrl' => Utils::serviceUrl('/wallet', $this->user->tenant_id),
+                'supportUrl' => Utils::serviceUrl($supportUrl, $this->user->tenant_id),
             ]);
 
         return $this;
@@ -66,7 +63,7 @@ class PaymentMandateDisabled extends Mailable
     {
         $wallet = new Wallet();
         $user = new User([
-              'email' => 'test@' . \config('app.domain'),
+            'email' => 'test@' . \config('app.domain'),
         ]);
         $wallet->owner = $user;
 

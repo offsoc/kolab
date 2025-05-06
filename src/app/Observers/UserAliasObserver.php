@@ -3,6 +3,9 @@
 namespace App\Observers;
 
 use App\Domain;
+use App\Jobs\PGP\KeyCreateJob;
+use App\Jobs\PGP\KeyDeleteJob;
+use App\Jobs\User\UpdateJob;
 use App\Tenant;
 use App\User;
 use App\UserAlias;
@@ -12,15 +15,13 @@ class UserAliasObserver
     /**
      * Handle the "creating" event on an alias
      *
-     * @param \App\UserAlias $alias The user email alias
-     *
-     * @return bool
+     * @param UserAlias $alias The user email alias
      */
     public function creating(UserAlias $alias): bool
     {
         $alias->alias = \strtolower($alias->alias);
 
-        list($login, $domain) = explode('@', $alias->alias);
+        [$login, $domain] = explode('@', $alias->alias);
 
         $domain = Domain::where('namespace', $domain)->first();
 
@@ -42,17 +43,15 @@ class UserAliasObserver
     /**
      * Handle the user alias "created" event.
      *
-     * @param \App\UserAlias $alias User email alias
-     *
-     * @return void
+     * @param UserAlias $alias User email alias
      */
     public function created(UserAlias $alias)
     {
         if ($alias->user) {
-            \App\Jobs\User\UpdateJob::dispatch($alias->user_id);
+            UpdateJob::dispatch($alias->user_id);
 
             if (Tenant::getConfig($alias->user->tenant_id, 'pgp.enable')) {
-                \App\Jobs\PGP\KeyCreateJob::dispatch($alias->user_id, $alias->alias);
+                KeyCreateJob::dispatch($alias->user_id, $alias->alias);
             }
         }
     }
@@ -60,31 +59,27 @@ class UserAliasObserver
     /**
      * Handle the user alias "updated" event.
      *
-     * @param \App\UserAlias $alias User email alias
-     *
-     * @return void
+     * @param UserAlias $alias User email alias
      */
     public function updated(UserAlias $alias)
     {
         if ($alias->user) {
-            \App\Jobs\User\UpdateJob::dispatch($alias->user_id);
+            UpdateJob::dispatch($alias->user_id);
         }
     }
 
     /**
      * Handle the user alias "deleted" event.
      *
-     * @param \App\UserAlias $alias User email alias
-     *
-     * @return void
+     * @param UserAlias $alias User email alias
      */
     public function deleted(UserAlias $alias)
     {
         if ($alias->user) {
-            \App\Jobs\User\UpdateJob::dispatch($alias->user_id);
+            UpdateJob::dispatch($alias->user_id);
 
             if (Tenant::getConfig($alias->user->tenant_id, 'pgp.enable')) {
-                \App\Jobs\PGP\KeyDeleteJob::dispatch($alias->user_id, $alias->alias);
+                KeyDeleteJob::dispatch($alias->user_id, $alias->alias);
             }
         }
     }

@@ -39,8 +39,6 @@ abstract class SharedFolderJob extends CommonJob
      *
      * @param int   $folderId   The ID for the shared folder to process
      * @param array $properties Old values of the shared folder properties on update (key -> value)
-     *
-     * @return void
      */
     public function __construct(int $folderId, array $properties = [])
     {

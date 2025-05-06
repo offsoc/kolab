@@ -9,17 +9,14 @@ use App\Wallet;
 
 class DegradedAccountReminder extends Mailable
 {
-    /** @var \App\Wallet A wallet with a negative balance */
+    /** @var Wallet A wallet with a negative balance */
     protected $wallet;
-
 
     /**
      * Create a new message instance.
      *
-     * @param \App\Wallet $wallet A wallet
-     * @param \App\User   $user   A wallet controller to whom the email is being sent
-     *
-     * @return void
+     * @param Wallet $wallet A wallet
+     * @param User   $user   A wallet controller to whom the email is being sent
      */
     public function __construct(Wallet $wallet, User $user)
     {
@@ -47,10 +44,10 @@ class DegradedAccountReminder extends Mailable
             ->text('emails.plain.degraded_account_reminder')
             ->subject(\trans('mail.degradedaccountreminder-subject', $vars))
             ->with([
-                    'vars' => $vars,
-                    'supportUrl' => Utils::serviceUrl($supportUrl, $this->user->tenant_id),
-                    'walletUrl' => Utils::serviceUrl('/wallet', $this->user->tenant_id),
-                    'dashboardUrl' => Utils::serviceUrl('/dashboard', $this->user->tenant_id),
+                'vars' => $vars,
+                'supportUrl' => Utils::serviceUrl($supportUrl, $this->user->tenant_id),
+                'walletUrl' => Utils::serviceUrl('/wallet', $this->user->tenant_id),
+                'dashboardUrl' => Utils::serviceUrl('/dashboard', $this->user->tenant_id),
             ]);
 
         return $this;

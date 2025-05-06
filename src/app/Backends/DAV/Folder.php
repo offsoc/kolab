@@ -36,7 +36,6 @@ class Folder
     /** @var ?string Folder owner (email) */
     public $owner;
 
-
     /**
      * Create Folder object from a DOMElement element
      *
@@ -46,7 +45,7 @@ class Folder
      */
     public static function fromDomElement(\DOMElement $element)
     {
-        $folder = new Folder();
+        $folder = new self();
 
         if ($href = $element->getElementsByTagName('href')->item(0)) {
             $folder->href = $href->nodeValue;
@@ -76,7 +75,7 @@ class Folder
         $types = [];
         if ($type_element = $element->getElementsByTagName('resourcetype')->item(0)) {
             foreach ($type_element->childNodes as $node) {
-                if ($node->nodeType == XML_ELEMENT_NODE) {
+                if ($node->nodeType == \XML_ELEMENT_NODE) {
                     $_type = explode(':', $node->nodeName);
                     $types[] = count($_type) > 1 ? $_type[1] : $_type[0];
                 }
@@ -187,7 +186,7 @@ class Folder
         }
 
         if ($this->name !== null) {
-            $props .= '<d:displayname>' . htmlspecialchars($this->name, ENT_XML1, 'UTF-8') . '</d:displayname>';
+            $props .= '<d:displayname>' . htmlspecialchars($this->name, \ENT_XML1, 'UTF-8') . '</d:displayname>';
         }
 
         if ($this->color !== null) {
@@ -197,7 +196,7 @@ class Folder
             }
 
             $ns .= ' xmlns:a="http://apple.com/ns/ical/"';
-            $props .= '<a:calendar-color>' . htmlspecialchars($color, ENT_XML1, 'UTF-8') . '</a:calendar-color>';
+            $props .= '<a:calendar-color>' . htmlspecialchars($color, \ENT_XML1, 'UTF-8') . '</a:calendar-color>';
         }
 
         return '<?xml version="1.0" encoding="utf-8"?>'

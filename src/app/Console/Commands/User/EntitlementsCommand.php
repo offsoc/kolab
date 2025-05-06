@@ -3,6 +3,7 @@
 namespace App\Console\Commands\User;
 
 use App\Console\Command;
+use App\Sku;
 
 class EntitlementsCommand extends Command
 {
@@ -40,12 +41,12 @@ class EntitlementsCommand extends Command
             if (!array_key_exists($entitlement->sku_id, $skus_counted)) {
                 $skus_counted[$entitlement->sku_id] = 1;
             } else {
-                $skus_counted[$entitlement->sku_id] += 1;
+                $skus_counted[$entitlement->sku_id]++;
             }
         }
 
         foreach ($skus_counted as $id => $qty) {
-            $sku = \App\Sku::find($id);
+            $sku = Sku::find($id);
             $this->info("{$sku->title}: {$qty}");
         }
     }

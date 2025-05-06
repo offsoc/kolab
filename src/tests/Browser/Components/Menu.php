@@ -4,6 +4,7 @@ namespace Tests\Browser\Components;
 
 use Laravel\Dusk\Component as BaseComponent;
 use PHPUnit\Framework\Assert as PHPUnit;
+use Tests\Browser;
 
 class Menu extends BaseComponent
 {
@@ -32,9 +33,7 @@ class Menu extends BaseComponent
     /**
      * Assert that the browser page contains the component.
      *
-     * @param \Tests\Browser $browser
-     *
-     * @return void
+     * @param Browser $browser
      */
     public function assert($browser)
     {
@@ -44,13 +43,11 @@ class Menu extends BaseComponent
     /**
      * Assert that menu contains only specified menu items.
      *
-     * @param \Tests\Browser $browser
-     * @param array          $items   List of menu items
-     * @param string         $active  Expected active item
-     *
-     * @return void
+     * @param Browser $browser
+     * @param array   $items   List of menu items
+     * @param string  $active  Expected active item
      */
-    public function assertMenuItems($browser, array $items, string $active = null)
+    public function assertMenuItems($browser, array $items, ?string $active = null)
     {
         // On mobile the links are not visible, show them first (wait for transition)
         if (!$browser->isDesktop()) {
@@ -76,10 +73,8 @@ class Menu extends BaseComponent
     /**
      * Click menu link.
      *
-     * @param \Tests\Browser $browser The browser object
-     * @param string         $name    Menu item name
-     *
-     * @return void
+     * @param Browser $browser The browser object
+     * @param string  $name    Menu item name
      */
     public function clickMenuItem($browser, string $name)
     {
@@ -106,9 +101,9 @@ class Menu extends BaseComponent
 
         return [
             '@list' => ".navbar-nav",
-            '@brand' =>  ".navbar-brand",
+            '@brand' => ".navbar-brand",
             '@toggler' => ".navbar-toggler",
-            '@lang' =>  ".nav-link.link-lang",
+            '@lang' => ".nav-link.link-lang",
         ];
     }
 }

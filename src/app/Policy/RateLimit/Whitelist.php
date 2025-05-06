@@ -7,9 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * The eloquent definition of a RateLimit Whitelist entry.
  *
- * @property ?object     $whitelistable      The whitelistable object
- * @property int|string  $whitelistable_id   The whitelistable object identifier
- * @property string      $whitelistable_type The whitelistable object type
+ * @property ?object    $whitelistable      The whitelistable object
+ * @property int|string $whitelistable_id   The whitelistable object identifier
+ * @property string     $whitelistable_type The whitelistable object type
  */
 class Whitelist extends Model
 {

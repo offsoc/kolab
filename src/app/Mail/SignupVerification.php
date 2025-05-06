@@ -12,13 +12,10 @@ class SignupVerification extends Mailable
     /** @var SignupCode A signup verification code object */
     protected $code;
 
-
     /**
      * Create a new message instance.
      *
      * @param SignupCode $code A signup verification code object
-     *
-     * @return void
      */
     public function __construct(SignupCode $code)
     {
@@ -53,10 +50,10 @@ class SignupVerification extends Mailable
             ->text('emails.plain.signup_verification')
             ->subject(\trans('mail.signupverification-subject', $vars))
             ->with([
-                    'vars' => $vars,
-                    'href' => $href,
-                    'code' => $this->code->code,
-                    'short_code' => $this->code->short_code,
+                'vars' => $vars,
+                'href' => $href,
+                'code' => $this->code->code,
+                'short_code' => $this->code->short_code,
             ]);
 
         return $this;
@@ -72,11 +69,11 @@ class SignupVerification extends Mailable
     public static function fakeRender(string $type = 'html'): string
     {
         $code = new SignupCode([
-                'code' => Str::random(SignupCode::CODE_LENGTH),
-                'short_code' => SignupCode::generateShortCode(),
-                'email' => 'test@' . \config('app.domain'),
-                'first_name' => 'Firstname',
-                'last_name' => 'Lastname',
+            'code' => Str::random(SignupCode::CODE_LENGTH),
+            'short_code' => SignupCode::generateShortCode(),
+            'email' => 'test@' . \config('app.domain'),
+            'first_name' => 'Firstname',
+            'last_name' => 'Lastname',
         ]);
 
         $mail = new self($code);

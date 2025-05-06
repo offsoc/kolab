@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Utils;
+use Illuminate\Http\JsonResponse;
+use Illuminate\View\View;
+
 class ContentController extends Controller
 {
     /**
@@ -9,7 +13,7 @@ class ContentController extends Controller
      *
      * @param string $page Page template identifier
      *
-     * @return \Illuminate\View\View
+     * @return View
      */
     public function pageContent(string $page)
     {
@@ -27,7 +31,7 @@ class ContentController extends Controller
             abort(404);
         }
 
-        return view($view)->with('env', \App\Utils::uiEnv());
+        return view($view)->with('env', Utils::uiEnv());
     }
 
     /**
@@ -35,7 +39,7 @@ class ContentController extends Controller
      *
      * @param string $page Page path
      *
-     * @return \Illuminate\Http\JsonResponse JSON response
+     * @return JsonResponse JSON response
      */
     public function faqContent(string $page)
     {
@@ -51,8 +55,8 @@ class ContentController extends Controller
 
         if (file_exists($theme_file)) {
             $theme = json_decode(file_get_contents($theme_file), true);
-            if (json_last_error() != JSON_ERROR_NONE) {
-                \Log::error("Failed to parse $theme_file: " . json_last_error_msg());
+            if (json_last_error() != \JSON_ERROR_NONE) {
+                \Log::error("Failed to parse {$theme_file}: " . json_last_error_msg());
             } elseif (!empty($theme['faq']) && !empty($theme['faq'][$page])) {
                 $faq = $theme['faq'][$page];
             }
@@ -88,8 +92,6 @@ class ContentController extends Controller
 
     /**
      * Get menu definition from the theme
-     *
-     * @return array
      */
     public static function menu(): array
     {
@@ -100,8 +102,8 @@ class ContentController extends Controller
         if (file_exists($theme_file)) {
             $theme = json_decode(file_get_contents($theme_file), true);
 
-            if (json_last_error() != JSON_ERROR_NONE) {
-                \Log::error("Failed to parse $theme_file: " . json_last_error_msg());
+            if (json_last_error() != \JSON_ERROR_NONE) {
+                \Log::error("Failed to parse {$theme_file}: " . json_last_error_msg());
             } elseif (!empty($theme['menu'])) {
                 $menu = $theme['menu'];
             }
@@ -110,9 +112,9 @@ class ContentController extends Controller
         // TODO: These 2-3 lines could become a utility function somewhere
         $req_domain = preg_replace('/:[0-9]+$/', '', request()->getHttpHost());
         $sys_domain = \config('app.domain');
-        $isAdmin = $req_domain == "admin.$sys_domain";
+        $isAdmin = $req_domain == "admin.{$sys_domain}";
 
-        $filter = function ($item) use ($isAdmin) {
+        $filter = static function ($item) use ($isAdmin) {
             if ($isAdmin && empty($item['admin'])) {
                 return false;
             }

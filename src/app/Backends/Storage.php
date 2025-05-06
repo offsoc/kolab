@@ -4,6 +4,7 @@ namespace App\Backends;
 
 use App\Fs\Chunk;
 use App\Fs\Item;
+use App\Utils;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage as LaravelStorage;
@@ -14,7 +15,6 @@ class Storage
 {
     /** @const How long the resumable upload "token" is valid (in seconds) */
     public const UPLOAD_TTL = 60 * 60 * 6;
-
 
     /**
      * Check if we can connect to the backend
@@ -33,7 +33,7 @@ class Storage
     /**
      * Delete a file.
      *
-     * @param \App\Fs\Item $file File object
+     * @param Item $file File object
      *
      * @throws \Exception
      */
@@ -53,7 +53,7 @@ class Storage
     /**
      * Delete a file chunk.
      *
-     * @param \App\Fs\Chunk $chunk File chunk object
+     * @param Chunk $chunk File chunk object
      *
      * @throws \Exception
      */
@@ -71,7 +71,7 @@ class Storage
     /**
      * File download handler.
      *
-     * @param \App\Fs\Item $file File object
+     * @param Item $file File object
      *
      * @throws \Exception
      */
@@ -87,12 +87,12 @@ class Storage
         $disposition = $response->headers->makeDisposition('attachment', $props['name'], $fallbackName);
 
         $response->headers->replace([
-                'Content-Type' => $props['mimetype'],
-                'Content-Disposition' => $disposition,
+            'Content-Type' => $props['mimetype'],
+            'Content-Disposition' => $disposition,
         ]);
 
-        $response->setCallback(function () use ($file) {
-            $file->chunks()->orderBy('sequence')->get()->each(function ($chunk) use ($file) {
+        $response->setCallback(static function () use ($file) {
+            $file->chunks()->orderBy('sequence')->get()->each(static function ($chunk) use ($file) {
                 $disk = LaravelStorage::disk(\config('filesystems.default'));
                 $path = Storage::chunkLocation($chunk->chunk_id, $file);
 
@@ -109,7 +109,7 @@ class Storage
     /**
      * File content getter.
      *
-     * @param \App\Fs\Item $file File object
+     * @param Item $file File object
      *
      * @throws \Exception
      */
@@ -117,7 +117,7 @@ class Storage
     {
         $output = '';
 
-        $file->chunks()->orderBy('sequence')->get()->each(function ($chunk) use ($file, &$output) {
+        $file->chunks()->orderBy('sequence')->get()->each(static function ($chunk) use ($file, &$output) {
             $disk = LaravelStorage::disk(\config('filesystems.default'));
             $path = Storage::chunkLocation($chunk->chunk_id, $file);
 
@@ -130,14 +130,15 @@ class Storage
     /**
      * File upload handler
      *
-     * @param resource      $stream File input stream
-     * @param array         $params Request parameters
-     * @param ?\App\Fs\Item $file   The file object
+     * @param resource $stream File input stream
+     * @param array    $params Request parameters
+     * @param ?Item    $file   The file object
      *
      * @return array File/Response attributes
+     *
      * @throws \Exception
      */
-    public static function fileInput($stream, array $params, Item $file = null): array
+    public static function fileInput($stream, array $params, ?Item $file = null): array
     {
         if (!empty($params['uploadId'])) {
             return self::fileInputResumable($stream, $params, $file);
@@ -145,7 +146,7 @@ class Storage
 
         $disk = LaravelStorage::disk(\config('filesystems.default'));
 
-        $chunkId = \App\Utils::uuidStr();
+        $chunkId = Utils::uuidStr();
 
         $path = self::chunkLocation($chunkId, $file);
 
@@ -160,17 +161,17 @@ class Storage
 
         // Update the file type and size information
         $file->setProperties([
-                'size' => $fileSize,
-                // Pick the client-supplied mimetype if available, otherwise detect.
-                'mimetype' => !empty($params['mimetype']) ? $params['mimetype'] : self::mimetype($path),
+            'size' => $fileSize,
+            // Pick the client-supplied mimetype if available, otherwise detect.
+            'mimetype' => !empty($params['mimetype']) ? $params['mimetype'] : self::mimetype($path),
         ]);
 
         // Assign the node to the file, "unlink" any old nodes of this file
         $file->chunks()->delete();
         $file->chunks()->create([
-                'chunk_id' => $chunkId,
-                'sequence' => 0,
-                'size' => $fileSize,
+            'chunk_id' => $chunkId,
+            'sequence' => 0,
+            'size' => $fileSize,
         ]);
 
         return ['id' => $file->id];
@@ -179,14 +180,15 @@ class Storage
     /**
      * Resumable file upload handler
      *
-     * @param resource      $stream File input stream
-     * @param array         $params Request parameters
-     * @param ?\App\Fs\Item $file   The file object
+     * @param resource $stream File input stream
+     * @param array    $params Request parameters
+     * @param ?Item    $file   The file object
      *
      * @return array File/Response attributes
+     *
      * @throws \Exception
      */
-    protected static function fileInputResumable($stream, array $params, Item $file = null): array
+    protected static function fileInputResumable($stream, array $params, ?Item $file = null): array
     {
         // Initial request, save file metadata, return uploadId
         if ($params['uploadId'] == 'resumable') {
@@ -194,7 +196,7 @@ class Storage
                 throw new \Exception("Missing parameters of resumable file upload.");
             }
 
-            $params['uploadId'] = \App\Utils::uuidStr();
+            $params['uploadId'] = Utils::uuidStr();
 
             $upload = [
                 'fileId' => $file->id,
@@ -234,7 +236,7 @@ class Storage
         }
 
         $disk = LaravelStorage::disk(\config('filesystems.default'));
-        $chunkId = \App\Utils::uuidStr();
+        $chunkId = Utils::uuidStr();
 
         $path = self::chunkLocation($chunkId, $file);
 
@@ -251,10 +253,10 @@ class Storage
 
         // Create the chunk record
         $file->chunks()->create([
-                'chunk_id' => $chunkId,
-                'sequence' => count($upload['chunks']),
-                'size' => $chunkSize,
-                'deleted_at' => \now(), // not yet active chunk
+            'chunk_id' => $chunkId,
+            'sequence' => count($upload['chunks']),
+            'size' => $chunkSize,
+            'deleted_at' => \now(), // not yet active chunk
         ]);
 
         $upload['chunks'][] = $chunkId;
@@ -269,8 +271,8 @@ class Storage
 
             // Update file metadata
             $file->setProperties([
-                    'size' => $upload['uploaded'],
-                    'mimetype' => $upload['mimetype'] ?: 'application/octet-stream',
+                'size' => $upload['uploaded'],
+                'mimetype' => $upload['mimetype'] ?: 'application/octet-stream',
             ]);
 
             // Assign uploaded chunks to the file, "unlink" any old chunks of this file
@@ -316,8 +318,8 @@ class Storage
     /**
      * Node location in the storage
      *
-     * @param string        $chunkId Chunk identifier
-     * @param \App\Fs\Item  $file    File the chunk belongs to
+     * @param string $chunkId Chunk identifier
+     * @param Item   $file    File the chunk belongs to
      *
      * @return string Chunk location
      */

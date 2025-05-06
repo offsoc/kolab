@@ -8,10 +8,7 @@ use Tests\TestCase;
 
 class CreateTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -19,10 +16,7 @@ class CreateTest extends TestCase
         $this->deleteTestGroup('group-testm@kolab.org');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestGroup('group-test@kolab.org');
         $this->deleteTestGroup('group-testm@kolab.org');
@@ -72,7 +66,7 @@ class CreateTest extends TestCase
         $group = Group::where('email', 'group-test@kolab.org')->first();
 
         $this->assertSame(0, $code);
-        $this->assertEquals($group->id, $output);
+        $this->assertSame((string) $group->id, $output);
         $this->assertSame([], $group->members);
         $this->assertSame($user->wallets->first()->id, $group->wallet()->id);
 
@@ -95,7 +89,7 @@ class CreateTest extends TestCase
         $output = trim(\Artisan::output());
         $group = Group::where('email', 'group-testm@kolab.org')->first();
         $this->assertSame(0, $code);
-        $this->assertEquals($group->id, $output);
+        $this->assertSame((string) $group->id, $output);
         $this->assertSame(['member1@kolabnow.com', 'member2@gmail.com'], $group->members);
         $this->assertSame($user->wallets->first()->id, $group->wallet()->id);
     }

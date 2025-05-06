@@ -3,6 +3,11 @@
 namespace Tests\Feature\Jobs\Wallet;
 
 use App\Jobs\Wallet\CheckJob;
+use App\Mail\DegradedAccountReminder;
+use App\Mail\NegativeBalance;
+use App\Mail\NegativeBalanceDegraded;
+use App\Mail\NegativeBalanceReminderDegrade;
+use App\Package;
 use App\User;
 use App\Wallet;
 use Carbon\Carbon;
@@ -12,21 +17,15 @@ use Tests\TestCase;
 
 class CheckTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
-        Carbon::setTestNow(Carbon::createFromDate(2022, 02, 02));
+        Carbon::setTestNow(Carbon::createFromDate(2022, 2, 2));
 
         $this->deleteTestUser('wallet-check@kolabnow.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('wallet-check@kolabnow.com');
 
@@ -83,8 +82,8 @@ class CheckTest extends TestCase
         $job->handle();
 
         // Assert the mail was sent to the user's email, but not to his external email
-        Mail::assertSent(\App\Mail\NegativeBalance::class, 1);
-        Mail::assertSent(\App\Mail\NegativeBalance::class, function ($mail) use ($user) {
+        Mail::assertSent(NegativeBalance::class, 1);
+        Mail::assertSent(NegativeBalance::class, static function ($mail) use ($user) {
             return $mail->hasTo($user->email) && !$mail->hasCc('external@test.com');
         });
 
@@ -104,8 +103,8 @@ class CheckTest extends TestCase
         $job->handle();
 
         // Assert the mail was sent to the user's email, but not to his external email
-        Mail::assertSent(\App\Mail\NegativeBalance::class, 1);
-        Mail::assertSent(\App\Mail\NegativeBalance::class, function ($mail) use ($user) {
+        Mail::assertSent(NegativeBalance::class, 1);
+        Mail::assertSent(NegativeBalance::class, static function ($mail) use ($user) {
             return $mail->hasTo($user->email) && !$mail->hasCc('external@test.com');
         });
 
@@ -166,8 +165,8 @@ class CheckTest extends TestCase
         $job->handle();
 
         // Assert the mail was sent to the user's email and to his external email
-        Mail::assertSent(\App\Mail\NegativeBalanceReminderDegrade::class, 1);
-        Mail::assertSent(\App\Mail\NegativeBalanceReminderDegrade::class, function ($mail) use ($user) {
+        Mail::assertSent(NegativeBalanceReminderDegrade::class, 1);
+        Mail::assertSent(NegativeBalanceReminderDegrade::class, static function ($mail) use ($user) {
             return $mail->hasTo($user->email) && $mail->hasCc('external@test.com');
         });
 
@@ -211,8 +210,8 @@ class CheckTest extends TestCase
         $job->handle();
 
         // Assert the mail was sent to the user's email, and his external email
-        Mail::assertSent(\App\Mail\NegativeBalanceDegraded::class, 1);
-        Mail::assertSent(\App\Mail\NegativeBalanceDegraded::class, function ($mail) use ($user) {
+        Mail::assertSent(NegativeBalanceDegraded::class, 1);
+        Mail::assertSent(NegativeBalanceDegraded::class, static function ($mail) use ($user) {
             return $mail->hasTo($user->email) && $mail->hasCc('external@test.com');
         });
 
@@ -277,8 +276,8 @@ class CheckTest extends TestCase
         $res = $job->handle();
 
         // Assert the mail was sent to the user's email, and his external email
-        Mail::assertSent(\App\Mail\DegradedAccountReminder::class, 1);
-        Mail::assertSent(\App\Mail\DegradedAccountReminder::class, function ($mail) use ($user) {
+        Mail::assertSent(DegradedAccountReminder::class, 1);
+        Mail::assertSent(DegradedAccountReminder::class, static function ($mail) use ($user) {
             return $mail->hasTo($user->email) && !$mail->hasCc('external@test.com');
         });
 
@@ -308,7 +307,7 @@ class CheckTest extends TestCase
         $user->setSetting('external_email', 'external@test.com');
         $wallet = $user->wallets()->first();
 
-        $package = \App\Package::withObjectTenantContext($user)->where('title', 'kolab')->first();
+        $package = Package::withObjectTenantContext($user)->where('title', 'kolab')->first();
         $user->assignPackage($package);
 
         $wallet->balance = -100;

@@ -3,6 +3,8 @@
 namespace App\Console\Commands\Data\Import;
 
 use App\Console\Command;
+use App\IP6Net;
+use App\Utils;
 use Carbon\Carbon;
 
 class IP6NetsCommand extends Command
@@ -33,7 +35,7 @@ class IP6NetsCommand extends Command
             'apnic' => 'http://ftp.apnic.net/apnic/stats/apnic/delegated-apnic-latest',
             'arin' => 'http://ftp.arin.net/pub/stats/arin/delegated-arin-extended-latest',
             'lacnic' => 'http://ftp.lacnic.net/pub/stats/lacnic/delegated-lacnic-latest',
-            'ripencc' => 'https://ftp.ripe.net/ripe/stats/delegated-ripencc-latest'
+            'ripencc' => 'https://ftp.ripe.net/ripe/stats/delegated-ripencc-latest',
         ];
 
         $today = Carbon::now()->toDateString();
@@ -41,7 +43,7 @@ class IP6NetsCommand extends Command
         foreach ($rirs as $rir => $url) {
             $file = storage_path("{$rir}-{$today}");
 
-            \App\Utils::downloadFile($url, $file);
+            Utils::downloadFile($url, $file);
 
             $serial = $this->serialFromStatsFile($file);
 
@@ -76,7 +78,7 @@ class IP6NetsCommand extends Command
 
                 $items = explode('|', $line);
 
-                if (sizeof($items) < 7) {
+                if (count($items) < 7) {
                     continue;
                 }
 
@@ -94,12 +96,12 @@ class IP6NetsCommand extends Command
 
                 $bar->advance();
 
-                $broadcast = \App\Utils::ip6Broadcast($items[3], (int)$items[4]);
+                $broadcast = Utils::ip6Broadcast($items[3], (int) $items[4]);
 
-                $net = \App\IP6Net::where(
+                $net = IP6Net::where(
                     [
                         'net_number' => inet_pton($items[3]),
-                        'net_mask' => (int)$items[4],
+                        'net_mask' => (int) $items[4],
                         'net_broadcast' => inet_pton($broadcast),
                     ]
                 )->first();
@@ -123,22 +125,22 @@ class IP6NetsCommand extends Command
                 $nets[] = [
                     'rir_name' => $rir,
                     'net_number' => inet_pton($items[3]),
-                    'net_mask' => (int)$items[4],
+                    'net_mask' => (int) $items[4],
                     'net_broadcast' => inet_pton($broadcast),
                     'country' => $items[1],
                     'serial' => $serial,
                     'created_at' => Carbon::parse($items[5], 'UTC'),
-                    'updated_at' => Carbon::now()
+                    'updated_at' => Carbon::now(),
                 ];
 
-                if (sizeof($nets) >= 100) {
-                    \App\IP6Net::insert($nets);
+                if (count($nets) >= 100) {
+                    IP6Net::insert($nets);
                     $nets = [];
                 }
             }
 
-            if (sizeof($nets) > 0) {
-                \App\IP6Net::insert($nets);
+            if (count($nets) > 0) {
+                IP6Net::insert($nets);
                 $nets = [];
             }
 
@@ -159,7 +161,7 @@ class IP6NetsCommand extends Command
 
             $items = explode('|', $line);
 
-            if (sizeof($items) < 3) {
+            if (count($items) < 3) {
                 continue;
             }
 
@@ -184,12 +186,12 @@ class IP6NetsCommand extends Command
 
             $items = explode('|', $line);
 
-            if (sizeof($items) < 2) {
+            if (count($items) < 2) {
                 continue;
             }
 
-            if ((int)$items[2]) {
-                $serial = (int)$items[2];
+            if ((int) $items[2]) {
+                $serial = (int) $items[2];
                 break;
             }
         }

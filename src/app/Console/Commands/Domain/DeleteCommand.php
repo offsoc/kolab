@@ -3,13 +3,14 @@
 namespace App\Console\Commands\Domain;
 
 use App\Console\ObjectDeleteCommand;
+use App\Domain;
 
 class DeleteCommand extends ObjectDeleteCommand
 {
     protected $dangerous = false;
     protected $hidden = false;
 
-    protected $objectClass = \App\Domain::class;
+    protected $objectClass = Domain::class;
     protected $objectName = 'domain';
     protected $objectTitle = 'namespace';
 

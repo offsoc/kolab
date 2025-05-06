@@ -2,7 +2,16 @@
 
 namespace App\Console;
 
+use App\Domain;
+use App\Group;
+use App\Resource;
+use App\SharedFolder;
+use App\Tenant;
+use App\Traits\BelongsToTenantTrait;
+use App\User;
+use App\Wallet;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\Console\Helper\ProgressBar;
 
 abstract class Command extends \Illuminate\Console\Command
 {
@@ -25,7 +34,7 @@ abstract class Command extends \Illuminate\Console\Command
      *
      * * a command will result in the permanent, irrecoverable loss of data.
      *
-     * @var boolean
+     * @var bool
      */
     protected $dangerous = false;
 
@@ -38,7 +47,6 @@ abstract class Command extends \Illuminate\Console\Command
 
     /** @var bool Adds --tenant option handler */
     protected $withTenant = false;
-
 
     /**
      * Apply current tenant context to the query
@@ -58,12 +66,12 @@ abstract class Command extends \Illuminate\Console\Command
         }
 
         $modelsWithOwner = [
-            \App\Wallet::class,
+            Wallet::class,
         ];
 
         // Add tenant filter
-        if (in_array(\App\Traits\BelongsToTenantTrait::class, class_uses($object::class))) {
-            $context = new \App\User();
+        if (in_array(BelongsToTenantTrait::class, class_uses($object::class))) {
+            $context = new User();
             $context->tenant_id = $this->tenantId;
 
             $object = $object->withObjectTenantContext($context);
@@ -85,7 +93,7 @@ abstract class Command extends \Illuminate\Console\Command
      * @param int    $count   Number of progress steps
      * @param string $message The description
      *
-     * @return \Symfony\Component\Console\Helper\ProgressBar
+     * @return ProgressBar
      */
     protected function createProgressBar($count, $message = null)
     {
@@ -109,11 +117,11 @@ abstract class Command extends \Illuminate\Console\Command
      * @param string $domain      Domain ID or namespace
      * @param bool   $withDeleted Include deleted
      *
-     * @return \App\Domain|null
+     * @return Domain|null
      */
     public function getDomain($domain, $withDeleted = false)
     {
-        return $this->getObject(\App\Domain::class, $domain, 'namespace', $withDeleted);
+        return $this->getObject(Domain::class, $domain, 'namespace', $withDeleted);
     }
 
     /**
@@ -122,19 +130,19 @@ abstract class Command extends \Illuminate\Console\Command
      * @param string $group       Group ID or email
      * @param bool   $withDeleted Include deleted
      *
-     * @return \App\Group|null
+     * @return Group|null
      */
     public function getGroup($group, $withDeleted = false)
     {
-        return $this->getObject(\App\Group::class, $group, 'email', $withDeleted);
+        return $this->getObject(Group::class, $group, 'email', $withDeleted);
     }
 
     /**
      * Find an object.
      *
      * @param string      $objectClass     The name of the class
-     * @param string      $objectIdOrTitle The name of a database field to match.
-     * @param string|null $objectTitle     An additional database field to match.
+     * @param string      $objectIdOrTitle the name of a database field to match
+     * @param string|null $objectTitle     an additional database field to match
      * @param bool        $withDeleted     Act as if --with-deleted was used
      *
      * @return mixed
@@ -185,11 +193,11 @@ abstract class Command extends \Illuminate\Console\Command
      * @param string $resource    Resource ID or email
      * @param bool   $withDeleted Include deleted
      *
-     * @return \App\Resource|null
+     * @return Resource|null
      */
     public function getResource($resource, $withDeleted = false)
     {
-        return $this->getObject(\App\Resource::class, $resource, 'email', $withDeleted);
+        return $this->getObject(Resource::class, $resource, 'email', $withDeleted);
     }
 
     /**
@@ -198,11 +206,11 @@ abstract class Command extends \Illuminate\Console\Command
      * @param string $folder      Folder ID or email
      * @param bool   $withDeleted Include deleted
      *
-     * @return \App\SharedFolder|null
+     * @return SharedFolder|null
      */
     public function getSharedFolder($folder, $withDeleted = false)
     {
-        return $this->getObject(\App\SharedFolder::class, $folder, 'email', $withDeleted);
+        return $this->getObject(SharedFolder::class, $folder, 'email', $withDeleted);
     }
 
     /**
@@ -211,11 +219,11 @@ abstract class Command extends \Illuminate\Console\Command
      * @param string $user        User ID or email
      * @param bool   $withDeleted Include deleted
      *
-     * @return \App\User|null
+     * @return User|null
      */
     public function getUser($user, $withDeleted = false)
     {
-        return $this->getObject(\App\User::class, $user, 'email', $withDeleted);
+        return $this->getObject(User::class, $user, 'email', $withDeleted);
     }
 
     /**
@@ -223,11 +231,11 @@ abstract class Command extends \Illuminate\Console\Command
      *
      * @param string $wallet Wallet ID
      *
-     * @return \App\Wallet|null
+     * @return Wallet|null
      */
     public function getWallet($wallet)
     {
-        return $this->getObject(\App\Wallet::class, $wallet);
+        return $this->getObject(Wallet::class, $wallet);
     }
 
     /**
@@ -254,7 +262,7 @@ abstract class Command extends \Illuminate\Console\Command
 
         // @phpstan-ignore-next-line
         if ($this->withTenant && $this->hasOption('tenant') && ($tenantId = $this->option('tenant'))) {
-            $tenant = $this->getObject(\App\Tenant::class, $tenantId, 'title');
+            $tenant = $this->getObject(Tenant::class, $tenantId, 'title');
             if (!$tenant) {
                 $this->error("Tenant {$tenantId} not found");
                 return 1;
@@ -275,16 +283,13 @@ abstract class Command extends \Illuminate\Console\Command
      */
     protected function toString($entry)
     {
-        /**
-         * Haven't figured out yet, how to test if this command implements an option for additional
-         * attributes.
-        if (!in_array('attr', $this->options())) {
-            return $entry->{$entry->getKeyName()};
-        }
-        */
+        // Haven't figured out yet, how to test if this command implements an option for additional attributes.
+        // if (!in_array('attr', $this->options())) {
+        // return $entry->{$entry->getKeyName()};
+        // }
 
         $str = [
-            $entry->{$entry->getKeyName()}
+            $entry->{$entry->getKeyName()},
         ];
 
         // @phpstan-ignore-next-line

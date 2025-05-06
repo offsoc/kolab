@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Tenant;
+use App\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable as IMailable;
 use Illuminate\Queue\SerializesModels;
@@ -12,16 +13,15 @@ class Mailable extends IMailable
     use Queueable;
     use SerializesModels;
 
-    /** @var ?\App\User User context */
+    /** @var ?User User context */
     protected $user;
-
 
     /**
      * Returns the user object of an email main recipient.
      *
-     * @return ?\App\User User object if set
+     * @return ?User User object if set
      */
-    public function getUser(): ?\App\User
+    public function getUser(): ?User
     {
         return $this->user;
     }

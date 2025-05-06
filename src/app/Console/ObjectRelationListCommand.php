@@ -2,6 +2,10 @@
 
 namespace App\Console;
 
+use App\Utils;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Str;
 
@@ -54,7 +58,7 @@ abstract class ObjectRelationListCommand extends ObjectCommand
             $this->objectRelationClass = "App\\" . rtrim(ucfirst($this->objectRelation), 's');
         }
 
-        if (\App\Utils::isSoftDeletable($this->objectRelationClass)) {
+        if (Utils::isSoftDeletable($this->objectRelationClass)) {
             $this->signature .= " {--with-deleted : Include deleted objects}";
         }
 
@@ -95,11 +99,11 @@ abstract class ObjectRelationListCommand extends ObjectCommand
 
         // Convert query builder into a collection
         if (
-            ($result instanceof \Illuminate\Database\Eloquent\Relations\Relation)
-            || ($result instanceof \Illuminate\Database\Eloquent\Builder)
+            ($result instanceof Relation)
+            || ($result instanceof Builder)
         ) {
             // @phpstan-ignore-next-line
-            if (\App\Utils::isSoftDeletable($this->objectRelationClass) && $this->option('with-deleted')) {
+            if (Utils::isSoftDeletable($this->objectRelationClass) && $this->option('with-deleted')) {
                 $result->withoutGlobalScope(SoftDeletingScope::class);
             }
 
@@ -108,7 +112,7 @@ abstract class ObjectRelationListCommand extends ObjectCommand
 
         // Print the result
         if (
-            ($result instanceof \Illuminate\Database\Eloquent\Collection)
+            ($result instanceof Collection)
             || is_array($result)
         ) {
             foreach ($result as $entry) {

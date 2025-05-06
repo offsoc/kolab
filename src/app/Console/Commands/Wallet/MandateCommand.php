@@ -60,7 +60,7 @@ class MandateCommand extends Command
             $this->info("    status: {$status}");
             $this->info("    amount: {$mandate['amount']} {$wallet->currency}");
             $this->info("    min-balance: {$mandate['balance']} {$wallet->currency}");
-            $this->info("    disabled: $disabled");
+            $this->info("    disabled: {$disabled}");
         } else {
             $this->info("Auto-payment: none");
         }

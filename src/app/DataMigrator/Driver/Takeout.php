@@ -5,10 +5,9 @@ namespace App\DataMigrator\Driver;
 use App\DataMigrator\Account;
 use App\DataMigrator\Engine;
 use App\DataMigrator\Interface\ExporterInterface;
-use App\DataMigrator\Interface\ImporterInterface;
 use App\DataMigrator\Interface\Folder;
+use App\DataMigrator\Interface\ImporterInterface;
 use App\DataMigrator\Interface\Item;
-use App\DataMigrator\Interface\ItemSet;
 
 /**
  * Data migration from Google Takeout archive file
@@ -23,7 +22,6 @@ class Takeout implements ExporterInterface
 
     /** @var string Local folder with folders/files (extracted from the Takeout archive) */
     protected $location;
-
 
     /**
      * Object constructor
@@ -170,10 +168,10 @@ class Takeout implements ExporterInterface
             $pos = 0;
             $start = null;
 
-            $add_vevent_block = function ($start_pos, $end_pos) use (&$event, &$events) {
+            $add_vevent_block = static function ($start_pos, $end_pos) use (&$event, &$events) {
                 // Get the UID which will be the array key
                 if (preg_match('/\nUID:(.[^\r\n]+(\r\n[\s\t][^\r\n]+)*)/', $event, $matches)) {
-                    $uid =  str_replace(["\r\n ", "\r\n  "], '', $matches[1]);
+                    $uid = str_replace(["\r\n ", "\r\n  "], '', $matches[1]);
                     // Remember position in the stream, we don't want to copy the whole content into memory
                     $chunk = $start_pos . ':' . $end_pos;
                     $events[$uid] = isset($events[$uid]) ? array_merge($events[$uid], [$chunk]) : [$chunk];
@@ -214,7 +212,7 @@ class Takeout implements ExporterInterface
                 $event = '';
                 foreach ($chunks as $pos) {
                     [$start, $end] = explode(':', $pos);
-                    $event .= stream_get_contents($fp, intval($end) - intval($start), intval($start));
+                    $event .= stream_get_contents($fp, (int) $end - (int) $start, (int) $start);
                 }
 
                 $this->eventItemHandler($folder, $head . $event . "END:VCALENDAR\r\n", $existing, $callback);

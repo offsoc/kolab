@@ -2,13 +2,17 @@
 
 namespace App;
 
+use App\Jobs\Mail\PaymentMandateDisabledJob;
 use App\Providers\PaymentProvider;
 use App\Traits\SettingsTrait;
 use App\Traits\UuidStrKeyTrait;
 use Carbon\Carbon;
 use Dyrynda\Database\Support\NullableFields;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -16,12 +20,12 @@ use Illuminate\Support\Facades\DB;
  *
  * A wallet is owned by an {@link \App\User}.
  *
- * @property int        $balance     Current balance in cents
- * @property string     $currency    Currency code
- * @property ?string    $description Description
- * @property string     $id          Unique identifier
- * @property ?\App\User $owner       Owner (can be null when owner is deleted)
- * @property int        $user_id     Owner's identifier
+ * @property int     $balance     Current balance in cents
+ * @property string  $currency    Currency code
+ * @property ?string $description Description
+ * @property string  $id          Unique identifier
+ * @property ?User   $owner       Owner (can be null when owner is deleted)
+ * @property int     $user_id     Owner's identifier
  */
 class Wallet extends Model
 {
@@ -40,7 +44,7 @@ class Wallet extends Model
     /** @var list<string> The attributes that are mass assignable */
     protected $fillable = [
         'currency',
-        'description'
+        'description',
     ];
 
     /** @var array<int, string> The attributes that can be not set */
@@ -53,13 +57,10 @@ class Wallet extends Model
         'balance' => 'integer',
     ];
 
-
     /**
      * Add a controller to this wallet.
      *
-     * @param \App\User $user The user to add as a controller to this wallet.
-     *
-     * @return void
+     * @param User $user the user to add as a controller to this wallet
      */
     public function addController(User $user)
     {
@@ -71,12 +72,12 @@ class Wallet extends Model
     /**
      * Add an award to this wallet's balance.
      *
-     * @param int|\App\Payment $amount      The amount of award (in cents) or Payment object
-     * @param string           $description The transaction description
+     * @param int|Payment $amount      The amount of award (in cents) or Payment object
+     * @param string      $description The transaction description
      *
      * @return Wallet Self
      */
-    public function award(int|Payment $amount, string $description = ''): Wallet
+    public function award(int|Payment $amount, string $description = ''): self
     {
         return $this->balanceUpdate(Transaction::WALLET_AWARD, $amount, $description);
     }
@@ -102,16 +103,16 @@ class Wallet extends Model
 
         // Get all relevant entitlements...
         $entitlements = $this->entitlements()->withTrashed()
-            ->where(function (Builder $query) {
+            ->where(static function (Builder $query) {
                 // existing entitlements created, or billed last less than a month ago
-                $query->where(function (Builder $query) {
+                $query->where(static function (Builder $query) {
                     $query->whereNull('deleted_at')
                         ->where('updated_at', '<=', Carbon::now()->subMonthsWithoutOverflow(1));
                 })
                 // deleted entitlements not yet charged
-                ->orWhere(function (Builder $query) {
-                    $query->whereColumn('updated_at', '<', 'deleted_at');
-                });
+                    ->orWhere(static function (Builder $query) {
+                        $query->whereColumn('updated_at', '<', 'deleted_at');
+                    });
             })
             ->get();
 
@@ -159,7 +160,7 @@ class Wallet extends Model
      *
      * Returns NULL for balance < 0 or discount = 100% or on a fresh account
      *
-     * @return \Carbon\Carbon|null Date
+     * @return Carbon|null Date
      */
     public function balanceLastsUntil()
     {
@@ -173,10 +174,10 @@ class Wallet extends Model
 
         // Get all entitlements...
         $entitlements = $this->entitlements()->orderBy('updated_at')->get()
-            ->filter(function ($entitlement) {
+            ->filter(static function ($entitlement) {
                 return $entitlement->cost > 0;
             })
-            ->map(function ($entitlement) {
+            ->map(static function ($entitlement) {
                 return [
                     'date' => $entitlement->updated_at ?: $entitlement->created_at,
                     'cost' => $entitlement->cost,
@@ -223,12 +224,12 @@ class Wallet extends Model
     /**
      * Chargeback an amount of pecunia from this wallet's balance.
      *
-     * @param int|\App\Payment $amount      The amount of pecunia to charge back (in cents) or Payment object
-     * @param string           $description The transaction description
+     * @param int|Payment $amount      The amount of pecunia to charge back (in cents) or Payment object
+     * @param string      $description The transaction description
      *
      * @return Wallet Self
      */
-    public function chargeback(int|Payment $amount, string $description = ''): Wallet
+    public function chargeback(int|Payment $amount, string $description = ''): self
     {
         return $this->balanceUpdate(Transaction::WALLET_CHARGEBACK, $amount, $description);
     }
@@ -236,7 +237,7 @@ class Wallet extends Model
     /**
      * Controllers of this wallet.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<User, $this>
+     * @return BelongsToMany<User, $this>
      */
     public function controllers()
     {
@@ -251,12 +252,12 @@ class Wallet extends Model
     /**
      * Add an amount of pecunia to this wallet's balance.
      *
-     * @param int|\App\Payment $amount      The amount of pecunia to add (in cents) or Payment object
-     * @param string           $description The transaction description
+     * @param int|Payment $amount      The amount of pecunia to add (in cents) or Payment object
+     * @param string      $description The transaction description
      *
      * @return Wallet Self
      */
-    public function credit(int|Payment $amount, string $description = ''): Wallet
+    public function credit(int|Payment $amount, string $description = ''): self
     {
         return $this->balanceUpdate(Transaction::WALLET_CREDIT, $amount, $description);
     }
@@ -264,13 +265,14 @@ class Wallet extends Model
     /**
      * Deduct an amount of pecunia from this wallet's balance.
      *
-     * @param int|\App\Payment $amount      The amount of pecunia to deduct (in cents) or Payment object
-     * @param string           $description The transaction description
-     * @param array            $eTIDs       List of transaction IDs for the individual entitlements
-     *                                      that make up this debit record, if any.
+     * @param int|Payment $amount      The amount of pecunia to deduct (in cents) or Payment object
+     * @param string      $description The transaction description
+     * @param array       $eTIDs       list of transaction IDs for the individual entitlements
+     *                                 that make up this debit record, if any
+     *
      * @return Wallet Self
      */
-    public function debit(int|Payment $amount, string $description = '', array $eTIDs = []): Wallet
+    public function debit(int|Payment $amount, string $description = '', array $eTIDs = []): self
     {
         return $this->balanceUpdate(Transaction::WALLET_DEBIT, $amount, $description, $eTIDs);
     }
@@ -278,7 +280,7 @@ class Wallet extends Model
     /**
      * The discount assigned to the wallet.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Discount, $this>
+     * @return BelongsTo<Discount, $this>
      */
     public function discount()
     {
@@ -288,7 +290,7 @@ class Wallet extends Model
     /**
      * Entitlements billed to this wallet.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Entitlement, $this>
+     * @return HasMany<Entitlement, $this>
      */
     public function entitlements()
     {
@@ -308,7 +310,7 @@ class Wallet extends Model
     /**
      * Return the exact, numeric version of the discount to be applied.
      *
-     * @return int Discount in percent, ranges from 0 - 100.
+     * @return int discount in percent, ranges from 0 - 100
      */
     public function getDiscount(): int
     {
@@ -348,7 +350,7 @@ class Wallet extends Model
     /**
      * Check if the specified user is a controller to this wallet.
      *
-     * @param \App\User $user The user object.
+     * @param User $user the user object
      *
      * @return bool True if the user is one of the wallet controllers (including user), False otherwise
      */
@@ -368,13 +370,13 @@ class Wallet extends Model
      */
     public function money(int $amount, $locale = 'de_DE')
     {
-        return \App\Utils::money($amount, $this->currency, $locale);
+        return Utils::money($amount, $this->currency, $locale);
     }
 
     /**
      * The owner of the wallet -- the wallet is in his/her back pocket.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<User, $this>
+     * @return BelongsTo<User, $this>
      */
     public function owner()
     {
@@ -398,9 +400,8 @@ class Wallet extends Model
                 case 1:
                     // In this mode tax is added on top of the payment. The amount
                     // to pay grows, but we keep wallet balance without tax.
-                    $request['amount'] = $request['amount'] + round($request['amount'] * $rate->rate / 100);
+                    $request['amount'] += round($request['amount'] * $rate->rate / 100);
                     break;
-
                 default:
                     // In this mode tax is "swallowed" by the vendor. The payment
                     // amount does not change
@@ -414,7 +415,7 @@ class Wallet extends Model
     /**
      * Payments on this wallet.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Payment, $this>
+     * @return HasMany<Payment, $this>
      */
     public function payments()
     {
@@ -424,12 +425,12 @@ class Wallet extends Model
     /**
      * Add a penalty to this wallet's balance.
      *
-     * @param int|\App\Payment $amount      The amount of penalty (in cents) or Payment object
-     * @param string           $description The transaction description
+     * @param int|Payment $amount      The amount of penalty (in cents) or Payment object
+     * @param string      $description The transaction description
      *
      * @return Wallet Self
      */
-    public function penalty(int|Payment $amount, string $description = ''): Wallet
+    public function penalty(int|Payment $amount, string $description = ''): self
     {
         return $this->balanceUpdate(Transaction::WALLET_PENALTY, $amount, $description);
     }
@@ -437,7 +438,7 @@ class Wallet extends Model
     /**
      * Plan of the wallet.
      *
-     * @return ?\App\Plan
+     * @return ?Plan
      */
     public function plan()
     {
@@ -449,9 +450,7 @@ class Wallet extends Model
     /**
      * Remove a controller from this wallet.
      *
-     * @param \App\User $user The user to remove as a controller from this wallet.
-     *
-     * @return void
+     * @param User $user the user to remove as a controller from this wallet
      */
     public function removeController(User $user)
     {
@@ -463,12 +462,12 @@ class Wallet extends Model
     /**
      * Refund an amount of pecunia from this wallet's balance.
      *
-     * @param int|\App\Payment $amount      The amount of pecunia to refund (in cents) or Payment object
-     * @param string           $description The transaction description
+     * @param int|Payment $amount      The amount of pecunia to refund (in cents) or Payment object
+     * @param string      $description The transaction description
      *
      * @return Wallet Self
      */
-    public function refund($amount, string $description = ''): Wallet
+    public function refund($amount, string $description = ''): self
     {
         return $this->balanceUpdate(Transaction::WALLET_REFUND, $amount, $description);
     }
@@ -489,8 +488,8 @@ class Wallet extends Model
             return false;
         }
 
-        $min_balance = (int) round(floatval($settings['mandate_balance']) * 100);
-        $amount = (int) round(floatval($settings['mandate_amount']) * 100);
+        $min_balance = (int) round((float) $settings['mandate_balance'] * 100);
+        $amount = (int) round((float) $settings['mandate_amount'] * 100);
 
         // The wallet balance is greater than the auto-payment threshold
         if ($this->balance >= $min_balance) {
@@ -517,7 +516,7 @@ class Wallet extends Model
             // Disable (not remove) the mandate
             \Log::warning("Top-up for wallet {$this->id}: mandate too little");
             $this->setSetting('mandate_disabled', '1');
-            \App\Jobs\Mail\PaymentMandateDisabledJob::dispatch($this);
+            PaymentMandateDisabledJob::dispatch($this);
             return false;
         }
 
@@ -549,12 +548,12 @@ class Wallet extends Model
     /**
      * Get the VAT rate for the wallet owner country.
      *
-     * @param ?\DateTime $start Get the rate valid for the specified date-time,
-     *                          without it the current rate will be returned (if exists).
+     * @param ?\DateTime $start get the rate valid for the specified date-time,
+     *                          without it the current rate will be returned (if exists)
      *
-     * @return ?\App\VatRate VAT rate
+     * @return ?VatRate VAT rate
      */
-    public function vatRate(\DateTime $start = null): ?VatRate
+    public function vatRate(?\DateTime $start = null): ?VatRate
     {
         $owner = $this->owner;
 
@@ -579,12 +578,12 @@ class Wallet extends Model
     /**
      * Retrieve the transactions against this wallet.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Transaction, $this>
+     * @return HasMany<Transaction, $this>
      */
     public function transactions()
     {
         return $this->hasMany(Transaction::class, 'object_id')
-            ->where('object_type', Wallet::class);
+            ->where('object_type', self::class);
     }
 
     /**
@@ -605,11 +604,11 @@ class Wallet extends Model
             //       - if we change plan definition at some point in time, the old users would use
             //         the old definition, instead of the current one
             // TODO: The same for plan's free_months value
-            $trialSkus = \App\Sku::select('id')
-                ->whereIn('id', function ($query) use ($plan) {
+            $trialSkus = Sku::select('id')
+                ->whereIn('id', static function ($query) use ($plan) {
                     $query->select('sku_id')
                         ->from('package_skus')
-                        ->whereIn('package_id', function ($query) use ($plan) {
+                        ->whereIn('package_id', static function ($query) use ($plan) {
                             $query->select('package_id')
                                 ->from('plan_packages')
                                 ->where('plan_id', $plan->id);
@@ -726,12 +725,12 @@ class Wallet extends Model
         $this->save();
 
         $transaction = Transaction::create([
-                'user_email' => \App\Utils::userEmailOrNull(),
-                'object_id' => $this->id,
-                'object_type' => Wallet::class,
-                'type' => $type,
-                'amount' => $amount,
-                'description' => $description,
+            'user_email' => Utils::userEmailOrNull(),
+            'object_id' => $this->id,
+            'object_type' => self::class,
+            'type' => $type,
+            'amount' => $amount,
+            'description' => $description,
         ]);
 
         if (!empty($eTIDs)) {
@@ -750,7 +749,7 @@ class Wallet extends Model
      *
      * @return array Result in form of [cost, fee, end-of-period]
      */
-    protected function entitlementCosts(Entitlement $entitlement, array $trial = null, bool $useCostPerDay = false)
+    protected function entitlementCosts(Entitlement $entitlement, ?array $trial = null, bool $useCostPerDay = false)
     {
         if ($entitlement->wallet_id != $this->id) {
             throw new \Exception("Entitlement assigned to another wallet");
@@ -787,14 +786,14 @@ class Wallet extends Model
             $fee = 0;
 
             // Charge for full months first
-            if (($diff = intval($startDate->diffInMonths($endDate, true))) > 0) {
+            if (($diff = (int) $startDate->diffInMonths($endDate, true)) > 0) {
                 $cost += floor($entitlement->cost * $discountRate) * $diff;
                 $fee += $entitlement->fee * $diff;
                 $startDate->addMonthsWithoutOverflow($diff);
             }
 
             // Charge for the rest of the period
-            if (($diff = intval($startDate->diffInDays($endDate, true))) > 0) {
+            if (($diff = (int) $startDate->diffInDays($endDate, true)) > 0) {
                 // The price per day is based on the number of days in the month(s)
                 // Note: The $endDate does not have to be the current month
                 $endMonthDiff = $endDate->day > $diff ? $diff : $endDate->day;

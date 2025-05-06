@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Jobs\Resource;
 
+use App\Jobs\Resource\VerifyJob;
 use App\Resource;
 use App\Support\Facades\IMAP;
 use Illuminate\Support\Facades\Queue;
@@ -9,10 +10,7 @@ use Tests\TestCase;
 
 class VerifyTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -21,10 +19,7 @@ class VerifyTest extends TestCase
         $resource->save();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $resource = $this->getTestResource('resource-test1@kolab.org');
         $resource->status |= Resource::STATUS_IMAP_READY;
@@ -41,7 +36,7 @@ class VerifyTest extends TestCase
         Queue::fake();
 
         // Test non-existing resource ID
-        $job = (new \App\Jobs\Resource\VerifyJob(123))->withFakeQueueInteractions();
+        $job = (new VerifyJob(123))->withFakeQueueInteractions();
         $job->handle();
         $job->assertFailedWith("Resource 123 could not be found in the database.");
 
@@ -57,7 +52,7 @@ class VerifyTest extends TestCase
         // Test existing resource (successful verification)
         IMAP::shouldReceive('verifySharedFolder')->once()->with($resource->getSetting('folder'))->andReturn(true);
 
-        $job = new \App\Jobs\Resource\VerifyJob($resource->id);
+        $job = new VerifyJob($resource->id);
         $job->handle();
 
         $resource->refresh();
@@ -69,7 +64,7 @@ class VerifyTest extends TestCase
 
         IMAP::shouldReceive('verifySharedFolder')->once()->with($resource->getSetting('folder'))->andReturn(false);
 
-        $job = new \App\Jobs\Resource\VerifyJob($resource->id);
+        $job = new VerifyJob($resource->id);
         $job->handle();
 
         $this->assertFalse($resource->fresh()->isImapReady());

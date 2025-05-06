@@ -1,22 +1,19 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-// phpcs:ignore
 class CreateSharedFoldersTable extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up()
     {
         Schema::create(
             'shared_folders',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->unsignedBigInteger('id');
                 $table->string('email')->unique();
                 $table->string('name');
@@ -34,7 +31,7 @@ class CreateSharedFoldersTable extends Migration
 
         Schema::create(
             'shared_folder_settings',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->unsignedBigInteger('shared_folder_id');
                 $table->string('key');
@@ -51,8 +48,6 @@ class CreateSharedFoldersTable extends Migration
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
     public function down()
     {

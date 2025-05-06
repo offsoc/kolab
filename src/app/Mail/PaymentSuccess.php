@@ -6,20 +6,18 @@ use App\Payment;
 use App\Tenant;
 use App\User;
 use App\Utils;
+use App\Wallet;
 
 class PaymentSuccess extends Mailable
 {
-    /** @var \App\Payment A payment operation */
+    /** @var Payment A payment operation */
     protected $payment;
-
 
     /**
      * Create a new message instance.
      *
-     * @param \App\Payment $payment A payment operation
-     * @param \App\User    $user    A wallet controller to whom the email is being sent
-     *
-     * @return void
+     * @param Payment $payment A payment operation
+     * @param User    $user    A wallet controller to whom the email is being sent
      */
     public function __construct(Payment $payment, User $user)
     {
@@ -47,9 +45,9 @@ class PaymentSuccess extends Mailable
             ->text('emails.plain.payment_success')
             ->subject(\trans('mail.paymentsuccess-subject', $vars))
             ->with([
-                    'vars' => $vars,
-                    'walletUrl' => Utils::serviceUrl('/wallet', $this->user->tenant_id),
-                    'supportUrl' => Utils::serviceUrl($supportUrl, $this->user->tenant_id),
+                'vars' => $vars,
+                'walletUrl' => Utils::serviceUrl('/wallet', $this->user->tenant_id),
+                'supportUrl' => Utils::serviceUrl($supportUrl, $this->user->tenant_id),
             ]);
 
         return $this;
@@ -65,11 +63,11 @@ class PaymentSuccess extends Mailable
     public static function fakeRender(string $type = 'html'): string
     {
         $user = new User([
-              'email' => 'test@' . \config('app.domain'),
+            'email' => 'test@' . \config('app.domain'),
         ]);
 
         $payment = new Payment();
-        $payment->wallet = new \App\Wallet();
+        $payment->wallet = new Wallet();
         $payment->wallet->owner = $user;
 
         $mail = new self($payment, $user);

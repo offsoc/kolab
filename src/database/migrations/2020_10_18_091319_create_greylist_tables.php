@@ -4,19 +4,16 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-// phpcs:ignore
 class CreateGreylistTables extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up()
     {
         Schema::create(
             'greylist_connect',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->charset = 'latin1';
                 $table->collation = 'latin1_general_ci';
                 $table->bigIncrements('id');
@@ -31,35 +28,29 @@ class CreateGreylistTables extends Migration
                 $table->bigInteger('connect_count')->unsigned()->default(1);
                 $table->timestamps();
 
-                /**
-                 * Index for recipient request.
-                 */
+                // Index for recipient request.
                 $table->index(
                     [
                         'sender_local',
                         'sender_domain',
                         'recipient_hash',
                         'net_id',
-                        'net_type'
+                        'net_type',
                     ],
                     'ssrnn_idx'
                 );
 
-                /**
-                 * Index for domain whitelist query.
-                 */
+                // Index for domain whitelist query.
                 $table->index(
                     [
                         'sender_domain',
                         'net_id',
-                        'net_type'
+                        'net_type',
                     ],
                     'snn_idx'
                 );
 
-                /**
-                 * Index for updated_at
-                 */
+                // Index for updated_at
                 $table->index('updated_at');
 
                 $table->unique(
@@ -71,7 +62,7 @@ class CreateGreylistTables extends Migration
 
         Schema::create(
             'greylist_penpals',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->bigInteger('local_id');
                 $table->string('local_type', 16);
@@ -83,7 +74,7 @@ class CreateGreylistTables extends Migration
 
         Schema::create(
             'greylist_settings',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->bigInteger('object_id');
                 $table->string('object_type', 16);
@@ -97,7 +88,7 @@ class CreateGreylistTables extends Migration
 
         Schema::create(
             'greylist_whitelist',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->charset = 'latin1';
                 $table->collation = 'latin1_general_ci';
                 $table->bigIncrements('id');
@@ -114,8 +105,6 @@ class CreateGreylistTables extends Migration
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
     public function down()
     {

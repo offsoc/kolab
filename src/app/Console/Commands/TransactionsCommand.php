@@ -3,10 +3,11 @@
 namespace App\Console\Commands;
 
 use App\Console\ObjectListCommand;
+use App\Transaction;
 
 class TransactionsCommand extends ObjectListCommand
 {
-    protected $objectClass = \App\Transaction::class;
+    protected $objectClass = Transaction::class;
     protected $objectName = 'transaction';
-    protected $objectTitle = null;
+    protected $objectTitle;
 }

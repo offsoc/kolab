@@ -3,14 +3,12 @@
 namespace Tests\Feature\Jobs\Domain;
 
 use App\Domain;
+use App\Jobs\Domain\VerifyJob;
 use Tests\TestCase;
 
 class VerifyTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -18,7 +16,7 @@ class VerifyTest extends TestCase
         $this->deleteTestDomain('some-non-existing-domain.fff');
     }
 
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestDomain('gmail.com');
         $this->deleteTestDomain('some-non-existing-domain.fff');
@@ -43,13 +41,13 @@ class VerifyTest extends TestCase
 
         $this->assertFalse($domain->isVerified());
 
-        $job = new \App\Jobs\Domain\VerifyJob($domain->id);
+        $job = new VerifyJob($domain->id);
         $job->handle();
 
         $this->assertTrue($domain->fresh()->isVerified());
 
         // Test non-existing domain ID
-        $job = (new \App\Jobs\Domain\VerifyJob(123))->withFakeQueueInteractions();
+        $job = (new VerifyJob(123))->withFakeQueueInteractions();
         $job->handle();
         $job->assertFailedWith("Domain 123 could not be found in the database.");
     }
@@ -71,7 +69,7 @@ class VerifyTest extends TestCase
 
         $this->assertFalse($domain->isVerified());
 
-        $job = new \App\Jobs\Domain\VerifyJob($domain->id);
+        $job = new VerifyJob($domain->id);
         $job->handle();
 
         $this->assertFalse($domain->fresh()->isVerified());

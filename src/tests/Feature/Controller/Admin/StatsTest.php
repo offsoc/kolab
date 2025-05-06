@@ -2,17 +2,16 @@
 
 namespace Tests\Feature\Controller\Admin;
 
+use App\Discount;
 use App\Http\Controllers\API\V4\Admin\StatsController;
 use App\Payment;
+use App\Utils;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class StatsTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         self::useAdminUrl();
@@ -23,10 +22,7 @@ class StatsTest extends TestCase
         $this->deleteTestUser('test-stats@' . \config('app.domain'));
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         Payment::query()->delete();
         DB::table('wallets')->update(['discount_id' => null]);
@@ -73,7 +69,7 @@ class StatsTest extends TestCase
         $this->assertSame('bar', $json['type']);
         $this->assertCount(8, $json['data']['labels']);
         $this->assertSame(date('Y-W'), $json['data']['labels'][7]);
-        $this->assertSame([['values' => [0,0,0,0,0,0,0,0]]], $json['data']['datasets']);
+        $this->assertSame([['values' => [0, 0, 0, 0, 0, 0, 0, 0]]], $json['data']['datasets']);
 
         // 'users' chart
         $response = $this->actingAs($admin)->get("api/v4/stats/chart/users");
@@ -99,7 +95,7 @@ class StatsTest extends TestCase
         $this->assertCount(1, $json['data']['datasets']);
 
         // 'vouchers' chart
-        $discount = \App\Discount::withObjectTenantContext($user)->where('code', 'TEST')->first();
+        $discount = Discount::withObjectTenantContext($user)->where('code', 'TEST')->first();
         $wallet = $user->wallets->first();
         $wallet->discount()->associate($discount);
         $wallet->save();
@@ -129,76 +125,76 @@ class StatsTest extends TestCase
 
         // Create some test payments
         Payment::create([
-                'id' => 'test1',
-                'description' => '',
-                'status' => Payment::STATUS_PAID,
-                'amount' => 1000,
-                'credit_amount' => 1000,
-                'type' => Payment::TYPE_ONEOFF,
-                'wallet_id' => $wallet->id,
-                'provider' => 'mollie',
-                'currency' => 'EUR',
-                'currency_amount' => 1000,
+            'id' => 'test1',
+            'description' => '',
+            'status' => Payment::STATUS_PAID,
+            'amount' => 1000,
+            'credit_amount' => 1000,
+            'type' => Payment::TYPE_ONEOFF,
+            'wallet_id' => $wallet->id,
+            'provider' => 'mollie',
+            'currency' => 'EUR',
+            'currency_amount' => 1000,
         ]);
         Payment::create([
-                'id' => 'test2',
-                'description' => '',
-                'status' => Payment::STATUS_PAID,
-                'amount' => 2000,
-                'credit_amount' => 2000,
-                'type' => Payment::TYPE_RECURRING,
-                'wallet_id' => $wallet->id,
-                'provider' => 'mollie',
-                'currency' => 'EUR',
-                'currency_amount' => 2000,
+            'id' => 'test2',
+            'description' => '',
+            'status' => Payment::STATUS_PAID,
+            'amount' => 2000,
+            'credit_amount' => 2000,
+            'type' => Payment::TYPE_RECURRING,
+            'wallet_id' => $wallet->id,
+            'provider' => 'mollie',
+            'currency' => 'EUR',
+            'currency_amount' => 2000,
         ]);
         Payment::create([
-                'id' => 'test3',
-                'description' => '',
-                'status' => Payment::STATUS_PAID,
-                'amount' => 3000,
-                'credit_amount' => 3000,
-                'type' => Payment::TYPE_ONEOFF,
-                'wallet_id' => $johns_wallet->id,
-                'provider' => 'mollie',
-                'currency' => 'EUR',
-                'currency_amount' => 2800,
+            'id' => 'test3',
+            'description' => '',
+            'status' => Payment::STATUS_PAID,
+            'amount' => 3000,
+            'credit_amount' => 3000,
+            'type' => Payment::TYPE_ONEOFF,
+            'wallet_id' => $johns_wallet->id,
+            'provider' => 'mollie',
+            'currency' => 'EUR',
+            'currency_amount' => 2800,
         ]);
         Payment::create([
-                'id' => 'test4',
-                'description' => '',
-                'status' => Payment::STATUS_PAID,
-                'amount' => 4000,
-                'credit_amount' => 4000,
-                'type' => Payment::TYPE_RECURRING,
-                'wallet_id' => $johns_wallet->id,
-                'provider' => 'mollie',
-                'currency' => 'CHF',
-                'currency_amount' => 4000,
+            'id' => 'test4',
+            'description' => '',
+            'status' => Payment::STATUS_PAID,
+            'amount' => 4000,
+            'credit_amount' => 4000,
+            'type' => Payment::TYPE_RECURRING,
+            'wallet_id' => $johns_wallet->id,
+            'provider' => 'mollie',
+            'currency' => 'CHF',
+            'currency_amount' => 4000,
         ]);
         Payment::create([
-                'id' => 'test5',
-                'description' => '',
-                'status' => Payment::STATUS_OPEN,
-                'amount' => 5000,
-                'credit_amount' => 5000,
-                'type' => Payment::TYPE_ONEOFF,
-                'wallet_id' => $johns_wallet->id,
-                'provider' => 'mollie',
-                'currency' => 'CHF',
-                'currency_amount' => 5000,
+            'id' => 'test5',
+            'description' => '',
+            'status' => Payment::STATUS_OPEN,
+            'amount' => 5000,
+            'credit_amount' => 5000,
+            'type' => Payment::TYPE_ONEOFF,
+            'wallet_id' => $johns_wallet->id,
+            'provider' => 'mollie',
+            'currency' => 'CHF',
+            'currency_amount' => 5000,
         ]);
         Payment::create([
-                'id' => 'test6',
-                'description' => '',
-                'status' => Payment::STATUS_FAILED,
-                'amount' => 6000,
-                'credit_amount' => 6000,
-                'type' => Payment::TYPE_ONEOFF,
-                'wallet_id' => $johns_wallet->id,
-                'provider' => 'mollie',
-                'currency' => 'CHF',
-                'currency_amount' => 6000,
+            'id' => 'test6',
+            'description' => '',
+            'status' => Payment::STATUS_FAILED,
+            'amount' => 6000,
+            'credit_amount' => 6000,
+            'type' => Payment::TYPE_ONEOFF,
+            'wallet_id' => $johns_wallet->id,
+            'provider' => 'mollie',
+            'currency' => 'CHF',
+            'currency_amount' => 6000,
         ]);
 
         // 'income' chart
@@ -213,7 +209,7 @@ class StatsTest extends TestCase
         $this->assertSame(date('Y-W'), $json['data']['labels'][7]);
 
         // 7000 CHF + 3000 EUR =
-        $expected = 7000 + intval(round(3000 * \App\Utils::exchangeRate('EUR', 'CHF')));
+        $expected = 7000 + (int) round(3000 * Utils::exchangeRate('EUR', 'CHF'));
 
         $this->assertCount(1, $json['data']['datasets']);
         $this->assertSame($expected / 100, $json['data']['datasets'][0]['values'][7]);
@@ -241,14 +237,14 @@ class StatsTest extends TestCase
         $this->assertCount(54, $json['data']['datasets'][0]['values']);
 
         DB::table('stats')->insert([
-                'type' => StatsController::TYPE_PAYERS,
-                'value' => 5,
-                'created_at' => \now(),
+            'type' => StatsController::TYPE_PAYERS,
+            'value' => 5,
+            'created_at' => \now(),
         ]);
         DB::table('stats')->insert([
-                'type' => StatsController::TYPE_PAYERS,
-                'value' => 7,
-                'created_at' => \now(),
+            'type' => StatsController::TYPE_PAYERS,
+            'value' => 7,
+            'created_at' => \now(),
         ]);
 
         $response = $this->actingAs($admin)->get("api/v4/stats/chart/payers");

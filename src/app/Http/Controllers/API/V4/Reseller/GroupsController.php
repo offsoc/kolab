@@ -4,13 +4,14 @@ namespace App\Http\Controllers\API\V4\Reseller;
 
 use App\Group;
 use App\User;
+use Illuminate\Http\JsonResponse;
 
 class GroupsController extends \App\Http\Controllers\API\V4\Admin\GroupsController
 {
     /**
      * Search for groups
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function index()
     {

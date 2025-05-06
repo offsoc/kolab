@@ -2,13 +2,12 @@
 
 namespace Tests\Browser\Components;
 
+use Laravel\Dusk\Browser;
 use Laravel\Dusk\Component as BaseComponent;
-use PHPUnit\Framework\Assert as PHPUnit;
 
 class ListInput extends BaseComponent
 {
     protected $selector;
-
 
     public function __construct($selector)
     {
@@ -28,9 +27,7 @@ class ListInput extends BaseComponent
     /**
      * Assert that the browser page contains the component.
      *
-     * @param \Laravel\Dusk\Browser $browser
-     *
-     * @return void
+     * @param Browser $browser
      */
     public function assert($browser)
     {

@@ -2,6 +2,9 @@
 
 namespace Tests\Browser\Reseller;
 
+use App\Domain;
+use App\Plan;
+use App\Utils;
 use Illuminate\Support\Facades\Queue;
 use Tests\Browser;
 use Tests\Browser\Components\Toast;
@@ -11,10 +14,7 @@ use Tests\TestCaseDusk;
 
 class DashboardTest extends TestCaseDusk
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         self::useResellerUrl();
@@ -26,10 +26,7 @@ class DashboardTest extends TestCaseDusk
         $this->deleteTestDomain('testsearch.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $jack = $this->getTestUser('jack@kolab.org');
         $jack->setSetting('external_email', null);
@@ -47,7 +44,7 @@ class DashboardTest extends TestCaseDusk
     {
         $this->browse(function (Browser $browser) {
             $browser->visit(new Home())
-                ->submitLogon('reseller@' . \config('app.domain'), \App\Utils::generatePassphrase(), true)
+                ->submitLogon('reseller@' . \config('app.domain'), Utils::generatePassphrase(), true)
                 ->on(new Dashboard())
                 ->assertFocused('@search input')
                 ->assertMissing('@search table');
@@ -66,9 +63,9 @@ class DashboardTest extends TestCaseDusk
             $browser->type('@search input', 'john.doe.external@gmail.com')
                 ->click('@search form button')
                 ->assertToast(Toast::TYPE_INFO, '2 user accounts have been found.')
-                ->whenAvailable('@search table', function (Browser $browser) use ($john, $jack) {
+                ->whenAvailable('@search table', static function (Browser $browser) use ($john, $jack) {
                     $browser->assertElementsCount('tbody tr', 2)
-                        ->with('tbody tr:first-child', function (Browser $browser) use ($jack) {
+                        ->with('tbody tr:first-child', static function (Browser $browser) use ($jack) {
                             $browser->assertSeeIn('td:nth-child(1) a', $jack->email)
                                 ->assertSeeIn('td:nth-child(2) a', $jack->id);
 
@@ -81,7 +78,7 @@ class DashboardTest extends TestCaseDusk
                                     ->assertText('td:nth-child(4)', '');
                             }
                         })
-                        ->with('tbody tr:last-child', function (Browser $browser) use ($john) {
+                        ->with('tbody tr:last-child', static function (Browser $browser) use ($john) {
                             $browser->assertSeeIn('td:nth-child(1) a', $john->email)
                                 ->assertSeeIn('td:nth-child(2) a', $john->id);
 
@@ -102,7 +99,7 @@ class DashboardTest extends TestCaseDusk
                 ->assertMissing('@search table')
                 ->waitForLocation('/user/' . $john->id)
                 ->waitUntilMissing('.app-loader')
-                ->whenAvailable('#user-info', function (Browser $browser) use ($john) {
+                ->whenAvailable('#user-info', static function (Browser $browser) use ($john) {
                     $browser->assertSeeIn('.card-title', $john->email);
                 });
         });
@@ -115,15 +112,15 @@ class DashboardTest extends TestCaseDusk
     {
         $this->browse(function (Browser $browser) {
             $browser->visit(new Home())
-                ->submitLogon('reseller@' . \config('app.domain'), \App\Utils::generatePassphrase(), true)
+                ->submitLogon('reseller@' . \config('app.domain'), Utils::generatePassphrase(), true)
                 ->on(new Dashboard())
                 ->assertFocused('@search input')
                 ->assertMissing('@search table');
 
             // Deleted users/domains
-            $domain = $this->getTestDomain('testsearch.com', ['type' => \App\Domain::TYPE_EXTERNAL]);
+            $domain = $this->getTestDomain('testsearch.com', ['type' => Domain::TYPE_EXTERNAL]);
             $user = $this->getTestUser('test@testsearch.com');
-            $plan = \App\Plan::where('title', 'group')->first();
+            $plan = Plan::where('title', 'group')->first();
             $user->assignPlan($plan, $domain);
             $user->setAliases(['alias@testsearch.com']);
             Queue::fake();
@@ -133,10 +130,10 @@ class DashboardTest extends TestCaseDusk
             $browser->type('@search input', 'testsearch.com')
                 ->click('@search form button')
                 ->assertToast(Toast::TYPE_INFO, '1 user accounts have been found.')
-                ->whenAvailable('@search table', function (Browser $browser) use ($user) {
+                ->whenAvailable('@search table', static function (Browser $browser) use ($user) {
                     $browser->assertElementsCount('tbody tr', 1)
                         ->assertVisible('tbody tr:first-child.text-secondary')
-                        ->with('tbody tr:first-child', function (Browser $browser) use ($user) {
+                        ->with('tbody tr:first-child', static function (Browser $browser) use ($user) {
                             $browser->assertSeeIn('td:nth-child(1) span', $user->email)
                                 ->assertSeeIn('td:nth-child(2) span', $user->id);
 

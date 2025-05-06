@@ -48,11 +48,10 @@ class Folder
     /** @var array Extra (temporary, cache) data */
     public $data = [];
 
-
     /**
      * Create Folder instance from an array
      */
-    public static function fromArray(array $data = []): Folder
+    public static function fromArray(array $data = []): self
     {
         $obj = new self();
 
@@ -74,7 +73,7 @@ class Folder
 
         // TODO: What if parent folder not yet exists?
         if (!file_exists($location)) {
-            mkdir($location, 0740, true);
+            mkdir($location, 0o740, true);
         }
 
         $location .= '/' . $filename;

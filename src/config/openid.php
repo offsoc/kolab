@@ -1,9 +1,11 @@
 <?php
 
+use App\Auth\IdentityRepository;
+use Lcobucci\JWT\Signer\Rsa\Sha256;
+
 return [
     'passport' => [
-
-        /**
+        /*
          * Place your Passport and OpenID Connect scopes here.
          * To receive an `id_token`, you should at least provide the openid scope.
          */
@@ -18,9 +20,7 @@ return [
         ],
     ],
 
-    /**
-     * Place your custom claim sets here.
-     */
+    // Place your custom claim sets here.
     'custom_claim_sets' => [
         // 'login' => [
         //     'last-login',
@@ -33,57 +33,45 @@ return [
         // ],
         'auth.token' => [
             'auth.token',
-        ]
+        ],
     ],
 
-    /**
-     * You can override the repositories below.
-     */
+    // You can override the repositories below.
     'repositories' => [
         // 'identity' => \OpenIDConnect\Repositories\IdentityRepository::class,
-        'identity' => \App\Auth\IdentityRepository::class,
+        'identity' => IdentityRepository::class,
     ],
 
     'routes' => [
-        /**
+        /*
          * When set to true, this package will expose the OpenID Connect Discovery endpoint.
          *  - /.well-known/openid-configuration
          */
         'discovery' => true,
-        /**
-         * When set to true, this package will expose the JSON Web Key Set endpoint.
-         */
+        // When set to true, this package will expose the JSON Web Key Set endpoint.
         'jwks' => false,
-         /**
+        /*
           * Optional URL to change the JWKS path to align with your custom Passport routes.
           * Defaults to /oauth/jwks
           */
         'jwks_url' => '/oauth/jwks',
     ],
 
-    /**
-     * Settings for the discovery endpoint
-     */
+    // Settings for the discovery endpoint
     'discovery' => [
-        /**
-        * Hide scopes that aren't from the OpenID Core spec from the Discovery,
-        * default = false (all scopes are listed)
-        */
+        /*
+         * Hide scopes that aren't from the OpenID Core spec from the Discovery,
+         * default = false (all scopes are listed)
+         */
         'hide_scopes' => false,
     ],
 
-    /**
-     * The signer to be used
-     */
-    'signer' => \Lcobucci\JWT\Signer\Rsa\Sha256::class,
+    // The signer to be used
+    'signer' => Sha256::class,
 
-    /**
-     * Optional associative array that will be used to set headers on the JWT
-     */
+    // Optional associative array that will be used to set headers on the JWT
     'token_headers' => [],
 
-    /**
-     * By default, microseconds are included.
-     */
+    // By default, microseconds are included.
     'use_microseconds' => true,
 ];

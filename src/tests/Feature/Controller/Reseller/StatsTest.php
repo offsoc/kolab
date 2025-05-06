@@ -2,15 +2,13 @@
 
 namespace Tests\Feature\Controller\Reseller;
 
+use App\Discount;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class StatsTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         self::useResellerUrl();
@@ -18,10 +16,7 @@ class StatsTest extends TestCase
         DB::table('wallets')->update(['discount_id' => null]);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         DB::table('wallets')->update(['discount_id' => null]);
 
@@ -92,7 +87,7 @@ class StatsTest extends TestCase
         $this->assertCount(1, $json['data']['datasets']);
 
         // 'vouchers' chart
-        $discount = \App\Discount::withObjectTenantContext($user)->where('code', 'TEST')->first();
+        $discount = Discount::withObjectTenantContext($user)->where('code', 'TEST')->first();
         $wallet = $user->wallets->first();
         $wallet->discount()->associate($discount);
         $wallet->save();

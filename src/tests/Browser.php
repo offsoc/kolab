@@ -18,8 +18,8 @@ class Browser extends \Laravel\Dusk\Browser
     public function assertAttributeRegExp($selector, $attribute, $regexp)
     {
         $element = $this->resolver->findOrFail($selector);
-        $value   = (string) $element->getAttribute($attribute);
-        $error   = "No expected text in [$selector][$attribute]. Found: $value";
+        $value = (string) $element->getAttribute($attribute);
+        $error = "No expected text in [{$selector}][{$attribute}]. Found: {$value}";
 
         Assert::assertMatchesRegularExpression($regexp, $value, $error);
 
@@ -42,7 +42,7 @@ class Browser extends \Laravel\Dusk\Browser
             }
         }
 
-        Assert::assertEquals($expected_count, $count, "Count of [$selector] elements is not $expected_count");
+        Assert::assertEquals($expected_count, $count, "Count of [{$selector}] elements is not {$expected_count}");
 
         return $this;
     }
@@ -53,7 +53,7 @@ class Browser extends \Laravel\Dusk\Browser
     public function assertTip($selector, $content)
     {
         return $this->click($selector)
-            ->withinBody(function ($browser) use ($content) {
+            ->withinBody(static function ($browser) use ($content) {
                 $browser->waitFor('div.tooltip .tooltip-inner')
                     ->assertSeeIn('div.tooltip .tooltip-inner', $content);
             })
@@ -65,8 +65,8 @@ class Browser extends \Laravel\Dusk\Browser
      */
     public function assertToast(string $type, string $message, $title = null)
     {
-        return $this->withinBody(function ($browser) use ($type, $title, $message) {
-            $browser->with(new Toast($type), function (Browser $browser) use ($title, $message) {
+        return $this->withinBody(static function ($browser) use ($type, $title, $message) {
+            $browser->with(new Toast($type), static function (Browser $browser) use ($title, $message) {
                 $browser->assertToastTitle($title)
                     ->assertToastMessage($message)
                     ->closeToast();
@@ -79,7 +79,7 @@ class Browser extends \Laravel\Dusk\Browser
      */
     public function assertErrorPage(int $error_code, string $hint = '')
     {
-        $this->with(new Error($error_code, $hint), function ($browser) {
+        $this->with(new Error($error_code, $hint), static function ($browser) {
             // empty, assertions will be made by the Error component itself
         });
 
@@ -94,7 +94,7 @@ class Browser extends \Laravel\Dusk\Browser
         $element = $this->resolver->findOrFail($selector);
         $classes = explode(' ', (string) $element->getAttribute('class'));
 
-        Assert::assertContains($class_name, $classes, "[$selector] has no class '{$class_name}'");
+        Assert::assertContains($class_name, $classes, "[{$selector}] has no class '{$class_name}'");
 
         return $this;
     }
@@ -107,7 +107,7 @@ class Browser extends \Laravel\Dusk\Browser
         $element = $this->resolver->findOrFail($selector);
         $value = $element->getAttribute('readonly');
 
-        Assert::assertTrue($value == 'true', "Element [$selector] is not readonly");
+        Assert::assertTrue($value == 'true', "Element [{$selector}] is not readonly");
 
         return $this;
     }
@@ -120,7 +120,7 @@ class Browser extends \Laravel\Dusk\Browser
         $element = $this->resolver->findOrFail($selector);
         $value = $element->getAttribute('readonly');
 
-        Assert::assertTrue($value != 'true', "Element [$selector] is not readonly");
+        Assert::assertTrue($value != 'true', "Element [{$selector}] is not readonly");
 
         return $this;
     }
@@ -134,9 +134,9 @@ class Browser extends \Laravel\Dusk\Browser
         $element = $this->resolver->findOrFail($selector);
 
         if ($text === '') {
-            Assert::assertTrue((string) $element->getText() === $text, "Element's text is not empty [$selector]");
+            Assert::assertTrue((string) $element->getText() === $text, "Element's text is not empty [{$selector}]");
         } else {
-            Assert::assertTrue(strpos($element->getText(), $text) !== false, "No expected text in [$selector]");
+            Assert::assertTrue(str_contains($element->getText(), $text), "No expected text in [{$selector}]");
         }
 
         return $this;
@@ -150,7 +150,7 @@ class Browser extends \Laravel\Dusk\Browser
     {
         $element = $this->resolver->findOrFail($selector);
 
-        Assert::assertMatchesRegularExpression($regexp, $element->getText(), "No expected text in [$selector]");
+        Assert::assertMatchesRegularExpression($regexp, $element->getText(), "No expected text in [{$selector}]");
 
         return $this;
     }
@@ -211,7 +211,7 @@ class Browser extends \Laravel\Dusk\Browser
      */
     public function readDownloadedFile($filename, $sleep = 5)
     {
-        $filename = __DIR__ . "/Browser/downloads/$filename";
+        $filename = __DIR__ . "/Browser/downloads/{$filename}";
 
         // Give the browser a chance to finish download
         // Note: For unknown reason Chromium would create files with added underscore
@@ -221,7 +221,8 @@ class Browser extends \Laravel\Dusk\Browser
 
         if (file_exists($filename)) {
             return file_get_contents($filename);
-        } elseif (file_exists("{$filename}_")) {
+        }
+        if (file_exists("{$filename}_")) {
             return file_get_contents("{$filename}_");
         }
 
@@ -233,7 +234,7 @@ class Browser extends \Laravel\Dusk\Browser
      */
     public function removeDownloadedFile($filename)
     {
-        @unlink(__DIR__ . "/Browser/downloads/$filename");
+        @unlink(__DIR__ . "/Browser/downloads/{$filename}");
         @unlink(__DIR__ . "/Browser/downloads/{$filename}_"); // see readDownloadedFile() method
 
         return $this;
@@ -250,7 +251,7 @@ class Browser extends \Laravel\Dusk\Browser
         // We have to clear the field and dispatch 'input' event programatically.
 
         $this->script(
-            "var element = document.querySelector('$selector');"
+            "var element = document.querySelector('{$selector}');"
             . "element.value = '';"
             . "element.dispatchEvent(new Event('input'))"
         );
@@ -281,7 +282,8 @@ class Browser extends \Laravel\Dusk\Browser
     /**
      * Store the console output with the given name. Overwrites Dusk's method.
      *
-     * @param  string  $name
+     * @param string $name
+     *
      * @return $this
      */
     public function storeConsoleLog($name)
@@ -305,7 +307,7 @@ class Browser extends \Laravel\Dusk\Browser
 
             if (!empty($console)) {
                 $file = sprintf('%s/%s.log', rtrim(static::$storeConsoleLogAt, '/'), $name);
-                $content = json_encode($console, JSON_PRETTY_PRINT);
+                $content = json_encode($console, \JSON_PRETTY_PRINT);
 
                 file_put_contents($file, $content);
             }
@@ -319,7 +321,6 @@ class Browser extends \Laravel\Dusk\Browser
      *
      * This allows to propagte custom config values to the server that interacts with the browser.
      *
-     * @param  array  $config
      * @return $this
      */
     public function withConfig(array $config)

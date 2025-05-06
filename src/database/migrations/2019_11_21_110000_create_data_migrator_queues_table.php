@@ -1,19 +1,16 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up()
     {
-        Schema::create('data_migrator_queues', function (Blueprint $table) {
+        Schema::create('data_migrator_queues', static function (Blueprint $table) {
             $table->string('id', 32);
             $table->integer('jobs_started');
             $table->integer('jobs_finished');
@@ -26,8 +23,6 @@ return new class extends Migration
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
     public function down()
     {

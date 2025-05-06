@@ -4,7 +4,7 @@ namespace App\Http\Controllers\API\V4\User;
 
 use App\Delegation;
 use App\User;
-use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
 
 trait DelegationTrait
@@ -14,7 +14,7 @@ trait DelegationTrait
      *
      * @param string $id The user to get delegatees for
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function delegations($id)
     {
@@ -30,7 +30,7 @@ trait DelegationTrait
         }
 
         $result = $user->delegatees()->orderBy('email')->get()
-            ->map(function (User $user) {
+            ->map(static function (User $user) {
                 return [
                     'email' => $user->email,
                     'options' => $user->delegation->options ?? [],
@@ -51,7 +51,7 @@ trait DelegationTrait
      *
      * @param string $id The user to get delegators for
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function delegators($id)
     {
@@ -67,7 +67,7 @@ trait DelegationTrait
         }
 
         $delegators = $user->delegators()->orderBy('email')->get()
-            ->map(function (User $user) {
+            ->map(static function (User $user) {
                 return [
                     'email' => $user->email,
                     'aliases' => $user->aliases()->pluck('alias'),
@@ -88,7 +88,7 @@ trait DelegationTrait
      * @param string $id    User identifier
      * @param string $email Delegatee's email address
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function deleteDelegation($id, $email)
     {
@@ -118,8 +118,8 @@ trait DelegationTrait
         $delegation->delete();
 
         return response()->json([
-                'status' => 'success',
-                'message' => \trans('app.delegation-delete-success'),
+            'status' => 'success',
+            'message' => \trans('app.delegation-delete-success'),
         ]);
     }
 
@@ -128,7 +128,7 @@ trait DelegationTrait
      *
      * @param string $id User identifier
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function createDelegation($id)
     {

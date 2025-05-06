@@ -3,6 +3,7 @@
 namespace App\Console\Commands\Discount;
 
 use App\Console\Command;
+use App\Discount;
 
 /**
  * Merge one discount (source) with another discount (target), and delete the source discount.
@@ -40,8 +41,8 @@ class MergeCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Merge one discount in to another discount, ' .
-                             'optionally set the description, and delete the source discount';
+    protected $description = 'Merge one discount in to another discount, '
+        . 'optionally set the description, and delete the source discount';
 
     /**
      * Execute the console command.
@@ -50,14 +51,14 @@ class MergeCommand extends Command
      */
     public function handle()
     {
-        $source = $this->getObject(\App\Discount::class, $this->argument('source'));
+        $source = $this->getObject(Discount::class, $this->argument('source'));
 
         if (!$source) {
             $this->error("No such source discount: {$source}");
             return 1;
         }
 
-        $target = $this->getObject(\App\Discount::class, $this->argument('target'));
+        $target = $this->getObject(Discount::class, $this->argument('target'));
 
         if (!$target) {
             $this->error("No such target discount: {$target}");

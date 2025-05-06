@@ -31,7 +31,7 @@ foreach (glob("{$rootDir}/resources/lang/*/ui.php") as $file) {
         preg_match('|([a-z]+)/ui\.php$|', $file, $matches);
 
         $file = "{$rootDir}/resources/build/js/{$matches[1]}.json";
-        $opts =  JSON_PRETTY_PRINT | JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNICODE;
+        $opts = \JSON_PRETTY_PRINT | \JSON_INVALID_UTF8_SUBSTITUTE | \JSON_UNESCAPED_UNICODE;
 
         file_put_contents($file, json_encode($content, $opts));
     }
@@ -45,7 +45,7 @@ foreach (glob("{$rootDir}/resources/themes/*/lang/*/ui.php") as $file) {
 
         $theme = $matches[1];
         $file = "{$rootDir}/resources/build/js/{$theme}-{$matches[2]}.json";
-        $opts = JSON_PRETTY_PRINT | JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNICODE;
+        $opts = \JSON_PRETTY_PRINT | \JSON_INVALID_UTF8_SUBSTITUTE | \JSON_UNESCAPED_UNICODE;
 
         file_put_contents($file, json_encode($content, $opts));
     }
@@ -60,9 +60,9 @@ if (!file_exists("{$rootDir}/public/themes")) {
     mkdir("{$rootDir}/public/themes");
 }
 
-foreach (glob("{$rootDir}/resources/themes/*", GLOB_ONLYDIR) as $file) {
+foreach (glob("{$rootDir}/resources/themes/*", \GLOB_ONLYDIR) as $file) {
     $path = explode('/', $file);
-    $theme = $path[count($path)-1];
+    $theme = $path[count($path) - 1];
 
     if (!file_exists("{$rootDir}/public/themes/{$theme}")) {
         mkdir("{$rootDir}/public/themes/{$theme}");
@@ -77,7 +77,7 @@ foreach (glob("{$rootDir}/resources/themes/*", GLOB_ONLYDIR) as $file) {
             }
 
             foreach (glob("{$rootDir}/resources/themes/{$theme}/{$subDir}/*") as $file) {
-                $filename = pathinfo($file, PATHINFO_BASENAME);
+                $filename = pathinfo($file, \PATHINFO_BASENAME);
                 copy($file, "{$rootDir}/public/themes/{$theme}/{$subDir}/{$filename}");
             }
         }

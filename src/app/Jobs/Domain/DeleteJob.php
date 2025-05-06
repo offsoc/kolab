@@ -2,14 +2,14 @@
 
 namespace App\Jobs\Domain;
 
+use App\Domain;
 use App\Jobs\DomainJob;
+use App\Support\Facades\LDAP;
 
 class DeleteJob extends DomainJob
 {
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle()
     {
@@ -31,12 +31,12 @@ class DeleteJob extends DomainJob
         }
 
         if (\config('app.with_ldap') && $domain->isLdapReady()) {
-            \App\Support\Facades\LDAP::deleteDomain($domain);
+            LDAP::deleteDomain($domain);
 
-            $domain->status ^= \App\Domain::STATUS_LDAP_READY;
+            $domain->status ^= Domain::STATUS_LDAP_READY;
         }
 
-        $domain->status |= \App\Domain::STATUS_DELETED;
+        $domain->status |= Domain::STATUS_DELETED;
         $domain->save();
     }
 }

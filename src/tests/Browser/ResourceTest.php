@@ -2,7 +2,9 @@
 
 namespace Tests\Browser;
 
+use App\Entitlement;
 use App\Resource;
+use App\Sku;
 use Tests\Browser;
 use Tests\Browser\Components\Status;
 use Tests\Browser\Components\Toast;
@@ -14,27 +16,21 @@ use Tests\TestCaseDusk;
 
 class ResourceTest extends TestCaseDusk
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->clearBetaEntitlements();
         Resource::whereNotIn('email', ['resource-test1@kolab.org', 'resource-test2@kolab.org'])->delete();
         // Remove leftover entitlements that might interfere with the tests
-        \App\Entitlement::where('entitleable_type', 'App\\Resource')
+        Entitlement::where('entitleable_type', 'App\Resource')
             ->whereRaw('entitleable_id not in (select id from resources where deleted_at is null)')
             ->forceDelete();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
-        \App\Sku::withEnvTenantContext()->where('title', 'resource')->update(['units_free' => 0]);
+        Sku::withEnvTenantContext()->where('title', 'resource')->update(['units_free' => 0]);
         Resource::whereNotIn('email', ['resource-test1@kolab.org', 'resource-test2@kolab.org'])->delete();
         $this->clearBetaEntitlements();
 
@@ -47,7 +43,7 @@ class ResourceTest extends TestCaseDusk
     public function testInfoUnauth(): void
     {
         // Test that the page requires authentication
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit('/resource/abc')->on(new Home());
         });
     }
@@ -58,7 +54,7 @@ class ResourceTest extends TestCaseDusk
     public function testListUnauth(): void
     {
         // Test that the page requires authentication
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit('/resources')->on(new Home());
         });
     }
@@ -69,7 +65,7 @@ class ResourceTest extends TestCaseDusk
     public function testList(): void
     {
         // Log on the user
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit(new Home())
                 ->submitLogon('john@kolab.org', 'simple123', true)
                 ->on(new Dashboard())
@@ -77,7 +73,7 @@ class ResourceTest extends TestCaseDusk
         });
 
         // Test that Resources lists page is not accessible without the 'beta' entitlement
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit('/resources')
                 ->assertErrorPage(403);
         });
@@ -92,12 +88,12 @@ class ResourceTest extends TestCaseDusk
         $resource->save();
 
         // Test resources lists page
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit(new Dashboard())
                 ->assertSeeIn('@links .link-resources', 'Resources')
                 ->click('@links .link-resources')
                 ->on(new ResourceList())
-                ->whenAvailable('@table', function (Browser $browser) {
+                ->whenAvailable('@table', static function (Browser $browser) {
                     $browser->waitFor('tbody tr')
                         ->assertSeeIn('thead tr th:nth-child(1)', 'Name')
                         ->assertSeeIn('thead tr th:nth-child(2)', 'Email Address')
@@ -118,7 +114,7 @@ class ResourceTest extends TestCaseDusk
     public function testCreateUpdateDelete(): void
     {
         // Test that the page is not available accessible without the 'beta' entitlement
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit('/resource/new')
                 ->assertErrorPage(403);
         });
@@ -127,7 +123,7 @@ class ResourceTest extends TestCaseDusk
         $john = $this->getTestUser('john@kolab.org');
         $this->addBetaEntitlement($john);
 
-        \App\Sku::withEnvTenantContext()->where('title', 'resource')->update(['units_free' => 3]);
+        Sku::withEnvTenantContext()->where('title', 'resource')->update(['units_free' => 3]);
 
         $this->browse(function (Browser $browser) {
             // Create a resource
@@ -138,7 +134,7 @@ class ResourceTest extends TestCaseDusk
                 ->assertSeeIn('#resource-info .card-title', 'New resource')
                 ->assertSeeIn('@nav #tab-general', 'General')
                 ->assertMissing('@nav #tab-settings')
-                ->with('@general', function (Browser $browser) {
+                ->with('@general', static function (Browser $browser) {
                     // Assert form content
                     $browser->assertMissing('#status')
                         ->assertFocused('#name')
@@ -148,7 +144,7 @@ class ResourceTest extends TestCaseDusk
                         ->assertSelectHasOptions('div.row:nth-child(2) select', ['kolab.org'])
                         ->assertValue('div.row:nth-child(2) select', 'kolab.org')
                         ->assertSeeIn('div.row:nth-child(3) label', 'Subscriptions')
-                        ->with('@skus', function ($browser) {
+                        ->with('@skus', static function ($browser) {
                             $browser->assertElementsCount('tbody tr', 1)
                                 ->assertSeeIn('tbody tr:nth-child(1) td.name', 'Resource')
                                 ->assertSeeIn('tbody tr:nth-child(1) td.price', '0,00 CHF/month') // one free unit left
@@ -179,7 +175,7 @@ class ResourceTest extends TestCaseDusk
             $browser->click('@table tr:nth-child(3) td:first-child a')
                 ->on(new ResourceInfo())
                 ->assertSeeIn('#resource-info .card-title', 'Resource')
-                ->with('@general', function (Browser $browser) {
+                ->with('@general', static function (Browser $browser) {
                     // Assert form content
                     $browser->assertFocused('#name')
                         ->assertSeeIn('div.row:nth-child(1) label', 'Status')
@@ -192,7 +188,7 @@ class ResourceTest extends TestCaseDusk
                             'value',
                             '/^resource-[0-9]+@kolab\.org$/'
                         )
-                        ->with('@skus', function ($browser) {
+                        ->with('@skus', static function ($browser) {
                             $browser->assertElementsCount('tbody tr', 1)
                                 ->assertSeeIn('tbody tr:nth-child(1) td.name', 'Resource')
                                 ->assertSeeIn('tbody tr:nth-child(1) td.price', '0,00 CHF/month')
@@ -236,12 +232,12 @@ class ResourceTest extends TestCaseDusk
         });
 
         // Assert Subscription price for the case when there's no free units
-        \App\Sku::withEnvTenantContext()->where('title', 'resource')->update(['units_free' => 2]);
+        Sku::withEnvTenantContext()->where('title', 'resource')->update(['units_free' => 2]);
 
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit('/resource/new')
                 ->on(new ResourceInfo())
-                ->with('@skus', function ($browser) {
+                ->with('@skus', static function ($browser) {
                     $browser->assertElementsCount('tbody tr', 1)
                         ->assertSeeIn('tbody tr:nth-child(1) td.name', 'Resource')
                         ->assertSeeIn('tbody tr:nth-child(1) td.price', '1,01 CHF/month')
@@ -267,11 +263,11 @@ class ResourceTest extends TestCaseDusk
 
         $this->assertFalse($resource->isImapReady());
 
-        $this->browse(function ($browser) use ($resource) {
+        $this->browse(static function ($browser) use ($resource) {
             // Test auto-refresh
             $browser->visit('/resource/' . $resource->id)
                 ->on(new ResourceInfo())
-                ->with(new Status(), function ($browser) {
+                ->with(new Status(), static function ($browser) {
                     $browser->assertSeeIn('@body', 'We are preparing the resource')
                         ->assertProgress(\config('app.with_ldap') ? 85 : 80, 'Creating a shared folder...', 'pending')
                         ->assertMissing('@refresh-button')
@@ -300,14 +296,14 @@ class ResourceTest extends TestCaseDusk
         $resource = $this->getTestResource('resource-test2@kolab.org');
         $resource->setSetting('invitation_policy', null);
 
-        $this->browse(function ($browser) use ($resource) {
+        $this->browse(static function ($browser) use ($resource) {
             // Test auto-refresh
             $browser->visit('/resource/' . $resource->id)
                 ->on(new ResourceInfo())
                 ->assertSeeIn('@nav #tab-general', 'General')
                 ->assertSeeIn('@nav #tab-settings', 'Settings')
                 ->click('@nav #tab-settings')
-                ->with('@settings form', function (Browser $browser) {
+                ->with('@settings form', static function (Browser $browser) {
                     // Assert form content
                     $browser->assertSeeIn('div.row:nth-child(1) label', 'Invitation policy')
                         ->assertSelectHasOptions('div.row:nth-child(1) select', ['accept', 'manual', 'reject'])
@@ -336,7 +332,7 @@ class ResourceTest extends TestCaseDusk
                 ->refresh()
                 ->on(new ResourceInfo())
                 ->click('@nav #tab-settings')
-                ->with('@settings form', function (Browser $browser) {
+                ->with('@settings form', static function (Browser $browser) {
                     $browser->assertValue('div.row:nth-child(1) select', 'manual')
                         ->assertVisible('div.row:nth-child(1) input')
                         ->assertValue('div.row:nth-child(1) input', 'jack@kolab.org');

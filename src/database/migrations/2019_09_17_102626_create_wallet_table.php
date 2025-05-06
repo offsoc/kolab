@@ -1,22 +1,19 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-// phpcs:ignore
 class CreateWalletTable extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up()
     {
         Schema::create(
             'wallets',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->string('id', 36);
                 $table->string('description', 128)->nullable();
                 $table->string('currency', 4);
@@ -33,8 +30,6 @@ class CreateWalletTable extends Migration
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
     public function down()
     {

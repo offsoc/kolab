@@ -3,7 +3,10 @@
 namespace App\Providers;
 
 use App\Payment;
-use App\Transaction;
+use App\Providers\Payment\Coinbase;
+use App\Providers\Payment\Mollie;
+use App\Providers\Payment\Stripe;
+use App\Utils;
 use App\Wallet;
 use Illuminate\Support\Facades\Cache;
 
@@ -29,7 +32,8 @@ abstract class PaymentProvider
     /**
      * Detect the name of the provider
      *
-     * @param \App\Wallet|string|null $provider_or_wallet
+     * @param Wallet|string|null $provider_or_wallet
+     *
      * @return string The name of the provider
      */
     private static function providerName($provider_or_wallet = null): string
@@ -56,23 +60,20 @@ abstract class PaymentProvider
     /**
      * Factory method
      *
-     * @param \App\Wallet|string|null $provider_or_wallet
+     * @param Wallet|string|null $provider_or_wallet
      */
     public static function factory($provider_or_wallet = null, $currency = null)
     {
         if (is_string($currency) && \strtolower($currency) == 'btc') {
-            return new \App\Providers\Payment\Coinbase();
+            return new Coinbase();
         }
         switch (self::providerName($provider_or_wallet)) {
             case self::PROVIDER_STRIPE:
-                return new \App\Providers\Payment\Stripe();
-
+                return new Stripe();
             case self::PROVIDER_MOLLIE:
-                return new \App\Providers\Payment\Mollie();
-
+                return new Mollie();
             case self::PROVIDER_COINBASE:
-                return new \App\Providers\Payment\Coinbase();
-
+                return new Coinbase();
             default:
                 throw new \Exception("Invalid payment provider: {$provider_or_wallet}");
         }
@@ -81,15 +82,15 @@ abstract class PaymentProvider
     /**
      * Create a new auto-payment mandate for a wallet.
      *
-     * @param \App\Wallet $wallet  The wallet
-     * @param array       $payment Payment data:
-     *                             - amount: Value in cents (wallet currency)
-     *                             - credit_amount: Balance'able base amount in cents (wallet currency)
-     *                             - vat_rate_id: VAT rate id
-     *                             - currency: The operation currency
-     *                             - description: Operation desc.
-     *                             - methodId: Payment method
-     *                             - redirectUrl: The location to goto after checkout
+     * @param Wallet $wallet  The wallet
+     * @param array  $payment Payment data:
+     *                        - amount: Value in cents (wallet currency)
+     *                        - credit_amount: Balance'able base amount in cents (wallet currency)
+     *                        - vat_rate_id: VAT rate id
+     *                        - currency: The operation currency
+     *                        - description: Operation desc.
+     *                        - methodId: Payment method
+     *                        - redirectUrl: The location to goto after checkout
      *
      * @return array Provider payment data:
      *               - id: Operation identifier
@@ -100,7 +101,7 @@ abstract class PaymentProvider
     /**
      * Revoke the auto-payment mandate for a wallet.
      *
-     * @param \App\Wallet $wallet The wallet
+     * @param Wallet $wallet The wallet
      *
      * @return bool True on success, False on failure
      */
@@ -109,7 +110,7 @@ abstract class PaymentProvider
     /**
      * Get a auto-payment mandate for a wallet.
      *
-     * @param \App\Wallet $wallet The wallet
+     * @param Wallet $wallet The wallet
      *
      * @return array|null Mandate information:
      *                    - id: Mandate identifier
@@ -123,7 +124,7 @@ abstract class PaymentProvider
     /**
      * Get a link to the customer in the provider's control panel
      *
-     * @param \App\Wallet $wallet The wallet
+     * @param Wallet $wallet The wallet
      *
      * @return string|null The string representing <a> tag
      */
@@ -139,15 +140,15 @@ abstract class PaymentProvider
     /**
      * Create a new payment.
      *
-     * @param \App\Wallet $wallet  The wallet
-     * @param array       $payment Payment data:
-     *                             - amount: Value in cents (wallet currency)
-     *                             - credit_amount: Balance'able base amount in cents (wallet currency)
-     *                             - vat_rate_id: Vat rate id
-     *                             - currency: The operation currency
-     *                             - type: first/oneoff/recurring
-     *                             - description: Operation description
-     *                             - methodId: Payment method
+     * @param Wallet $wallet  The wallet
+     * @param array  $payment Payment data:
+     *                        - amount: Value in cents (wallet currency)
+     *                        - credit_amount: Balance'able base amount in cents (wallet currency)
+     *                        - vat_rate_id: Vat rate id
+     *                        - currency: The operation currency
+     *                        - type: first/oneoff/recurring
+     *                        - description: Operation description
+     *                        - methodId: Payment method
      *
      * @return array Provider payment/session data:
      *               - id: Operation identifier
@@ -168,7 +169,7 @@ abstract class PaymentProvider
      * @param array  $payment   Payment information
      * @param string $wallet_id Wallet ID
      *
-     * @return \App\Payment Payment object
+     * @return Payment Payment object
      */
     protected function storePayment(array $payment, $wallet_id): Payment
     {
@@ -189,13 +190,13 @@ abstract class PaymentProvider
      */
     protected function exchange(int $amount, string $sourceCurrency, string $targetCurrency): int
     {
-        return intval(round($amount * \App\Utils::exchangeRate($sourceCurrency, $targetCurrency)));
+        return (int) round($amount * Utils::exchangeRate($sourceCurrency, $targetCurrency));
     }
 
     /**
      * List supported payment methods from this provider
      *
-     * @param string $type     The payment type for which we require a method (oneoff/recurring).
+     * @param string $type     the payment type for which we require a method (oneoff/recurring)
      * @param string $currency Currency code
      *
      * @return array Array of array with available payment methods:
@@ -214,17 +215,17 @@ abstract class PaymentProvider
      * @param string $paymentId Payment identifier
      *
      * @return array Payment information:
-     *                    - id: Payment identifier
-     *                    - status: Payment status
-     *                    - isCancelable: The payment can be canceled
-     *                    - checkoutUrl: The checkout url to complete the payment or null if none
+     *               - id: Payment identifier
+     *               - status: Payment status
+     *               - isCancelable: The payment can be canceled
+     *               - checkoutUrl: The checkout url to complete the payment or null if none
      */
     abstract public function getPayment($paymentId): array;
 
     /**
      * Return an array of whitelisted payment methods with override values.
      *
-     * @param string $type The payment type for which we require a method.
+     * @param string $type the payment type for which we require a method
      *
      * @return array Array of methods
      */
@@ -248,7 +249,7 @@ abstract class PaymentProvider
     /**
      * Return an array of whitelisted payment methods with override values.
      *
-     * @param string $type The payment type for which we require a method.
+     * @param string $type the payment type for which we require a method
      *
      * @return array Array of methods
      */
@@ -272,8 +273,8 @@ abstract class PaymentProvider
     /**
      * List supported payment methods for $wallet
      *
-     * @param \App\Wallet $wallet The wallet
-     * @param string      $type   The payment type for which we require a method (oneoff/recurring).
+     * @param Wallet $wallet The wallet
+     * @param string $type   the payment type for which we require a method (oneoff/recurring)
      *
      * @return array Array of array with available payment methods:
      *               - id: id of the method
@@ -294,11 +295,11 @@ abstract class PaymentProvider
             return $methods;
         }
 
-        $provider = PaymentProvider::factory($providerName);
+        $provider = self::factory($providerName);
         $methods = $provider->providerPaymentMethods($type, $wallet->currency);
 
         if (!empty(\config('services.coinbase.key'))) {
-            $coinbaseProvider = PaymentProvider::factory(self::PROVIDER_COINBASE);
+            $coinbaseProvider = self::factory(self::PROVIDER_COINBASE);
             $methods = array_merge($methods, $coinbaseProvider->providerPaymentMethods($type, $wallet->currency));
         }
         $methods = self::applyMethodWhitelist($type, $methods);
@@ -318,11 +319,11 @@ abstract class PaymentProvider
      */
     public static function redirectUrl(): string
     {
-        $url = \App\Utils::serviceUrl('/wallet');
+        $url = Utils::serviceUrl('/wallet');
         $domain = preg_replace('/:[0-9]+$/', '', request()->getHttpHost());
 
-        if (strpos($domain, 'reseller') === 0) {
-            $url = preg_replace('|^(https?://)([^/]+)|', '\\1' . $domain, $url);
+        if (str_starts_with($domain, 'reseller')) {
+            $url = preg_replace('|^(https?://)([^/]+)|', '\1' . $domain, $url);
         }
 
         return $url;

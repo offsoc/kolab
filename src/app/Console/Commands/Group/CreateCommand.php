@@ -38,7 +38,7 @@ class CreateCommand extends Command
         $email = $this->argument('email');
         $members = $this->option('member');
 
-        list($local, $domainName) = explode('@', $email, 2);
+        [$local, $domainName] = explode('@', $email, 2);
 
         $domain = $this->getDomain($domainName);
 
@@ -57,7 +57,7 @@ class CreateCommand extends Command
         // Validate members addresses
         foreach ($members as $i => $member) {
             if ($error = GroupsController::validateMemberEmail($member, $owner)) {
-                $this->error("{$member}: $error");
+                $this->error("{$member}: {$error}");
                 return 1;
             }
             if (\strtolower($member) === \strtolower($email)) {

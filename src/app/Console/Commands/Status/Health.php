@@ -2,9 +2,8 @@
 
 namespace App\Console\Commands\Status;
 
-use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Redis;
+use App\Http\Controllers\API\AuthController;
+use App\Meet\Service;
 use App\Providers\Payment\Mollie;
 use App\Support\Facades\DAV;
 use App\Support\Facades\IMAP;
@@ -12,9 +11,13 @@ use App\Support\Facades\LDAP;
 use App\Support\Facades\OpenExchangeRates;
 use App\Support\Facades\Roundcube;
 use App\Support\Facades\Storage;
+use App\User;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redis;
 
-//TODO stripe
-//TODO firebase
+// TODO stripe
+// TODO firebase
 
 class Health extends Command
 {
@@ -26,7 +29,7 @@ class Health extends Command
     protected $signature = 'status:health
         {--check=* : One of DB, Redis, IMAP, LDAP, Roundcube, Meet, DAV, Mollie, OpenExchangeRates, Storage, Auth}
         {--user= : Test user (for Auth test)}
-        {--password= : Password of test user}'; // phpcs:ignore
+        {--password= : Password of test user}';
 
     /**
      * The console command description.
@@ -102,8 +105,8 @@ class Health extends Command
     private function checkAuth()
     {
         try {
-            $user = \App\User::findByEmail($this->option('user'));
-            $response = \App\Http\Controllers\API\AuthController::logonResponse($user, $this->option('password'));
+            $user = User::findByEmail($this->option('user'));
+            $response = AuthController::logonResponse($user, $this->option('password'));
             return $response->getData()->status == 'success';
         } catch (\Exception $exception) {
             $this->line($exception);
@@ -150,10 +153,10 @@ class Health extends Command
         $success = true;
 
         foreach ($urls as $url) {
-            $this->line("Checking $url");
+            $this->line("Checking {$url}");
 
             try {
-                $response = \App\Meet\Service::client($url)->get('ping');
+                $response = Service::client($url)->get('ping');
                 if (!$response->ok()) {
                     $success = false;
                     $this->line("Backend {$url} not available. Status: " . $response->status());
@@ -178,7 +181,7 @@ class Health extends Command
         $steps = $this->option('check');
         if (empty($steps)) {
             $steps = [
-                'DB', 'Redis', 'Roundcube', 'Meet', 'DAV', 'Mollie', 'OpenExchangeRates'
+                'DB', 'Redis', 'Roundcube', 'Meet', 'DAV', 'Mollie', 'OpenExchangeRates',
             ];
             if (!empty($this->option('user'))) {
                 array_unshift($steps, 'Auth');
@@ -202,7 +205,7 @@ class Health extends Command
             if ($this->{$func}()) {
                 $this->info("OK");
             } else {
-                $this->error("Error while checking: $step");
+                $this->error("Error while checking: {$step}");
                 $result = 1;
             }
         }

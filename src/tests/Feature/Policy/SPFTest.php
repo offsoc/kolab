@@ -14,19 +14,19 @@ class SPFTest extends TestCase
     private $testDomain;
     private $testUser;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->testDomain = $this->getTestDomain('test.domain', [
-                'type' => Domain::TYPE_EXTERNAL,
-                'status' => Domain::STATUS_ACTIVE | Domain::STATUS_CONFIRMED | Domain::STATUS_VERIFIED
+            'type' => Domain::TYPE_EXTERNAL,
+            'status' => Domain::STATUS_ACTIVE | Domain::STATUS_CONFIRMED | Domain::STATUS_VERIFIED,
         ]);
 
         $this->testUser = $this->getTestUser('john@test.domain');
     }
 
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser($this->testUser->email);
         $this->deleteTestDomain($this->testDomain->namespace);
@@ -47,7 +47,7 @@ class SPFTest extends TestCase
             'client_name' => 'mx.kolabnow.com',
             // actually IN AAAA gmail.com.
             'client_address' => '2a00:1450:400a:801::2005',
-            'recipient' => $this->testUser->email
+            'recipient' => $this->testUser->email,
         ]);
 
         $this->assertSame(403, $response->code);
@@ -77,7 +77,7 @@ class SPFTest extends TestCase
             'sender' => 'sender@spf-none.kolab.org',
             'client_name' => 'mx.kolabnow.com',
             'client_address' => '256.0.0.1',
-            'recipient' => $this->testUser->email
+            'recipient' => $this->testUser->email,
         ]);
 
         $this->assertSame(403, $response->code);
@@ -251,7 +251,7 @@ class SPFTest extends TestCase
             return;
         }
 
-        $headers = array_filter($response->prepends, fn ($h) => str_starts_with($h, 'Received-SPF:'));
+        $headers = array_filter($response->prepends, static fn ($h) => str_starts_with($h, 'Received-SPF:'));
         $this->assertCount(1, $headers);
 
         if ($content) {

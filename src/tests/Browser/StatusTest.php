@@ -5,6 +5,7 @@ namespace Tests\Browser;
 use App\Domain;
 use App\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Tests\Browser;
 use Tests\Browser\Components\Status;
 use Tests\Browser\Components\Toast;
@@ -15,14 +16,10 @@ use Tests\Browser\Pages\Home;
 use Tests\Browser\Pages\UserInfo;
 use Tests\Browser\Pages\UserList;
 use Tests\TestCaseDusk;
-use Illuminate\Support\Facades\DB;
 
 class StatusTest extends TestCaseDusk
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -33,10 +30,7 @@ class StatusTest extends TestCaseDusk
             . " WHERE email = 'john@kolab.org'");
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $domain_status = Domain::STATUS_CONFIRMED | Domain::STATUS_VERIFIED;
         DB::statement("UPDATE domains SET status = (status | {$domain_status})"
@@ -70,11 +64,11 @@ class StatusTest extends TestCaseDusk
 
         $john->save();
 
-        $this->browse(function ($browser) use ($john, $domain) {
+        $this->browse(static function ($browser) use ($john, $domain) {
             $browser->visit(new Home())
                 ->submitLogon('john@kolab.org', 'simple123', true)
                 ->on(new Dashboard())
-                ->with(new Status(), function ($browser) use ($john) {
+                ->with(new Status(), static function ($browser) use ($john) {
                     $browser->assertSeeIn('@body', 'We are preparing your account')
                         ->assertProgress(\config('app.with_ldap') ? 71 : 60, 'Creating a mailbox...', 'pending')
                         ->assertMissing('#status-confirm')
@@ -103,7 +97,7 @@ class StatusTest extends TestCaseDusk
                 ->on(new DomainInfo())
                 ->back()
                 ->on(new Dashboard())
-                ->with(new Status(), function ($browser) {
+                ->with(new Status(), static function ($browser) {
                     $browser->assertMissing('@refresh-button')
                         ->assertProgress(
                             \config('app.with_ldap') ? 85 : 80,
@@ -134,9 +128,9 @@ class StatusTest extends TestCaseDusk
 
         $john->save();
 
-        $this->browse(function ($browser) use ($john, $domain) {
+        $this->browse(static function ($browser) use ($john, $domain) {
             $browser->visit(new Dashboard())
-                ->with(new Status(), function ($browser) use ($john, $domain) {
+                ->with(new Status(), static function ($browser) use ($john, $domain) {
                     $browser->assertSeeIn('@body', 'We are preparing your account')
                         ->assertProgress(\config('app.with_ldap') ? 71 : 60, 'Creating a mailbox...', 'failed')
                         ->assertVisible('@refresh-button')
@@ -178,7 +172,7 @@ class StatusTest extends TestCaseDusk
         $this->assertFalse($domain->isSuspended());
         $this->assertFalse($domain->isDeleted());
 
-        $this->browse(function ($browser) use ($domain) {
+        $this->browse(static function ($browser) use ($domain) {
             // Test auto-refresh
             $browser->on(new Dashboard())
                 ->click('@links a.link-domains')
@@ -189,7 +183,7 @@ class StatusTest extends TestCaseDusk
                 ->assertText('@table tbody tr:first-child td:first-child svg title', 'Not Ready')
                 ->click('@table tbody tr:first-child td:first-child a')
                 ->on(new DomainInfo())
-                ->with(new Status(), function ($browser) {
+                ->with(new Status(), static function ($browser) {
                     $browser->assertSeeIn('@body', 'We are preparing the domain')
                         ->assertProgress(\config('app.with_ldap') ? 50 : 33, 'Verifying a custom domain...', 'pending')
                         ->assertMissing('@refresh-button')
@@ -203,7 +197,7 @@ class StatusTest extends TestCaseDusk
 
             // This should take less than 10 seconds
             $browser->waitFor('@status.process-failed')
-                ->with(new Status(), function ($browser) {
+                ->with(new Status(), static function ($browser) {
                     $browser->assertSeeIn('@body', 'The domain is almost ready')
                         ->assertProgress(
                             \config('app.with_ldap') ? 75 : 66,
@@ -248,7 +242,7 @@ class StatusTest extends TestCaseDusk
             $domain->save();
         }
 
-        $this->browse(function ($browser) use ($john, $domain) {
+        $this->browse(static function ($browser) use ($john, $domain) {
             $browser->visit(new Dashboard())
                 ->click('@links a.link-users')
                 ->on(new UserList())
@@ -260,19 +254,18 @@ class StatusTest extends TestCaseDusk
                 ->assertText('@table tbody tr:nth-child(3) td:first-child svg title', 'Not Ready')
                 ->click('@table tbody tr:nth-child(3) td:first-child a')
                 ->on(new UserInfo())
-                ->with('@general', function (Browser $browser) {
+                ->with('@general', static function (Browser $browser) {
                     // Assert state in the user edit form
                     $browser->assertSeeIn('div.row:nth-child(1) label', 'Status')
                         ->assertSeeIn('div.row:nth-child(1) #status', 'Not Ready');
                 })
-                ->with(new Status(), function ($browser) use ($john) {
+                ->with(new Status(), static function ($browser) use ($john) {
                     $browser->assertSeeIn('@body', 'We are preparing the user account')
                         ->assertProgress(\config('app.with_ldap') ? 71 : 60, 'Creating a mailbox...', 'pending')
                         ->assertMissing('#status-confirm')
                         ->assertMissing('#status-link')
                         ->assertMissing('@refresh-button')
                         ->assertMissing('@refresh-text');
-
 
                     $john->status |= User::STATUS_IMAP_READY;
                     $john->save();

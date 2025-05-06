@@ -9,7 +9,7 @@ return [
         'background_color' => '#ffffff',
         'theme_color' => '#000000',
         'display' => 'standalone',
-        'orientation'=> 'any',
+        'orientation' => 'any',
         'icons' => [
             '72x72' => '/images/icons/icon-72x72.png',
             '96x96' => '/images/icons/icon-96x96.png',
@@ -18,7 +18,7 @@ return [
             '152x152' => '/images/icons/icon-152x152.png',
             '192x192' => '/images/icons/icon-192x192.png',
             '384x384' => '/images/icons/icon-384x384.png',
-            '512x512' => '/images/icons/icon-512x512.png'
+            '512x512' => '/images/icons/icon-512x512.png',
         ],
         'splash' => [
             '640x1136' => '/images/icons/splash-640x1136.png',
@@ -32,6 +32,6 @@ return [
             '1668x2388' => '/images/icons/splash-1668x2388.png',
             '2048x2732' => '/images/icons/splash-2048x2732.png',
         ],
-        'custom' => []
-    ]
+        'custom' => [],
+    ],
 ];

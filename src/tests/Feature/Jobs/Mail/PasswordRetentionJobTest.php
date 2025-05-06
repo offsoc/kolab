@@ -10,20 +10,14 @@ use Tests\TestCase;
 
 class PasswordRetentionJobTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestUser('PasswordRetention@UserAccount.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('PasswordRetention@UserAccount.com');
 
@@ -56,12 +50,12 @@ class PasswordRetentionJobTest extends TestCase
         Mail::assertSent(PasswordExpirationReminder::class, 1);
 
         // Assert the mail was sent to the code's email
-        Mail::assertSent(PasswordExpirationReminder::class, function ($mail) use ($user) {
+        Mail::assertSent(PasswordExpirationReminder::class, static function ($mail) use ($user) {
             return $mail->hasTo($user->email);
         });
 
         // Assert sender
-        Mail::assertSent(PasswordExpirationReminder::class, function ($mail) {
+        Mail::assertSent(PasswordExpirationReminder::class, static function ($mail) {
             return $mail->hasFrom(\config('mail.sender.address'), \config('mail.sender.name'))
                 && $mail->hasReplyTo(\config('mail.replyto.address'), \config('mail.replyto.name'));
         });

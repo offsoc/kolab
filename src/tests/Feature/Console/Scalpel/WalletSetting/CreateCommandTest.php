@@ -13,7 +13,7 @@ class CreateCommandTest extends TestCase
         $wallet->setSetting('test', null);
 
         $this->artisan("scalpel:wallet-setting:create --key=test --value=init --wallet_id={$wallet->id}")
-             ->assertExitCode(0);
+            ->assertExitCode(0);
 
         $setting = $wallet->settings()->where('key', 'test')->first();
 

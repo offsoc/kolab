@@ -2,14 +2,14 @@
 
 namespace App\Jobs\Group;
 
+use App\Group;
 use App\Jobs\GroupJob;
+use App\Support\Facades\LDAP;
 
 class DeleteJob extends GroupJob
 {
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle()
     {
@@ -31,20 +31,20 @@ class DeleteJob extends GroupJob
         }
 
         if (\config('app.with_ldap') && $group->isLdapReady()) {
-            \App\Support\Facades\LDAP::deleteGroup($group);
+            LDAP::deleteGroup($group);
 
-            $group->status ^= \App\Group::STATUS_LDAP_READY;
+            $group->status ^= Group::STATUS_LDAP_READY;
         }
-/*
-        if (\config('app.with_imap') && $group->isImapReady()) {
-            if (!\App\Support\Facades\IMAP::deleteGroup($group)) {
-                throw new \Exception("Failed to delete group {$this->groupId} from IMAP.");
-            }
+        /*
+                if (\config('app.with_imap') && $group->isImapReady()) {
+                    if (!\App\Support\Facades\IMAP::deleteGroup($group)) {
+                        throw new \Exception("Failed to delete group {$this->groupId} from IMAP.");
+                    }
 
-            $group->status ^= \App\Group::STATUS_IMAP_READY;
-        }
-*/
-        $group->status |= \App\Group::STATUS_DELETED;
+                    $group->status ^= \App\Group::STATUS_IMAP_READY;
+                }
+        */
+        $group->status |= Group::STATUS_DELETED;
         $group->save();
     }
 }

@@ -5,6 +5,7 @@ namespace App;
 use App\Traits\BelongsToTenantTrait;
 use App\Traits\UuidStrKeyTrait;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Translatable\HasTranslations;
 
 /**
@@ -32,7 +33,6 @@ class Discount extends Model
     /** @var array<int, string> Translatable properties */
     public $translatable = ['description'];
 
-
     /**
      * Discount value mutator
      *
@@ -58,7 +58,7 @@ class Discount extends Model
     /**
      * List of wallets with this discount assigned.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Wallet, $this>
+     * @return HasMany<Wallet, $this>
      */
     public function wallets()
     {

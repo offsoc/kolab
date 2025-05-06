@@ -3,6 +3,8 @@
 namespace App\Observers;
 
 use App\Delegation;
+use App\Jobs\User\Delegation\CreateJob;
+use App\Jobs\User\Delegation\DeleteJob;
 
 class DelegationObserver
 {
@@ -13,7 +15,7 @@ class DelegationObserver
      */
     public function created(Delegation $delegation): void
     {
-        \App\Jobs\User\Delegation\CreateJob::dispatch($delegation->id);
+        CreateJob::dispatch($delegation->id);
     }
 
     /**
@@ -23,6 +25,6 @@ class DelegationObserver
      */
     public function deleted(Delegation $delegation): void
     {
-        \App\Jobs\User\Delegation\DeleteJob::dispatch($delegation->user->email, $delegation->delegatee->email);
+        DeleteJob::dispatch($delegation->user->email, $delegation->delegatee->email);
     }
 }

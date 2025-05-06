@@ -4,13 +4,15 @@ namespace App;
 
 use BaconQrCode;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * The eloquent definition of a ReferralCode.
  *
- * @property string  $code        Referral code
- * @property int     $program_id  Referral program identifier
- * @property int     $user_id     User identifier
+ * @property string $code       Referral code
+ * @property int    $program_id Referral program identifier
+ * @property int    $user_id    User identifier
  */
 class ReferralCode extends Model
 {
@@ -40,23 +42,20 @@ class ReferralCode extends Model
     /** @var bool Indicates if the model should be timestamped. */
     public $timestamps = false;
 
-
     /**
      * Generate a random code.
-     *
-     * @return string
      */
     public static function generateCode(): string
     {
         $code_length = env('REFERRAL_CODE_LENGTH', self::CODE_LENGTH);
 
-        return \App\Utils::randStr($code_length);
+        return Utils::randStr($code_length);
     }
 
     /**
      * The referral code owner (user)
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<User, $this>
+     * @return BelongsTo<User, $this>
      */
     public function owner()
     {
@@ -66,7 +65,7 @@ class ReferralCode extends Model
     /**
      * The referral program
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<ReferralProgram, $this>
+     * @return BelongsTo<ReferralProgram, $this>
      */
     public function program()
     {
@@ -76,7 +75,7 @@ class ReferralCode extends Model
     /**
      * The referrals using this code.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Referral, $this>
+     * @return HasMany<Referral, $this>
      */
     public function referrals()
     {
@@ -106,6 +105,6 @@ class ReferralCode extends Model
      */
     public function signupUrl(): string
     {
-        return \App\Utils::serviceUrl("signup/referral/{$this->code}", $this->program->tenant_id);
+        return Utils::serviceUrl("signup/referral/{$this->code}", $this->program->tenant_id);
     }
 }

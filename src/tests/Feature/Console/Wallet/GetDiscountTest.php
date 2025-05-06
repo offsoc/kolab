@@ -2,25 +2,20 @@
 
 namespace Tests\Feature\Console\Wallet;
 
+use App\Discount;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class GetDiscountTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestUser('wallets-controller@kolabnow.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('wallets-controller@kolabnow.com');
 
@@ -57,7 +52,7 @@ class GetDiscountTest extends TestCase
         $this->assertSame(0, $code);
         $this->assertSame("0", $output);
 
-        $discount = \App\Discount::withObjectTenantContext($user)->where('discount', 10)->first();
+        $discount = Discount::withObjectTenantContext($user)->where('discount', 10)->first();
         $wallet->discount()->associate($discount);
         $wallet->save();
 

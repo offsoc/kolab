@@ -2,7 +2,8 @@
 
 namespace App\Traits;
 
-use App\Policy\Greylist;
+use App\Rules\Password;
+use App\Utils;
 
 trait UserConfigTrait
 {
@@ -12,11 +13,11 @@ trait UserConfigTrait
     public function getConfig(): array
     {
         $settings = $this->getSettings([
-                'greylist_enabled',
-                'guam_enabled',
-                'password_policy',
-                'max_password_age',
-                'limit_geo'
+            'greylist_enabled',
+            'guam_enabled',
+            'password_policy',
+            'max_password_age',
+            'limit_geo',
         ]);
 
         $config = [
@@ -54,13 +55,13 @@ trait UserConfigTrait
 
                 $this->setSetting($key, !empty($value) ? json_encode($value) : null);
             } elseif ($key == 'max_password_age') {
-                $this->setSetting($key, intval($value) > 0 ? ((string) intval($value)) : null);
+                $this->setSetting($key, (int) $value > 0 ? ((string) (int) $value) : null);
             } elseif ($key == 'password_policy') {
                 // Validate the syntax and make sure min and max is included
                 if (
                     !is_string($value)
-                    || strpos($value, 'min:') === false
-                    || strpos($value, 'max:') === false
+                    || !str_contains($value, 'min:')
+                    || !str_contains($value, 'max:')
                     || !preg_match('/^[a-z0-9:,]+$/', $value)
                 ) {
                     $errors[$key] = \trans('validation.invalid-password-policy');
@@ -93,32 +94,32 @@ trait UserConfigTrait
     protected function validatePasswordPolicyRule(string $rule): ?string
     {
         $regexp = [
-            'min:[0-9]+', 'max:[0-9]+', 'upper', 'lower', 'digit', 'special', 'last:[0-9]+'
+            'min:[0-9]+', 'max:[0-9]+', 'upper', 'lower', 'digit', 'special', 'last:[0-9]+',
         ];
 
         if (empty($rule) || !preg_match('/^(' . implode('|', $regexp) . ')$/', $rule)) {
             return \trans('validation.invalid-password-policy');
         }
 
-        $systemPolicy = \App\Rules\Password::parsePolicy(\config('app.password_policy'));
+        $systemPolicy = Password::parsePolicy(\config('app.password_policy'));
 
         // Min/Max values cannot exceed the system defaults, i.e. if system policy
         // is min:5, user's policy cannot be set to a smaller number.
-        if (!empty($systemPolicy['min']) && strpos($rule, 'min:') === 0) {
+        if (!empty($systemPolicy['min']) && str_starts_with($rule, 'min:')) {
             $value = trim(substr($rule, 4));
             if ($value < $systemPolicy['min']) {
                 return \trans('validation.password-policy-min-len-error', ['min' => $systemPolicy['min']]);
             }
         }
 
-        if (!empty($systemPolicy['max']) && strpos($rule, 'max:') === 0) {
+        if (!empty($systemPolicy['max']) && str_starts_with($rule, 'max:')) {
             $value = trim(substr($rule, 4));
             if ($value > $systemPolicy['max']) {
                 return \trans('validation.password-policy-max-len-error', ['max' => $systemPolicy['max']]);
             }
         }
 
-        if (!empty($systemPolicy['last']) && strpos($rule, 'last:') === 0) {
+        if (!empty($systemPolicy['last']) && str_starts_with($rule, 'last:')) {
             $value = trim(substr($rule, 5));
             if ($value < $systemPolicy['last']) {
                 return \trans('validation.password-policy-last-error', ['last' => $systemPolicy['last']]);
@@ -151,9 +152,10 @@ trait UserConfigTrait
 
         if (count($value) > 250) {
             return \trans('validation.invalid-limit-geo');
-        } elseif (count($value)) {
+        }
+        if (count($value)) {
             // There MUST be country of the current connection included
-            $currentCountry = \App\Utils::countryForRequest();
+            $currentCountry = Utils::countryForRequest();
 
             if (!in_array($currentCountry, $value)) {
                 return \trans('validation.invalid-limit-geo-missing-current', ['code' => $currentCountry]);

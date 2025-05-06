@@ -2,21 +2,20 @@
 
 namespace Tests\Feature;
 
-use App\User;
 use App\VerificationCode;
 use Carbon\Carbon;
 use Tests\TestCase;
 
 class VerificationCodeTest extends TestCase
 {
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestUser('UserAccountA@UserAccount.com');
     }
 
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('UserAccountA@UserAccount.com');
 
@@ -47,7 +46,7 @@ class VerificationCodeTest extends TestCase
         $this->assertTrue(strlen($code->short_code) === $code_length);
         $this->assertTrue($code->active);
         $this->assertSame($data['mode'], $code->mode);
-        $this->assertEquals($user->id, $code->user->id);
+        $this->assertSame($user->id, $code->user->id);
         $this->assertInstanceOf(\DateTime::class, $code->expires_at);
         $this->assertSame($code->expires_at->toDateTimeString(), $exp->toDateTimeString());
 

@@ -2,6 +2,8 @@
 
 namespace App\Console;
 
+use App\Traits\BelongsToTenantTrait;
+
 /**
  * This abstract class provides a means to treat objects in our model using CRUD.
  */
@@ -37,7 +39,7 @@ abstract class ObjectCreateCommand extends ObjectCommand
 
         if (
             $this->commandPrefix == 'scalpel'
-            && in_array(\App\Traits\BelongsToTenantTrait::class, class_uses($this->objectClass))
+            && in_array(BelongsToTenantTrait::class, class_uses($this->objectClass))
         ) {
             $properties[] = 'tenant_id';
         }

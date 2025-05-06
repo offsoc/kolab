@@ -2,16 +2,19 @@
 
 namespace Tests\Feature\Controller;
 
+use App\Jobs\Mail\PaymentJob;
+use App\Jobs\Mail\PaymentMandateDisabledJob;
+use App\Jobs\Wallet\ChargeJob;
 use App\Payment;
 use App\Providers\PaymentProvider;
 use App\Transaction;
 use App\Wallet;
-use App\WalletSetting;
 use GuzzleHttp\Psr7\Response;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Http;
-use Tests\TestCase;
+use Mollie\Api\Types\RefundStatus;
 use Tests\BrowserAddonTrait;
+use Tests\TestCase;
 
 class PaymentsMollieEuroTest extends TestCase
 {
@@ -19,10 +22,7 @@ class PaymentsMollieEuroTest extends TestCase
 
     protected const API_URL = 'https://api.mollie.com/v2';
 
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -34,10 +34,7 @@ class PaymentsMollieEuroTest extends TestCase
         \config(['services.payment_provider' => 'mollie']);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         if (\config('services.mollie.key')) {
             $this->deleteTestUser('euro@' . \config('app.domain'));
@@ -103,7 +100,7 @@ class PaymentsMollieEuroTest extends TestCase
         $this->assertCount(1, $json['errors']);
         $min = $wallet->money(Payment::MIN_AMOUNT);
         $this->assertSame("Minimum amount for a single payment is {$min}.", $json['errors']['amount']);
-        $this->assertMatchesRegularExpression("/[0-9.,]+ €\.$/", $json['errors']['amount']);
+        $this->assertMatchesRegularExpression("/[0-9.,]+ €\\.$/", $json['errors']['amount']);
 
         // Test creating a mandate (negative balance, amount too small)
         Wallet::where('id', $wallet->id)->update(['balance' => -2000]);
@@ -138,12 +135,12 @@ class PaymentsMollieEuroTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertEquals(20.10, $json['amount']);
-        $this->assertEquals(0, $json['balance']);
+        $this->assertSame(20.10, $json['amount']);
+        $this->assertSame(0, $json['balance']);
         $this->assertTrue(in_array($json['method'], ['Mastercard (**** **** **** 9399)', 'Credit Card']));
-        $this->assertSame(false, $json['isPending']);
-        $this->assertSame(true, $json['isValid']);
-        $this->assertSame(false, $json['isDisabled']);
+        $this->assertFalse($json['isPending']);
+        $this->assertTrue($json['isValid']);
+        $this->assertFalse($json['isDisabled']);
 
         $wallet = $user->wallets()->first();
         $wallet->setSetting('mandate_disabled', 1);
@@ -153,12 +150,12 @@ class PaymentsMollieEuroTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertEquals(20.10, $json['amount']);
-        $this->assertEquals(0, $json['balance']);
+        $this->assertSame(20.10, $json['amount']);
+        $this->assertSame(0, $json['balance']);
         $this->assertTrue(in_array($json['method'], ['Mastercard (**** **** **** 9399)', 'Credit Card']));
-        $this->assertSame(false, $json['isPending']);
-        $this->assertSame(true, $json['isValid']);
-        $this->assertSame(true, $json['isDisabled']);
+        $this->assertFalse($json['isPending']);
+        $this->assertTrue($json['isValid']);
+        $this->assertTrue($json['isDisabled']);
 
         Bus::fake();
         $wallet->setSetting('mandate_disabled', null);
@@ -186,7 +183,7 @@ class PaymentsMollieEuroTest extends TestCase
         $this->assertSame('error', $json['status']);
         $this->assertCount(1, $json['errors']);
         $this->assertSame("Minimum amount for a single payment is {$min}.", $json['errors']['amount']);
-        $this->assertMatchesRegularExpression("/[0-9.,]+ €\.$/", $json['errors']['amount']);
+        $this->assertMatchesRegularExpression("/[0-9.,]+ €\\.$/", $json['errors']['amount']);
 
         // Test updating a mandate (valid input)
         $post = ['amount' => 30.10, 'balance' => 10];
@@ -202,10 +199,10 @@ class PaymentsMollieEuroTest extends TestCase
 
         $wallet->refresh();
 
-        $this->assertEquals(30.10, $wallet->getSetting('mandate_amount'));
-        $this->assertEquals(10, $wallet->getSetting('mandate_balance'));
+        $this->assertSame(30.10, $wallet->getSetting('mandate_amount'));
+        $this->assertSame(10, $wallet->getSetting('mandate_balance'));
 
-        Bus::assertDispatchedTimes(\App\Jobs\Wallet\ChargeJob::class, 0);
+        Bus::assertDispatchedTimes(ChargeJob::class, 0);
 
         // Test updating a disabled mandate (invalid input)
         $wallet->setSetting('mandate_disabled', 1);
@@ -235,8 +232,8 @@ class PaymentsMollieEuroTest extends TestCase
         $this->assertSame($mandate_id, $json['id']);
         $this->assertFalse($json['isDisabled']);
 
-        Bus::assertDispatchedTimes(\App\Jobs\Wallet\ChargeJob::class, 1);
-        Bus::assertDispatched(\App\Jobs\Wallet\ChargeJob::class, function ($job) use ($wallet) {
+        Bus::assertDispatchedTimes(ChargeJob::class, 1);
+        Bus::assertDispatched(ChargeJob::class, function ($job) use ($wallet) {
             $job_wallet_id = $this->getObjectProperty($job, 'walletId');
             return $job_wallet_id === $wallet->id;
         });
@@ -268,9 +265,9 @@ class PaymentsMollieEuroTest extends TestCase
             '_links' => [
                 'documentation' => [
                     'href' => "https://docs.mollie.com/errors",
-                    'type' => "text/html"
-                ]
-            ]
+                    'type' => "text/html",
+                ],
+            ],
         ];
 
         $mollieId = $wallet->getSetting('mollie_id');
@@ -319,7 +316,7 @@ class PaymentsMollieEuroTest extends TestCase
         $this->assertCount(1, $json['errors']);
         $min = $wallet->money(Payment::MIN_AMOUNT);
         $this->assertSame("Minimum amount for a single payment is {$min}.", $json['errors']['amount']);
-        $this->assertMatchesRegularExpression("/[0-9.,]+ €\.$/", $json['errors']['amount']);
+        $this->assertMatchesRegularExpression("/[0-9.,]+ €\\.$/", $json['errors']['amount']);
 
         // Invalid currency
         $post = ['amount' => '12.34', 'currency' => 'FOO', 'methodId' => 'creditcard'];
@@ -345,7 +342,7 @@ class PaymentsMollieEuroTest extends TestCase
         $this->assertSame('EUR', $payment->currency);
         $this->assertSame($user->tenant->title . ' Payment', $payment->description);
         $this->assertSame('open', $payment->status);
-        $this->assertEquals(0, $wallet->balance);
+        $this->assertSame(0, $wallet->balance);
 
         // Test the webhook
         // Note: Webhook end-point does not require authentication
@@ -371,7 +368,7 @@ class PaymentsMollieEuroTest extends TestCase
         $response->assertStatus(200);
 
         $this->assertSame(Payment::STATUS_PAID, $payment->fresh()->status);
-        $this->assertEquals(1234, $wallet->fresh()->balance);
+        $this->assertSame(1234, $wallet->fresh()->balance);
 
         $transaction = $wallet->transactions()
             ->where('type', Transaction::WALLET_CREDIT)->get()->last();
@@ -384,7 +381,7 @@ class PaymentsMollieEuroTest extends TestCase
 
         // Assert that email notification job wasn't dispatched,
         // it is expected only for recurring payments
-        Bus::assertDispatchedTimes(\App\Jobs\Mail\PaymentJob::class, 0);
+        Bus::assertDispatchedTimes(PaymentJob::class, 0);
 
         // Verify "paid -> open -> paid" scenario, assert that balance didn't change
         $mollie_response['status'] = 'open';
@@ -398,7 +395,7 @@ class PaymentsMollieEuroTest extends TestCase
         $response->assertStatus(200);
 
         $this->assertSame(Payment::STATUS_PAID, $payment->fresh()->status);
-        $this->assertEquals(1234, $wallet->fresh()->balance);
+        $this->assertSame(1234, $wallet->fresh()->balance);
 
         $mollie_response['status'] = 'paid';
         $mollie_response['paidAt'] = date('c');
@@ -411,7 +408,7 @@ class PaymentsMollieEuroTest extends TestCase
         $response->assertStatus(200);
 
         $this->assertSame(Payment::STATUS_PAID, $payment->fresh()->status);
-        $this->assertEquals(1234, $wallet->fresh()->balance);
+        $this->assertSame(1234, $wallet->fresh()->balance);
 
         // Test for payment failure
         Bus::fake();
@@ -438,11 +435,11 @@ class PaymentsMollieEuroTest extends TestCase
         $response->assertStatus(200);
 
         $this->assertSame('failed', $payment->fresh()->status);
-        $this->assertEquals(1234, $wallet->fresh()->balance);
+        $this->assertSame(1234, $wallet->fresh()->balance);
 
         // Assert that email notification job wasn't dispatched,
         // it is expected only for recurring payments
-        Bus::assertDispatchedTimes(\App\Jobs\Mail\PaymentJob::class, 0);
+        Bus::assertDispatchedTimes(PaymentJob::class, 0);
     }
 
     /**
@@ -486,7 +483,7 @@ class PaymentsMollieEuroTest extends TestCase
         // immediately the balance update
         // Assert that email notification job has been dispatched
         $this->assertSame(Payment::STATUS_PAID, $payment->status);
-        $this->assertEquals(2010, $wallet->fresh()->balance);
+        $this->assertSame(2010, $wallet->fresh()->balance);
         $transaction = $wallet->transactions()
             ->where('type', Transaction::WALLET_CREDIT)->get()->last();
 
@@ -496,8 +493,8 @@ class PaymentsMollieEuroTest extends TestCase
             $transaction->description
         );
 
-        Bus::assertDispatchedTimes(\App\Jobs\Mail\PaymentJob::class, 1);
-        Bus::assertDispatched(\App\Jobs\Mail\PaymentJob::class, function ($job) use ($payment) {
+        Bus::assertDispatchedTimes(PaymentJob::class, 1);
+        Bus::assertDispatched(PaymentJob::class, function ($job) use ($payment) {
             $job_payment = $this->getObjectProperty($job, 'payment');
             return $job_payment->id === $payment->id;
         });
@@ -524,8 +521,8 @@ class PaymentsMollieEuroTest extends TestCase
         $this->assertFalse($result);
         $this->assertCount(2, $wallet->payments()->get());
 
-        Bus::assertDispatchedTimes(\App\Jobs\Mail\PaymentMandateDisabledJob::class, 1);
-        Bus::assertDispatched(\App\Jobs\Mail\PaymentMandateDisabledJob::class, function ($job) use ($wallet) {
+        Bus::assertDispatchedTimes(PaymentMandateDisabledJob::class, 1);
+        Bus::assertDispatched(PaymentMandateDisabledJob::class, function ($job) use ($wallet) {
             $job_wallet = $this->getObjectProperty($job, 'wallet');
             return $job_wallet->id === $wallet->id;
         });
@@ -538,7 +535,7 @@ class PaymentsMollieEuroTest extends TestCase
         $this->assertFalse($result);
         $this->assertCount(2, $wallet->payments()->get());
 
-        Bus::assertDispatchedTimes(\App\Jobs\Mail\PaymentMandateDisabledJob::class, 1);
+        Bus::assertDispatchedTimes(PaymentMandateDisabledJob::class, 1);
 
         // Test webhook for recurring payments
 
@@ -571,7 +568,7 @@ class PaymentsMollieEuroTest extends TestCase
         $response->assertStatus(200);
 
         $this->assertSame(Payment::STATUS_PAID, $payment->fresh()->status);
-        $this->assertEquals(2010, $wallet->fresh()->balance);
+        $this->assertSame(2010, $wallet->fresh()->balance);
 
         $transaction = $wallet->transactions()
             ->where('type', Transaction::WALLET_CREDIT)->get()->last();
@@ -583,8 +580,8 @@ class PaymentsMollieEuroTest extends TestCase
         );
 
         // Assert that email notification job has been dispatched
-        Bus::assertDispatchedTimes(\App\Jobs\Mail\PaymentJob::class, 1);
-        Bus::assertDispatched(\App\Jobs\Mail\PaymentJob::class, function ($job) use ($payment) {
+        Bus::assertDispatchedTimes(PaymentJob::class, 1);
+        Bus::assertDispatched(PaymentJob::class, function ($job) use ($payment) {
             $job_payment = $this->getObjectProperty($job, 'payment');
             return $job_payment->id === $payment->id;
         });
@@ -616,12 +613,12 @@ class PaymentsMollieEuroTest extends TestCase
         $wallet->refresh();
 
         $this->assertSame(Payment::STATUS_FAILED, $payment->fresh()->status);
-        $this->assertEquals(2010, $wallet->balance);
+        $this->assertSame(2010, $wallet->balance);
         $this->assertTrue(!empty($wallet->getSetting('mandate_disabled')));
 
         // Assert that email notification job has been dispatched
-        Bus::assertDispatchedTimes(\App\Jobs\Mail\PaymentJob::class, 1);
-        Bus::assertDispatched(\App\Jobs\Mail\PaymentJob::class, function ($job) use ($payment) {
+        Bus::assertDispatchedTimes(PaymentJob::class, 1);
+        Bus::assertDispatched(PaymentJob::class, function ($job) use ($payment) {
             $job_payment = $this->getObjectProperty($job, 'payment');
             return $job_payment->id === $payment->id;
         });
@@ -644,16 +641,16 @@ class PaymentsMollieEuroTest extends TestCase
 
         // Create a paid payment
         $payment = Payment::create([
-                'id' => 'tr_123456',
-                'status' => Payment::STATUS_PAID,
-                'amount' => 123,
-                'credit_amount' => 123,
-                'currency_amount' => 123,
-                'currency' => 'EUR',
-                'type' => Payment::TYPE_ONEOFF,
-                'wallet_id' => $wallet->id,
-                'provider' => 'mollie',
-                'description' => 'test',
+            'id' => 'tr_123456',
+            'status' => Payment::STATUS_PAID,
+            'amount' => 123,
+            'credit_amount' => 123,
+            'currency_amount' => 123,
+            'currency' => 'EUR',
+            'type' => Payment::TYPE_ONEOFF,
+            'wallet_id' => $wallet->id,
+            'provider' => 'mollie',
+            'description' => 'test',
         ]);
 
         // Test handling a refund by the webhook
@@ -667,10 +664,10 @@ class PaymentsMollieEuroTest extends TestCase
             "mode" => "test",
             "_links" => [
                 "refunds" => [
-                   "href" => "https://api.mollie.com/v2/payments/{$payment->id}/refunds",
-                   "type" => "application/hal+json"
-                ]
-            ]
+                    "href" => "https://api.mollie.com/v2/payments/{$payment->id}/refunds",
+                    "type" => "application/hal+json",
+                ],
+            ],
         ];
 
         $mollie_response2 = [
@@ -681,16 +678,16 @@ class PaymentsMollieEuroTest extends TestCase
                     [
                         "resource" => "refund",
                         "id" => "re_123456",
-                        "status" => \Mollie\Api\Types\RefundStatus::STATUS_REFUNDED,
+                        "status" => RefundStatus::STATUS_REFUNDED,
                         "paymentId" => $payment->id,
                         "description" => "refund desc",
                         "amount" => [
                             "currency" => "EUR",
                             "value" => "1.01",
                         ],
-                    ]
-                ]
-            ]
+                    ],
+                ],
+            ],
         ];
 
         // We'll trigger the webhook with payment id and use mocking for
@@ -706,7 +703,7 @@ class PaymentsMollieEuroTest extends TestCase
 
         $wallet->refresh();
 
-        $this->assertEquals(-101, $wallet->balance);
+        $this->assertSame(-101, $wallet->balance);
 
         $transactions = $wallet->transactions()->where('type', Transaction::WALLET_REFUND)->get();
 
@@ -729,9 +726,9 @@ class PaymentsMollieEuroTest extends TestCase
 
         $mollie_response1["_links"] = [
             "chargebacks" => [
-               "href" => "https://api.mollie.com/v2/payments/{$payment->id}/chargebacks",
-               "type" => "application/hal+json"
-            ]
+                "href" => "https://api.mollie.com/v2/payments/{$payment->id}/chargebacks",
+                "type" => "application/hal+json",
+            ],
         ];
 
         $mollie_response2 = [
@@ -747,9 +744,9 @@ class PaymentsMollieEuroTest extends TestCase
                             "currency" => "EUR",
                             "value" => "0.15",
                         ],
-                    ]
-                ]
-            ]
+                    ],
+                ],
+            ],
         ];
 
         // We'll trigger the webhook with payment id and use mocking for
@@ -765,7 +762,7 @@ class PaymentsMollieEuroTest extends TestCase
 
         $wallet->refresh();
 
-        $this->assertEquals(-116, $wallet->balance);
+        $this->assertSame(-116, $wallet->balance);
 
         $transactions = $wallet->transactions()->where('type', Transaction::WALLET_CHARGEBACK)->get();
 
@@ -783,7 +780,7 @@ class PaymentsMollieEuroTest extends TestCase
         $this->assertSame("mollie", $payments[0]->provider);
         $this->assertSame('', $payments[0]->description);
 
-        Bus::assertNotDispatched(\App\Jobs\Mail\PaymentJob::class);
+        Bus::assertNotDispatched(PaymentJob::class);
     }
 
     /**
@@ -800,33 +797,33 @@ class PaymentsMollieEuroTest extends TestCase
         $wallet->currency = 'EUR';
         $wallet->save();
 
-        //Empty response
+        // Empty response
         $response = $this->actingAs($user)->get("api/v4/payments/pending");
         $json = $response->json();
 
         $this->assertSame('success', $json['status']);
         $this->assertSame(0, $json['count']);
         $this->assertSame(1, $json['page']);
-        $this->assertSame(false, $json['hasMore']);
+        $this->assertFalse($json['hasMore']);
         $this->assertCount(0, $json['list']);
 
         $response = $this->actingAs($user)->get("api/v4/payments/has-pending");
         $json = $response->json();
-        $this->assertSame(false, $json['hasPending']);
+        $this->assertFalse($json['hasPending']);
 
         // Successful payment
         $post = ['amount' => '12.34', 'currency' => 'EUR', 'methodId' => 'creditcard'];
         $response = $this->actingAs($user)->post("api/v4/payments", $post);
         $response->assertStatus(200);
 
-        //A response
+        // A response
         $response = $this->actingAs($user)->get("api/v4/payments/pending");
         $json = $response->json();
 
         $this->assertSame('success', $json['status']);
         $this->assertSame(1, $json['count']);
         $this->assertSame(1, $json['page']);
-        $this->assertSame(false, $json['hasMore']);
+        $this->assertFalse($json['hasMore']);
         $this->assertCount(1, $json['list']);
         $this->assertSame(Payment::STATUS_OPEN, $json['list'][0]['status']);
         $this->assertSame('EUR', $json['list'][0]['currency']);
@@ -835,7 +832,7 @@ class PaymentsMollieEuroTest extends TestCase
 
         $response = $this->actingAs($user)->get("api/v4/payments/has-pending");
         $json = $response->json();
-        $this->assertSame(true, $json['hasPending']);
+        $this->assertTrue($json['hasPending']);
 
         // Set the payment to paid
         $payments = Payment::where('wallet_id', $wallet->id)->get();
@@ -855,7 +852,7 @@ class PaymentsMollieEuroTest extends TestCase
 
         $response = $this->actingAs($user)->get("api/v4/payments/has-pending");
         $json = $response->json();
-        $this->assertSame(false, $json['hasPending']);
+        $this->assertFalse($json['hasPending']);
     }
 
     /**
@@ -878,7 +875,7 @@ class PaymentsMollieEuroTest extends TestCase
 
         $hasCoinbase = !empty(\config('services.coinbase.key'));
 
-        $this->assertCount(3 + intval($hasCoinbase), $json);
+        $this->assertCount(3 + (int) $hasCoinbase, $json);
         $this->assertSame('creditcard', $json[0]['id']);
         $this->assertSame('paypal', $json[1]['id']);
         $this->assertSame('banktransfer', $json[2]['id']);

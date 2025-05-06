@@ -2,6 +2,7 @@
 
 namespace Tests\Browser\Reseller;
 
+use App\Utils;
 use Tests\Browser;
 use Tests\Browser\Components\Menu;
 use Tests\Browser\Components\Toast;
@@ -11,10 +12,7 @@ use Tests\TestCaseDusk;
 
 class LogonTest extends TestCaseDusk
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         self::useResellerUrl();
@@ -25,9 +23,9 @@ class LogonTest extends TestCaseDusk
      */
     public function testLogonMenu(): void
     {
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit(new Home())
-                ->with(new Menu(), function ($browser) {
+                ->with(new Menu(), static function ($browser) {
                     $browser->assertMenuItems(['support', 'login', 'lang']);
                 })
                 ->assertMissing('@second-factor-input')
@@ -40,7 +38,7 @@ class LogonTest extends TestCaseDusk
      */
     public function testLogonRedirect(): void
     {
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit('/dashboard');
 
             // Checks if we're really on the login page
@@ -54,7 +52,7 @@ class LogonTest extends TestCaseDusk
      */
     public function testLogonWrongCredentials(): void
     {
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit(new Home())
                 ->submitLogon('reseller@' . \config('app.domain'), 'wrong')
                 // Error message
@@ -69,13 +67,13 @@ class LogonTest extends TestCaseDusk
      */
     public function testLogonSuccessful(): void
     {
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit(new Home())
-                ->submitLogon('reseller@' . \config('app.domain'), \App\Utils::generatePassphrase(), true);
+                ->submitLogon('reseller@' . \config('app.domain'), Utils::generatePassphrase(), true);
 
             // Checks if we're really on Dashboard page
             $browser->on(new Dashboard())
-                ->within(new Menu(), function ($browser) {
+                ->within(new Menu(), static function ($browser) {
                     $browser->assertMenuItems(['support', 'dashboard', 'logout', 'lang']);
                 })
                 ->assertUser('reseller@' . \config('app.domain'));
@@ -93,11 +91,11 @@ class LogonTest extends TestCaseDusk
      */
     public function testLogout(): void
     {
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->on(new Dashboard());
 
             // Click the Logout button
-            $browser->within(new Menu(), function ($browser) {
+            $browser->within(new Menu(), static function ($browser) {
                 $browser->clickMenuItem('logout');
             });
 
@@ -106,7 +104,7 @@ class LogonTest extends TestCaseDusk
                 ->on(new Home());
 
             // with default menu
-            $browser->within(new Menu(), function ($browser) {
+            $browser->within(new Menu(), static function ($browser) {
                 $browser->assertMenuItems(['support', 'login', 'lang']);
             });
 
@@ -120,9 +118,9 @@ class LogonTest extends TestCaseDusk
      */
     public function testLogoutByURL(): void
     {
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit(new Home())
-                ->submitLogon('reseller@' . \config('app.domain'), \App\Utils::generatePassphrase(), true);
+                ->submitLogon('reseller@' . \config('app.domain'), Utils::generatePassphrase(), true);
 
             // Checks if we're really on Dashboard page
             $browser->on(new Dashboard());
@@ -133,7 +131,7 @@ class LogonTest extends TestCaseDusk
                 ->on(new Home());
 
             // with default menu
-            $browser->within(new Menu(), function ($browser) {
+            $browser->within(new Menu(), static function ($browser) {
                 $browser->assertMenuItems(['support', 'login', 'lang']);
             });
 

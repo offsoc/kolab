@@ -2,26 +2,22 @@
 
 namespace Tests\Feature\Console\Scalpel\TenantSetting;
 
+use App\Tenant;
+use App\TenantSetting;
 use Tests\TestCase;
 
 class CreateCommandTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
-        \App\TenantSetting::truncate();
+        TenantSetting::truncate();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
-        \App\TenantSetting::truncate();
+        TenantSetting::truncate();
 
         parent::tearDown();
     }
@@ -31,10 +27,10 @@ class CreateCommandTest extends TestCase
      */
     public function testHandle(): void
     {
-        $tenant = \App\Tenant::whereNotIn('id', [1])->first();
+        $tenant = Tenant::whereNotIn('id', [1])->first();
 
         $this->artisan("scalpel:tenant-setting:create --key=test --value=init --tenant_id={$tenant->id}")
-             ->assertExitCode(0);
+            ->assertExitCode(0);
 
         $setting = $tenant->settings()->where('key', 'test')->first();
 

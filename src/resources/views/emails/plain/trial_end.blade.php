@@ -14,6 +14,6 @@
 
 {!! $supportUrl !!}
 
--- 
+--
 {!! __('mail.footer1', $vars) !!}
 {!! __('mail.footer2', $vars) !!}

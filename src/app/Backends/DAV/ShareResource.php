@@ -17,7 +17,6 @@ class ShareResource
     /** @var ?array Resource sharees list */
     public $sharees;
 
-
     /**
      * Create Share Resource object from a DOMElement element
      *
@@ -44,16 +43,16 @@ class ShareResource
             }
 
             $props .= '<d:sharee>'
-                . '<d:href>' . htmlspecialchars($href, ENT_XML1, 'UTF-8') . '</d:href>'
+                . '<d:href>' . htmlspecialchars($href, \ENT_XML1, 'UTF-8') . '</d:href>'
                 . '<d:share-access><d:' . ($sharee['access'] ?? self::ACCESS_NONE) . '/></d:share-access>';
 
             if (isset($sharee['comment']) && strlen($sharee['comment'])) {
-                $props .= '<d:comment>' . htmlspecialchars($sharee['comment'], ENT_XML1, 'UTF-8') . '</d:comment>';
+                $props .= '<d:comment>' . htmlspecialchars($sharee['comment'], \ENT_XML1, 'UTF-8') . '</d:comment>';
             }
 
             if (isset($sharee['displayname']) && strlen($sharee['displayname'])) {
                 $props .= '<d:prop><d:displayname>'
-                    . htmlspecialchars($sharee['comment'], ENT_XML1, 'UTF-8')
+                    . htmlspecialchars($sharee['comment'], \ENT_XML1, 'UTF-8')
                     . '</d:displayname></d:prop>';
             }
 

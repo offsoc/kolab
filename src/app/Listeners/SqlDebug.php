@@ -25,7 +25,7 @@ class SqlDebug
             QueryExecuted::class => 'handle',
             TransactionBeginning::class => 'handle',
             TransactionCommitted::class => 'handle',
-            TransactionRolledBack::class => 'handle'
+            TransactionRolledBack::class => 'handle',
         ];
     }
 
@@ -36,7 +36,7 @@ class SqlDebug
      */
     public function handle(object $event): void
     {
-        switch (get_class($event)) {
+        switch ($event::class) {
             case TransactionBeginning::class:
                 $query = 'begin';
                 break;
@@ -65,12 +65,14 @@ class SqlDebug
     {
         $ipv = preg_match('/ip([46])nets/', $sql, $m) ? $m[1] : null;
 
-        $serialized = array_map(function ($entry) use ($ipv) {
+        $serialized = array_map(static function ($entry) use ($ipv) {
             if ($entry instanceof \DateTime) {
                 return $entry->format('Y-m-d h:i:s');
-            } elseif (is_bool($entry)) {
+            }
+            if (is_bool($entry)) {
                 return $entry ? 'true' : 'false';
-            } elseif ($ipv && is_string($entry) && strlen($entry) == ($ipv == 6 ? 16 : 4)) {
+            }
+            if ($ipv && is_string($entry) && strlen($entry) == ($ipv == 6 ? 16 : 4)) {
                 // binary IP address? use HEX representation
                 return '0x' . bin2hex($entry);
             }

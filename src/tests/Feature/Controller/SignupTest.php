@@ -2,12 +2,14 @@
 
 namespace Tests\Feature\Controller;
 
-use App\Http\Controllers\API\SignupController;
 use App\Discount;
 use App\Domain;
+use App\Http\Controllers\API\SignupController;
 use App\IP4Net;
-use App\Plan;
+use App\Jobs\Mail\SignupVerificationJob;
+use App\Jobs\User\CreateJob;
 use App\Package;
+use App\Plan;
 use App\ReferralProgram;
 use App\SignupCode;
 use App\SignupInvitation as SI;
@@ -21,10 +23,7 @@ class SignupTest extends TestCase
 {
     private $domain;
 
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -32,8 +31,8 @@ class SignupTest extends TestCase
         //       we should probably create plans here to not depend on that
         $this->domain = $this->getPublicDomain();
 
-        $this->deleteTestUser("SignupControllerTest1@$this->domain");
-        $this->deleteTestUser("signuplogin@$this->domain");
+        $this->deleteTestUser("SignupControllerTest1@{$this->domain}");
+        $this->deleteTestUser("signuplogin@{$this->domain}");
         $this->deleteTestUser("admin@external.com");
         $this->deleteTestUser("test-inv@kolabnow.com");
 
@@ -50,13 +49,10 @@ class SignupTest extends TestCase
         ReferralProgram::query()->delete();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
-        $this->deleteTestUser("SignupControllerTest1@$this->domain");
-        $this->deleteTestUser("signuplogin@$this->domain");
+        $this->deleteTestUser("SignupControllerTest1@{$this->domain}");
+        $this->deleteTestUser("signuplogin@{$this->domain}");
         $this->deleteTestUser("admin@external.com");
         $this->deleteTestUser("test-inv@kolabnow.com");
 
@@ -88,9 +84,9 @@ class SignupTest extends TestCase
             if (empty($this->domain)) {
                 $this->domain = 'signup-domain.com';
                 Domain::create([
-                        'namespace' => $this->domain,
-                        'status' => Domain::STATUS_ACTIVE,
-                        'type' => Domain::TYPE_PUBLIC,
+                    'namespace' => $this->domain,
+                    'status' => Domain::STATUS_ACTIVE,
+                    'type' => Domain::TYPE_PUBLIC,
                 ]);
             }
         }
@@ -121,11 +117,11 @@ class SignupTest extends TestCase
         $individual = Plan::withEnvTenantContext()->where('title', 'individual')->first();
         $group = Plan::withEnvTenantContext()->where('title', 'group')->first();
         $hidden = Plan::create([
-                'title' => 'test',
-                'name' => 'Test Account',
-                'description' => 'Test',
-                'hidden' => true,
-                'mode' => Plan::MODE_MANDATE,
+            'title' => 'test',
+            'name' => 'Test Account',
+            'description' => 'Test',
+            'hidden' => true,
+            'mode' => Plan::MODE_MANDATE,
         ]);
 
         $response = $this->get('/api/auth/signup/plans');
@@ -345,21 +341,21 @@ class SignupTest extends TestCase
         $this->assertCount(5, $json);
         $this->assertSame('success', $json['status']);
         $this->assertSame('email', $json['mode']);
-        $this->assertSame(true, $json['is_domain']);
+        $this->assertTrue($json['is_domain']);
         $this->assertNotEmpty($json['code']);
         $this->assertSame($all_domains = Domain::getPublicDomains(), $json['domains']);
 
         $code = SignupCode::find($json['code']);
 
         $this->assertSame('10.1.1.2', $code->ip_address);
-        $this->assertSame(null, $code->verify_ip_address);
-        $this->assertSame(null, $code->submit_ip_address);
+        $this->assertNull($code->verify_ip_address);
+        $this->assertNull($code->submit_ip_address);
 
         // Assert the email sending job was pushed once
-        Queue::assertPushed(\App\Jobs\Mail\SignupVerificationJob::class, 1);
+        Queue::assertPushed(SignupVerificationJob::class, 1);
 
         // Assert the job has proper data assigned
-        Queue::assertPushed(\App\Jobs\Mail\SignupVerificationJob::class, function ($job) use ($data, $json) {
+        Queue::assertPushed(SignupVerificationJob::class, static function ($job) use ($data, $json) {
             $code = TestCase::getObjectProperty($job, 'code');
 
             return $code->code === $json['code']
@@ -380,12 +376,12 @@ class SignupTest extends TestCase
         $this->assertCount(5, $json);
         $this->assertSame('success', $json['status']);
         $this->assertSame('email', $json['mode']);
-        $this->assertSame(false, $json['is_domain']);
+        $this->assertFalse($json['is_domain']);
         $this->assertNotEmpty($json['code']);
         $this->assertSame($all_domains, $json['domains']);
 
         // Assert the job has proper data assigned
-        Queue::assertPushed(\App\Jobs\Mail\SignupVerificationJob::class, function ($job) use ($data, $json) {
+        Queue::assertPushed(SignupVerificationJob::class, static function ($job) use ($data, $json) {
             $code = TestCase::getObjectProperty($job, 'code');
 
             return $code->code === $json['code']
@@ -402,7 +398,7 @@ class SignupTest extends TestCase
             'first_name' => $data['first_name'],
             'last_name' => $data['last_name'],
             'plan' => $data['plan'],
-            'voucher' => $data['voucher']
+            'voucher' => $data['voucher'],
         ];
     }
 
@@ -480,14 +476,14 @@ class SignupTest extends TestCase
         $this->assertSame($result['first_name'], $json['first_name']);
         $this->assertSame($result['last_name'], $json['last_name']);
         $this->assertSame($result['voucher'], $json['voucher']);
-        $this->assertSame(false, $json['is_domain']);
-        //$this->assertTrue(is_array($json['domains']) && !empty($json['domains']));
+        $this->assertFalse($json['is_domain']);
+        // $this->assertTrue(is_array($json['domains']) && !empty($json['domains']));
 
         $code->refresh();
 
         $this->assertSame('10.1.1.2', $code->ip_address);
         $this->assertSame('10.1.1.3', $code->verify_ip_address);
-        $this->assertSame(null, $code->submit_ip_address);
+        $this->assertNull($code->submit_ip_address);
 
         return $result;
     }
@@ -664,11 +660,11 @@ class SignupTest extends TestCase
         $this->assertNotEmpty($json['access_token']);
         $this->assertSame($identity, $json['email']);
 
-        Queue::assertPushed(\App\Jobs\User\CreateJob::class, 1);
+        Queue::assertPushed(CreateJob::class, 1);
 
         Queue::assertPushed(
-            \App\Jobs\User\CreateJob::class,
-            function ($job) use ($data) {
+            CreateJob::class,
+            static function ($job) use ($data) {
                 $userEmail = TestCase::getObjectProperty($job, 'userEmail');
                 return $userEmail === \strtolower($data['login'] . '@' . $data['domain']);
             }
@@ -740,15 +736,15 @@ class SignupTest extends TestCase
         $this->assertCount(5, $json);
         $this->assertSame('success', $json['status']);
         $this->assertSame('email', $json['mode']);
-        $this->assertSame(true, $json['is_domain']);
+        $this->assertTrue($json['is_domain']);
         $this->assertNotEmpty($json['code']);
         $this->assertSame(Domain::getPublicDomains(), $json['domains']);
 
         // Assert the email sending job was pushed once
-        Queue::assertPushed(\App\Jobs\Mail\SignupVerificationJob::class, 1);
+        Queue::assertPushed(SignupVerificationJob::class, 1);
 
         // Assert the job has proper data assigned
-        Queue::assertPushed(\App\Jobs\Mail\SignupVerificationJob::class, function ($job) use ($data, $json) {
+        Queue::assertPushed(SignupVerificationJob::class, static function ($job) use ($data, $json) {
             $code = TestCase::getObjectProperty($job, 'code');
 
             return $code->code === $json['code']
@@ -774,8 +770,8 @@ class SignupTest extends TestCase
         $this->assertSame($user_data['email'], $result['email']);
         $this->assertSame($user_data['first_name'], $result['first_name']);
         $this->assertSame($user_data['last_name'], $result['last_name']);
-        $this->assertSame(null, $result['voucher']);
-        $this->assertSame(true, $result['is_domain']);
+        $this->assertNull($result['voucher']);
+        $this->assertTrue($result['is_domain']);
 
         // Final signup request
         $login = 'admin';
@@ -797,24 +793,24 @@ class SignupTest extends TestCase
         $this->assertSame('bearer', $result['token_type']);
         $this->assertTrue(!empty($result['expires_in']) && is_int($result['expires_in']) && $result['expires_in'] > 0);
         $this->assertNotEmpty($result['access_token']);
-        $this->assertSame("$login@$domain", $result['email']);
+        $this->assertSame("{$login}@{$domain}", $result['email']);
 
         Queue::assertPushed(\App\Jobs\Domain\CreateJob::class, 1);
 
         Queue::assertPushed(
             \App\Jobs\Domain\CreateJob::class,
-            function ($job) use ($domain) {
+            static function ($job) use ($domain) {
                 $domainNamespace = TestCase::getObjectProperty($job, 'domainNamespace');
 
                 return $domainNamespace === $domain;
             }
         );
 
-        Queue::assertPushed(\App\Jobs\User\CreateJob::class, 1);
+        Queue::assertPushed(CreateJob::class, 1);
 
         Queue::assertPushed(
-            \App\Jobs\User\CreateJob::class,
-            function ($job) use ($data) {
+            CreateJob::class,
+            static function ($job) use ($data) {
                 $userEmail = TestCase::getObjectProperty($job, 'userEmail');
 
                 return $userEmail === $data['login'] . '@' . $data['domain'];
@@ -859,17 +855,17 @@ class SignupTest extends TestCase
         \config(['services.payment_provider' => 'mollie']);
 
         $plan = Plan::create([
-                'title' => 'test',
-                'name' => 'Test Account',
-                'description' => 'Test',
-                'free_months' => 1,
-                'discount_qty' => 0,
-                'discount_rate' => 0,
-                'mode' => Plan::MODE_MANDATE,
+            'title' => 'test',
+            'name' => 'Test Account',
+            'description' => 'Test',
+            'free_months' => 1,
+            'discount_qty' => 0,
+            'discount_rate' => 0,
+            'mode' => Plan::MODE_MANDATE,
         ]);
 
         $packages = [
-            Package::where(['title' => 'kolab', 'tenant_id' => \config('app.tenant_id')])->first()
+            Package::where(['title' => 'kolab', 'tenant_id' => \config('app.tenant_id')])->first(),
         ];
 
         $plan->packages()->saveMany($packages);
@@ -977,13 +973,13 @@ class SignupTest extends TestCase
         Queue::fake();
 
         $plan = Plan::create([
-                'title' => 'test',
-                'name' => 'Test Account',
-                'description' => 'Test',
-                'free_months' => 1,
-                'discount_qty' => 0,
-                'discount_rate' => 0,
-                'mode' => Plan::MODE_TOKEN,
+            'title' => 'test',
+            'name' => 'Test Account',
+            'description' => 'Test',
+            'free_months' => 1,
+            'discount_qty' => 0,
+            'discount_rate' => 0,
+            'mode' => Plan::MODE_TOKEN,
         ]);
 
         $post = [
@@ -1019,7 +1015,7 @@ class SignupTest extends TestCase
         $this->assertNotEmpty($user);
         $this->assertSame($plan->id, $user->getSetting('plan_id'));
         $this->assertSame($plan->signupTokens()->first()->id, $user->getSetting('signup_token'));
-        $this->assertSame(null, $user->getSetting('external_email'));
+        $this->assertNull($user->getSetting('external_email'));
 
         // Token's counter bumped up
         $this->assertSame(1, $plan->signupTokens()->first()->counter);
@@ -1097,18 +1093,18 @@ class SignupTest extends TestCase
         Queue::fake();
 
         $plan = Plan::create([
-                'title' => 'test',
-                'name' => 'Test Account',
-                'description' => 'Test',
-                'free_months' => 1,
-                'months' => 12,
-                'discount_qty' => 0,
-                'discount_rate' => 0,
-                'mode' => Plan::MODE_MANDATE,
+            'title' => 'test',
+            'name' => 'Test Account',
+            'description' => 'Test',
+            'free_months' => 1,
+            'months' => 12,
+            'discount_qty' => 0,
+            'discount_rate' => 0,
+            'mode' => Plan::MODE_MANDATE,
         ]);
 
         $packages = [
-            Package::where(['title' => 'kolab', 'tenant_id' => \config('app.tenant_id')])->first()
+            Package::where(['title' => 'kolab', 'tenant_id' => \config('app.tenant_id')])->first(),
         ];
 
         $plan->packages()->saveMany($packages);
@@ -1155,18 +1151,18 @@ class SignupTest extends TestCase
 
         // Prepare VAT rate and network entries, so we can test the VAT related output
         VatRate::create([
-                'country' => 'CH',
-                'rate' => 7.7,
-                'start' => now()->copy()->subDay(),
+            'country' => 'CH',
+            'rate' => 7.7,
+            'start' => now()->copy()->subDay(),
         ]);
 
         IP4Net::create([
-                'net_number' => '127.0.0.0',
-                'net_broadcast' => '127.255.255.255',
-                'net_mask' => 8,
-                'country' => 'CH',
-                'rir_name' => 'test',
-                'serial' => 1,
+            'net_number' => '127.0.0.0',
+            'net_broadcast' => '127.255.255.255',
+            'net_mask' => 8,
+            'country' => 'CH',
+            'rir_name' => 'test',
+            'serial' => 1,
         ]);
 
         // Test with mode=mandate plan, and valid voucher code

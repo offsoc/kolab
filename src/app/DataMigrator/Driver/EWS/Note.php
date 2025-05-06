@@ -13,7 +13,7 @@ class Note extends Item
     // public const TYPE        = 'IPM.Note';
     // public const TYPE        = 'IPM.Note.SMIME';
     // public const TYPE        = 'IPM.Note.SMIME.MultipartSigned';
-    public const FILE_EXT    = 'eml';
+    public const FILE_EXT = 'eml';
 
     /**
      * Get GetItem request parameters
@@ -43,7 +43,7 @@ class Note extends Item
             $flags[] = 'SEEN';
         }
 
-        //low/normal/high are exist
+        // low/normal/high are exist
         if (strtolower($item->getImportance()) == "high") {
             $flags[] = 'FLAGGED';
         }

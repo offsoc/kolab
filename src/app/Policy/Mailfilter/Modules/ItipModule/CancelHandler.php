@@ -49,7 +49,7 @@ class CancelHandler extends ItipModule
 
         // SEQUENCE does not match, deliver the message, let the MUAs to deal with this
         // FIXME: Is this even a valid aproach regarding recurrence?
-        if (strval($existingMaster->SEQUENCE) != strval($cancelMaster->SEQUENCE)) {
+        if ((string) $existingMaster->SEQUENCE != (string) $cancelMaster->SEQUENCE) {
             return null;
         }
 

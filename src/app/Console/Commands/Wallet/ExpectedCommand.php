@@ -3,6 +3,7 @@
 namespace App\Console\Commands\Wallet;
 
 use App\Console\Command;
+use App\Wallet;
 
 class ExpectedCommand extends Command
 {
@@ -37,7 +38,7 @@ class ExpectedCommand extends Command
 
             $wallets = $user->wallets;
         } else {
-            $wallets = \App\Wallet::select('wallets.*')
+            $wallets = Wallet::select('wallets.*')
                 ->join('users', 'users.id', '=', 'wallets.user_id')
                 ->withEnvTenantContext('users')
                 ->whereNull('users.deleted_at');

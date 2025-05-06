@@ -28,8 +28,6 @@ class UserEmailLocal implements Rule
      *
      * @param string $attribute Attribute name
      * @param mixed  $login     Local part of email address
-     *
-     * @return bool
      */
     public function passes($attribute, $login): bool
     {
@@ -66,8 +64,6 @@ class UserEmailLocal implements Rule
 
     /**
      * Get the validation error message.
-     *
-     * @return string
      */
     public function message(): ?string
     {

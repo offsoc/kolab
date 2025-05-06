@@ -3,8 +3,8 @@
 namespace Tests;
 
 use Facebook\WebDriver\Chrome\ChromeOptions;
-use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
+use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Laravel\Dusk\TestCase as BaseTestCase;
 
 abstract class TestCaseDusk extends BaseTestCase
@@ -15,7 +15,6 @@ abstract class TestCaseDusk extends BaseTestCase
      * Prepare for Dusk test execution.
      *
      * @beforeClass
-     * @return void
      */
     public static function prepare()
     {
@@ -35,7 +34,6 @@ abstract class TestCaseDusk extends BaseTestCase
      * when we switch to PHPUnit v10.
      *
      * @afterClass
-     * @return void
      */
     public static function tearDownDuskClass()
     {
@@ -49,7 +47,7 @@ abstract class TestCaseDusk extends BaseTestCase
     /**
      * Create the RemoteWebDriver instance.
      *
-     * @return \Facebook\WebDriver\Remote\RemoteWebDriver
+     * @return RemoteWebDriver
      */
     protected function driver()
     {
@@ -98,7 +96,7 @@ abstract class TestCaseDusk extends BaseTestCase
 
         // Make sure downloads dir exists and is empty
         if (!file_exists($download_dir)) {
-            mkdir($download_dir, 0777, true);
+            mkdir($download_dir, 0o777, true);
         } else {
             foreach (glob("{$download_dir}/*") as $file) {
                 @unlink($file);

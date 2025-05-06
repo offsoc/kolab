@@ -3,6 +3,7 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * A collection of settings for a Tenant.
@@ -20,7 +21,7 @@ class TenantSetting extends Model
     /**
      * The tenant to which this setting belongs.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Tenant, $this>
+     * @return BelongsTo<Tenant, $this>
      */
     public function tenant()
     {

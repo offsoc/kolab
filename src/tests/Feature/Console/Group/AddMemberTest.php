@@ -8,10 +8,7 @@ use Tests\TestCase;
 
 class AddMemberTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -19,10 +16,7 @@ class AddMemberTest extends TestCase
         $this->deleteTestGroup('group-test@kolab.org');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestGroup('group-test@kolabnow.com');
         $this->deleteTestGroup('group-test@kolab.org');

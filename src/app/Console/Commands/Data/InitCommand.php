@@ -38,13 +38,13 @@ class InitCommand extends Command
     {
         $user = User::where(['email' => \config('services.imap.admin_login')])->first();
         if (!$user) {
-            $user = new \App\User();
+            $user = new User();
             $user->email = \config('services.imap.admin_login');
             $user->password = \config('services.imap.admin_password');
-            $user->role = \App\User::ROLE_SERVICE;
+            $user->role = User::ROLE_SERVICE;
         } else {
             $user->password = \config('services.imap.admin_password');
-            $user->role = \App\User::ROLE_SERVICE;
+            $user->role = User::ROLE_SERVICE;
         }
         $user->save();
     }
@@ -54,13 +54,13 @@ class InitCommand extends Command
         if (!empty(\config('mail.mailers.smtp.username'))) {
             $user = User::where(['email' => \config('mail.mailers.smtp.username')])->first();
             if (!$user) {
-                $user = new \App\User();
+                $user = new User();
                 $user->email = \config('mail.mailers.smtp.username');
                 $user->password = \config('mail.mailers.smtp.password');
-                $user->role = \App\User::ROLE_SERVICE;
+                $user->role = User::ROLE_SERVICE;
             } else {
                 $user->password = \config('mail.mailers.smtp.password');
-                $user->role = \App\User::ROLE_SERVICE;
+                $user->role = User::ROLE_SERVICE;
             }
             $user->save();
         }
@@ -77,8 +77,8 @@ class InitCommand extends Command
 
         // Create a password grant client for the webapp
         if (
-            !empty(\config('auth.proxy.client_secret')) &&
-            !Passport::client()->where('id', \config('auth.proxy.client_id'))->exists()
+            !empty(\config('auth.proxy.client_secret'))
+            && !Passport::client()->where('id', \config('auth.proxy.client_id'))->exists()
         ) {
             $client = Passport::client()->forceFill([
                 'user_id' => null,
@@ -96,15 +96,15 @@ class InitCommand extends Command
 
         // Create a client for Webmail SSO
         if (
-            !empty(\config('auth.sso.client_secret')) &&
-            !Passport::client()->where('id', \config('auth.sso.client_id'))->exists()
+            !empty(\config('auth.sso.client_secret'))
+            && !Passport::client()->where('id', \config('auth.sso.client_id'))->exists()
         ) {
             $client = Passport::client()->forceFill([
                 'user_id' => null,
                 'name' => 'Webmail SSO client',
                 'secret' => \config('auth.sso.client_secret'),
                 'provider' => 'users',
-                'redirect' => (str_starts_with(\config('app.webmail_url'), 'http') ?  '' : 'https://' . $domain)
+                'redirect' => (str_starts_with(\config('app.webmail_url'), 'http') ? '' : 'https://' . $domain)
                     . \config('app.webmail_url') . 'index.php/login/oauth',
                 'personal_access_client' => 0,
                 'password_client' => 0,
@@ -117,8 +117,8 @@ class InitCommand extends Command
 
         // Create a client for synapse oauth
         if (
-            !empty(\config('auth.synapse.client_secret')) &&
-            !Passport::client()->where('id', \config('auth.synapse.client_id'))->exists()
+            !empty(\config('auth.synapse.client_secret'))
+            && !Passport::client()->where('id', \config('auth.synapse.client_id'))->exists()
         ) {
             $client = Passport::client()->forceFill([
                 'user_id' => null,

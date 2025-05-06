@@ -4,8 +4,7 @@ namespace Tests\Unit\Mail;
 
 use App\Jobs\Wallet\CheckJob;
 use App\Mail\NegativeBalanceReminderDegrade;
-use App\User;
-use App\Wallet;
+use App\Utils;
 use Tests\TestCase;
 
 class NegativeBalanceReminderDegradeTest extends TestCase
@@ -24,7 +23,7 @@ class NegativeBalanceReminderDegradeTest extends TestCase
         $threshold = CheckJob::threshold($wallet, CheckJob::THRESHOLD_DEGRADE);
 
         \config([
-                'app.support_url' => 'https://kolab.org/support',
+            'app.support_url' => 'https://kolab.org/support',
         ]);
 
         $mail = $this->renderMail(new NegativeBalanceReminderDegrade($wallet, $user));
@@ -32,13 +31,13 @@ class NegativeBalanceReminderDegradeTest extends TestCase
         $html = $mail['html'];
         $plain = $mail['plain'];
 
-        $walletUrl = \App\Utils::serviceUrl('/wallet');
+        $walletUrl = Utils::serviceUrl('/wallet');
         $walletLink = sprintf('<a href="%s">%s</a>', $walletUrl, $walletUrl);
         $supportUrl = \config('app.support_url');
         $supportLink = sprintf('<a href="%s">%s</a>', $supportUrl, $supportUrl);
         $appName = $user->tenant->title;
 
-        $this->assertSame("$appName Payment Reminder", $mail['subject']);
+        $this->assertSame("{$appName} Payment Reminder", $mail['subject']);
 
         $this->assertStringStartsWith('<!DOCTYPE html>', $html);
         $this->assertTrue(strpos($html, $user->name(true)) > 0);
@@ -47,8 +46,8 @@ class NegativeBalanceReminderDegradeTest extends TestCase
         $this->assertTrue(strpos($html, "you are behind on paying for your {$john->email} account") > 0);
         $this->assertTrue(strpos($html, "your account will be degraded") > 0);
         $this->assertTrue(strpos($html, $threshold->toDateString()) > 0);
-        $this->assertTrue(strpos($html, "$appName Support") > 0);
-        $this->assertTrue(strpos($html, "$appName Team") > 0);
+        $this->assertTrue(strpos($html, "{$appName} Support") > 0);
+        $this->assertTrue(strpos($html, "{$appName} Team") > 0);
 
         $this->assertStringStartsWith('Dear ' . $user->name(true), $plain);
         $this->assertTrue(strpos($plain, $walletUrl) > 0);
@@ -56,8 +55,8 @@ class NegativeBalanceReminderDegradeTest extends TestCase
         $this->assertTrue(strpos($plain, "you are behind on paying for your {$john->email} account") > 0);
         $this->assertTrue(strpos($plain, "your account will be degraded") > 0);
         $this->assertTrue(strpos($plain, $threshold->toDateString()) > 0);
-        $this->assertTrue(strpos($plain, "$appName Support") > 0);
-        $this->assertTrue(strpos($plain, "$appName Team") > 0);
+        $this->assertTrue(strpos($plain, "{$appName} Support") > 0);
+        $this->assertTrue(strpos($plain, "{$appName} Team") > 0);
     }
 
     /**
@@ -71,7 +70,7 @@ class NegativeBalanceReminderDegradeTest extends TestCase
 
         $mail = new NegativeBalanceReminderDegrade($wallet, $user);
 
-        $this->assertSame("$appName Payment Reminder", $mail->getSubject());
+        $this->assertSame("{$appName} Payment Reminder", $mail->getSubject());
         $this->assertSame($user, $mail->getUser());
     }
 }

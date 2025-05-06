@@ -2,7 +2,6 @@
 
 namespace App\DataMigrator;
 
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
@@ -53,11 +52,10 @@ class Queue extends Model
         'data' => '', // must not be []
     ];
 
-
     /**
      * Fast and race-condition free method of bumping the jobs_started value
      */
-    public function bumpJobsStarted(int $num = null)
+    public function bumpJobsStarted(?int $num = null)
     {
         DB::update(
             "update data_migrator_queues set jobs_started = jobs_started + ? where id = ?",
@@ -68,7 +66,7 @@ class Queue extends Model
     /**
      * Fast and race-condition free method of bumping the jobs_finished value
      */
-    public function bumpJobsFinished(int $num = null)
+    public function bumpJobsFinished(?int $num = null)
     {
         DB::update(
             "update data_migrator_queues set jobs_finished = jobs_finished + ? where id = ?",

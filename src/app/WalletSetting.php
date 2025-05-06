@@ -3,6 +3,7 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * A collection of settings for a Wallet.
@@ -20,7 +21,7 @@ class WalletSetting extends Model
     /**
      * The wallet to which this setting belongs.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Wallet, $this>
+     * @return BelongsTo<Wallet, $this>
      */
     public function wallet()
     {

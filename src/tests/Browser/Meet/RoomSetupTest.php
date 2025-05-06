@@ -11,16 +11,13 @@ use Tests\TestCaseDusk;
 
 class RoomSetupTest extends TestCaseDusk
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         $this->resetTestRoom();
     }
 
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->resetTestRoom();
         parent::tearDown();
@@ -33,14 +30,14 @@ class RoomSetupTest extends TestCaseDusk
      */
     public function testRoomNonExistingRoom(): void
     {
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit(new RoomPage('unknown'))
-                ->within(new Menu(), function ($browser) {
+                ->within(new Menu(), static function ($browser) {
                     $browser->assertMenuItems(['support', 'signup', 'login', 'lang']);
                 });
 
             if ($browser->isDesktop()) {
-                $browser->within(new Menu('footer'), function ($browser) {
+                $browser->within(new Menu('footer'), static function ($browser) {
                     $browser->assertMenuItems(['support', 'signup', 'login']);
                 });
             } else {
@@ -67,14 +64,14 @@ class RoomSetupTest extends TestCaseDusk
      */
     public function testRoomSetup(): void
     {
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit(new RoomPage('john'))
-                ->within(new Menu(), function ($browser) {
+                ->within(new Menu(), static function ($browser) {
                     $browser->assertMenuItems(['support', 'signup', 'login', 'lang']);
                 });
 
             if ($browser->isDesktop()) {
-                $browser->within(new Menu('footer'), function ($browser) {
+                $browser->within(new Menu('footer'), static function ($browser) {
                     $browser->assertMenuItems(['support', 'signup', 'login']);
                 });
             } else {
@@ -117,11 +114,12 @@ class RoomSetupTest extends TestCaseDusk
      * Test two users in a room (joining/leaving and some basic functionality)
      *
      * @group meet
+     *
      * @depends testRoomSetup
      */
     public function testTwoUsersInARoom(): void
     {
-        $this->browse(function (Browser $browser, Browser $guest) {
+        $this->browse(static function (Browser $browser, Browser $guest) {
             // In one browser window act as a guest
             $guest->visit(new RoomPage('john'))
                 ->assertMissing('@toolbar')
@@ -149,12 +147,12 @@ class RoomSetupTest extends TestCaseDusk
                 ->assertVisible('@login-form')
                 ->submitLogon('john@kolab.org', 'simple123')
                 ->waitFor('@setup-form')
-                ->within(new Menu(), function ($browser) {
+                ->within(new Menu(), static function ($browser) {
                     $browser->assertMenuItems(['support', 'dashboard', 'logout', 'lang']);
                 });
 
             if ($browser->isDesktop()) {
-                $browser->within(new Menu('footer'), function ($browser) {
+                $browser->within(new Menu('footer'), static function ($browser) {
                     $browser->assertMenuItems(['support', 'dashboard', 'logout']);
                 });
             }
@@ -168,7 +166,7 @@ class RoomSetupTest extends TestCaseDusk
                 ->clickWhenEnabled('@setup-button')
                 ->waitFor('@session')
                 ->assertMissing('@setup-form')
-                ->whenAvailable('div.meet-video.self', function (Browser $browser) {
+                ->whenAvailable('div.meet-video.self', static function (Browser $browser) {
                     $browser->waitFor('video')
                         ->assertSeeIn('.meet-nickname', 'john')
                         ->assertVisible('.controls button.link-fullscreen')
@@ -190,11 +188,11 @@ class RoomSetupTest extends TestCaseDusk
                 ->assertSeeIn('@setup-button', "JOIN")
                 // Join the room, disable cam/mic
                 ->select('@setup-mic-select', '')
-                //->select('@setup-cam-select', '')
+                // ->select('@setup-cam-select', '')
                 ->clickWhenEnabled('@setup-button')
                 ->waitFor('@session')
                 ->assertMissing('@setup-form')
-                ->whenAvailable('div.meet-video.self', function (Browser $browser) {
+                ->whenAvailable('div.meet-video.self', static function (Browser $browser) {
                     $browser->waitFor('video')
                         ->assertVisible('.meet-nickname')
                         ->assertVisible('.controls button.link-fullscreen')
@@ -202,7 +200,7 @@ class RoomSetupTest extends TestCaseDusk
                         ->assertVisible('.status .status-audio')
                         ->assertMissing('.status .status-video');
                 })
-                ->whenAvailable('div.meet-video:not(.self)', function (Browser $browser) {
+                ->whenAvailable('div.meet-video:not(.self)', static function (Browser $browser) {
                     $browser->waitFor('video')
                         ->assertSeeIn('.meet-nickname', 'john')
                         ->assertVisible('.controls button.link-fullscreen')
@@ -215,7 +213,7 @@ class RoomSetupTest extends TestCaseDusk
 
             // Check guest's elements in the owner's window
             $browser
-                ->whenAvailable('div.meet-video:not(.self)', function (Browser $browser) {
+                ->whenAvailable('div.meet-video:not(.self)', static function (Browser $browser) {
                     $browser->waitFor('video')
                         ->assertVisible('.meet-nickname')
                         ->assertVisible('.controls button.link-fullscreen')
@@ -250,7 +248,7 @@ class RoomSetupTest extends TestCaseDusk
                 ->assertSeeIn('@setup-button', "JOIN")
                 // Join the room, disable cam/mic
                 ->select('@setup-mic-select', '')
-                //->select('@setup-cam-select', '')
+                // ->select('@setup-cam-select', '')
                 ->clickWhenEnabled('@setup-button')
                 ->waitFor('@session');
 
@@ -261,11 +259,11 @@ class RoomSetupTest extends TestCaseDusk
                 ->waitForLocation('/dashboard');
 
             // Expect other participants be informed about the end of the session
-            $guest->with(new Dialog('#leave-dialog'), function (Browser $browser) {
-                    $browser->assertSeeIn('@title', 'Room closed')
-                        ->assertSeeIn('@body', "The session has been closed by the room owner.")
-                        ->assertSeeIn('@button-cancel', 'Close')
-                        ->click('@button-cancel');
+            $guest->with(new Dialog('#leave-dialog'), static function (Browser $browser) {
+                $browser->assertSeeIn('@title', 'Room closed')
+                    ->assertSeeIn('@body', "The session has been closed by the room owner.")
+                    ->assertSeeIn('@button-cancel', 'Close')
+                    ->click('@button-cancel');
             })
                 ->assertMissing('#leave-dialog')
                 ->waitForLocation('/login');
@@ -276,11 +274,12 @@ class RoomSetupTest extends TestCaseDusk
      * Test two subscribers-only users in a room
      *
      * @group meet
+     *
      * @depends testTwoUsersInARoom
      */
     public function testSubscribers(): void
     {
-        $this->browse(function (Browser $browser, Browser $guest) {
+        $this->browse(static function (Browser $browser, Browser $guest) {
             // Join the room as the owner
             $browser->visit(new RoomPage('john'))
                 ->waitFor('@setup-form')
@@ -292,7 +291,7 @@ class RoomSetupTest extends TestCaseDusk
                 ->clickWhenEnabled('@setup-button')
                 ->waitFor('@session')
                 ->assertMissing('@setup-form')
-                ->whenAvailable('@subscribers .meet-subscriber.self', function (Browser $browser) {
+                ->whenAvailable('@subscribers .meet-subscriber.self', static function (Browser $browser) {
                     $browser->assertSeeIn('.meet-nickname', 'john');
                 })
                 ->assertElementsCount('@session div.meet-video', 0)
@@ -320,10 +319,10 @@ class RoomSetupTest extends TestCaseDusk
                 ->clickWhenEnabled('@setup-button')
                 ->waitFor('@session')
                 ->assertMissing('@setup-form')
-                ->whenAvailable('@subscribers .meet-subscriber.self', function (Browser $browser) {
+                ->whenAvailable('@subscribers .meet-subscriber.self', static function (Browser $browser) {
                     $browser->assertVisible('.meet-nickname');
                 })
-                ->whenAvailable('@subscribers .meet-subscriber:not(.self)', function (Browser $browser) {
+                ->whenAvailable('@subscribers .meet-subscriber:not(.self)', static function (Browser $browser) {
                     $browser->assertSeeIn('.meet-nickname', 'john');
                 })
                 ->assertElementsCount('@session div.meet-video', 0)
@@ -342,7 +341,7 @@ class RoomSetupTest extends TestCaseDusk
 
             // Check guest's elements in the owner's window
             $browser
-                ->whenAvailable('@subscribers .meet-subscriber:not(.self)', function (Browser $browser) {
+                ->whenAvailable('@subscribers .meet-subscriber:not(.self)', static function (Browser $browser) {
                     $browser->assertVisible('.meet-nickname');
                 })
                 ->assertElementsCount('@session div.meet-video', 0)
@@ -365,11 +364,12 @@ class RoomSetupTest extends TestCaseDusk
      * Test demoting publisher to a subscriber
      *
      * @group meet
+     *
      * @depends testSubscribers
      */
     public function testDemoteToSubscriber(): void
     {
-        $this->browse(function (Browser $browser, Browser $guest1, Browser $guest2) {
+        $this->browse(static function (Browser $browser, Browser $guest1, Browser $guest2) {
             // Join the room as the owner
             $browser->visit(new RoomPage('john'))
                 ->waitFor('@setup-form')
@@ -395,7 +395,7 @@ class RoomSetupTest extends TestCaseDusk
                 ->assertElementsCount('@session div.meet-subscriber', 0)
                 // assert there's no moderator-related features for this guess available
                 ->click('@session .meet-video.self .meet-nickname')
-                ->whenAvailable('@session .meet-video.self .dropdown-menu', function (Browser $browser) {
+                ->whenAvailable('@session .meet-video.self .dropdown-menu', static function (Browser $browser) {
                     $browser->assertMissing('.permissions');
                 })
                 ->click('@session .meet-video:not(.self) .meet-nickname')
@@ -410,7 +410,7 @@ class RoomSetupTest extends TestCaseDusk
                 ->assertElementsCount('@session video', 2)
                 ->assertElementsCount('@session .meet-subscriber', 0)
                 ->click('@session .meet-video:not(.self) .meet-nickname')
-                ->whenAvailable('@session .meet-video:not(.self) .dropdown-menu', function (Browser $browser) {
+                ->whenAvailable('@session .meet-video:not(.self) .dropdown-menu', static function (Browser $browser) {
                     $browser->assertSeeIn('.action-role-publisher', 'Audio & Video publishing')
                         ->click('.action-role-publisher')
                         ->waitUntilMissing('.dropdown-menu');
@@ -446,7 +446,7 @@ class RoomSetupTest extends TestCaseDusk
             // Promote the guest back to a publisher
             $browser
                 ->click('@session .meet-subscriber .meet-nickname')
-                ->whenAvailable('@session .meet-subscriber .dropdown-menu', function (Browser $browser) {
+                ->whenAvailable('@session .meet-subscriber .dropdown-menu', static function (Browser $browser) {
                     $browser->assertSeeIn('.action-role-publisher', 'Audio & Video publishing')
                         ->assertNotChecked('.action-role-publisher input')
                         ->click('.action-role-publisher')
@@ -458,7 +458,7 @@ class RoomSetupTest extends TestCaseDusk
                 ->assertElementsCount('@session div.meet-subscriber', 0);
 
             $guest1
-                ->with(new Dialog('#media-setup-dialog'), function (Browser $browser) {
+                ->with(new Dialog('#media-setup-dialog'), static function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Media setup')
                         ->click('@button-cancel');
                 })
@@ -470,7 +470,7 @@ class RoomSetupTest extends TestCaseDusk
             // Demote the owner to a subscriber
             $browser
                 ->click('@session .meet-video.self .meet-nickname')
-                ->whenAvailable('@session .meet-video.self .dropdown-menu', function (Browser $browser) {
+                ->whenAvailable('@session .meet-video.self .dropdown-menu', static function (Browser $browser) {
                     $browser->assertSeeIn('.action-role-publisher', 'Audio & Video publishing')
                         ->assertChecked('.action-role-publisher input')
                         ->click('.action-role-publisher')
@@ -485,14 +485,14 @@ class RoomSetupTest extends TestCaseDusk
             // Promote the owner to a publisher
             $browser
                 ->click('@session .meet-subscriber.self .meet-nickname')
-                ->whenAvailable('@session .meet-subscriber.self .dropdown-menu', function (Browser $browser) {
+                ->whenAvailable('@session .meet-subscriber.self .dropdown-menu', static function (Browser $browser) {
                     $browser->assertSeeIn('.action-role-publisher', 'Audio & Video publishing')
                         ->assertNotChecked('.action-role-publisher input')
                         ->click('.action-role-publisher')
                         ->waitUntilMissing('.dropdown-menu');
                 })
                 ->waitUntilMissing('@session .meet-subscriber.self')
-                ->with(new Dialog('#media-setup-dialog'), function (Browser $browser) {
+                ->with(new Dialog('#media-setup-dialog'), static function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Media setup')
                         ->click('@button-cancel');
                 })
@@ -507,11 +507,12 @@ class RoomSetupTest extends TestCaseDusk
      * Test the media setup dialog
      *
      * @group meet
+     *
      * @depends testDemoteToSubscriber
      */
     public function testMediaSetupDialog(): void
     {
-        $this->browse(function (Browser $browser, $guest) {
+        $this->browse(static function (Browser $browser, $guest) {
             // Join the room as the owner
             $browser->visit(new RoomPage('john'))
                 ->waitFor('@setup-form')
@@ -534,7 +535,7 @@ class RoomSetupTest extends TestCaseDusk
 
             $browser->waitFor('@session video')
                 ->click('.controls button.link-setup')
-                ->with(new Dialog('#media-setup-dialog'), function (Browser $browser) {
+                ->with(new Dialog('#media-setup-dialog'), static function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Media setup')
                         ->assertVisible('form video')
                         ->assertVisible('form > div:nth-child(1) video')
@@ -551,7 +552,7 @@ class RoomSetupTest extends TestCaseDusk
                 ->assertMissing('#media-setup-dialog')
                 // Test mute audio and video
                 ->click('.controls button.link-setup')
-                ->with(new Dialog('#media-setup-dialog'), function (Browser $browser) {
+                ->with(new Dialog('#media-setup-dialog'), static function (Browser $browser) {
                     $browser->select('form > div:nth-child(2) select', '')
                         ->select('form > div:nth-child(3) select', '')
                         ->click('@button-cancel');

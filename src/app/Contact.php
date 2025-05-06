@@ -7,10 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * The eloquent definition of a Contact (in the global addressbook).
  *
- * @property int    $id       The contact identifier
- * @property string $email    The contact email address
- * @property string $name     The contact (display) name
- * @property int    $user_id  The contact owner
+ * @property int    $id      The contact identifier
+ * @property string $email   The contact email address
+ * @property string $name    The contact (display) name
+ * @property int    $user_id The contact owner
  */
 class Contact extends Model
 {

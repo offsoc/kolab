@@ -1,3 +1,3 @@
 <?php
 
-class Log extends Illuminate\Support\Facades\Log {}
+class stubs extends Illuminate\Support\Facades\Log {}

@@ -2,7 +2,9 @@
 
 namespace App\Providers\Payment;
 
+use App\Jobs\Mail\PaymentJob;
 use App\Payment;
+use App\Providers\PaymentProvider;
 use App\Utils;
 use App\Wallet;
 use Illuminate\Support\Facades\DB;
@@ -10,12 +12,12 @@ use Mollie\Api\Exceptions\ApiException;
 use Mollie\Api\Types;
 use Mollie\Laravel\Facades\Mollie as MollieAPI;
 
-class Mollie extends \App\Providers\PaymentProvider
+class Mollie extends PaymentProvider
 {
     /**
      * Get a link to the customer in the provider's control panel
      *
-     * @param \App\Wallet $wallet The wallet
+     * @param Wallet $wallet The wallet
      *
      * @return string|null The string representing <a> tag
      */
@@ -37,8 +39,9 @@ class Mollie extends \App\Providers\PaymentProvider
     /**
      * Validates that mollie available.
      *
-     * @throws ApiException on failure
      * @return bool true on success
+     *
+     * @throws ApiException on failure
      */
     public static function healthcheck()
     {
@@ -49,13 +52,13 @@ class Mollie extends \App\Providers\PaymentProvider
     /**
      * Create a new auto-payment mandate for a wallet.
      *
-     * @param \App\Wallet $wallet  The wallet
-     * @param array       $payment Payment data:
-     *                             - amount: Value in cents (optional)
-     *                             - currency: The operation currency
-     *                             - description: Operation desc.
-     *                             - methodId: Payment method
-     *                             - redirectUrl: The location to goto after checkout
+     * @param Wallet $wallet  The wallet
+     * @param array  $payment Payment data:
+     *                        - amount: Value in cents (optional)
+     *                        - currency: The operation currency
+     *                        - description: Operation desc.
+     *                        - methodId: Payment method
+     *                        - redirectUrl: The location to goto after checkout
      *
      * @return array Provider payment data:
      *               - id: Operation identifier
@@ -84,7 +87,7 @@ class Mollie extends \App\Providers\PaymentProvider
             'webhookUrl' => Utils::serviceUrl('/api/webhooks/payment/mollie'),
             'redirectUrl' => $payment['redirectUrl'] ?? self::redirectUrl(),
             'locale' => 'en_US',
-            'method' => $payment['methodId']
+            'method' => $payment['methodId'],
         ];
 
         // Create the payment in Mollie
@@ -115,7 +118,7 @@ class Mollie extends \App\Providers\PaymentProvider
     /**
      * Revoke the auto-payment mandate for the wallet.
      *
-     * @param \App\Wallet $wallet The wallet
+     * @param Wallet $wallet The wallet
      *
      * @return bool True on success, False on failure
      */
@@ -137,7 +140,7 @@ class Mollie extends \App\Providers\PaymentProvider
     /**
      * Get a auto-payment mandate for the wallet.
      *
-     * @param \App\Wallet $wallet The wallet
+     * @param Wallet $wallet The wallet
      *
      * @return array|null Mandate information:
      *                    - id: Mandate identifier
@@ -160,7 +163,7 @@ class Mollie extends \App\Providers\PaymentProvider
             'isPending' => $mandate->isPending(),
             'isValid' => $mandate->isValid(),
             'method' => self::paymentMethod($mandate, 'Unknown method'),
-            'methodId' => $mandate->method
+            'methodId' => $mandate->method,
         ];
 
         return $result;
@@ -179,13 +182,13 @@ class Mollie extends \App\Providers\PaymentProvider
     /**
      * Create a new payment.
      *
-     * @param \App\Wallet $wallet  The wallet
-     * @param array       $payment Payment data:
-     *                             - amount: Value in cents
-     *                             - currency: The operation currency
-     *                             - type: oneoff/recurring
-     *                             - description: Operation desc.
-     *                             - methodId: Payment method
+     * @param Wallet $wallet  The wallet
+     * @param array  $payment Payment data:
+     *                        - amount: Value in cents
+     *                        - currency: The operation currency
+     *                        - type: oneoff/recurring
+     *                        - description: Operation desc.
+     *                        - methodId: Payment method
      *
      * @return array Provider payment data:
      *               - id: Operation identifier
@@ -217,7 +220,7 @@ class Mollie extends \App\Providers\PaymentProvider
             'webhookUrl' => Utils::serviceUrl('/api/webhooks/payment/mollie'),
             'locale' => 'en_US',
             'method' => $payment['methodId'],
-            'redirectUrl' => self::redirectUrl() // required for non-recurring payments
+            'redirectUrl' => self::redirectUrl(), // required for non-recurring payments
         ];
 
         // TODO: Additional payment parameters for better fraud protection:
@@ -247,8 +250,8 @@ class Mollie extends \App\Providers\PaymentProvider
     /**
      * Cancel a pending payment.
      *
-     * @param \App\Wallet $wallet  The wallet
-     * @param string      $paymentId Payment Id
+     * @param Wallet $wallet    The wallet
+     * @param string $paymentId Payment Id
      *
      * @return bool True on success, False on failure
      */
@@ -266,8 +269,8 @@ class Mollie extends \App\Providers\PaymentProvider
     /**
      * Create a new automatic payment operation.
      *
-     * @param \App\Wallet $wallet  The wallet
-     * @param array       $payment Payment data (see self::payment())
+     * @param Wallet $wallet  The wallet
+     * @param array  $payment Payment data (see self::payment())
      *
      * @return array Provider payment/session data:
      *               - id: Operation identifier
@@ -300,7 +303,7 @@ class Mollie extends \App\Providers\PaymentProvider
             'webhookUrl' => Utils::serviceUrl('/api/webhooks/payment/mollie'),
             'locale' => 'en_US',
             'method' => $payment['methodId'],
-            'mandateId' => $mandate->id
+            'mandateId' => $mandate->id,
         ];
 
         \Log::debug("Recurring payment for {$wallet->id}: " . json_encode($request));
@@ -340,7 +343,7 @@ class Mollie extends \App\Providers\PaymentProvider
         DB::commit();
 
         if (!empty($notify)) {
-            \App\Jobs\Mail\PaymentJob::dispatch($payment);
+            PaymentJob::dispatch($payment);
         }
 
         return [
@@ -390,9 +393,9 @@ class Mollie extends \App\Providers\PaymentProvider
                             $refunds[] = [
                                 'id' => $refund->id,
                                 'description' => $refund->description,
-                                'amount' => round(floatval($refund->amount->value) * 100),
+                                'amount' => round((float) $refund->amount->value * 100),
                                 'type' => Payment::TYPE_REFUND,
-                                'currency' => $refund->amount->currency
+                                'currency' => $refund->amount->currency,
                             ];
                         }
                     }
@@ -405,9 +408,9 @@ class Mollie extends \App\Providers\PaymentProvider
                         if ($chargeback->amount->value) {
                             $refunds[] = [
                                 'id' => $chargeback->id,
-                                'amount' => round(floatval($chargeback->amount->value) * 100),
+                                'amount' => round((float) $chargeback->amount->value * 100),
                                 'type' => Payment::TYPE_CHARGEBACK,
-                                'currency' => $chargeback->amount->currency
+                                'currency' => $chargeback->amount->currency,
                             ];
                         }
                     }
@@ -457,7 +460,7 @@ class Mollie extends \App\Providers\PaymentProvider
             DB::commit();
 
             if (!empty($notify)) {
-                \App\Jobs\Mail\PaymentJob::dispatch($payment);
+                PaymentJob::dispatch($payment);
             }
         } catch (ApiException $e) {
             \Log::error(sprintf('Mollie API call failed (%s)', $e->getMessage()));
@@ -470,8 +473,8 @@ class Mollie extends \App\Providers\PaymentProvider
      * Get Mollie customer identifier for specified wallet.
      * Create one if does not exist yet.
      *
-     * @param \App\Wallet $wallet The wallet
-     * @param bool        $create Create the customer if does not exist yet
+     * @param Wallet $wallet The wallet
+     * @param bool   $create Create the customer if does not exist yet
      *
      * @return ?string Mollie customer identifier
      */
@@ -482,8 +485,8 @@ class Mollie extends \App\Providers\PaymentProvider
         // Register the user in Mollie
         if (empty($customer_id) && $create) {
             $customer = MollieAPI::api()->customers->create([
-                    'name'  => $wallet->owner->name(),
-                    'email' => $wallet->id . '@private.' . \config('app.domain'),
+                'name' => $wallet->owner->name(),
+                'email' => $wallet->id . '@private.' . \config('app.domain'),
             ]);
 
             $customer_id = $customer->id;
@@ -556,7 +559,6 @@ class Mollie extends \App\Providers\PaymentProvider
 
             case self::METHOD_DIRECTDEBIT:
                 return sprintf('Direct Debit (%s)', $details->customerAccount);
-
             case self::METHOD_PAYPAL:
                 return sprintf('PayPal (%s)', $details->consumerAccount);
         }
@@ -567,7 +569,7 @@ class Mollie extends \App\Providers\PaymentProvider
     /**
      * List supported payment methods.
      *
-     * @param string $type The payment type for which we require a method (oneoff/recurring).
+     * @param string $type     the payment type for which we require a method (oneoff/recurring)
      * @param string $currency Currency code
      *
      * @return array Array of array with available payment methods:
@@ -586,8 +588,8 @@ class Mollie extends \App\Providers\PaymentProvider
                 'sequenceType' => $type,
                 'amount' => [
                     'value' => '1.00',
-                    'currency' => $currency
-                ]
+                    'currency' => $currency,
+                ],
             ]
         );
 
@@ -598,8 +600,8 @@ class Mollie extends \App\Providers\PaymentProvider
                     'sequenceType' => $type,
                     'amount' => [
                         'value' => '1.00',
-                        'currency' => 'EUR'
-                    ]
+                        'currency' => 'EUR',
+                    ],
                 ]
             );
 
@@ -613,9 +615,9 @@ class Mollie extends \App\Providers\PaymentProvider
             $availableMethods[$method->id] = [
                 'id' => $method->id,
                 'name' => $method->description,
-                'minimumAmount' => round(floatval($method->minimumAmount->value) * 100), // Converted to cents
+                'minimumAmount' => round((float) $method->minimumAmount->value * 100), // Converted to cents
                 'currency' => $method->minimumAmount->currency,
-                'exchangeRate' => \App\Utils::exchangeRate($currency, $method->minimumAmount->currency)
+                'exchangeRate' => Utils::exchangeRate($currency, $method->minimumAmount->currency),
             ];
         }
 
@@ -628,10 +630,10 @@ class Mollie extends \App\Providers\PaymentProvider
      * @param string $paymentId Payment identifier
      *
      * @return array Payment information:
-     *                    - id: Payment identifier
-     *                    - status: Payment status
-     *                    - isCancelable: The payment can be canceled
-     *                    - checkoutUrl: The checkout url to complete the payment or null if none
+     *               - id: Payment identifier
+     *               - status: Payment status
+     *               - isCancelable: The payment can be canceled
+     *               - checkoutUrl: The checkout url to complete the payment or null if none
      */
     public function getPayment($paymentId): array
     {
@@ -641,7 +643,7 @@ class Mollie extends \App\Providers\PaymentProvider
             'id' => $payment->id,
             'status' => $payment->status,
             'isCancelable' => $payment->isCancelable,
-            'checkoutUrl' => $payment->getCheckoutUrl()
+            'checkoutUrl' => $payment->getCheckoutUrl(),
         ];
     }
 

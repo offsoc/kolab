@@ -2,9 +2,11 @@
 
 namespace App\Jobs;
 
+use App\Resource;
+
 /**
  * The abstract \App\Jobs\ResourceJob implements the logic needed for all dispatchable Jobs related to
- * \App\Resource objects.
+ * Resource objects.
  *
  * ```php
  * $job = new \App\Jobs\Resource\CreateJob($resourceId);
@@ -21,15 +23,15 @@ abstract class ResourceJob extends CommonJob
     protected $properties = [];
 
     /**
-     * The ID for the \App\Resource. This is the shortest globally unique identifier and saves Redis space
-     * compared to a serialized version of the complete \App\Resource object.
+     * The ID for the Resource. This is the shortest globally unique identifier and saves Redis space
+     * compared to a serialized version of the complete Resource object.
      *
      * @var int
      */
     protected $resourceId;
 
     /**
-     * The \App\Resource email property, for legibility in the queue management.
+     * The Resource email property, for legibility in the queue management.
      *
      * @var string
      */
@@ -38,10 +40,8 @@ abstract class ResourceJob extends CommonJob
     /**
      * Create a new job instance.
      *
-     * @param int   $resourceId The ID for the resource to process.
+     * @param int   $resourceId the ID for the resource to process
      * @param array $properties Old values of the resource properties on update
-     *
-     * @return void
      */
     public function __construct(int $resourceId, array $properties = [])
     {
@@ -56,20 +56,20 @@ abstract class ResourceJob extends CommonJob
     }
 
     /**
-     * Get the \App\Resource entry associated with this job.
+     * Get the Resource entry associated with this job.
      *
-     * @return \App\Resource|null
+     * @return Resource|null
      *
      * @throws \Exception
      */
     protected function getResource()
     {
-        $resource = \App\Resource::withTrashed()->find($this->resourceId);
+        $resource = Resource::withTrashed()->find($this->resourceId);
 
         if (!$resource) {
             // The record might not exist yet in case of a db replication environment
             // This will release the job and delay another attempt for 5 seconds
-            if ($this instanceof Resource\CreateJob) {
+            if ($this instanceof \App\Jobs\Resource\CreateJob) {
                 $this->release(5);
                 return null;
             }

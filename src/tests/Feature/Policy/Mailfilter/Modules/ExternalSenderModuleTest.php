@@ -3,7 +3,6 @@
 namespace Tests\Feature\Policy\Mailfilter\Modules;
 
 use App\Policy\Mailfilter\Modules\ExternalSenderModule;
-use App\Policy\Mailfilter\Result;
 use Tests\TestCase;
 use Tests\Unit\Policy\Mailfilter\MailParserTest;
 

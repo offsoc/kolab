@@ -2,24 +2,20 @@
 
 namespace Tests\Feature\Console\Wallet;
 
+use App\Discount;
+use App\Package;
 use Tests\TestCase;
 
 class SetDiscountTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestUser('wallets-controller@kolabnow.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('wallets-controller@kolabnow.com');
 
@@ -32,10 +28,10 @@ class SetDiscountTest extends TestCase
     public function testHandle(): void
     {
         $user = $this->getTestUser('wallets-controller@kolabnow.com');
-        $package = \App\Package::where('title', 'kolab')->first();
+        $package = Package::where('title', 'kolab')->first();
         $user->assignPackage($package);
         $wallet = $user->wallets()->first();
-        $discount = \App\Discount::withObjectTenantContext($user)->where('discount', 100)->first();
+        $discount = Discount::withObjectTenantContext($user)->where('discount', 100)->first();
 
         // Invalid wallet id
         $code = \Artisan::call("wallet:set-discount 123 123");

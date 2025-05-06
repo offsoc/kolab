@@ -3,6 +3,9 @@
 namespace App\Console\Commands\Wallet;
 
 use App\Console\Command;
+use App\Jobs\Mail\TrialEndJob;
+use App\User;
+use App\Wallet;
 
 class TrialEndCommand extends Command
 {
@@ -28,25 +31,25 @@ class TrialEndCommand extends Command
     public function handle()
     {
         // Get all wallets...
-        $wallets = \App\Wallet::select('wallets.*')
+        $wallets = Wallet::select('wallets.*')
             ->join('users', 'users.id', '=', 'wallets.user_id')
             // exclude deleted accounts
             ->whereNull('users.deleted_at')
             // exclude "inactive" accounts
-            ->where('users.status', '&', \App\User::STATUS_IMAP_READY)
+            ->where('users.status', '&', User::STATUS_IMAP_READY)
             // consider only these created 1 to 2 months ago
             ->where('users.created_at', '>', \now()->subMonthsNoOverflow(2))
             ->where('users.created_at', '<=', \now()->subMonthsNoOverflow(1))
             // skip wallets with the notification already sent
-            ->whereNotExists(function ($query) {
+            ->whereNotExists(static function ($query) {
                 $query->from('wallet_settings')
                     ->where('wallet_settings.key', 'trial_end_notice')
                     ->whereColumn('wallet_settings.wallet_id', 'wallets.id');
             })
             // skip users that aren't account owners
-            ->whereExists(function ($query) {
+            ->whereExists(static function ($query) {
                 $query->from('entitlements')
-                    ->where('entitlements.entitleable_type', \App\User::class)
+                    ->where('entitlements.entitleable_type', User::class)
                     ->whereColumn('entitlements.entitleable_id', 'wallets.user_id')
                     ->whereColumn('entitlements.wallet_id', 'wallets.id');
             })
@@ -60,7 +63,7 @@ class TrialEndCommand extends Command
             }
 
             // Send the email asynchronously
-            \App\Jobs\Mail\TrialEndJob::dispatch($wallet->owner);
+            TrialEndJob::dispatch($wallet->owner);
 
             // Store the timestamp
             $wallet->setSetting('trial_end_notice', (string) \now());

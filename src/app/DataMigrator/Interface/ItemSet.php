@@ -13,7 +13,7 @@ class ItemSet
     /**
      * Create an ItemSet instance
      */
-    public static function set(array $items = []): ItemSet
+    public static function set(array $items = []): self
     {
         $obj = new self();
         $obj->items = $items;

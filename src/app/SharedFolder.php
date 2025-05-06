@@ -4,10 +4,10 @@ namespace App;
 
 use App\Traits\AliasesTrait;
 use App\Traits\BelongsToTenantTrait;
-use App\Traits\EntitleableTrait;
 use App\Traits\EmailPropertyTrait;
-use App\Traits\SharedFolderConfigTrait;
+use App\Traits\EntitleableTrait;
 use App\Traits\SettingsTrait;
+use App\Traits\SharedFolderConfigTrait;
 use App\Traits\StatusPropertyTrait;
 use App\Traits\UuidIntKeyTrait;
 use Illuminate\Database\Eloquent\Model;
@@ -28,21 +28,21 @@ class SharedFolder extends Model
     use AliasesTrait;
     use BelongsToTenantTrait;
     use EntitleableTrait;
-    use SharedFolderConfigTrait;
     use SettingsTrait;
+    use SharedFolderConfigTrait;
     use SoftDeletes;
     use StatusPropertyTrait;
     use UuidIntKeyTrait;
     use EmailPropertyTrait; // must be first after UuidIntKeyTrait
 
     // we've simply never heard of this folder
-    public const STATUS_NEW        = 1 << 0;
+    public const STATUS_NEW = 1 << 0;
     // folder has been activated
-    public const STATUS_ACTIVE     = 1 << 1;
+    public const STATUS_ACTIVE = 1 << 1;
     // folder has been suspended.
     // public const STATUS_SUSPENDED  = 1 << 2;
     // folder has been deleted
-    public const STATUS_DELETED    = 1 << 3;
+    public const STATUS_DELETED = 1 << 3;
     // folder has been created in LDAP
     public const STATUS_LDAP_READY = 1 << 4;
     // folder has been created in IMAP
@@ -55,11 +55,11 @@ class SharedFolder extends Model
     public const EMAIL_TEMPLATE = '{type}-{id}@{domainName}';
 
     /** @var int The allowed states for this object used in StatusPropertyTrait */
-    private int $allowed_states = self::STATUS_NEW |
-        self::STATUS_ACTIVE |
-        self::STATUS_DELETED |
-        self::STATUS_LDAP_READY |
-        self::STATUS_IMAP_READY;
+    private int $allowed_states = self::STATUS_NEW
+        | self::STATUS_ACTIVE
+        | self::STATUS_DELETED
+        | self::STATUS_LDAP_READY
+        | self::STATUS_IMAP_READY;
 
     /** @var array<string, string> The attributes that should be cast */
     protected $casts = [

@@ -5,20 +5,16 @@ namespace App\Mail;
 use App\SignupInvitation as SI;
 use App\Tenant;
 use App\Utils;
-use Illuminate\Support\Str;
 
 class SignupInvitation extends Mailable
 {
-    /** @var \App\SignupInvitation A signup invitation object */
+    /** @var SI A signup invitation object */
     protected $invitation;
-
 
     /**
      * Create a new message instance.
      *
-     * @param \App\SignupInvitation $invitation A signup invitation object
-     *
-     * @return void
+     * @param SI $invitation A signup invitation object
      */
     public function __construct(SI $invitation)
     {
@@ -44,8 +40,8 @@ class SignupInvitation extends Mailable
             ->text('emails.plain.signup_invitation')
             ->subject(\trans('mail.signupinvitation-subject', $vars))
             ->with([
-                    'vars' => $vars,
-                    'href' => $href,
+                'vars' => $vars,
+                'href' => $href,
             ]);
 
         return $this;
@@ -61,7 +57,7 @@ class SignupInvitation extends Mailable
     public static function fakeRender(string $type = 'html'): string
     {
         $invitation = new SI([
-                'email' => 'test@external.org',
+            'email' => 'test@external.org',
         ]);
 
         $invitation->id = Utils::uuidStr();

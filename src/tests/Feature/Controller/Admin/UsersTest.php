@@ -3,7 +3,11 @@
 namespace Tests\Feature\Controller\Admin;
 
 use App\Auth\SecondFactor;
+use App\Domain;
 use App\EventLog;
+use App\Payment;
+use App\Plan;
+use App\SharedFolderAlias;
 use App\Sku;
 use App\User;
 use Illuminate\Support\Facades\Queue;
@@ -11,10 +15,7 @@ use Tests\TestCase;
 
 class UsersTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         self::useAdminUrl();
@@ -27,14 +28,11 @@ class UsersTest extends TestCase
         $jack = $this->getTestUser('jack@kolab.org');
         $jack->setSetting('external_email', null);
 
-        \App\SharedFolderAlias::truncate();
-        \App\Payment::query()->delete();
+        SharedFolderAlias::truncate();
+        Payment::query()->delete();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('UsersControllerTest1@userscontroller.com');
         $this->deleteTestUser('test@testsearch.com');
@@ -43,8 +41,8 @@ class UsersTest extends TestCase
         $jack = $this->getTestUser('jack@kolab.org');
         $jack->setSetting('external_email', null);
 
-        \App\SharedFolderAlias::truncate();
-        \App\Payment::query()->delete();
+        SharedFolderAlias::truncate();
+        Payment::query()->delete();
 
         parent::tearDown();
     }
@@ -227,16 +225,16 @@ class UsersTest extends TestCase
         $this->assertSame($user->email, $json['list'][0]['email']);
 
         // Deleted users/domains
-        $domain = $this->getTestDomain('testsearch.com', ['type' => \App\Domain::TYPE_EXTERNAL]);
+        $domain = $this->getTestDomain('testsearch.com', ['type' => Domain::TYPE_EXTERNAL]);
         $user = $this->getTestUser('test@testsearch.com');
-        $plan = \App\Plan::where('title', 'group')->first();
+        $plan = Plan::where('title', 'group')->first();
         $user->assignPlan($plan, $domain);
         $user->setAliases(['alias@testsearch.com']);
 
         $wallet = $user->wallets()->first();
         $wallet->setSetting('mollie_id', 'cst_nonsense');
 
-        \App\Payment::create(
+        Payment::create(
             [
                 'id' => 'tr_nonsense',
                 'wallet_id' => $wallet->id,
@@ -247,7 +245,7 @@ class UsersTest extends TestCase
                 'provider' => 'self',
                 'type' => 'oneoff',
                 'currency' => 'CHF',
-                'currency_amount' => 1337
+                'currency_amount' => 1337,
             ]
         );
 
@@ -518,7 +516,7 @@ class UsersTest extends TestCase
             'object_id' => $user->id,
             'object_type' => User::class,
             'type' => EventLog::TYPE_SUSPENDED,
-            'comment' => 'Test'
+            'comment' => 'Test',
         ];
 
         $this->assertSame(1, EventLog::where($where)->count());
@@ -565,7 +563,7 @@ class UsersTest extends TestCase
             'object_id' => $user->id,
             'object_type' => User::class,
             'type' => EventLog::TYPE_UNSUSPENDED,
-            'comment' => 'Test'
+            'comment' => 'Test',
         ];
 
         $this->assertSame(1, EventLog::where($where)->count());

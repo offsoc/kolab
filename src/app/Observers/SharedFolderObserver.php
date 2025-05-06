@@ -2,6 +2,9 @@
 
 namespace App\Observers;
 
+use App\Jobs\SharedFolder\CreateJob;
+use App\Jobs\SharedFolder\DeleteJob;
+use App\Jobs\SharedFolder\UpdateJob;
 use App\SharedFolder;
 
 class SharedFolderObserver
@@ -9,9 +12,7 @@ class SharedFolderObserver
     /**
      * Handle the shared folder "creating" event.
      *
-     * @param \App\SharedFolder $folder The folder
-     *
-     * @return void
+     * @param SharedFolder $folder The folder
      */
     public function creating(SharedFolder $folder): void
     {
@@ -25,9 +26,7 @@ class SharedFolderObserver
     /**
      * Handle the shared folder "created" event.
      *
-     * @param \App\SharedFolder $folder The folder
-     *
-     * @return void
+     * @param SharedFolder $folder The folder
      */
     public function created(SharedFolder $folder)
     {
@@ -50,15 +49,13 @@ class SharedFolderObserver
         $folder->settings()->insert(array_values($settings));
 
         // Create the shared folder in the backend (LDAP and IMAP)
-        \App\Jobs\SharedFolder\CreateJob::dispatch($folder->id);
+        CreateJob::dispatch($folder->id);
     }
 
     /**
      * Handle the shared folder "deleted" event.
      *
-     * @param \App\SharedFolder $folder The folder
-     *
-     * @return void
+     * @param SharedFolder $folder The folder
      */
     public function deleted(SharedFolder $folder)
     {
@@ -66,20 +63,18 @@ class SharedFolderObserver
             return;
         }
 
-        \App\Jobs\SharedFolder\DeleteJob::dispatch($folder->id);
+        DeleteJob::dispatch($folder->id);
     }
 
     /**
      * Handle the shared folder "updated" event.
      *
-     * @param \App\SharedFolder $folder The folder
-     *
-     * @return void
+     * @param SharedFolder $folder The folder
      */
     public function updated(SharedFolder $folder)
     {
         if (!$folder->trashed()) {
-            \App\Jobs\SharedFolder\UpdateJob::dispatch($folder->id);
+            UpdateJob::dispatch($folder->id);
         }
 
         // Update the folder property if name changed

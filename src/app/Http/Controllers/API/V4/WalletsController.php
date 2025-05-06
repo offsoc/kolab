@@ -2,16 +2,18 @@
 
 namespace App\Http\Controllers\API\V4;
 
+use App\Documents\Receipt;
+use App\Http\Controllers\ResourceController;
 use App\Payment;
+use App\Providers\PaymentProvider;
 use App\ReferralCode;
 use App\ReferralProgram;
 use App\Transaction;
 use App\Wallet;
-use App\Http\Controllers\ResourceController;
-use App\Providers\PaymentProvider;
 use Carbon\Carbon;
 use Illuminate\Database\Query\JoinClause;
-use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -24,7 +26,7 @@ class WalletsController extends ResourceController
      *
      * @param string $id A wallet identifier
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function show($id)
     {
@@ -55,7 +57,7 @@ class WalletsController extends ResourceController
      * @param string $id      Wallet identifier
      * @param string $receipt Receipt identifier (YYYY-MM)
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function receiptDownload($id, $receipt)
     {
@@ -70,7 +72,7 @@ class WalletsController extends ResourceController
             abort(403);
         }
 
-        list ($year, $month) = explode('-', $receipt);
+        [$year, $month] = explode('-', $receipt);
 
         if (empty($year) || empty($month) || $year < 2000 || $month < 1 || $month > 12) {
             abort(404);
@@ -82,19 +84,19 @@ class WalletsController extends ResourceController
 
         $params = [
             'id' => sprintf('%04d-%02d', $year, $month),
-            'site' => \config('app.name')
+            'site' => \config('app.name'),
         ];
 
         $filename = self::trans('documents.receipt-filename', $params) . '.pdf';
 
-        $receipt = new \App\Documents\Receipt($wallet, (int) $year, (int) $month);
+        $receipt = new Receipt($wallet, (int) $year, (int) $month);
 
         $content = $receipt->pdfOutput();
 
         return response($content)
             ->withHeaders([
                 'Content-Type' => 'application/pdf',
-                'Content-Disposition' =>  'attachment; filename="' . $filename . '"',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
                 'Content-Length' => strlen($content),
             ]);
     }
@@ -104,7 +106,7 @@ class WalletsController extends ResourceController
      *
      * @param string $id Wallet identifier
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function receipts($id)
     {
@@ -120,7 +122,7 @@ class WalletsController extends ResourceController
         }
 
         $pageSize = 10;
-        $page = intval(request()->input('page')) ?: 1;
+        $page = (int) (request()->input('page')) ?: 1;
         $hasMore = false;
 
         $result = $wallet->payments()
@@ -140,21 +142,21 @@ class WalletsController extends ResourceController
         }
 
         // @phpstan-ignore argument.unresolvableType
-        $result = $result->map(function ($item) use ($wallet) {
+        $result = $result->map(static function ($item) use ($wallet) {
             $entry = [
                 'period' => $item->ident, // @phpstan-ignore-line
                 'amount' => $item->total, // @phpstan-ignore-line
-                'currency' => $wallet->currency
+                'currency' => $wallet->currency,
             ];
             return $entry;
         });
 
         return response()->json([
-                'status' => 'success',
-                'list' => $result,
-                'count' => count($result),
-                'hasMore' => $hasMore,
-                'page' => $page,
+            'status' => 'success',
+            'list' => $result,
+            'count' => count($result),
+            'hasMore' => $hasMore,
+            'page' => $page,
         ]);
     }
 
@@ -163,7 +165,7 @@ class WalletsController extends ResourceController
      *
      * @param string $id Wallet identifier
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function referralPrograms($id)
     {
@@ -183,12 +185,12 @@ class WalletsController extends ResourceController
 
         $result = ReferralProgram::withObjectTenantContext($wallet->owner)
             ->where('active', true)
-            ->leftJoinSub($codes, 'codes', function (JoinClause $join) {
+            ->leftJoinSub($codes, 'codes', static function (JoinClause $join) {
                 $join->on('referral_programs.id', '=', 'codes.program_id');
             })
             ->select('id', 'name', 'description', 'tenant_id', 'codes.code', 'codes.refcount')
             ->get()
-            ->map(function ($program) use ($wallet) {
+            ->map(static function ($program) use ($wallet) {
                 if (empty($program->code)) {
                     // Register/Generate a code for the user if it does not exist yet
                     $code = $program->codes()->create(['user_id' => $wallet->user_id]);
@@ -212,11 +214,11 @@ class WalletsController extends ResourceController
             });
 
         return response()->json([
-                'status' => 'success',
-                'list' => $result,
-                'count' => count($result),
-                'hasMore' => false,
-                'page' => 1,
+            'status' => 'success',
+            'list' => $result,
+            'count' => count($result),
+            'hasMore' => false,
+            'page' => 1,
         ]);
     }
 
@@ -225,7 +227,7 @@ class WalletsController extends ResourceController
      *
      * @param string $id Wallet identifier
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function transactions($id)
     {
@@ -241,7 +243,7 @@ class WalletsController extends ResourceController
         }
 
         $pageSize = 10;
-        $page = intval(request()->input('page')) ?: 1;
+        $page = (int) (request()->input('page')) ?: 1;
         $hasMore = false;
         $isAdmin = $this instanceof Admin\WalletsController;
 
@@ -249,7 +251,7 @@ class WalletsController extends ResourceController
             // Get sub-transactions for the specified transaction ID, first
             // check access rights to the transaction's wallet
 
-            /** @var ?\App\Transaction $transaction */
+            /** @var ?Transaction $transaction */
             $transaction = $wallet->transactions()->where('id', $transaction)->first();
 
             if (!$transaction) {
@@ -276,7 +278,7 @@ class WalletsController extends ResourceController
             }
         }
 
-        $result = $result->map(function ($item) use ($isAdmin, $wallet) {
+        $result = $result->map(static function ($item) use ($isAdmin, $wallet) {
             $entry = [
                 'id' => $item->id,
                 'createdAt' => $item->created_at->format('Y-m-d H:i'),
@@ -295,18 +297,18 @@ class WalletsController extends ResourceController
         });
 
         return response()->json([
-                'status' => 'success',
-                'list' => $result,
-                'count' => count($result),
-                'hasMore' => $hasMore,
-                'page' => $page,
+            'status' => 'success',
+            'list' => $result,
+            'count' => count($result),
+            'hasMore' => $hasMore,
+            'page' => $page,
         ]);
     }
 
     /**
      * Returns human readable notice about the wallet state.
      *
-     * @param \App\Wallet $wallet The wallet
+     * @param Wallet $wallet The wallet
      */
     protected function getWalletNotice(Wallet $wallet): ?string
     {

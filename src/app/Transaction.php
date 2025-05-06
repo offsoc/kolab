@@ -45,7 +45,7 @@ class Transaction extends Model
         'amount',
         'description',
         // parent, for example wallet debit is parent for entitlements charged.
-        'transaction_id'
+        'transaction_id',
     ];
 
     /** @var array<string, string> Casts properties as type */
@@ -53,11 +53,10 @@ class Transaction extends Model
         'amount' => 'integer',
     ];
 
-
     /**
      * Returns the entitlement to which the transaction is assigned (if any)
      *
-     * @return \App\Entitlement|null The entitlement
+     * @return Entitlement|null The entitlement
      */
     public function entitlement(): ?Entitlement
     {
@@ -82,7 +81,6 @@ class Transaction extends Model
                 // TODO: Must be an entitlement.
                 $this->attributes['type'] = $value;
                 break;
-
             case self::WALLET_AWARD:
             case self::WALLET_CREDIT:
             case self::WALLET_DEBIT:
@@ -92,7 +90,6 @@ class Transaction extends Model
                 // TODO: This must be a wallet.
                 $this->attributes['type'] = $value;
                 break;
-
             default:
                 throw new \Exception("Invalid type value");
         }
@@ -127,7 +124,7 @@ class Transaction extends Model
     /**
      * Returns a wallet to which the transaction is assigned (if any)
      *
-     * @return \App\Wallet|null The wallet
+     * @return Wallet|null The wallet
      */
     public function wallet(): ?Wallet
     {
@@ -172,8 +169,6 @@ class Transaction extends Model
 
     /**
      * Get a string for use in translation tables derived from the object type.
-     *
-     * @return string|null
      */
     private function objectTypeToLabelString(): ?string
     {

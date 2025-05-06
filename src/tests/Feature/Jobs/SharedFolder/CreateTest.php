@@ -2,25 +2,23 @@
 
 namespace Tests\Feature\Jobs\SharedFolder;
 
+use App\Jobs\SharedFolder\CreateJob;
 use App\SharedFolder;
-use App\Support\Facades\LDAP;
 use App\Support\Facades\IMAP;
+use App\Support\Facades\LDAP;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class CreateTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestSharedFolder('folder-test@' . \config('app.domain'));
     }
 
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestSharedFolder('folder-test@' . \config('app.domain'));
 
@@ -35,7 +33,7 @@ class CreateTest extends TestCase
         Queue::fake();
 
         // Test unknown folder
-        $job = (new \App\Jobs\SharedFolder\CreateJob(123))->withFakeQueueInteractions();
+        $job = (new CreateJob(123))->withFakeQueueInteractions();
         $job->handle();
         $job->assertReleased(delay: 5);
 
@@ -55,7 +53,7 @@ class CreateTest extends TestCase
         IMAP::shouldReceive('createSharedFolder')->once()->with($folder)->andReturn(true);
         LDAP::shouldReceive('createSharedFolder')->once()->with($folder)->andReturn(true);
 
-        $job = (new \App\Jobs\SharedFolder\CreateJob($folder->id))->withFakeQueueInteractions();
+        $job = (new CreateJob($folder->id))->withFakeQueueInteractions();
         $job->handle();
         $job->assertNotFailed();
 
@@ -69,7 +67,7 @@ class CreateTest extends TestCase
         $folder->status |= SharedFolder::STATUS_DELETED;
         $folder->save();
 
-        $job = (new \App\Jobs\SharedFolder\CreateJob($folder->id))->withFakeQueueInteractions();
+        $job = (new CreateJob($folder->id))->withFakeQueueInteractions();
         $job->handle();
         $job->assertFailedWith("Shared folder {$folder->id} is marked as deleted.");
 
@@ -77,7 +75,7 @@ class CreateTest extends TestCase
         $folder->save();
         $folder->delete();
 
-        $job = (new \App\Jobs\SharedFolder\CreateJob($folder->id))->withFakeQueueInteractions();
+        $job = (new CreateJob($folder->id))->withFakeQueueInteractions();
         $job->handle();
         $job->assertFailedWith("Shared folder {$folder->id} is actually deleted.");
 

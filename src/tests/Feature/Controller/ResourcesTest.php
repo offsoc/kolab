@@ -2,18 +2,17 @@
 
 namespace Tests\Feature\Controller;
 
-use App\Resource;
+use App\Domain;
 use App\Http\Controllers\API\V4\ResourcesController;
+use App\Jobs\Resource\CreateJob;
+use App\Resource;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class ResourcesTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -21,10 +20,7 @@ class ResourcesTest extends TestCase
         Resource::where('name', 'Test Resource')->delete();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestResource('resource-test@kolab.org');
         Resource::where('name', 'Test Resource')->delete();
@@ -67,8 +63,8 @@ class ResourcesTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertEquals('success', $json['status']);
-        $this->assertEquals("Resource deleted successfully.", $json['message']);
+        $this->assertSame('success', $json['status']);
+        $this->assertSame("Resource deleted successfully.", $json['message']);
     }
 
     /**
@@ -92,7 +88,7 @@ class ResourcesTest extends TestCase
 
         $this->assertCount(4, $json);
         $this->assertSame(0, $json['count']);
-        $this->assertSame(false, $json['hasMore']);
+        $this->assertFalse($json['hasMore']);
         $this->assertSame("0 resources have been found.", $json['message']);
         $this->assertSame([], $json['list']);
 
@@ -106,7 +102,7 @@ class ResourcesTest extends TestCase
 
         $this->assertCount(4, $json);
         $this->assertSame(2, $json['count']);
-        $this->assertSame(false, $json['hasMore']);
+        $this->assertFalse($json['hasMore']);
         $this->assertSame("2 resources have been found.", $json['message']);
         $this->assertCount(2, $json['list']);
         $this->assertSame($resource->id, $json['list'][0]['id']);
@@ -127,7 +123,7 @@ class ResourcesTest extends TestCase
 
         $this->assertCount(4, $json);
         $this->assertSame(2, $json['count']);
-        $this->assertSame(false, $json['hasMore']);
+        $this->assertFalse($json['hasMore']);
         $this->assertSame("2 resources have been found.", $json['message']);
         $this->assertCount(2, $json['list']);
         $this->assertSame($resource->email, $json['list'][0]['email']);
@@ -283,11 +279,11 @@ class ResourcesTest extends TestCase
 
         $this->assertCount(1, $json);
         $this->assertSkuElement('resource', $json[0], [
-                'prio' => 0,
-                'type' => 'resource',
-                'handler' => 'Resource',
-                'enabled' => true,
-                'readonly' => true,
+            'prio' => 0,
+            'type' => 'resource',
+            'handler' => 'Resource',
+            'enabled' => true,
+            'readonly' => true,
         ]);
     }
 
@@ -327,16 +323,16 @@ class ResourcesTest extends TestCase
         $this->assertTrue($json['isActive']);
         $this->assertFalse($json['isImapReady']);
         $this->assertSame('resource-new', $json['process'][0]['label']);
-        $this->assertSame(true, $json['process'][0]['state']);
+        $this->assertTrue($json['process'][0]['state']);
         if (\config('app.with_ldap')) {
             $this->assertFalse($json['isLdapReady']);
             $this->assertSame('resource-ldap-ready', $json['process'][1]['label']);
-            $this->assertSame(false, $json['process'][1]['state']);
+            $this->assertFalse($json['process'][1]['state']);
             $this->assertSame('resource-imap-ready', $json['process'][2]['label']);
-            $this->assertSame(false, $json['process'][2]['state']);
+            $this->assertFalse($json['process'][2]['state']);
         } else {
             $this->assertSame('resource-imap-ready', $json['process'][1]['label']);
-            $this->assertSame(false, $json['process'][1]['state']);
+            $this->assertFalse($json['process'][1]['state']);
         }
         $this->assertTrue(empty($json['status']));
         $this->assertTrue(empty($json['message']));
@@ -344,7 +340,7 @@ class ResourcesTest extends TestCase
 
         // Make sure the domain is confirmed (other test might unset that status)
         $domain = $this->getTestDomain('kolab.org');
-        $domain->status |= \App\Domain::STATUS_CONFIRMED;
+        $domain->status |= Domain::STATUS_CONFIRMED;
         $domain->save();
         $resource->status |= Resource::STATUS_IMAP_READY;
         $resource->save();
@@ -362,24 +358,24 @@ class ResourcesTest extends TestCase
             $this->assertFalse($json['isReady']);
             $this->assertFalse($json['isLdapReady']);
             $this->assertSame('resource-ldap-ready', $json['process'][1]['label']);
-            $this->assertSame(false, $json['process'][1]['state']);
+            $this->assertFalse($json['process'][1]['state']);
             $this->assertSame('resource-imap-ready', $json['process'][2]['label']);
-            $this->assertSame(true, $json['process'][2]['state']);
+            $this->assertTrue($json['process'][2]['state']);
             $this->assertSame('Setup process has been pushed. Please wait.', $json['message']);
             $this->assertSame('waiting', $json['processState']);
 
-            Queue::assertPushed(\App\Jobs\Resource\CreateJob::class, 1);
+            Queue::assertPushed(CreateJob::class, 1);
         } else {
             $this->assertTrue($json['isReady']);
             $this->assertSame('resource-imap-ready', $json['process'][1]['label']);
-            $this->assertSame(true, $json['process'][1]['state']);
+            $this->assertTrue($json['process'][1]['state']);
             $this->assertSame('Setup process finished successfully.', $json['message']);
             $this->assertSame('done', $json['processState']);
         }
 
         // Test a case when a domain is not ready
         Queue::fake();
-        $domain->status ^= \App\Domain::STATUS_CONFIRMED;
+        $domain->status ^= Domain::STATUS_CONFIRMED;
         $domain->save();
 
         $response = $this->actingAs($john)->get("/api/v4/resources/{$resource->id}/status?refresh=1");
@@ -392,11 +388,11 @@ class ResourcesTest extends TestCase
             $this->assertFalse($json['isReady']);
             $this->assertFalse($json['isLdapReady']);
             $this->assertSame('resource-ldap-ready', $json['process'][1]['label']);
-            $this->assertSame(false, $json['process'][1]['state']);
+            $this->assertFalse($json['process'][1]['state']);
             $this->assertSame('Setup process has been pushed. Please wait.', $json['message']);
             $this->assertSame('waiting', $json['processState']);
 
-            Queue::assertPushed(\App\Jobs\Resource\CreateJob::class, 1);
+            Queue::assertPushed(CreateJob::class, 1);
         } else {
             $this->assertSame('Setup process finished successfully.', $json['message']);
             $this->assertTrue($json['isReady']);
@@ -415,22 +411,22 @@ class ResourcesTest extends TestCase
         $resource->status = Resource::STATUS_NEW | Resource::STATUS_ACTIVE;
         $resource->save();
         $domain = $this->getTestDomain('kolab.org');
-        $domain->status |= \App\Domain::STATUS_CONFIRMED;
+        $domain->status |= Domain::STATUS_CONFIRMED;
         $domain->save();
 
         $result = ResourcesController::statusInfo($resource);
 
         $this->assertFalse($result['isDone']);
         $this->assertSame('resource-new', $result['process'][0]['label']);
-        $this->assertSame(true, $result['process'][0]['state']);
+        $this->assertTrue($result['process'][0]['state']);
         if (\config('app.with_ldap')) {
             $this->assertSame('resource-ldap-ready', $result['process'][1]['label']);
-            $this->assertSame(false, $result['process'][1]['state']);
+            $this->assertFalse($result['process'][1]['state']);
             $this->assertSame('resource-imap-ready', $result['process'][2]['label']);
-            $this->assertSame(false, $result['process'][2]['state']);
+            $this->assertFalse($result['process'][2]['state']);
         } else {
             $this->assertSame('resource-imap-ready', $result['process'][1]['label']);
-            $this->assertSame(false, $result['process'][1]['state']);
+            $this->assertFalse($result['process'][1]['state']);
         }
         $this->assertSame('running', $result['processState']);
 
@@ -448,15 +444,15 @@ class ResourcesTest extends TestCase
 
         $this->assertTrue($result['isDone']);
         $this->assertSame('resource-new', $result['process'][0]['label']);
-        $this->assertSame(true, $result['process'][0]['state']);
+        $this->assertTrue($result['process'][0]['state']);
         if (\config('app.with_ldap')) {
             $this->assertSame('resource-ldap-ready', $result['process'][1]['label']);
-            $this->assertSame(true, $result['process'][1]['state']);
+            $this->assertTrue($result['process'][1]['state']);
             $this->assertSame('resource-imap-ready', $result['process'][2]['label']);
-            $this->assertSame(true, $result['process'][2]['state']);
+            $this->assertTrue($result['process'][2]['state']);
         } else {
             $this->assertSame('resource-imap-ready', $result['process'][1]['label']);
-            $this->assertSame(true, $result['process'][1]['state']);
+            $this->assertTrue($result['process'][1]['state']);
         }
         $this->assertSame('done', $result['processState']);
     }

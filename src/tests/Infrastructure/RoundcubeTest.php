@@ -2,17 +2,15 @@
 
 namespace Tests\Infrastructure;
 
+use App\User;
 use Tests\Browser;
 use Tests\TestCaseDusk;
 
 class RoundcubeTest extends TestCaseDusk
 {
-    private static ?\App\User $user = null;
+    private static ?User $user = null;
 
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         Browser::$baseUrl = \config("services.webmail.uri");
@@ -22,17 +20,14 @@ class RoundcubeTest extends TestCaseDusk
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         parent::tearDown();
     }
 
     public function testLogin()
     {
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit('/')
                 ->type('#rcmloginuser', self::$user->email)
                 ->type('#rcmloginpwd', 'simple123')
@@ -51,7 +46,7 @@ class RoundcubeTest extends TestCaseDusk
                 ->waitUntil('!rcmail.busy')
                 ->assertSee('Calendar');
 
-            //TODO requires the default folders to be created
+            // TODO requires the default folders to be created
             // $browser->press('.button-files')
             // ->waitUntil('!rcmail.busy')
             // ->assertSeeIn('#files-folder-list', 'Files');

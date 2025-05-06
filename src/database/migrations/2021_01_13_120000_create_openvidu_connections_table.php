@@ -4,19 +4,16 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-// phpcs:ignore
 class CreateOpenviduConnectionsTable extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up()
     {
         Schema::create(
             'openvidu_connections',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 // I'm not sure about the max. length of the OpenVidu identifiers
                 // In examples they have 14 characters, so 16 should be enough, but
                 // let's be on the safe side with 24.
@@ -36,8 +33,6 @@ class CreateOpenviduConnectionsTable extends Migration
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
     public function down()
     {

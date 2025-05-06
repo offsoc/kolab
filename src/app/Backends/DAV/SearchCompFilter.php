@@ -2,13 +2,10 @@
 
 namespace App\Backends\DAV;
 
-use App\Backends\DAV;
-
 class SearchCompFilter
 {
     public $name;
     public $filters = [];
-
 
     public function __construct($name, $filters = [])
     {

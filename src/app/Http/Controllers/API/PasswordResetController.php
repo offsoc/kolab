@@ -7,6 +7,7 @@ use App\Jobs\Mail\PasswordResetJob;
 use App\Rules\Password;
 use App\User;
 use App\VerificationCode;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -21,9 +22,9 @@ class PasswordResetController extends Controller
      *
      * Verifies user email, sends verification email message.
      *
-     * @param \Illuminate\Http\Request $request HTTP request
+     * @param Request $request HTTP request
      *
-     * @return \Illuminate\Http\JsonResponse JSON response
+     * @return JsonResponse JSON response
      */
     public function init(Request $request)
     {
@@ -67,9 +68,9 @@ class PasswordResetController extends Controller
     /**
      * Validation of the verification code.
      *
-     * @param \Illuminate\Http\Request $request HTTP request
+     * @param Request $request HTTP request
      *
-     * @return \Illuminate\Http\JsonResponse JSON response
+     * @return JsonResponse JSON response
      */
     public function verify(Request $request)
     {
@@ -104,18 +105,18 @@ class PasswordResetController extends Controller
         $request->code = $code;
 
         return response()->json([
-                'status' => 'success',
-                // we need user's ID for e.g. password policy checks
-                'userId' => $code->user_id,
+            'status' => 'success',
+            // we need user's ID for e.g. password policy checks
+            'userId' => $code->user_id,
         ]);
     }
 
     /**
      * Password change
      *
-     * @param \Illuminate\Http\Request $request HTTP request
+     * @param Request $request HTTP request
      *
-     * @return \Illuminate\Http\JsonResponse JSON response
+     * @return JsonResponse JSON response
      */
     public function reset(Request $request)
     {
@@ -149,9 +150,9 @@ class PasswordResetController extends Controller
     /**
      * Create a verification code for the current user.
      *
-     * @param \Illuminate\Http\Request $request HTTP request
+     * @param Request $request HTTP request
      *
-     * @return \Illuminate\Http\JsonResponse JSON response
+     * @return JsonResponse JSON response
      */
     public function codeCreate(Request $request)
     {
@@ -168,10 +169,10 @@ class PasswordResetController extends Controller
         $this->guard()->user()->verificationcodes()->save($code);
 
         return response()->json([
-                'status' => 'success',
-                'code' => $code->code,
-                'short_code' => $code->short_code,
-                'expires_at' => $code->expires_at->toDateTimeString(),
+            'status' => 'success',
+            'code' => $code->code,
+            'short_code' => $code->short_code,
+            'expires_at' => $code->expires_at->toDateTimeString(),
         ]);
     }
 
@@ -180,7 +181,7 @@ class PasswordResetController extends Controller
      *
      * @param string $id Code identifier
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function codeDelete($id)
     {
@@ -204,8 +205,8 @@ class PasswordResetController extends Controller
         $code->delete();
 
         return response()->json([
-                'status' => 'success',
-                'message' => self::trans('app.password-reset-code-delete-success'),
+            'status' => 'success',
+            'message' => self::trans('app.password-reset-code-delete-success'),
         ]);
     }
 }

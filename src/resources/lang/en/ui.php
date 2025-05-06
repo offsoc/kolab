@@ -7,7 +7,6 @@
  */
 
 return [
-
     'app' => [
         'faq' => "FAQ",
     ],
@@ -66,16 +65,16 @@ return [
         'description' => "Use the Companion App on your mobile phone as multi-factor authentication device.",
         'download-description' => "You may download the Companion App for Android here: "
             . "<a href=\"{href}\">Download</a>",
-        'description-detailed' => "Here is how this works: " .
-            "Pairing a device will automatically enable multi-factor autentication for all login attempts. " .
-            "This includes not only the Cockpit, but also logins via Webmail, IMAP, SMPT, DAV and ActiveSync. " .
-            "Any authentication attempt will result in a notification on your device, " .
-            "that you can use to confirm if it was you, or deny otherwise. " .
-            "Once confirmed, the same username + IP address combination will be whitelisted for 8 hours. " .
-            "Unpair all your active devices to disable multi-factor authentication again.",
-        'description-warning' => "Warning: Loosing access to all your multi-factor authentication devices, " .
-            "will permanently lock you out of your account with no course for recovery. " .
-            "Always make sure you have a recovery QR-Code printed to pair a recovery device.",
+        'description-detailed' => "Here is how this works: "
+            . "Pairing a device will automatically enable multi-factor autentication for all login attempts. "
+            . "This includes not only the Cockpit, but also logins via Webmail, IMAP, SMPT, DAV and ActiveSync. "
+            . "Any authentication attempt will result in a notification on your device, "
+            . "that you can use to confirm if it was you, or deny otherwise. "
+            . "Once confirmed, the same username + IP address combination will be whitelisted for 8 hours. "
+            . "Unpair all your active devices to disable multi-factor authentication again.",
+        'description-warning' => "Warning: Loosing access to all your multi-factor authentication devices, "
+            . "will permanently lock you out of your account with no course for recovery. "
+            . "Always make sure you have a recovery QR-Code printed to pair a recovery device.",
         'new' => "Pair new device",
         'recovery' => "Prepare recovery device",
         'paired' => "Paired devices",
@@ -87,10 +86,10 @@ return [
         'list-empty' => "There are currently no devices",
         'delete' => "Delete/Unpair",
         'delete-companion' => "Delete/Unpair",
-        'delete-text' => "You are about to delete this entry and unpair any paired companion app. " .
-            "This cannot be undone, but you can pair the device again.",
-        'pairing-successful' => "Your companion app is paired and ready to be used " .
-            "as a multi-factor authentication device.",
+        'delete-text' => "You are about to delete this entry and unpair any paired companion app. "
+            . "This cannot be undone, but you can pair the device again.",
+        'pairing-successful' => "Your companion app is paired and ready to be used "
+            . "as a multi-factor authentication device.",
     ],
 
     'dashboard' => [
@@ -270,7 +269,7 @@ return [
         'header' => "Please sign in",
         'sign_in' => "Sign in",
         'signing_in' => "Signing in...",
-        'webmail' => "Webmail"
+        'webmail' => "Webmail",
     ],
 
     'meet' => [

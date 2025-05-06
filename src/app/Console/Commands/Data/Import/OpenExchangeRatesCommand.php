@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands\Data\Import;
 
+use App\Backends\OpenExchangeRates;
 use App\Console\Command;
 
 class OpenExchangeRatesCommand extends Command
@@ -29,9 +30,9 @@ class OpenExchangeRatesCommand extends Command
     {
         foreach (['CHF', 'EUR'] as $sourceCurrency) {
             try {
-                $rates = \App\Backends\OpenExchangeRates::retrieveRates($sourceCurrency);
+                $rates = OpenExchangeRates::retrieveRates($sourceCurrency);
 
-                $file = resource_path("exchangerates-$sourceCurrency.php");
+                $file = resource_path("exchangerates-{$sourceCurrency}.php");
 
                 $out = "<?php return [\n";
 
@@ -43,7 +44,7 @@ class OpenExchangeRatesCommand extends Command
 
                 file_put_contents($file, $out);
             } catch (\Exception $exception) {
-                $this->error("Failed to import $sourceCurrency: " . $exception->getMessage());
+                $this->error("Failed to import {$sourceCurrency}: " . $exception->getMessage());
             }
         }
     }

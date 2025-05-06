@@ -2,7 +2,11 @@
 
 namespace Tests\Unit;
 
+use App\IP4Net;
+use App\IP6Net;
+use App\User;
 use App\Utils;
+use App\Wallet;
 use Tests\TestCase;
 
 class UtilsTest extends TestCase
@@ -13,30 +17,30 @@ class UtilsTest extends TestCase
     public function testCountryForIP(): void
     {
         // Create some network records, the tables might be empty
-        \App\IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
-        \App\IP6Net::where('net_number', inet_pton('2001:db8::ff00:42:0'))->delete();
+        IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
+        IP6Net::where('net_number', inet_pton('2001:db8::ff00:42:0'))->delete();
 
         $this->assertSame('', Utils::countryForIP('127.0.0.1', ''));
         $this->assertSame('CH', Utils::countryForIP('127.0.0.1'));
         $this->assertSame('', Utils::countryForIP('2001:db8::ff00:42:1', ''));
         $this->assertSame('CH', Utils::countryForIP('2001:db8::ff00:42:1'));
 
-        \App\IP4Net::create([
-                'net_number' => '127.0.0.0',
-                'net_broadcast' => '127.255.255.255',
-                'net_mask' => 8,
-                'country' => 'US',
-                'rir_name' => 'test',
-                'serial' => 1,
+        IP4Net::create([
+            'net_number' => '127.0.0.0',
+            'net_broadcast' => '127.255.255.255',
+            'net_mask' => 8,
+            'country' => 'US',
+            'rir_name' => 'test',
+            'serial' => 1,
         ]);
 
-        \App\IP6Net::create([
-                'net_number' => '2001:db8::ff00:42:0',
-                'net_broadcast' => \App\Utils::ip6Broadcast('2001:db8::ff00:42:0', 8),
-                'net_mask' => 8,
-                'country' => 'PL',
-                'rir_name' => 'test',
-                'serial' => 1,
+        IP6Net::create([
+            'net_number' => '2001:db8::ff00:42:0',
+            'net_broadcast' => Utils::ip6Broadcast('2001:db8::ff00:42:0', 8),
+            'net_mask' => 8,
+            'country' => 'PL',
+            'rir_name' => 'test',
+            'serial' => 1,
         ]);
 
         $this->assertSame('US', Utils::countryForIP('127.0.0.1', ''));
@@ -44,8 +48,8 @@ class UtilsTest extends TestCase
         $this->assertSame('PL', Utils::countryForIP('2001:db8::ff00:42:1', ''));
         $this->assertSame('PL', Utils::countryForIP('2001:db8::ff00:42:1'));
 
-        \App\IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
-        \App\IP6Net::where('net_number', inet_pton('2001:db8::ff00:42:0'))->delete();
+        IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
+        IP6Net::where('net_number', inet_pton('2001:db8::ff00:42:0'))->delete();
     }
 
     /**
@@ -97,11 +101,11 @@ class UtilsTest extends TestCase
      */
     public function testIsSoftDeletable(): void
     {
-        $this->assertTrue(Utils::isSoftDeletable(\App\User::class));
-        $this->assertFalse(Utils::isSoftDeletable(\App\Wallet::class));
+        $this->assertTrue(Utils::isSoftDeletable(User::class));
+        $this->assertFalse(Utils::isSoftDeletable(Wallet::class));
 
-        $this->assertTrue(Utils::isSoftDeletable(new \App\User()));
-        $this->assertFalse(Utils::isSoftDeletable(new \App\Wallet()));
+        $this->assertTrue(Utils::isSoftDeletable(new User()));
+        $this->assertFalse(Utils::isSoftDeletable(new Wallet()));
     }
 
     /**
@@ -243,10 +247,10 @@ class UtilsTest extends TestCase
         // Exchange rates are volatile, can't test with high accuracy.
 
         $this->assertTrue(Utils::exchangeRate("CHF", "EUR") >= 0.88);
-        //$this->assertEqualsWithDelta(0.90503424978382, Utils::exchangeRate("CHF", "EUR"), PHP_FLOAT_EPSILON);
+        // $this->assertEqualsWithDelta(0.90503424978382, Utils::exchangeRate("CHF", "EUR"), PHP_FLOAT_EPSILON);
 
         $this->assertTrue(Utils::exchangeRate("EUR", "CHF") <= 1.12);
-        //$this->assertEqualsWithDelta(1.1049305595217682, Utils::exchangeRate("EUR", "CHF"), PHP_FLOAT_EPSILON);
+        // $this->assertEqualsWithDelta(1.1049305595217682, Utils::exchangeRate("EUR", "CHF"), PHP_FLOAT_EPSILON);
 
         $this->expectException(\Exception::class);
         $this->assertSame(1.0, Utils::exchangeRate("CHF", "FOO"));

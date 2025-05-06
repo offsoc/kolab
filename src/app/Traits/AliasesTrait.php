@@ -2,12 +2,17 @@
 
 namespace App\Traits;
 
+use App\SharedFolderAlias;
+use App\UserAlias;
+use App\Utils;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
 trait AliasesTrait
 {
     /**
      * Email aliases of this object.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function aliases()
     {
@@ -23,11 +28,11 @@ trait AliasesTrait
      */
     public static function aliasExists(string $email): bool
     {
-        if (strpos($email, '@') === false) {
+        if (!str_contains($email, '@')) {
             return false;
         }
 
-        $email = \App\Utils::emailToLower($email);
+        $email = Utils::emailToLower($email);
         $class = static::class . 'Alias';
 
         return $class::where('alias', $email)->count() > 0;
@@ -44,8 +49,6 @@ trait AliasesTrait
      * ```
      *
      * @param array $aliases An array of email addresses
-     *
-     * @return void
      */
     public function setAliases(array $aliases): void
     {
@@ -55,7 +58,7 @@ trait AliasesTrait
         $existing_aliases = [];
 
         foreach ($this->aliases()->get() as $alias) {
-            /** @var \App\UserAlias|\App\SharedFolderAlias $alias */
+            /** @var UserAlias|SharedFolderAlias $alias */
             if (!in_array($alias->alias, $aliases)) {
                 $alias->delete();
             } else {

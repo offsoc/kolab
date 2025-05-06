@@ -2,7 +2,10 @@
 
 namespace App\Backends;
 
+use App\PowerDNS\Domain;
+use App\PowerDNS\Record;
 use App\User;
+use App\Utils;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
@@ -14,12 +17,11 @@ class PGP
     /** @var array Crypt_GPG configuration */
     private static $config = [];
 
-
     /**
      * Remove all files from the user homedir
      *
-     * @param \App\User $user User object
-     * @param bool      $del  Delete also the homedir itself
+     * @param User $user User object
+     * @param bool $del  Delete also the homedir itself
      */
     public static function homedirCleanup(User $user, bool $del = false): void
     {
@@ -46,8 +48,8 @@ class PGP
      * Generate a keypair.
      * This will also initialize the user GPG homedir content.
      *
-     * @param \App\User $user  User object
-     * @param string    $email Email address to use for the key
+     * @param User   $user  User object
+     * @param string $email Email address to use for the key
      *
      * @throws \Exception
      */
@@ -85,8 +87,8 @@ class PGP
     /**
      * Delete a keypair from DNS and Enigma keyring.
      *
-     * @param \App\User $user  User object
-     * @param string    $email Email address of the key
+     * @param User   $user  User object
+     * @param string $email Email address of the key
      *
      * @throws \Exception
      */
@@ -98,18 +100,18 @@ class PGP
         // Remove the whole Enigma keyring (if it's a delete user account)
         if ($user->email === $email) {
             self::homedirCleanup($user);
-            $user->aliases()->pluck('alias')->each(fn ($alias) => self::keyUnregister($alias));
-        } else {
-            // TODO: remove only the alias key from Enigma keyring
+            $user->aliases()->pluck('alias')->each(static fn ($alias) => self::keyUnregister($alias));
         }
+        // TODO: remove only the alias key from Enigma keyring
     }
 
     /**
      * List (public and private) keys from a user keyring.
      *
-     * @param \App\User $user User object
+     * @param User $user User object
      *
      * @returns \Crypt_GPG_Key[] List of keys
+     *
      * @throws \Exception
      */
     public static function listKeys(User $user): array
@@ -124,7 +126,7 @@ class PGP
      */
     public static function logDebug($msg): void
     {
-        \Log::debug("[GPG] $msg");
+        \Log::debug("[GPG] {$msg}");
     }
 
     /**
@@ -135,19 +137,19 @@ class PGP
      */
     private static function keyRegister(string $email, string $key): void
     {
-        list($local, $domain) = \App\Utils::normalizeAddress($email, true);
+        [$local, $domain] = Utils::normalizeAddress($email, true);
 
         DB::beginTransaction();
 
-        $domain = \App\PowerDNS\Domain::firstOrCreate([
-                'name' => '_woat.' . $domain,
+        $domain = Domain::firstOrCreate([
+            'name' => '_woat.' . $domain,
         ]);
 
-        \App\PowerDNS\Record::create([
-                'domain_id' => $domain->id,
-                'name' => sha1($local) . '.' . $domain->name,
-                'type' => 'TXT',
-                'content' => 'v=woat1,public_key=' . $key
+        Record::create([
+            'domain_id' => $domain->id,
+            'name' => sha1($local) . '.' . $domain->name,
+            'type' => 'TXT',
+            'content' => 'v=woat1,public_key=' . $key,
         ]);
 
         DB::commit();
@@ -160,9 +162,9 @@ class PGP
      */
     private static function keyUnregister(string $email): void
     {
-        list($local, $domain) = \App\Utils::normalizeAddress($email, true);
+        [$local, $domain] = Utils::normalizeAddress($email, true);
 
-        $domain = \App\PowerDNS\Domain::where('name', '_woat.' . $domain)->first();
+        $domain = Domain::where('name', '_woat.' . $domain)->first();
 
         if ($domain) {
             $fqdn = sha1($local) . '.' . $domain->name;
@@ -181,9 +183,9 @@ class PGP
             return;
         }
 
-        $debug   = \config('app.debug');
-        $binary  = \config('pgp.binary');
-        $agent   = \config('pgp.agent');
+        $debug = \config('app.debug');
+        $binary = \config('pgp.binary');
+        $agent = \config('pgp.agent');
         $gpgconf = \config('pgp.gpgconf');
 
         $dir = self::setHomedir($user);

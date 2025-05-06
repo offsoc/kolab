@@ -2,15 +2,17 @@
 
 namespace App;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * The eloquent definition of a Referral (code-to-referree relation).
  *
- * @property string          $code        Referral code
- * @property int             $id          Record identifier
- * @property ?\Carbon\Carbon $redeemed_at When the award got applied
- * @property int             $user_id     User identifier
+ * @property string  $code        Referral code
+ * @property int     $id          Record identifier
+ * @property ?Carbon $redeemed_at When the award got applied
+ * @property int     $user_id     User identifier
  */
 class Referral extends Model
 {
@@ -32,7 +34,7 @@ class Referral extends Model
     /**
      * The code this referral is assigned to
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<ReferralCode, $this>
+     * @return BelongsTo<ReferralCode, $this>
      */
     public function code()
     {
@@ -42,7 +44,7 @@ class Referral extends Model
     /**
      * The user this referral is assigned to (referree)
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<User, $this>
+     * @return BelongsTo<User, $this>
      */
     public function user()
     {

@@ -123,14 +123,14 @@ class OwnerSwapCommand extends Command
     /**
      * Update user/wallet metadata at payment provider
      *
-     * @param \App\Wallet $wallet The wallet
+     * @param Wallet $wallet The wallet
      */
-    private function updatePaymentCustomer(\App\Wallet $wallet): void
+    private function updatePaymentCustomer(Wallet $wallet): void
     {
         if ($mollie_id = $wallet->getSetting('mollie_id')) {
             Mollie::api()->customers->update($mollie_id, [
-                    'name'  => $wallet->owner->name(),
-                    'email' => $wallet->id . '@private.' . \config('app.domain'),
+                'name' => $wallet->owner->name(),
+                'email' => $wallet->id . '@private.' . \config('app.domain'),
             ]);
         }
 

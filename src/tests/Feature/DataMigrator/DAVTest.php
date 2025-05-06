@@ -15,20 +15,14 @@ class DAVTest extends TestCase
 {
     use BackendsTrait;
 
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         MigratorQueue::truncate();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         MigratorQueue::truncate();
 
@@ -90,6 +84,7 @@ class DAVTest extends TestCase
      * Test DAV to DAV incremental migration run
      *
      * @group dav
+     *
      * @depends testInitialMigration
      */
     public function testIncrementalMigration(): void

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API\V4\Reseller;
 
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Auth;
 
 class StatsController extends \App\Http\Controllers\API\V4\Admin\StatsController
@@ -19,10 +20,10 @@ class StatsController extends \App\Http\Controllers\API\V4\Admin\StatsController
     /**
      * Add tenant scope to the queries when needed
      *
-     * @param \Illuminate\Database\Query\Builder $query    The query
-     * @param callable                           $addQuery Additional tenant-scope query-modifier
+     * @param Builder  $query    The query
+     * @param callable $addQuery Additional tenant-scope query-modifier
      *
-     * @return \Illuminate\Database\Query\Builder
+     * @return Builder
      */
     protected function applyTenantScope($query, $addQuery = null)
     {

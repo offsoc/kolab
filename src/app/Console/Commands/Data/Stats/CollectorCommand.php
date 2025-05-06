@@ -3,7 +3,6 @@
 namespace App\Console\Commands\Data\Stats;
 
 use App\Http\Controllers\API\V4\Admin\StatsController;
-use App\Payment;
 use App\Transaction;
 use App\User;
 use App\Wallet;
@@ -57,10 +56,10 @@ class CollectorCommand extends Command
         // Count all non-degraded and non-deleted users that are payers
         $counts = DB::table('users')
             ->selectRaw('count(*) as total, users.tenant_id')
-            ->joinSub($wallets, 'wallets', function ($join) {
+            ->joinSub($wallets, 'wallets', static function ($join) {
                 $join->on('users.id', '=', 'wallets.user_id');
             })
-            ->joinSub($transactions, 'transactions', function ($join) {
+            ->joinSub($transactions, 'transactions', static function ($join) {
                 $join->on('wallets.id', '=', 'transactions.wallet_id');
             })
             ->whereNull('users.deleted_at')
@@ -69,7 +68,7 @@ class CollectorCommand extends Command
             ->groupBy('users.tenant_id')
             ->havingRaw('count(*) > 0')
             ->get()
-            ->each(function ($record) {
+            ->each(static function ($record) {
                 DB::table('stats')->insert([
                     'tenant_id' => $record->tenant_id,
                     'type' => StatsController::TYPE_PAYERS,

@@ -9,11 +9,30 @@ use Tests\TestCase;
 class UserEmailLocalTest extends TestCase
 {
     /**
+     * Test validation of email local part
+     *
+     * @dataProvider provideUserEmailLocalCases
+     */
+    public function testUserEmailLocal($user, $external, $error): void
+    {
+        $rules = ['user' => [new UserEmailLocal($external)]];
+
+        $v = Validator::make(['user' => $user], $rules);
+
+        if ($error) {
+            $this->assertTrue($v->fails());
+            $this->assertSame(['user' => [$error]], $v->errors()->toArray());
+        } else {
+            $this->assertFalse($v->fails());
+        }
+    }
+
+    /**
      * List of email address validation cases for testUserEmailLocal()
      *
      * @return array Arguments for testUserEmailLocal()
      */
-    public static function dataUserEmailLocal(): array
+    public static function provideUserEmailLocalCases(): iterable
     {
         return [
             // non-string input
@@ -39,24 +58,5 @@ class UserEmailLocalTest extends TestCase
             ['Postmaster', true, null],
             ['Webmaster', true, null],
         ];
-    }
-
-    /**
-     * Test validation of email local part
-     *
-     * @dataProvider dataUserEmailLocal
-     */
-    public function testUserEmailLocal($user, $external, $error): void
-    {
-        $rules = ['user' => [new UserEmailLocal($external)]];
-
-        $v = Validator::make(['user' => $user], $rules);
-
-        if ($error) {
-            $this->assertTrue($v->fails());
-            $this->assertSame(['user' => [$error]], $v->errors()->toArray());
-        } else {
-            $this->assertFalse($v->fails());
-        }
     }
 }

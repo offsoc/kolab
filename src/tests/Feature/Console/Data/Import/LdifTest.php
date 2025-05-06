@@ -2,24 +2,25 @@
 
 namespace Tests\Feature\Console\Data\Import;
 
+use App\Console\Commands\Data\Import\LdifCommand;
+use App\Domain;
+use App\Group;
+use App\Resource;
+use App\SharedFolder;
+use App\User;
+use Symfony\Component\Console\Input\ArrayInput;
 use Tests\TestCase;
 
 class LdifTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestUser('owner@kolab3.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('owner@kolab3.com');
 
@@ -62,7 +63,7 @@ class LdifTest extends TestCase
             $output
         );
 
-        $owner = \App\User::where('email', 'owner@kolab3.com')->first();
+        $owner = User::where('email', 'owner@kolab3.com')->first();
 
         $this->assertNull($owner->password);
         $this->assertSame(
@@ -92,7 +93,7 @@ class LdifTest extends TestCase
 
         // Users
         $this->assertSame(2, $owner->users(false)->count());
-        /** @var \App\User $user */
+        /** @var User $user */
         $user = $owner->users(false)->where('email', 'user@kolab3.com')->first();
 
         // User settings
@@ -113,20 +114,20 @@ class LdifTest extends TestCase
         ]);
 
         // Domains
-        /** @var \App\Domain[] $domains */
+        /** @var Domain[] $domains */
         $domains = $owner->domains(false, false)->orderBy('namespace')->get();
 
         $this->assertCount(2, $domains);
         $this->assertSame('kolab3-alias.com', $domains[0]->namespace);
         $this->assertSame('kolab3.com', $domains[1]->namespace);
-        $this->assertSame(\App\Domain::TYPE_EXTERNAL, $domains[0]->type);
-        $this->assertSame(\App\Domain::TYPE_EXTERNAL, $domains[1]->type);
+        $this->assertSame(Domain::TYPE_EXTERNAL, $domains[0]->type);
+        $this->assertSame(Domain::TYPE_EXTERNAL, $domains[1]->type);
 
         $this->assertEntitlements($domains[0], ['domain-hosting']);
         $this->assertEntitlements($domains[1], ['domain-hosting']);
 
         // Shared folders
-        /** @var \App\SharedFolder[] $folders */
+        /** @var SharedFolder[] $folders */
         $folders = $owner->sharedFolders(false)->orderBy('email')->get();
 
         $this->assertCount(2, $folders);
@@ -147,7 +148,7 @@ class LdifTest extends TestCase
         );
 
         // Groups
-        /** @var \App\Group[] $groups */
+        /** @var Group[] $groups */
         $groups = $owner->groups(false)->orderBy('email')->get();
 
         $this->assertCount(1, $groups);
@@ -157,7 +158,7 @@ class LdifTest extends TestCase
         $this->assertSame('["sender@gmail.com","-"]', $groups[0]->getSetting('sender_policy'));
 
         // Resources
-        /** @var \App\Resource[] $resources */
+        /** @var Resource[] $resources */
         $resources = $owner->resources(false)->orderBy('email')->get();
 
         $this->assertCount(1, $resources);
@@ -172,7 +173,7 @@ class LdifTest extends TestCase
      */
     public function testParseACL(): void
     {
-        $command = new \App\Console\Commands\Data\Import\LdifCommand();
+        $command = new LdifCommand();
 
         $result = $this->invokeMethod($command, 'parseACL', [[]]);
         $this->assertSame([], $result);
@@ -210,16 +211,16 @@ class LdifTest extends TestCase
      */
     public function testParseInvitationPolicy(): void
     {
-        $command = new \App\Console\Commands\Data\Import\LdifCommand();
+        $command = new LdifCommand();
 
         $result = $this->invokeMethod($command, 'parseInvitationPolicy', [[]]);
-        $this->assertSame(null, $result);
+        $this->assertNull($result);
 
         $result = $this->invokeMethod($command, 'parseInvitationPolicy', [['UNKNOWN']]);
-        $this->assertSame(null, $result);
+        $this->assertNull($result);
 
         $result = $this->invokeMethod($command, 'parseInvitationPolicy', [['ACT_ACCEPT']]);
-        $this->assertSame(null, $result);
+        $this->assertNull($result);
 
         $result = $this->invokeMethod($command, 'parseInvitationPolicy', [['ACT_MANUAL']]);
         $this->assertSame('manual', $result);
@@ -228,7 +229,7 @@ class LdifTest extends TestCase
         $this->assertSame('reject', $result);
 
         $result = $this->invokeMethod($command, 'parseInvitationPolicy', [['ACT_ACCEPT_AND_NOTIFY', 'ACT_REJECT']]);
-        $this->assertSame(null, $result);
+        $this->assertNull($result);
     }
 
     /**
@@ -236,7 +237,7 @@ class LdifTest extends TestCase
      */
     public function testParseSenderPolicy(): void
     {
-        $command = new \App\Console\Commands\Data\Import\LdifCommand();
+        $command = new LdifCommand();
 
         $result = $this->invokeMethod($command, 'parseSenderPolicy', [[]]);
         $this->assertSame([], $result);
@@ -253,7 +254,7 @@ class LdifTest extends TestCase
      */
     public function testParseLDAPDomain(): void
     {
-        $command = new \App\Console\Commands\Data\Import\LdifCommand();
+        $command = new LdifCommand();
 
         $entry = [];
         $result = $this->invokeMethod($command, 'parseLDAPDomain', [$entry]);
@@ -263,7 +264,7 @@ class LdifTest extends TestCase
         $entry = ['associateddomain' => 'test.com'];
         $result = $this->invokeMethod($command, 'parseLDAPDomain', [$entry]);
         $this->assertSame(['namespace' => 'test.com'], $result[0]);
-        $this->assertSame(null, $result[1]);
+        $this->assertNull($result[1]);
 
         $entry = ['associateddomain' => 'test.com', 'inetdomainstatus' => 'deleted'];
         $result = $this->invokeMethod($command, 'parseLDAPDomain', [$entry]);
@@ -276,7 +277,7 @@ class LdifTest extends TestCase
      */
     public function testParseLDAPGroup(): void
     {
-        $command = new \App\Console\Commands\Data\Import\LdifCommand();
+        $command = new LdifCommand();
 
         $entry = [];
         $result = $this->invokeMethod($command, 'parseLDAPGroup', [$entry]);
@@ -309,7 +310,7 @@ class LdifTest extends TestCase
 
         $result = $this->invokeMethod($command, 'parseLDAPGroup', [$entry]);
         $this->assertSame($expected, $result[0]);
-        $this->assertSame(null, $result[1]);
+        $this->assertNull($result[1]);
     }
 
     /**
@@ -317,7 +318,7 @@ class LdifTest extends TestCase
      */
     public function testParseLDAPResource(): void
     {
-        $command = new \App\Console\Commands\Data\Import\LdifCommand();
+        $command = new LdifCommand();
 
         $entry = [];
         $result = $this->invokeMethod($command, 'parseLDAPResource', [$entry]);
@@ -334,7 +335,7 @@ class LdifTest extends TestCase
             'mail' => 'Test@domain.tld',
             'owner' => 'uid=user@kolab3.com,ou=People,ou=kolab3.com,dc=hosted,dc=com',
             'kolabtargetfolder' => 'Folder',
-            'kolabinvitationpolicy' => 'ACT_REJECT'
+            'kolabinvitationpolicy' => 'ACT_REJECT',
         ];
 
         $expected = [
@@ -347,7 +348,7 @@ class LdifTest extends TestCase
 
         $result = $this->invokeMethod($command, 'parseLDAPResource', [$entry]);
         $this->assertSame($expected, $result[0]);
-        $this->assertSame(null, $result[1]);
+        $this->assertNull($result[1]);
     }
 
     /**
@@ -355,7 +356,7 @@ class LdifTest extends TestCase
      */
     public function testParseLDAPSharedFolder(): void
     {
-        $command = new \App\Console\Commands\Data\Import\LdifCommand();
+        $command = new LdifCommand();
 
         $entry = [];
         $result = $this->invokeMethod($command, 'parseLDAPSharedFolder', [$entry]);
@@ -387,7 +388,7 @@ class LdifTest extends TestCase
 
         $result = $this->invokeMethod($command, 'parseLDAPSharedFolder', [$entry]);
         $this->assertSame($expected, $result[0]);
-        $this->assertSame(null, $result[1]);
+        $this->assertNull($result[1]);
     }
 
     /**
@@ -401,8 +402,8 @@ class LdifTest extends TestCase
             'owner' => 'test@domain.tld',
         ];
 
-        $command = new \App\Console\Commands\Data\Import\LdifCommand();
-        $command->setInput(new \Symfony\Component\Console\Input\ArrayInput($args, $command->getDefinition()));
+        $command = new LdifCommand();
+        $command->setInput(new ArrayInput($args, $command->getDefinition()));
 
         $entry = ['cn' => 'Test'];
         $result = $this->invokeMethod($command, 'parseLDAPUser', [$entry]);
@@ -438,7 +439,7 @@ class LdifTest extends TestCase
 
         $result = $this->invokeMethod($command, 'parseLDAPUser', [$entry]);
         $this->assertSame($expected, $result[0]);
-        $this->assertSame(null, $result[1]);
+        $this->assertNull($result[1]);
         $this->assertSame($entry['dn'], $this->getObjectProperty($command, 'ownerDN'));
     }
 }

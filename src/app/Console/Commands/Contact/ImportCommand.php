@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands\Contact;
 
-use App\Contact;
 use App\Console\Command;
+use App\Contact;
 
 class ImportCommand extends Command
 {
@@ -122,7 +122,7 @@ class ImportCommand extends Command
      */
     protected function getFileType(string $header): ?string
     {
-        [$line, ] = preg_split('/\r?\n/', $header);
+        [$line] = preg_split('/\r?\n/', $header);
 
         // TODO: vCard, LDIF
 
@@ -133,7 +133,7 @@ class ImportCommand extends Command
             if (
                 ($arr[0] == 'Email' && $arr[1] == 'Name')
                 || in_array('Email', $arr)
-                || strpos($arr[0], '@') !== false
+                || str_contains($arr[0], '@')
             ) {
                 return 'csv';
             }
@@ -175,7 +175,7 @@ class ImportCommand extends Command
             if ($fields === null) {
                 $filtered = array_filter(
                     array_map('strtolower', $data),
-                    fn ($h) => in_array($h, $all_props)
+                    static fn ($h) => in_array($h, $all_props)
                 );
 
                 if (count($filtered) == 1 || count($filtered) == 2) {
@@ -186,9 +186,8 @@ class ImportCommand extends Command
                     }
 
                     continue;
-                } else {
-                    $fields = ['email' => 0, 'name' => 1];
                 }
+                $fields = ['email' => 0, 'name' => 1];
             }
 
             $contact = new Contact();

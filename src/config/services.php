@@ -1,7 +1,8 @@
 <?php
 
-return [
+use App\Backends\Helper;
 
+return [
     /*
     ----------------------------------------------------------------------------
         Third Party Services
@@ -44,7 +45,7 @@ return [
         // api_key available in: Firebase Console -> Project Settings -> CLOUD MESSAGING -> Server key
         'api_key' => env('FIREBASE_API_KEY'),
         'api_url' => env('FIREBASE_API_URL', 'https://fcm.googleapis.com/fcm/send'),
-        'api_verify_tls' => (bool) env('FIREBASE_API_VERIFY_TLS', true)
+        'api_verify_tls' => (bool) env('FIREBASE_API_VERIFY_TLS', true),
     ],
 
     'openexchangerates' => [
@@ -59,7 +60,7 @@ return [
 
     'dav' => [
         'uri' => env('DAV_URI', 'https://proxy/'),
-        'default_folders' => \App\Backends\Helper::defaultDavFolders(),
+        'default_folders' => Helper::defaultDavFolders(),
         'verify' => (bool) env('DAV_VERIFY', true),
     ],
 
@@ -72,14 +73,14 @@ return [
         'host' => env('IMAP_HOST', '172.18.0.5'),
         'imap_port' => env('IMAP_PORT', 12143),
         'guam_port' => env('IMAP_GUAM_PORT', 9143),
-        'default_folders' => \App\Backends\Helper::defaultImapFolders(),
+        'default_folders' => Helper::defaultImapFolders(),
     ],
 
     'ldap' => [
         'hosts' => explode(' ', env('LDAP_HOSTS', '127.0.0.1')),
         'port' => env('LDAP_PORT', 636),
-        'use_tls' => (boolean)env('LDAP_USE_TLS', false),
-        'use_ssl' => (boolean)env('LDAP_USE_SSL', true),
+        'use_tls' => (bool) env('LDAP_USE_TLS', false),
+        'use_ssl' => (bool) env('LDAP_USE_SSL', true),
 
         'admin' => [
             'bind_dn' => env('LDAP_ADMIN_BIND_DN', null),
@@ -104,7 +105,7 @@ return [
         'filter' => env('LDAP_FILTER', '(&(objectclass=kolabinetorgperson)(uid=%s))'),
         'domain_name_attribute' => env('LDAP_DOMAIN_NAME_ATTRIBUTE', 'associateddomain'),
         'domain_base_dn' => env('LDAP_DOMAIN_BASE_DN', null),
-        'domain_filter' => env('LDAP_DOMAIN_FILTER', '(associateddomain=%s)')
+        'domain_filter' => env('LDAP_DOMAIN_FILTER', '(associateddomain=%s)'),
     ],
 
     'autodiscover' => [

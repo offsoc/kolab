@@ -2,15 +2,13 @@
 
 namespace App\Jobs\Group;
 
-use App\Support\Facades\LDAP;
 use App\Jobs\GroupJob;
+use App\Support\Facades\LDAP;
 
 class UpdateJob extends GroupJob
 {
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle()
     {

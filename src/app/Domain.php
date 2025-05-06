@@ -10,6 +10,7 @@ use App\Traits\StatusPropertyTrait;
 use App\Traits\UuidIntKeyTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -31,39 +32,39 @@ class Domain extends Model
     use UuidIntKeyTrait;
 
     // we've simply never heard of this domain
-    public const STATUS_NEW        = 1 << 0;
+    public const STATUS_NEW = 1 << 0;
     // it's been activated
-    public const STATUS_ACTIVE     = 1 << 1;
+    public const STATUS_ACTIVE = 1 << 1;
     // domain has been suspended.
-    public const STATUS_SUSPENDED  = 1 << 2;
+    public const STATUS_SUSPENDED = 1 << 2;
     // domain has been deleted
-    public const STATUS_DELETED    = 1 << 3;
+    public const STATUS_DELETED = 1 << 3;
     // ownership of the domain has been confirmed
-    public const STATUS_CONFIRMED  = 1 << 4;
+    public const STATUS_CONFIRMED = 1 << 4;
     // domain has been verified that it exists in DNS
-    public const STATUS_VERIFIED   = 1 << 5;
+    public const STATUS_VERIFIED = 1 << 5;
     // domain has been created in LDAP
     public const STATUS_LDAP_READY = 1 << 6;
 
     // open for public registration
-    public const TYPE_PUBLIC       = 1 << 0;
+    public const TYPE_PUBLIC = 1 << 0;
     // zone hosted with us
-    public const TYPE_HOSTED       = 1 << 1;
+    public const TYPE_HOSTED = 1 << 1;
     // zone registered externally
-    public const TYPE_EXTERNAL     = 1 << 2;
+    public const TYPE_EXTERNAL = 1 << 2;
 
     public const HASH_CODE = 1;
     public const HASH_TEXT = 2;
     public const HASH_CNAME = 3;
 
     /** @var int The allowed states for this object used in StatusPropertyTrait */
-    private int $allowed_states = self::STATUS_NEW |
-        self::STATUS_ACTIVE |
-        self::STATUS_SUSPENDED |
-        self::STATUS_DELETED |
-        self::STATUS_CONFIRMED |
-        self::STATUS_VERIFIED |
-        self::STATUS_LDAP_READY;
+    private int $allowed_states = self::STATUS_NEW
+        | self::STATUS_ACTIVE
+        | self::STATUS_SUSPENDED
+        | self::STATUS_DELETED
+        | self::STATUS_CONFIRMED
+        | self::STATUS_VERIFIED
+        | self::STATUS_LDAP_READY;
 
     /** @var array<string, string> The attributes that should be cast */
     protected $casts = [
@@ -80,10 +81,10 @@ class Domain extends Model
     /**
      * Assign a package to a domain. The domain should not belong to any existing entitlements.
      *
-     * @param \App\Package $package The package to assign.
-     * @param \App\User    $user    The wallet owner.
+     * @param Package $package the package to assign
+     * @param User    $user    the wallet owner
      *
-     * @return \App\Domain Self
+     * @return Domain Self
      */
     public function assignPackage($package, $user)
     {
@@ -108,14 +109,12 @@ class Domain extends Model
     public static function getPublicDomains(): array
     {
         return self::withEnvTenantContext()
-            ->where('type', '&', Domain::TYPE_PUBLIC)
+            ->where('type', '&', self::TYPE_PUBLIC)
             ->pluck('namespace')->all();
     }
 
     /**
      * Returns whether this domain is confirmed the ownership of.
-     *
-     * @return bool
      */
     public function isConfirmed(): bool
     {
@@ -124,8 +123,6 @@ class Domain extends Model
 
     /**
      * Returns whether this domain is registered with us.
-     *
-     * @return bool
      */
     public function isExternal(): bool
     {
@@ -134,8 +131,6 @@ class Domain extends Model
 
     /**
      * Returns whether this domain is hosted with us.
-     *
-     * @return bool
      */
     public function isHosted(): bool
     {
@@ -144,8 +139,6 @@ class Domain extends Model
 
     /**
      * Returns whether this domain is public.
-     *
-     * @return bool
      */
     public function isPublic(): bool
     {
@@ -155,8 +148,6 @@ class Domain extends Model
     /**
      * Returns whether this (external) domain has been verified
      * to exist in DNS.
-     *
-     * @return bool
      */
     public function isVerified(): bool
     {
@@ -214,6 +205,7 @@ class Domain extends Model
      * in the domain's DNS (that matches the verification hash).
      *
      * @return bool True if verification was successful, false otherwise
+     *
      * @throws \Exception Throws exception on DNS or DB errors
      */
     public function confirm(): bool
@@ -226,7 +218,7 @@ class Domain extends Model
         $confirmed = false;
 
         // Get DNS records and find a matching TXT entry
-        $records = \dns_get_record($this->namespace, DNS_TXT);
+        $records = \dns_get_record($this->namespace, \DNS_TXT);
 
         if ($records === false) {
             throw new \Exception("Failed to get DNS record for {$this->namespace}");
@@ -245,7 +237,7 @@ class Domain extends Model
         // i.e.: kolab-verify IN CNAME <hash>.domain.tld.
         if (!$confirmed) {
             $cname = $this->hash(self::HASH_CODE) . '.' . $this->namespace;
-            $records = \dns_get_record('kolab-verify.' . $this->namespace, DNS_CNAME);
+            $records = \dns_get_record('kolab-verify.' . $this->namespace, \DNS_CNAME);
 
             if ($records === false) {
                 throw new \Exception("Failed to get DNS record for {$this->namespace}");
@@ -260,7 +252,7 @@ class Domain extends Model
         }
 
         if ($confirmed) {
-            $this->status |= Domain::STATUS_CONFIRMED;
+            $this->status |= self::STATUS_CONFIRMED;
             $this->save();
         }
 
@@ -284,7 +276,7 @@ class Domain extends Model
 
         $hash = \md5('hkccp-verify-' . $this->namespace);
 
-        return $mod === self::HASH_TEXT ? "$cname=$hash" : $hash;
+        return $mod === self::HASH_TEXT ? "{$cname}={$hash}" : $hash;
     }
 
     /**
@@ -328,7 +320,7 @@ class Domain extends Model
      * List the users of a domain, so long as the domain is not a public registration domain.
      * Note: It returns only users with a mailbox.
      *
-     * @return \Illuminate\Support\Collection<User> A collection of users
+     * @return Collection<User> A collection of users
      */
     public function users()
     {
@@ -350,7 +342,7 @@ class Domain extends Model
         }
 
         return User::select()
-            ->whereExists(function ($query) use ($wallet, $mailboxSKU) {
+            ->whereExists(static function ($query) use ($wallet, $mailboxSKU) {
                 $query->select(DB::raw(1))
                     ->from('entitlements')
                     ->whereColumn('entitleable_id', 'users.id')
@@ -365,6 +357,7 @@ class Domain extends Model
      * Verify if a domain exists in DNS
      *
      * @return bool True if registered, False otherwise
+     *
      * @throws \Exception Throws exception on DNS or DB errors
      */
     public function verify(): bool
@@ -373,7 +366,7 @@ class Domain extends Model
             return true;
         }
 
-        $records = \dns_get_record($this->namespace, DNS_ANY);
+        $records = \dns_get_record($this->namespace, \DNS_ANY);
 
         if ($records === false) {
             throw new \Exception("Failed to get DNS record for {$this->namespace}");
@@ -382,7 +375,7 @@ class Domain extends Model
         // It may happen that result contains other domains depending on the host DNS setup
         // that's why in_array() and not just !empty()
         if (in_array($this->namespace, array_column($records, 'host'))) {
-            $this->status |= Domain::STATUS_VERIFIED;
+            $this->status |= self::STATUS_VERIFIED;
             $this->save();
 
             return true;

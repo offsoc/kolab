@@ -2,26 +2,26 @@
 
 namespace App\Jobs\Mail;
 
+use App\Jobs\MailJob;
+use App\Mail\Helper;
 use App\Mail\PasswordExpirationReminder;
+use App\User;
 
-class PasswordRetentionJob extends \App\Jobs\MailJob
+class PasswordRetentionJob extends MailJob
 {
     /** @var string Password expiration date */
     protected $expiresOn;
 
-    /** @var \App\User User object */
+    /** @var User User object */
     protected $user;
-
 
     /**
      * Create a new job instance.
      *
-     * @param \App\User $user      User object
-     * @param string    $expiresOn Password expiration date
-     *
-     * @return void
+     * @param User   $user      User object
+     * @param string $expiresOn Password expiration date
      */
-    public function __construct(\App\User $user, string $expiresOn)
+    public function __construct(User $user, string $expiresOn)
     {
         $this->user = $user;
         $this->expiresOn = $expiresOn;
@@ -29,8 +29,6 @@ class PasswordRetentionJob extends \App\Jobs\MailJob
 
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle()
     {
@@ -42,7 +40,7 @@ class PasswordRetentionJob extends \App\Jobs\MailJob
         // TODO: Should we check if the password didn't update since
         //       the job has been created?
 
-        \App\Mail\Helper::sendMail(
+        Helper::sendMail(
             new PasswordExpirationReminder($this->user, $this->expiresOn),
             $this->user->tenant_id,
             ['to' => $this->user->email]

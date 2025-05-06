@@ -4,17 +4,14 @@ namespace Tests\Feature;
 
 use App\Payment;
 use App\Transaction;
-use App\Wallet;
 use App\VatRate;
+use App\Wallet;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class PaymentTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -23,10 +20,7 @@ class PaymentTest extends TestCase
         VatRate::query()->delete();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('jane@kolabnow.com');
         Payment::query()->delete();
@@ -106,9 +100,9 @@ class PaymentTest extends TestCase
         $wallet = $user->wallets()->first();
 
         $vatRate = VatRate::create([
-                'start' => now()->subDay(),
-                'country' => 'US',
-                'rate' => 7.5,
+            'start' => now()->subDay(),
+            'country' => 'US',
+            'rate' => 7.5,
         ]);
 
         // Test required properties only
@@ -126,7 +120,7 @@ class PaymentTest extends TestCase
         $this->assertSame($payment1Array['id'], $payment1->id);
         $this->assertSame('', $payment1->provider);
         $this->assertSame('', $payment1->description);
-        $this->assertSame(null, $payment1->vat_rate_id);
+        $this->assertNull($payment1->vat_rate_id);
         $this->assertSame($payment1Array['amount'], $payment1->amount);
         $this->assertSame($payment1Array['amount'], $payment1->credit_amount);
         $this->assertSame($payment1Array['currency_amount'], $payment1->currency_amount);

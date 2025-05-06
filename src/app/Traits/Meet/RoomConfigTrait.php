@@ -36,9 +36,9 @@ trait RoomConfigTrait
             if ($key == 'password') {
                 if ($value === null || $value === '') {
                     $value = null;
-                } else {
-                    // TODO: Do we have to validate the password in any way?
                 }
+                // TODO: Do we have to validate the password in any way?
+
                 $this->setSetting($key, $value);
             } elseif ($key == 'locked' || $key == 'nomedia') {
                 $this->setSetting($key, $value ? 'true' : null);

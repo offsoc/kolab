@@ -2,25 +2,20 @@
 
 namespace Tests\Feature\Console\User;
 
+use App\User;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class UndegradeTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestUser('user-degrade-test@kolabnow.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('user-degrade-test@kolabnow.com');
 
@@ -42,7 +37,7 @@ class UndegradeTest extends TestCase
         $this->assertSame("User not found.", $output);
 
         // Create a user account for degrade/undegrade
-        $user = $this->getTestUser('user-degrade-test@kolabnow.com', ['status' => \App\User::STATUS_DEGRADED]);
+        $user = $this->getTestUser('user-degrade-test@kolabnow.com', ['status' => User::STATUS_DEGRADED]);
 
         $this->assertTrue($user->isDegraded());
 

@@ -12,8 +12,6 @@ class ItipNotificationMail extends Mailable
      * Create a new message instance.
      *
      * @param ItipNotificationParams $params Mail content parameters
-     *
-     * @return void
      */
     public function __construct(ItipNotificationParams $params)
     {

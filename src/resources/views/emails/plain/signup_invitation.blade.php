@@ -6,6 +6,6 @@
 
 {!! __('mail.signupinvitation-body2', $vars) !!}
 
--- 
+--
 {!! __('mail.footer1', $vars) !!}
 {!! __('mail.footer2', $vars) !!}

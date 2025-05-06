@@ -2,8 +2,6 @@
 
 namespace App\Observers\PowerDNS;
 
-use App\PowerDNS\Record;
-
 class RecordObserver
 {
     public function created($record)

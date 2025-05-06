@@ -11,10 +11,7 @@ use Tests\TestCase;
 
 class DomainsTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         self::useResellerUrl();
@@ -22,10 +19,7 @@ class DomainsTest extends TestCase
         $this->deleteTestDomain('domainscontroller.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('test1@domainscontroller.com');
         $this->deleteTestDomain('domainscontroller.com');
@@ -40,8 +34,8 @@ class DomainsTest extends TestCase
     {
         $reseller1 = $this->getTestUser('reseller@' . \config('app.domain'));
         $domain = $this->getTestDomain('domainscontroller.com', [
-                'status' => Domain::STATUS_NEW,
-                'type' => Domain::TYPE_EXTERNAL,
+            'status' => Domain::STATUS_NEW,
+            'type' => Domain::TYPE_EXTERNAL,
         ]);
 
         // THe end-point exists on the users controller, but not reseller's
@@ -150,15 +144,15 @@ class DomainsTest extends TestCase
         $reseller1 = $this->getTestUser('reseller@' . \config('app.domain'));
         $reseller2 = $this->getTestUser('reseller@sample-tenant.dev-local');
         $domain = $this->getTestDomain('domainscontroller.com', [
-                'status' => Domain::STATUS_NEW,
-                'type' => Domain::TYPE_EXTERNAL,
+            'status' => Domain::STATUS_NEW,
+            'type' => Domain::TYPE_EXTERNAL,
         ]);
 
         Entitlement::create([
-                'wallet_id' => $user->wallets()->first()->id,
-                'sku_id' => $sku_domain->id,
-                'entitleable_id' => $domain->id,
-                'entitleable_type' => Domain::class
+            'wallet_id' => $user->wallets()->first()->id,
+            'sku_id' => $sku_domain->id,
+            'entitleable_id' => $domain->id,
+            'entitleable_type' => Domain::class,
         ]);
 
         // Unauthorized access (user)
@@ -178,10 +172,10 @@ class DomainsTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertEquals($domain->id, $json['id']);
-        $this->assertEquals($domain->namespace, $json['namespace']);
-        $this->assertEquals($domain->status, $json['status']);
-        $this->assertEquals($domain->type, $json['type']);
+        $this->assertSame($domain->id, $json['id']);
+        $this->assertSame($domain->namespace, $json['namespace']);
+        $this->assertSame($domain->status, $json['status']);
+        $this->assertSame($domain->type, $json['type']);
         // Note: Other properties are being tested in the user controller tests
     }
 

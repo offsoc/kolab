@@ -20,7 +20,6 @@ class UserSetting extends Model
     /** @var list<string> The attributes that are mass assignable */
     protected $fillable = ['user_id', 'key', 'value'];
 
-
     /**
      * Check if the setting is used in any storage backend.
      */

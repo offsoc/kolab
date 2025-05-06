@@ -2,8 +2,10 @@
 
 namespace Tests\Browser\Pages\Meet;
 
+use App\Auth\SecondFactor;
 use Laravel\Dusk\Page;
 use PHPUnit\Framework\Assert;
+use Tests\Browser;
 
 class Room extends Page
 {
@@ -42,8 +44,6 @@ class Room extends Page
      * Assert that the browser is on the page.
      *
      * @param \Laravel\Dusk\Browser $browser The browser object
-     *
-     * @return void
      */
     public function assert($browser)
     {
@@ -99,8 +99,8 @@ class Room extends Page
     /**
      * Assert menu state.
      *
-     * @param \Tests\Browser $browser The browser object
-     * @param array          $menu    Menu items/state
+     * @param Browser $browser The browser object
+     * @param array   $menu    Menu items/state
      */
     public function assertToolbar($browser, array $menu): void
     {
@@ -114,9 +114,9 @@ class Room extends Page
     /**
      * Assert menu button state.
      *
-     * @param \Tests\Browser $browser The browser object
-     * @param string         $button  Button name
-     * @param int            $state   Expected button state (sum of BUTTON_* consts)
+     * @param Browser $browser The browser object
+     * @param string  $button  Button name
+     * @param int     $state   Expected button state (sum of BUTTON_* consts)
      */
     public function assertToolbarButtonState($browser, $button, $state): void
     {
@@ -144,16 +144,16 @@ class Room extends Page
     /**
      * Assert the <video> element's 'muted' property state
      *
-     * @param \Tests\Browser $browser  The browser object
-     * @param string         $selector Video element selector
-     * @param bool           $state    Expected state
+     * @param Browser $browser  The browser object
+     * @param string  $selector Video element selector
+     * @param bool    $state    Expected state
      */
     public function assertAudioMuted($browser, $selector, $state): void
     {
         $selector = addslashes($browser->resolver->format($selector));
 
         $result = $browser->script(
-            "var video = document.querySelector('$selector'); return video.muted"
+            "var video = document.querySelector('{$selector}'); return video.muted"
         );
 
         Assert::assertSame((bool) $result[0], $state);
@@ -162,9 +162,9 @@ class Room extends Page
     /**
      * Assert the participant icon type
      *
-     * @param \Tests\Browser $browser  The browser object
-     * @param string         $selector Element selector
-     * @param string         $type     Participant icon type
+     * @param Browser $browser  The browser object
+     * @param string  $selector Element selector
+     * @param string  $type     Participant icon type
      */
     public function assertUserIcon($browser, $selector, $type): void
     {
@@ -175,23 +175,23 @@ class Room extends Page
     /**
      * Set the nickname for the participant
      *
-     * @param \Tests\Browser $browser  The browser object
-     * @param string         $selector Participant element selector
-     * @param string         $nickname Nickname
+     * @param Browser $browser  The browser object
+     * @param string  $selector Participant element selector
+     * @param string  $nickname Nickname
      */
     public function setNickname($browser, $selector, $nickname): void
     {
-        $element = "$selector .meet-nickname .content";
+        $element = "{$selector} .meet-nickname .content";
 
-        $browser->click("$selector .meet-nickname")
-            ->waitFor("$selector .dropdown-menu")
-            ->assertSeeIn("$selector .dropdown-menu > .action-nickname", 'Nickname')
-            ->click("$selector .dropdown-menu > .action-nickname")
+        $browser->click("{$selector} .meet-nickname")
+            ->waitFor("{$selector} .dropdown-menu")
+            ->assertSeeIn("{$selector} .dropdown-menu > .action-nickname", 'Nickname')
+            ->click("{$selector} .dropdown-menu > .action-nickname")
             ->waitUntilMissing('.dropdown-menu')
             // Use script() because type() does not work with this contenteditable widget
             ->script(
-                "var element = document.querySelector('$element');"
-                . "element.innerText = '$nickname';"
+                "var element = document.querySelector('{$element}');"
+                . "element.innerText = '{$nickname}';"
                 . "element.dispatchEvent(new KeyboardEvent('keydown', { keyCode: 27 }))"
             );
     }
@@ -199,10 +199,10 @@ class Room extends Page
     /**
      * Submit logon form.
      *
-     * @param \Tests\Browser $browser  The browser object
-     * @param string         $username User name
-     * @param string         $password User password
-     * @param array          $config   Client-site config
+     * @param Browser $browser  The browser object
+     * @param string  $username User name
+     * @param string  $password User password
+     * @param array   $config   Client-site config
      */
     public function submitLogon($browser, $username, $password, $config = []): void
     {
@@ -210,7 +210,7 @@ class Room extends Page
             ->type('@login-password-input', $password);
 
         if ($username == 'ned@kolab.org') {
-            $code = \App\Auth\SecondFactor::code('ned@kolab.org');
+            $code = SecondFactor::code('ned@kolab.org');
             $browser->type('@login-second-factor-input', $code);
         }
 

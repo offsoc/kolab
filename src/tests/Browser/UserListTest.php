@@ -2,9 +2,7 @@
 
 namespace Tests\Browser;
 
-use App\User;
 use Tests\Browser;
-use Tests\Browser\Components\Toast;
 use Tests\Browser\Pages\Dashboard;
 use Tests\Browser\Pages\Home;
 use Tests\Browser\Pages\UserInfo;
@@ -13,18 +11,12 @@ use Tests\TestCaseDusk;
 
 class UserListTest extends TestCaseDusk
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         parent::tearDown();
     }
@@ -35,7 +27,7 @@ class UserListTest extends TestCaseDusk
     public function testListUnauth(): void
     {
         // Test that the page requires authentication
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit('/users')->on(new Home());
         });
     }
@@ -45,7 +37,7 @@ class UserListTest extends TestCaseDusk
      */
     public function testList(): void
     {
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             // Test that the page requires authentication
             // Test the list
             $browser->visit(new Home())
@@ -54,7 +46,7 @@ class UserListTest extends TestCaseDusk
                 ->assertSeeIn('@links .link-users', 'User accounts')
                 ->click('@links .link-users')
                 ->on(new UserList())
-                ->whenAvailable('@table', function (Browser $browser) {
+                ->whenAvailable('@table', static function (Browser $browser) {
                     $browser->waitFor('tbody tr')
                         ->assertElementsCount('tbody tr', 4)
                         ->assertSeeIn('tbody tr:nth-child(1) a', 'jack@kolab.org')
@@ -71,7 +63,7 @@ class UserListTest extends TestCaseDusk
                 ->type('@search input', 'jo')
                 ->click('@search button')
                 ->waitUntilMissing('@app .app-loader')
-                ->whenAvailable('@table', function (Browser $browser) {
+                ->whenAvailable('@table', static function (Browser $browser) {
                     $browser->waitFor('tbody tr')
                         ->assertElementsCount('tbody tr', 2)
                         ->assertSeeIn('tbody tr:nth-child(1) a', 'joe@kolab.org')
@@ -82,7 +74,7 @@ class UserListTest extends TestCaseDusk
                 ->type('@search input', 'jojo')
                 ->click('@search button')
                 ->waitUntilMissing('@app .app-loader')
-                ->whenAvailable('@table', function (Browser $browser) {
+                ->whenAvailable('@table', static function (Browser $browser) {
                     $browser->waitFor('tfoot tr')
                         ->assertSeeIn('tfoot tr', "There are no users in this account.");
                 })
@@ -90,7 +82,7 @@ class UserListTest extends TestCaseDusk
                 ->vueClear('@search input')
                 ->keys('@search input', '{enter}')
                 ->waitUntilMissing('@app .app-loader')
-                ->whenAvailable('@table', function (Browser $browser) {
+                ->whenAvailable('@table', static function (Browser $browser) {
                     $browser->waitFor('tbody tr')->assertElementsCount('tbody tr', 4);
                 });
 
@@ -99,7 +91,7 @@ class UserListTest extends TestCaseDusk
             $browser->click('@table tr:nth-child(3)')
                 ->on(new UserInfo())
                 ->assertSeeIn('#user-info .card-title', 'User account')
-                ->with('@general', function (Browser $browser) {
+                ->with('@general', static function (Browser $browser) {
                     $browser->assertValue('#email', 'john@kolab.org');
                 });
         });

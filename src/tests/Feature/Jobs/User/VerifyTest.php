@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Jobs\User;
 
+use App\Jobs\User\VerifyJob;
 use App\Support\Facades\IMAP;
 use App\User;
 use Illuminate\Support\Facades\Queue;
@@ -9,10 +10,7 @@ use Tests\TestCase;
 
 class VerifyTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -21,10 +19,7 @@ class VerifyTest extends TestCase
         $ned->save();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $ned = $this->getTestUser('ned@kolab.org');
         $ned->status |= User::STATUS_IMAP_READY;
@@ -41,7 +36,7 @@ class VerifyTest extends TestCase
         Queue::fake();
 
         // Test non-existing user ID
-        $job = (new \App\Jobs\User\VerifyJob(123))->withFakeQueueInteractions();
+        $job = (new VerifyJob(123))->withFakeQueueInteractions();
         $job->handle();
         $job->assertFailedWith("User 123 could not be found in the database.");
 
@@ -57,7 +52,7 @@ class VerifyTest extends TestCase
 
         IMAP::shouldReceive('verifyAccount')->once()->with($user->email)->andReturn(true);
 
-        $job = new \App\Jobs\User\VerifyJob($user->id);
+        $job = new VerifyJob($user->id);
         $job->handle();
 
         $user->refresh();
@@ -69,7 +64,7 @@ class VerifyTest extends TestCase
 
         IMAP::shouldReceive('verifyAccount')->once()->with($user->email)->andReturn(false);
 
-        $job = new \App\Jobs\User\VerifyJob($user->id);
+        $job = new VerifyJob($user->id);
         $job->handle();
 
         $this->assertFalse($user->fresh()->isImapReady());

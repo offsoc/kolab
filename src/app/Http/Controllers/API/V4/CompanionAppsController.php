@@ -2,15 +2,16 @@
 
 namespace App\Http\Controllers\API\V4;
 
+use App\CompanionApp;
 use App\Http\Controllers\ResourceController;
 use App\Utils;
-use App\Tenant;
-use Laravel\Passport\Passport;
-use Laravel\Passport\ClientRepository;
+use BaconQrCode;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use BaconQrCode;
+use Laravel\Passport\ClientRepository;
+use Laravel\Passport\Passport;
 
 class CompanionAppsController extends ResourceController
 {
@@ -19,11 +20,11 @@ class CompanionAppsController extends ResourceController
      *
      * @param string $id Companion app identifier
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function destroy($id)
     {
-        $companion = \App\CompanionApp::find($id);
+        $companion = CompanionApp::find($id);
         if (!$companion) {
             return $this->errorResponse(404);
         }
@@ -51,9 +52,7 @@ class CompanionAppsController extends ResourceController
     /**
      * Create a companion app.
      *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function store(Request $request)
     {
@@ -70,25 +69,25 @@ class CompanionAppsController extends ResourceController
             return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
         }
 
-        $app = \App\CompanionApp::create([
+        $app = CompanionApp::create([
             'name' => $request->name,
-            'user_id' =>  $user->id,
+            'user_id' => $user->id,
         ]);
 
         return response()->json([
             'status' => 'success',
             'message' => self::trans('app.companion-create-success'),
-            'id' => $app->id
+            'id' => $app->id,
         ]);
     }
 
     /**
-    * Register a companion app.
-    *
-    * @param \Illuminate\Http\Request $request The API request.
-    *
-    * @return \Illuminate\Http\JsonResponse The response
-    */
+     * Register a companion app.
+     *
+     * @param Request $request the API request
+     *
+     * @return JsonResponse The response
+     */
     public function register(Request $request)
     {
         $user = $this->guard()->user();
@@ -114,7 +113,7 @@ class CompanionAppsController extends ResourceController
 
         \Log::info("Registering app. Notification token: {$notificationToken} Device id: {$deviceId} Name: {$name}");
 
-        $app = \App\CompanionApp::find($companionId);
+        $app = CompanionApp::find($companionId);
         if (!$app) {
             return $this->errorResponse(404);
         }
@@ -145,7 +144,7 @@ class CompanionAppsController extends ResourceController
         $renderer_style = new BaconQrCode\Renderer\RendererStyle\RendererStyle(300, 1);
         $renderer_image = new BaconQrCode\Renderer\Image\SvgImageBackEnd();
         $renderer = new BaconQrCode\Renderer\ImageRenderer($renderer_style, $renderer_image);
-        $writer   = new BaconQrCode\Writer($renderer);
+        $writer = new BaconQrCode\Writer($renderer);
 
         return 'data:image/svg+xml;base64,' . base64_encode($writer->writeString($data));
     }
@@ -153,17 +152,17 @@ class CompanionAppsController extends ResourceController
     /**
      * List devices.
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function index()
     {
         $user = $this->guard()->user();
         $search = trim(request()->input('search'));
-        $page = intval(request()->input('page')) ?: 1;
+        $page = (int) (request()->input('page')) ?: 1;
         $pageSize = 20;
         $hasMore = false;
 
-        $result = \App\CompanionApp::where('user_id', $user->id);
+        $result = CompanionApp::where('user_id', $user->id);
 
         $result = $result->orderBy('created_at')
             ->limit($pageSize + 1)
@@ -177,9 +176,9 @@ class CompanionAppsController extends ResourceController
 
         // Process the result
         $result = $result->map(
-            function ($device) {
+            static function ($device) {
                 return array_merge($device->toArray(), [
-                    'isReady' => $device->isPaired()
+                    'isReady' => $device->isPaired(),
                 ]);
             }
         );
@@ -198,11 +197,11 @@ class CompanionAppsController extends ResourceController
      *
      * @param string $id CompanionApp identifier
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function show($id)
     {
-        $result = \App\CompanionApp::find($id);
+        $result = CompanionApp::find($id);
         if (!$result) {
             return $this->errorResponse(404);
         }
@@ -214,19 +213,19 @@ class CompanionAppsController extends ResourceController
 
         return response()->json(array_merge($result->toArray(), [
             'statusInfo' => [
-                'isReady' => $result->isPaired()
-            ]
+                'isReady' => $result->isPaired(),
+            ],
         ]));
     }
 
     /**
      * Retrieve the pairing information encoded into a qrcode image.
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function pairing($id)
     {
-        $result = \App\CompanionApp::find($id);
+        $result = CompanionApp::find($id);
         if (!$result) {
             return $this->errorResponse(404);
         }
@@ -247,7 +246,7 @@ class CompanionAppsController extends ResourceController
                 'personal_access_client' => 0,
                 'password_client' => 1,
                 'revoked' => false,
-                'allowed_scopes' => ["mfa", "fs"]
+                'allowed_scopes' => ["mfa", "fs"],
             ]);
             $client->save();
 

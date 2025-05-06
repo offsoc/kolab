@@ -2,7 +2,7 @@
 
 namespace Tests\Browser\Reseller;
 
-use App\Wallet;
+use App\Utils;
 use Tests\Browser;
 use Tests\Browser\Components\Dialog;
 use Tests\Browser\Components\Toast;
@@ -14,10 +14,7 @@ use Tests\TestCaseDusk;
 
 class PaymentMollieTest extends TestCaseDusk
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -28,10 +25,7 @@ class PaymentMollieTest extends TestCaseDusk
         self::useResellerUrl();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         if (\config('services.mollie.key')) {
             $user = $this->getTestUser('reseller@' . \config('app.domain'));
@@ -60,20 +54,20 @@ class PaymentMollieTest extends TestCaseDusk
 
             $browser->withConfig(['services.payment_provider' => 'mollie'])
                 ->visit(new Home())
-                ->submitLogon($user->email, \App\Utils::generatePassphrase(), true)
+                ->submitLogon($user->email, Utils::generatePassphrase(), true)
                 ->on(new Dashboard())
                 ->click('@links .link-wallet')
                 ->on(new WalletPage())
                 ->assertSeeIn('@main button', 'Add credit')
                 ->click('@main button')
-                ->with(new Dialog('@payment-dialog'), function (Browser $browser) {
+                ->with(new Dialog('@payment-dialog'), static function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Top up your wallet')
                         ->waitFor('#payment-method-selection .link-creditcard svg')
                         ->waitFor('#payment-method-selection .link-paypal svg')
                         ->waitFor('#payment-method-selection .link-banktransfer svg')
                         ->click('#payment-method-selection .link-creditcard');
                 })
-                ->with(new Dialog('@payment-dialog'), function (Browser $browser) {
+                ->with(new Dialog('@payment-dialog'), static function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Top up your wallet')
                         ->assertFocused('#amount')
                         ->assertSeeIn('@button-cancel', 'Cancel')
@@ -95,8 +89,8 @@ class PaymentMollieTest extends TestCaseDusk
                 ->submitPayment()
                 ->waitForLocation('/wallet')
                 ->on(new WalletPage());
-                // Note: This depends on Mollie to Cockcpit communication (webhook)
-                // $browser->assertSeeIn('@main .card-title', 'Account balance 12,34 CHF');
+            // Note: This depends on Mollie to Cockcpit communication (webhook)
+            // $browser->assertSeeIn('@main .card-title', 'Account balance 12,34 CHF');
 
             $this->assertSame(1, $wallet->payments()->count());
         });

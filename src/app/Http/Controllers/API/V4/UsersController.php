@@ -2,15 +2,25 @@
 
 namespace App\Http\Controllers\API\V4;
 
+use App\Domain;
+use App\Entitlement;
+use App\Group;
 use App\Http\Controllers\API\V4\User\DelegationTrait;
 use App\Http\Controllers\RelationController;
-use App\Domain;
+use App\Jobs\User\CreateJob;
 use App\License;
+use App\Package;
 use App\Plan;
+use App\Providers\PaymentProvider;
+use App\Resource;
 use App\Rules\Password;
 use App\Rules\UserEmailLocal;
+use App\SharedFolder;
 use App\Sku;
 use App\User;
+use App\VerificationCode;
+use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -36,7 +46,7 @@ class UsersController extends RelationController
      * On user create it is filled with a user or group object to force-delete
      * before the creation of a new user record is possible.
      *
-     * @var \App\User|\App\Group|null
+     * @var User|Group|null
      */
     protected $deleteBeforeCreate;
 
@@ -49,7 +59,7 @@ class UsersController extends RelationController
     /** @var array Common object properties in the API response */
     protected $objectProps = ['email'];
 
-    /** @var ?\App\VerificationCode Password reset code to activate on user create/update */
+    /** @var ?VerificationCode Password reset code to activate on user create/update */
     protected $passCode;
 
     /**
@@ -57,20 +67,20 @@ class UsersController extends RelationController
      *
      * The user-entitlements billed to the current user wallet(s)
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function index()
     {
         $user = $this->guard()->user();
         $search = trim(request()->input('search'));
-        $page = intval(request()->input('page')) ?: 1;
+        $page = (int) (request()->input('page')) ?: 1;
         $pageSize = 20;
         $hasMore = false;
 
         $result = $user->users();
 
         // Search by user email, alias or name
-        if (strlen($search) > 0) {
+        if ($search !== '') {
             // thanks to cloning we skip some extra queries in $user->users()
             $allUsers1 = clone $result;
             $allUsers2 = clone $result;
@@ -119,7 +129,7 @@ class UsersController extends RelationController
      * @param string $id   The account to get licenses for
      * @param string $type License type
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function licenses(string $id, string $type)
     {
@@ -157,11 +167,11 @@ class UsersController extends RelationController
         }
 
         // Slim down the result set
-        $licenses = $licenses->map(function ($license) {
-                return [
-                    'key' => $license->key,
-                    'type' => $license->type,
-                ];
+        $licenses = $licenses->map(static function ($license) {
+            return [
+                'key' => $license->key,
+                'type' => $license->type,
+            ];
         });
 
         return response()->json([
@@ -174,9 +184,9 @@ class UsersController extends RelationController
     /**
      * Display information on the user account specified by $id.
      *
-     * @param string $id The account to show information for.
+     * @param string $id the account to show information for
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function show($id)
     {
@@ -192,12 +202,12 @@ class UsersController extends RelationController
 
         $response = $this->userResponse($user);
 
-        $response['skus'] = \App\Entitlement::objectEntitlementsSummary($user);
+        $response['skus'] = Entitlement::objectEntitlementsSummary($user);
         $response['config'] = $user->getConfig();
         $response['aliases'] = $user->aliases()->pluck('alias')->all();
 
         $code = $user->verificationcodes()->where('active', true)
-            ->where('expires_at', '>', \Carbon\Carbon::now())
+            ->where('expires_at', '>', Carbon::now())
             ->first();
 
         if ($code) {
@@ -210,7 +220,7 @@ class UsersController extends RelationController
     /**
      * User status (extended) information
      *
-     * @param \App\User $user User object
+     * @param User $user User object
      *
      * @return array Status information
      */
@@ -265,9 +275,9 @@ class UsersController extends RelationController
     /**
      * Create a new user record.
      *
-     * @param \Illuminate\Http\Request $request The API request.
+     * @param Request $request the API request
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function store(Request $request)
     {
@@ -286,7 +296,7 @@ class UsersController extends RelationController
 
         if (
             empty($request->package)
-            || !($package = \App\Package::withObjectTenantContext($owner)->find($request->package))
+            || !($package = Package::withObjectTenantContext($owner)->find($request->package))
         ) {
             $errors = ['package' => self::trans('validation.packagerequired')];
             return response()->json(['status' => 'error', 'errors' => $errors], 422);
@@ -306,9 +316,9 @@ class UsersController extends RelationController
 
         // Create user record
         $user = User::create([
-                'email' => $request->email,
-                'password' => $request->password,
-                'status' => $owner->isRestricted() ? User::STATUS_RESTRICTED : 0,
+            'email' => $request->email,
+            'password' => $request->password,
+            'status' => $owner->isRestricted() ? User::STATUS_RESTRICTED : 0,
         ]);
 
         $this->activatePassCode($user);
@@ -326,18 +336,18 @@ class UsersController extends RelationController
         DB::commit();
 
         return response()->json([
-                'status' => 'success',
-                'message' => self::trans('app.user-create-success'),
+            'status' => 'success',
+            'message' => self::trans('app.user-create-success'),
         ]);
     }
 
     /**
      * Update user data.
      *
-     * @param \Illuminate\Http\Request $request The API request.
-     * @param string                   $id      User identifier
+     * @param Request $request the API request
+     * @param string  $id      User identifier
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function update(Request $request, $id)
     {
@@ -398,7 +408,7 @@ class UsersController extends RelationController
     /**
      * Create a response data array for specified user.
      *
-     * @param \App\User $user User object
+     * @param User $user User object
      *
      * @return array Response data
      */
@@ -421,7 +431,7 @@ class UsersController extends RelationController
         $response['statusInfo'] = self::statusInfo($user);
 
         // Add more info to the wallet object output
-        $map_func = function ($wallet) use ($user) {
+        $map_func = static function ($wallet) use ($user) {
             $result = $wallet->toArray();
 
             if ($wallet->discount) {
@@ -433,7 +443,7 @@ class UsersController extends RelationController
                 $result['user_email'] = $wallet->owner->email;
             }
 
-            $provider = \App\Providers\PaymentProvider::factory($wallet);
+            $provider = PaymentProvider::factory($wallet);
             $result['provider'] = $provider->name();
 
             return $result;
@@ -450,7 +460,7 @@ class UsersController extends RelationController
     /**
      * Prepare user statuses for the UI
      *
-     * @param \App\User $user User object
+     * @param User $user User object
      *
      * @return array Statuses array
      */
@@ -466,11 +476,11 @@ class UsersController extends RelationController
     /**
      * Validate user input
      *
-     * @param \Illuminate\Http\Request $request  The API request.
-     * @param \App\User|null           $user     User identifier
-     * @param array                    $settings User settings (from the request)
+     * @param Request   $request  the API request
+     * @param User|null $user     User identifier
+     * @param array     $settings User settings (from the request)
      *
-     * @return \Illuminate\Http\JsonResponse|null The error response on error
+     * @return JsonResponse|null The error response on error
      */
     protected function validateUserRequest(Request $request, $user, &$settings = [])
     {
@@ -577,8 +587,8 @@ class UsersController extends RelationController
     /**
      * Execute (synchronously) specified step in a user setup process.
      *
-     * @param \App\User $user User object
-     * @param string    $step Step identifier (as in self::statusInfo())
+     * @param User   $user User object
+     * @param string $step Step identifier (as in self::statusInfo())
      *
      * @return bool|null True if the execution succeeded, False if not, Null when
      *                   the job has been sent to the worker (result unknown)
@@ -586,7 +596,7 @@ class UsersController extends RelationController
     public static function execProcessStep(User $user, string $step): ?bool
     {
         try {
-            if (strpos($step, 'domain-') === 0) {
+            if (str_starts_with($step, 'domain-')) {
                 return DomainsController::execProcessStep($user->domain(), $step);
             }
 
@@ -594,7 +604,7 @@ class UsersController extends RelationController
                 case 'user-ldap-ready':
                 case 'user-imap-ready':
                     // Use worker to do the job, frontend might not have the IMAP admin credentials
-                    \App\Jobs\User\CreateJob::dispatch($user->id);
+                    CreateJob::dispatch($user->id);
                     return null;
             }
         } catch (\Exception $e) {
@@ -607,24 +617,24 @@ class UsersController extends RelationController
     /**
      * Email address validation for use as a user mailbox (login).
      *
-     * @param string      $email   Email address
-     * @param \App\User   $user    The account owner
-     * @param mixed       $deleted Filled with an instance of a deleted model object
-     *                             with the specified email address, if exists
+     * @param string $email   Email address
+     * @param User   $user    The account owner
+     * @param mixed  $deleted Filled with an instance of a deleted model object
+     *                        with the specified email address, if exists
      *
      * @return ?string Error message on validation error
      */
-    public static function validateEmail(string $email, \App\User $user, &$deleted = null): ?string
+    public static function validateEmail(string $email, User $user, &$deleted = null): ?string
     {
         $deleted = null;
 
-        if (strpos($email, '@') === false) {
+        if (!str_contains($email, '@')) {
             return self::trans('validation.entryinvalid', ['attribute' => 'email']);
         }
 
-        list($login, $domain) = explode('@', Str::lower($email));
+        [$login, $domain] = explode('@', Str::lower($email));
 
-        if (strlen($login) === 0 || strlen($domain) === 0) {
+        if ($login === '' || $domain === '') {
             return self::trans('validation.entryinvalid', ['attribute' => 'email']);
         }
 
@@ -653,9 +663,9 @@ class UsersController extends RelationController
         // Check if a user/group/resource/shared folder with specified address already exists
         if (
             ($existing = User::emailExists($email, true))
-            || ($existing = \App\Group::emailExists($email, true))
-            || ($existing = \App\Resource::emailExists($email, true))
-            || ($existing = \App\SharedFolder::emailExists($email, true))
+            || ($existing = Group::emailExists($email, true))
+            || ($existing = Resource::emailExists($email, true))
+            || ($existing = SharedFolder::emailExists($email, true))
         ) {
             // If this is a deleted user/group/resource/folder in the same custom domain
             // we'll force delete it before creating the target user
@@ -667,7 +677,7 @@ class UsersController extends RelationController
         }
 
         // Check if an alias with specified address already exists.
-        if (User::aliasExists($email) || \App\SharedFolder::aliasExists($email)) {
+        if (User::aliasExists($email) || SharedFolder::aliasExists($email)) {
             return self::trans('validation.entryexists', ['attribute' => 'email']);
         }
 
@@ -677,20 +687,20 @@ class UsersController extends RelationController
     /**
      * Email address validation for use as an alias.
      *
-     * @param string    $email Email address
-     * @param \App\User $user  The account owner
+     * @param string $email Email address
+     * @param User   $user  The account owner
      *
      * @return ?string Error message on validation error
      */
-    public static function validateAlias(string $email, \App\User $user): ?string
+    public static function validateAlias(string $email, User $user): ?string
     {
-        if (strpos($email, '@') === false) {
+        if (!str_contains($email, '@')) {
             return self::trans('validation.entryinvalid', ['attribute' => 'alias']);
         }
 
-        list($login, $domain) = explode('@', Str::lower($email));
+        [$login, $domain] = explode('@', Str::lower($email));
 
-        if (strlen($login) === 0 || strlen($domain) === 0) {
+        if ($login === '' || $domain === '') {
             return self::trans('validation.entryinvalid', ['attribute' => 'alias']);
         }
 
@@ -726,15 +736,15 @@ class UsersController extends RelationController
 
         // Check if a group/resource/shared folder with specified address already exists
         if (
-            \App\Group::emailExists($email)
-            || \App\Resource::emailExists($email)
-            || \App\SharedFolder::emailExists($email)
+            Group::emailExists($email)
+            || Resource::emailExists($email)
+            || SharedFolder::emailExists($email)
         ) {
             return self::trans('validation.entryexists', ['attribute' => 'alias']);
         }
 
         // Check if an alias with specified address already exists
-        if (User::aliasExists($email) || \App\SharedFolder::aliasExists($email)) {
+        if (User::aliasExists($email) || SharedFolder::aliasExists($email)) {
             // Allow assigning the same alias to a user in the same group account,
             // but only for non-public domains
             if ($domain->isPublic()) {
@@ -748,7 +758,7 @@ class UsersController extends RelationController
     /**
      * Activate password reset code (if set), and assign it to a user.
      *
-     * @param \App\User $user The user
+     * @param User $user The user
      */
     protected function activatePassCode(User $user): void
     {

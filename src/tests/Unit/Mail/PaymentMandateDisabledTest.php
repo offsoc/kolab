@@ -5,6 +5,7 @@ namespace Tests\Unit\Mail;
 use App\Mail\PaymentMandateDisabled;
 use App\Tenant;
 use App\User;
+use App\Utils;
 use App\Wallet;
 use Tests\TestCase;
 
@@ -25,28 +26,28 @@ class PaymentMandateDisabledTest extends TestCase
         $html = $mail['html'];
         $plain = $mail['plain'];
 
-        $walletUrl = \App\Utils::serviceUrl('/wallet');
+        $walletUrl = Utils::serviceUrl('/wallet');
         $walletLink = sprintf('<a href="%s">%s</a>', $walletUrl, $walletUrl);
         $supportUrl = \config('app.support_url');
         $supportLink = sprintf('<a href="%s">%s</a>', $supportUrl, $supportUrl);
         $appName = Tenant::getConfig($user->tenant_id, 'app.name');
 
-        $this->assertSame("$appName Auto-payment Problem", $mail['subject']);
+        $this->assertSame("{$appName} Auto-payment Problem", $mail['subject']);
 
         $this->assertStringStartsWith('<!DOCTYPE html>', $html);
         $this->assertTrue(strpos($html, $user->name(true)) > 0);
         $this->assertTrue(strpos($html, $walletLink) > 0);
         $this->assertTrue(strpos($html, $supportLink) > 0);
-        $this->assertTrue(strpos($html, "$appName Support") > 0);
+        $this->assertTrue(strpos($html, "{$appName} Support") > 0);
         $this->assertTrue(strpos($html, "Your {$user->email} account balance") > 0);
-        $this->assertTrue(strpos($html, "$appName Team") > 0);
+        $this->assertTrue(strpos($html, "{$appName} Team") > 0);
 
         $this->assertStringStartsWith('Dear ' . $user->name(true), $plain);
         $this->assertTrue(strpos($plain, $walletUrl) > 0);
         $this->assertTrue(strpos($plain, $supportUrl) > 0);
-        $this->assertTrue(strpos($plain, "$appName Support") > 0);
+        $this->assertTrue(strpos($plain, "{$appName} Support") > 0);
         $this->assertTrue(strpos($plain, "Your {$user->email} account balance") > 0);
-        $this->assertTrue(strpos($plain, "$appName Team") > 0);
+        $this->assertTrue(strpos($plain, "{$appName} Team") > 0);
     }
 
     /**
@@ -61,7 +62,7 @@ class PaymentMandateDisabledTest extends TestCase
 
         $mail = new PaymentMandateDisabled($wallet, $user);
 
-        $this->assertSame("$appName Auto-payment Problem", $mail->getSubject());
+        $this->assertSame("{$appName} Auto-payment Problem", $mail->getSubject());
         $this->assertSame($user, $mail->getUser());
     }
 }

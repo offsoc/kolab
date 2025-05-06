@@ -9,10 +9,7 @@ use Tests\TestCase;
 
 class RoundcubeTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -20,10 +17,7 @@ class RoundcubeTest extends TestCase
         $this->deleteTestUser('roundcube-delegatee@' . \config('app.domain'));
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('roundcube@' . \config('app.domain'));
         $this->deleteTestUser('roundcube-delegatee@' . \config('app.domain'));
@@ -94,7 +88,7 @@ class RoundcubeTest extends TestCase
         $this->assertSame($user->email, $idents[0]->email);
         $this->assertSame('First Last', $idents[0]->name);
         $this->assertSame(0, $idents[0]->standard);
-        $this->assertSame(null, $idents[0]->signature);
+        $this->assertNull($idents[0]->signature);
 
         // Test with no delegator user record (yet)
         $db->table('identities')->where('user_id', $delegatee_id)->where('email', $user->email)->delete();
@@ -106,7 +100,7 @@ class RoundcubeTest extends TestCase
         $this->assertSame($user->email, $idents[0]->email);
         $this->assertSame('First Last', $idents[0]->name);
         $this->assertSame(0, $idents[0]->standard);
-        $this->assertSame(null, $idents[0]->signature);
+        $this->assertNull($idents[0]->signature);
 
         // Test with delegator user record existing and his identity too
         $db->table('identities')->where('user_id', $delegatee_id)->where('email', $user->email)->delete();
@@ -120,7 +114,7 @@ class RoundcubeTest extends TestCase
         $this->assertCount(1, $idents);
         $this->assertSame($user->email, $idents[0]->email);
         $this->assertSame('Test', $idents[0]->name);
-        $this->assertSame(null, $idents[0]->signature);
+        $this->assertNull($idents[0]->signature);
 
         // TODO: signatures copying?
     }

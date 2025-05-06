@@ -5,6 +5,7 @@ namespace App;
 use App\Traits\BelongsToTenantTrait;
 use App\Traits\UuidStrKeyTrait;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Spatie\Translatable\HasTranslations;
 
 /**
@@ -24,12 +25,12 @@ use Spatie\Translatable\HasTranslations;
  *
  * Selecting a package will therefore create a set of entitlments from SKUs.
  *
- * @property string  $description
- * @property int     $discount_rate
- * @property string  $id
- * @property string  $name
- * @property ?int    $tenant_id
- * @property string  $title
+ * @property string $description
+ * @property int    $discount_rate
+ * @property string $id
+ * @property string $name
+ * @property ?int   $tenant_id
+ * @property string $title
  */
 class Package extends Model
 {
@@ -62,7 +63,7 @@ class Package extends Model
      * NOTE: This results in the overall list price and foregoes additional wallet discount
      * deductions.
      *
-     * @return int The costs in cents.
+     * @return int the costs in cents
      */
     public function cost()
     {
@@ -93,7 +94,7 @@ class Package extends Model
     /**
      * SKUs of this package.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<Sku, $this, PackageSku>
+     * @return BelongsToMany<Sku, $this, PackageSku>
      */
     public function skus()
     {

@@ -10,14 +10,13 @@ use App\Support\Facades\Roundcube;
 
 class CreateJob extends UserJob
 {
-    /** @var int $delegationId Delegation identifier */
+    /** @var int Delegation identifier */
     protected $delegationId;
-
 
     /**
      * Create a new job instance.
      *
-     * @param int $delegationId The ID for the delegation to create.
+     * @param int $delegationId the ID for the delegation to create
      */
     public function __construct(int $delegationId)
     {
@@ -34,7 +33,6 @@ class CreateJob extends UserJob
     /**
      * Execute the job.
      *
-     * @return void
      * @throws \Exception
      */
     public function handle()

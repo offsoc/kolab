@@ -2,8 +2,8 @@
 
 namespace App\Rules;
 
+use App\User;
 use Illuminate\Contracts\Validation\Rule;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
 class ResourceName implements Rule
@@ -12,13 +12,13 @@ class ResourceName implements Rule
     private $owner;
     private $domain;
 
-    private const FORBIDDEN_CHARS = '+/^%*!`@(){}|\\?<;"';
+    private const FORBIDDEN_CHARS = '+/^%*!`@(){}|\?<;"';
 
     /**
      * Class constructor.
      *
-     * @param \App\User $owner  The account owner
-     * @param string    $domain The domain name of the group
+     * @param User   $owner  The account owner
+     * @param string $domain The domain name of the group
      */
     public function __construct($owner, $domain)
     {
@@ -31,8 +31,6 @@ class ResourceName implements Rule
      *
      * @param string $attribute Attribute name
      * @param mixed  $name      Resource name input
-     *
-     * @return bool
      */
     public function passes($attribute, $name): bool
     {
@@ -75,8 +73,6 @@ class ResourceName implements Rule
 
     /**
      * Get the validation error message.
-     *
-     * @return string
      */
     public function message(): ?string
     {

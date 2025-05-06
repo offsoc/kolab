@@ -14,7 +14,6 @@ class LDAP
     /** @var ?\Net_LDAP3 LDAP connection object */
     protected static $ldap;
 
-
     /**
      * Starts a new LDAP connection that will be used by all methods
      * until you call self::disconnect() explicitely. Normally every
@@ -56,19 +55,19 @@ class LDAP
 
         $result = $ldap->search($mgmtRootDN, '', 'base');
         if (!$result || $result->count() != 1) {
-            self::throwException($ldap, "Failed to find the configured management domain $mgmtRootDN");
+            self::throwException($ldap, "Failed to find the configured management domain {$mgmtRootDN}");
         }
 
         $result = $ldap->search($hostedRootDN, '', 'base');
         if (!$result || $result->count() != 1) {
-            self::throwException($ldap, "Failed to find the configured hosted domain $hostedRootDN");
+            self::throwException($ldap, "Failed to find the configured hosted domain {$hostedRootDN}");
         }
     }
 
     /**
      * Create a domain in LDAP.
      *
-     * @param \App\Domain $domain The domain to create.
+     * @param Domain $domain the domain to create
      *
      * @throws \Exception
      */
@@ -97,7 +96,7 @@ class LDAP
             '(targetattr = "*")'
             . '(version 3.0;acl "Kolab Administrators";allow (all)'
             . '(roledn = "ldap:///cn=kolab-admin,' . $domainBaseDN
-            . ' || ldap:///cn=kolab-admin,' . $mgmtRootDN . '");)'
+            . ' || ldap:///cn=kolab-admin,' . $mgmtRootDN . '");)',
         ];
 
         $entry = [
@@ -107,7 +106,7 @@ class LDAP
             'objectclass' => [
                 'top',
                 'domainrelatedobject',
-                'inetdomain'
+                'inetdomain',
             ],
         ];
 
@@ -129,12 +128,12 @@ class LDAP
             'description' => $domain->namespace,
             'objectclass' => [
                 'top',
-                'organizationalunit'
+                'organizationalunit',
             ],
             'ou' => $domain->namespace,
         ];
 
-        $entry['aci'] = array(
+        $entry['aci'] = [
             '(targetattr = "*")'
             . '(version 3.0;acl "Deny Unauthorized"; deny (all)'
             . '(userdn != "ldap:///uid=kolab-service,ou=Special Users,' . $mgmtRootDN
@@ -163,7 +162,7 @@ class LDAP
             '(target = "ldap:///cn=*,' . $domainBaseDN . '")(targetattr="objectclass || cn")'
             . '(version 3.0;acl "Allow Domain Role Registration"; allow (add)'
             . '(userdn = "ldap:///uid=kolab-service,ou=Special Users,' . $mgmtRootDN . '");)',
-        );
+        ];
 
         if (!$ldap->get_entry($domainBaseDN)) {
             self::addEntry(
@@ -182,8 +181,8 @@ class LDAP
                     'description' => $item,
                     'objectclass' => [
                         'top',
-                        'organizationalunit'
-                    ]
+                        'organizationalunit',
+                    ],
                 ];
 
                 self::addEntry(
@@ -206,8 +205,8 @@ class LDAP
                         'ldapsubentry',
                         'nsmanagedroledefinition',
                         'nsroledefinition',
-                        'nssimpleroledefinition'
-                    ]
+                        'nssimpleroledefinition',
+                    ],
                 ];
 
                 self::addEntry(
@@ -229,7 +228,7 @@ class LDAP
     /**
      * Create a group in LDAP.
      *
-     * @param \App\Group $group The group to create.
+     * @param Group $group the group to create
      *
      * @throws \Exception
      */
@@ -247,7 +246,7 @@ class LDAP
             'objectclass' => [
                 'top',
                 'groupofuniquenames',
-                'kolabgroupofuniquenames'
+                'kolabgroupofuniquenames',
             ],
         ];
 
@@ -270,7 +269,7 @@ class LDAP
     /**
      * Create a resource in LDAP.
      *
-     * @param \App\Resource $resource The resource to create.
+     * @param Resource $resource the resource to create
      *
      * @throws \Exception
      */
@@ -313,7 +312,7 @@ class LDAP
     /**
      * Create a shared folder in LDAP.
      *
-     * @param \App\SharedFolder $folder The shared folder to create.
+     * @param SharedFolder $folder the shared folder to create
      *
      * @throws \Exception
      */
@@ -369,7 +368,7 @@ class LDAP
      *
      * 3) The Directory Manager account.
      *
-     * @param \App\User $user The user account to create.
+     * @param User $user the user account to create
      *
      * @throws \Exception
      */
@@ -385,11 +384,11 @@ class LDAP
                 'inetuser',
                 'kolabinetorgperson',
                 'mailrecipient',
-                'person'
+                'person',
             ],
             'mail' => $user->email,
             'uid' => $user->email,
-            'nsroledn' => []
+            'nsroledn' => [],
         ];
 
         if (!self::getUserEntry($ldap, $user->email, $dn)) {
@@ -415,7 +414,7 @@ class LDAP
     /**
      * Delete a domain from LDAP.
      *
-     * @param \App\Domain $domain The domain to delete
+     * @param Domain $domain The domain to delete
      *
      * @throws \Exception
      */
@@ -458,7 +457,7 @@ class LDAP
     /**
      * Delete a group from LDAP.
      *
-     * @param \App\Group $group The group to delete.
+     * @param Group $group the group to delete
      *
      * @throws \Exception
      */
@@ -486,7 +485,7 @@ class LDAP
     /**
      * Delete a resource from LDAP.
      *
-     * @param \App\Resource $resource The resource to delete.
+     * @param Resource $resource the resource to delete
      *
      * @throws \Exception
      */
@@ -514,7 +513,7 @@ class LDAP
     /**
      * Delete a shared folder from LDAP.
      *
-     * @param \App\SharedFolder $folder The shared folder to delete.
+     * @param SharedFolder $folder the shared folder to delete
      *
      * @throws \Exception
      */
@@ -542,7 +541,7 @@ class LDAP
     /**
      * Delete a user from LDAP.
      *
-     * @param \App\User $user The user account to delete.
+     * @param User $user the user account to delete
      *
      * @throws \Exception
      */
@@ -573,6 +572,7 @@ class LDAP
      * @param string $namespace The domain name
      *
      * @return array|false|null
+     *
      * @throws \Exception
      */
     public static function getDomain(string $namespace)
@@ -596,9 +596,10 @@ class LDAP
     /**
      * Get a group data from LDAP.
      *
-     * @param string $email The group email.
+     * @param string $email the group email
      *
      * @return array|false|null
+     *
      * @throws \Exception
      */
     public static function getGroup(string $email)
@@ -618,9 +619,10 @@ class LDAP
     /**
      * Get a resource data from LDAP.
      *
-     * @param string $email The resource email.
+     * @param string $email the resource email
      *
      * @return array|false|null
+     *
      * @throws \Exception
      */
     public static function getResource(string $email)
@@ -640,9 +642,10 @@ class LDAP
     /**
      * Get a shared folder data from LDAP.
      *
-     * @param string $email The resource email.
+     * @param string $email the resource email
      *
      * @return array|false|null
+     *
      * @throws \Exception
      */
     public static function getSharedFolder(string $email)
@@ -662,9 +665,10 @@ class LDAP
     /**
      * Get a user data from LDAP.
      *
-     * @param string $email The user email.
+     * @param string $email the user email
      *
      * @return array|false|null
+     *
      * @throws \Exception
      */
     public static function getUser(string $email)
@@ -684,7 +688,7 @@ class LDAP
     /**
      * Update a domain in LDAP.
      *
-     * @param \App\Domain $domain The domain to update.
+     * @param Domain $domain the domain to update
      *
      * @throws \Exception
      */
@@ -728,7 +732,7 @@ class LDAP
     /**
      * Update a group in LDAP.
      *
-     * @param \App\Group $group The group to update
+     * @param Group $group The group to update
      *
      * @throws \Exception
      */
@@ -765,7 +769,7 @@ class LDAP
     /**
      * Update a resource in LDAP.
      *
-     * @param \App\Resource $resource The resource to update
+     * @param Resource $resource The resource to update
      *
      * @throws \Exception
      */
@@ -802,7 +806,7 @@ class LDAP
     /**
      * Update a shared folder in LDAP.
      *
-     * @param \App\SharedFolder $folder The shared folder to update
+     * @param SharedFolder $folder The shared folder to update
      *
      * @throws \Exception
      */
@@ -839,7 +843,7 @@ class LDAP
     /**
      * Update a user in LDAP.
      *
-     * @param \App\User $user The user account to update.
+     * @param User $user the user account to update
      *
      * @throws \Exception
      */
@@ -945,7 +949,7 @@ class LDAP
         $validMembers = [];
 
         foreach ($group->members as $member) {
-            list($local, $domainName) = explode('@', $member);
+            [$local, $domainName] = explode('@', $member);
 
             $memberDN = "uid={$member},ou=People,{$domainBaseDN}";
             $memberEntry = $ldap->get_entry($memberDN);
@@ -964,9 +968,9 @@ class LDAP
                         'top',
                         'inetorgperson',
                         'organizationalperson',
-                        'person'
+                        'person',
                     ],
-                    'sn' => 'unknown'
+                    'sn' => 'unknown',
                 ];
 
                 $ldap->add_entry($memberDN, $memberEntry);
@@ -1096,11 +1100,9 @@ class LDAP
             switch ($entitlement->sku->title) {
                 case "mailbox":
                     break;
-
                 case "storage":
                     $entry['mailquota'] += 1048576;
                     break;
-
                 default:
                     $roles[] = $entitlement->sku->title;
                     break;
@@ -1154,7 +1156,7 @@ class LDAP
      * @param string     $email Group email (mail)
      * @param string     $dn    Reference to group DN
      *
-     * @return null|array Group entry, NULL if not found
+     * @return array|null Group entry, NULL if not found
      */
     private static function getGroupEntry($ldap, $email, &$dn = null)
     {
@@ -1166,7 +1168,7 @@ class LDAP
         // For groups we're using search() instead of get_entry() because
         // a group name is not constant, so e.g. on update we might have
         // the new name, but not the old one. Email address is constant.
-        return self::searchEntry($ldap, $base_dn, "(mail=$email)", $attrs, $dn);
+        return self::searchEntry($ldap, $base_dn, "(mail={$email})", $attrs, $dn);
     }
 
     /**
@@ -1176,7 +1178,7 @@ class LDAP
      * @param string     $email Resource email (mail)
      * @param string     $dn    Reference to the resource DN
      *
-     * @return null|array Resource entry, NULL if not found
+     * @return array|null Resource entry, NULL if not found
      */
     private static function getResourceEntry($ldap, $email, &$dn = null)
     {
@@ -1189,7 +1191,7 @@ class LDAP
         // For resources we're using search() instead of get_entry() because
         // a resource name is not constant, so e.g. on update we might have
         // the new name, but not the old one. Email address is constant.
-        return self::searchEntry($ldap, $base_dn, "(mail=$email)", $attrs, $dn);
+        return self::searchEntry($ldap, $base_dn, "(mail={$email})", $attrs, $dn);
     }
 
     /**
@@ -1199,7 +1201,7 @@ class LDAP
      * @param string     $email Resource email (mail)
      * @param string     $dn    Reference to the shared folder DN
      *
-     * @return null|array Shared folder entry, NULL if not found
+     * @return array|null Shared folder entry, NULL if not found
      */
     private static function getSharedFolderEntry($ldap, $email, &$dn = null)
     {
@@ -1211,7 +1213,7 @@ class LDAP
         // For shared folders we're using search() instead of get_entry() because
         // a folder name is not constant, so e.g. on update we might have
         // the new name, but not the old one. Email address is constant.
-        return self::searchEntry($ldap, $base_dn, "(mail=$email)", $attrs, $dn);
+        return self::searchEntry($ldap, $base_dn, "(mail={$email})", $attrs, $dn);
     }
 
     /**
@@ -1222,7 +1224,7 @@ class LDAP
      * @param string     $dn    Reference to user DN
      * @param bool       $full  Get extra attributes, e.g. nsroledn
      *
-     * @return null|array User entry, NULL if not found
+     * @return array|null User entry, NULL if not found
      */
     private static function getUserEntry($ldap, $email, &$dn, $full = false)
     {
@@ -1251,9 +1253,9 @@ class LDAP
     {
         if (
             (
-                $level == LOG_INFO
-                || $level == LOG_DEBUG
-                || $level == LOG_NOTICE
+                $level == \LOG_INFO
+                || $level == \LOG_DEBUG
+                || $level == \LOG_NOTICE
             )
             && !\config('app.debug')
         ) {
@@ -1261,28 +1263,28 @@ class LDAP
         }
 
         switch ($level) {
-            case LOG_CRIT:
+            case \LOG_CRIT:
                 $function = 'critical';
                 break;
-            case LOG_EMERG:
+            case \LOG_EMERG:
                 $function = 'emergency';
                 break;
-            case LOG_ERR:
+            case \LOG_ERR:
                 $function = 'error';
                 break;
-            case LOG_ALERT:
+            case \LOG_ALERT:
                 $function = 'alert';
                 break;
-            case LOG_WARNING:
+            case \LOG_WARNING:
                 $function = 'warning';
                 break;
-            case LOG_INFO:
+            case \LOG_INFO:
                 $function = 'info';
                 break;
-            case LOG_DEBUG:
+            case \LOG_DEBUG:
                 $function = 'debug';
                 break;
-            case LOG_NOTICE:
+            case \LOG_NOTICE:
                 $function = 'notice';
                 break;
             default:
@@ -1340,7 +1342,7 @@ class LDAP
      * @param array      $attrs   Result attributes
      * @param string     $dn      Reference to a DN of the found entry
      *
-     * @return null|array LDAP entry, NULL if not found
+     * @return array|null LDAP entry, NULL if not found
      */
     private static function searchEntry($ldap, $base_dn, $filter, $attrs, &$dn = null)
     {
@@ -1385,7 +1387,7 @@ class LDAP
      *
      * @return string Full base DN
      */
-    private static function baseDN($ldap, string $domainName, string $ouName = null): string
+    private static function baseDN($ldap, string $domainName, ?string $ouName = null): string
     {
         $dn = $ldap->domain_root_dn($domainName);
 

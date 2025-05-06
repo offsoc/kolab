@@ -3,6 +3,8 @@
 namespace App\Console\Commands\User;
 
 use App\Console\Command;
+use App\Policy\Greylist\Connect;
+use Carbon\Carbon;
 
 class GreylistCommand extends Command
 {
@@ -31,7 +33,7 @@ class GreylistCommand extends Command
         $recipientAddress = $this->argument('user');
         $recipientHash = hash('sha256', $recipientAddress);
 
-        $lastConnect = \App\Policy\Greylist\Connect::where('recipient_hash', $recipientHash)
+        $lastConnect = Connect::where('recipient_hash', $recipientHash)
             ->orderBy('updated_at', 'desc')
             ->first();
 
@@ -39,11 +41,11 @@ class GreylistCommand extends Command
             $timestamp = $lastConnect->updated_at->copy();
             $this->info("Going from timestamp (last connect) {$timestamp}");
         } else {
-            $timestamp = \Carbon\Carbon::now();
+            $timestamp = Carbon::now();
             $this->info("Going from timestamp (now) {$timestamp}");
         }
 
-        \App\Policy\Greylist\Connect::where('recipient_hash', $recipientHash)
+        Connect::where('recipient_hash', $recipientHash)
             ->where('greylisting', true)
             ->whereDate('updated_at', '>=', $timestamp->copy()->subDays(7))
             ->orderBy('created_at')->each(

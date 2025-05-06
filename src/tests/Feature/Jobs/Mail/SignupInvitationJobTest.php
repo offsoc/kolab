@@ -5,7 +5,6 @@ namespace Tests\Feature\Jobs\Mail;
 use App\Jobs\Mail\SignupInvitationJob;
 use App\Mail\SignupInvitation;
 use App\SignupInvitation as SI;
-use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
@@ -14,10 +13,7 @@ class SignupInvitationJobTest extends TestCase
 {
     private $invitation;
 
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -26,10 +22,7 @@ class SignupInvitationJobTest extends TestCase
         $this->invitation = SI::create(['email' => 'SignupInvitationEmailTest@external.com']);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->invitation->delete();
     }

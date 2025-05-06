@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\V4\Admin;
 use App\EventLog;
 use App\Group;
 use App\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -13,7 +14,7 @@ class GroupsController extends \App\Http\Controllers\API\V4\GroupsController
     /**
      * Search for groups
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function index()
     {
@@ -50,9 +51,9 @@ class GroupsController extends \App\Http\Controllers\API\V4\GroupsController
     /**
      * Create a new group.
      *
-     * @param \Illuminate\Http\Request $request The API request.
+     * @param Request $request the API request
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function store(Request $request)
     {
@@ -62,10 +63,10 @@ class GroupsController extends \App\Http\Controllers\API\V4\GroupsController
     /**
      * Suspend a group
      *
-     * @param \Illuminate\Http\Request $request The API request.
-     * @param string                   $id      Group identifier
+     * @param Request $request the API request
+     * @param string  $id      Group identifier
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function suspend(Request $request, $id)
     {
@@ -86,18 +87,18 @@ class GroupsController extends \App\Http\Controllers\API\V4\GroupsController
         EventLog::createFor($group, EventLog::TYPE_SUSPENDED, $request->comment);
 
         return response()->json([
-                'status' => 'success',
-                'message' => self::trans('app.distlist-suspend-success'),
+            'status' => 'success',
+            'message' => self::trans('app.distlist-suspend-success'),
         ]);
     }
 
     /**
      * Un-Suspend a group
      *
-     * @param \Illuminate\Http\Request $request The API request.
-     * @param string                   $id      Group identifier
+     * @param Request $request the API request
+     * @param string  $id      Group identifier
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function unsuspend(Request $request, $id)
     {
@@ -118,8 +119,8 @@ class GroupsController extends \App\Http\Controllers\API\V4\GroupsController
         EventLog::createFor($group, EventLog::TYPE_UNSUSPENDED, $request->comment);
 
         return response()->json([
-                'status' => 'success',
-                'message' => self::trans('app.distlist-unsuspend-success'),
+            'status' => 'success',
+            'message' => self::trans('app.distlist-unsuspend-success'),
         ]);
     }
 }

@@ -2,12 +2,14 @@
 
 namespace App\Policy\Greylist;
 
+use App\Domain;
+use App\User;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * @property \App\Domain $domain
- * @property \App\Domain|\App\User $recipient
- * @property \App\User $user
+ * @property Domain      $domain
+ * @property Domain|User $recipient
+ * @property User        $user
  */
 class Connect extends Model
 {
@@ -21,14 +23,14 @@ class Connect extends Model
         'recipient_type',
         'connect_count',
         'created_at',
-        'updated_at'
+        'updated_at',
     ];
 
     protected $table = 'greylist_connect';
 
     public function domain()
     {
-        if ($this->recipient_type == \App\Domain::class) {
+        if ($this->recipient_type == Domain::class) {
             return $this->recipient;
         }
 
@@ -43,7 +45,7 @@ class Connect extends Model
 
     public function user()
     {
-        if ($this->recipient_type == \App\User::class) {
+        if ($this->recipient_type == User::class) {
             return $this->recipient;
         }
 

@@ -2,6 +2,10 @@
 
 namespace App\Console;
 
+use App\Traits\BelongsToTenantTrait;
+use App\Utils;
+use Carbon\Carbon;
+
 /**
  * This abstract class provides a means to treat objects in our model using CRUD, with the exception that
  * this particular abstract class lists objects.
@@ -20,11 +24,11 @@ abstract class ObjectListCommand extends ObjectCommand
             $this->signature .= "{$this->objectName}s";
         }
 
-        if (in_array(\App\Traits\BelongsToTenantTrait::class, class_uses($this->objectClass))) {
+        if (in_array(BelongsToTenantTrait::class, class_uses($this->objectClass))) {
             $this->signature .= " {--tenant= : Limit results to the specified tenant}";
         }
 
-        if (\App\Utils::isSoftDeletable($this->objectClass)) {
+        if (Utils::isSoftDeletable($this->objectClass)) {
             $this->signature .= " {--with-deleted : Include deleted {$this->objectName}s}";
         }
 
@@ -42,14 +46,14 @@ abstract class ObjectListCommand extends ObjectCommand
     public function handle()
     {
         // @phpstan-ignore-next-line
-        if (\App\Utils::isSoftDeletable($this->objectClass) && $this->option('with-deleted')) {
+        if (Utils::isSoftDeletable($this->objectClass) && $this->option('with-deleted')) {
             $objects = $this->objectClass::withTrashed();
         } else {
             $objects = new $this->objectClass();
         }
 
         // @phpstan-ignore-next-line
-        if ($this->hasOption('tenant') && ($tenant = intval($this->option('tenant')))) {
+        if ($this->hasOption('tenant') && ($tenant = (int) $this->option('tenant'))) {
             $this->tenantId = $tenant;
             $objects = $this->applyTenant($objects);
         }
@@ -100,7 +104,7 @@ abstract class ObjectListCommand extends ObjectCommand
             $operator = strtolower($matches[1]) == 'min' ? '<=' : '>=';
             $count = (int) $matches[2];
             $period = strtolower($matches[3]);
-            $date = \Carbon\Carbon::now();
+            $date = Carbon::now();
 
             if ($period == 'y') {
                 $date->subYearsWithoutOverflow($count);

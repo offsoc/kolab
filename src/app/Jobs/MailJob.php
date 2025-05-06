@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\Queue;
 use Illuminate\Queue\SerializesModels;
 
 /**
@@ -18,8 +19,7 @@ abstract class MailJob extends CommonJob
     public $deleteWhenMissingModels = true;
 
     /** @var string|null The name of the queue the job should be sent to. */
-    public $queue = \App\Enums\Queue::Mail->value;
-
+    public $queue = Queue::Mail->value;
 
     /**
      * Number of seconds to wait before retrying the job.

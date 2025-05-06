@@ -2,13 +2,12 @@
 
 namespace Tests\Browser\Components;
 
+use Laravel\Dusk\Browser;
 use Laravel\Dusk\Component as BaseComponent;
-use PHPUnit\Framework\Assert as PHPUnit;
 
 class SubscriptionSelect extends BaseComponent
 {
     protected $selector;
-
 
     public function __construct($selector)
     {
@@ -28,9 +27,7 @@ class SubscriptionSelect extends BaseComponent
     /**
      * Assert that the browser page contains the component.
      *
-     * @param \Laravel\Dusk\Browser $browser
-     *
-     * @return void
+     * @param Browser $browser
      */
     public function assert($browser)
     {
@@ -42,17 +39,17 @@ class SubscriptionSelect extends BaseComponent
      */
     public function assertSubscription($browser, int $idx, $name, $title = null, $price = null)
     {
-        $idx += 1; // index starts with 1 in css
-        $row = "tbody tr:nth-child($idx)";
+        $idx++; // index starts with 1 in css
+        $row = "tbody tr:nth-child({$idx})";
 
-        $browser->assertSeeIn("$row td.name label", $name);
+        $browser->assertSeeIn("{$row} td.name label", $name);
 
         if ($title !== null) {
-            $browser->assertTip("$row td.buttons button", $title);
+            $browser->assertTip("{$row} td.buttons button", $title);
         }
 
         if ($price !== null) {
-            $browser->assertSeeIn("$row td.price", $price);
+            $browser->assertSeeIn("{$row} td.price", $price);
         }
     }
 
@@ -61,9 +58,9 @@ class SubscriptionSelect extends BaseComponent
      */
     public function assertSubscriptionState($browser, int $idx, bool $enabled)
     {
-        $idx += 1; // index starts with 1 in css
-        $row = "tbody tr:nth-child($idx)";
-        $browser->{$enabled ? 'assertChecked' : 'assertNotChecked'}("$row td.selection input");
+        $idx++; // index starts with 1 in css
+        $row = "tbody tr:nth-child({$idx})";
+        $browser->{$enabled ? 'assertChecked' : 'assertNotChecked'}("{$row} td.selection input");
     }
 
     /**
@@ -71,8 +68,8 @@ class SubscriptionSelect extends BaseComponent
      */
     public function clickSubscription($browser, int $idx)
     {
-        $idx += 1; // index starts with 1 in css
-        $row = "tbody tr:nth-child($idx)";
-        $browser->click("$row td.selection input");
+        $idx++; // index starts with 1 in css
+        $row = "tbody tr:nth-child({$idx})";
+        $browser->click("{$row} td.selection input");
     }
 }

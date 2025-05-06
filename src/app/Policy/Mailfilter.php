@@ -14,7 +14,7 @@ class Mailfilter
     /**
      * SMTP Content Filter
      *
-     * @param Request $request The API request.
+     * @param Request $request the API request
      *
      * @return Response|StreamedResponse The response
      */
@@ -77,7 +77,8 @@ class Mailfilter
                 if ($result->getStatus() == Result::STATUS_REJECT) {
                     // FIXME: Better code? Should we use custom header instead?
                     return response('', 460);
-                } elseif ($result->getStatus() == Result::STATUS_DISCARD) {
+                }
+                if ($result->getStatus() == Result::STATUS_DISCARD) {
                     // FIXME: Better code? Should we use custom header instead?
                     return response('', 461);
                 }
@@ -95,7 +96,7 @@ class Mailfilter
 
             $stream = $parser->getStream();
 
-            $response->setCallback(function () use ($stream) {
+            $response->setCallback(static function () use ($stream) {
                 fpassthru($stream);
                 fclose($stream);
             });

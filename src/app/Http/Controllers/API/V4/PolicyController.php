@@ -8,14 +8,16 @@ use App\Policy\Mailfilter;
 use App\Policy\RateLimit;
 use App\Policy\SmtpAccess;
 use App\Policy\SPF;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class PolicyController extends Controller
 {
     /**
      * Take a greylist policy request
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function greylist()
     {
@@ -27,9 +29,9 @@ class PolicyController extends Controller
     /**
      * SMTP Content Filter
      *
-     * @param Request $request The API request.
+     * @param Request $request the API request
      *
-     * @return \Illuminate\Http\Response The response
+     * @return Response The response
      */
     public function mailfilter(Request $request)
     {

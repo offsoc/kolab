@@ -16,10 +16,10 @@ class PasswordResetTest extends TestCase
     public function testBuild(): void
     {
         $code = new VerificationCode([
-                'user_id' => 123456789,
-                'mode' => 'password-reset',
-                'code' => 'code',
-                'short_code' => 'short-code',
+            'user_id' => 123456789,
+            'mode' => 'password-reset',
+            'code' => 'code',
+            'short_code' => 'short-code',
         ]);
 
         // @phpstan-ignore-next-line
@@ -31,10 +31,10 @@ class PasswordResetTest extends TestCase
         $plain = $mail['plain'];
 
         $url = Utils::serviceUrl('/password-reset/' . $code->short_code . '-' . $code->code);
-        $link = "<a href=\"$url\">$url</a>";
+        $link = "<a href=\"{$url}\">{$url}</a>";
         $appName = \config('app.name');
 
-        $this->assertSame("$appName Password Reset", $mail['subject']);
+        $this->assertSame("{$appName} Password Reset", $mail['subject']);
 
         $this->assertStringStartsWith('<!DOCTYPE html>', $html);
         $this->assertTrue(strpos($html, $link) > 0);
@@ -53,10 +53,10 @@ class PasswordResetTest extends TestCase
     {
         $appName = \config('app.name');
         $code = new VerificationCode([
-                'user_id' => 123456789,
-                'mode' => 'password-reset',
-                'code' => 'code',
-                'short_code' => 'short-code',
+            'user_id' => 123456789,
+            'mode' => 'password-reset',
+            'code' => 'code',
+            'short_code' => 'short-code',
         ]);
 
         // @phpstan-ignore-next-line
@@ -64,7 +64,7 @@ class PasswordResetTest extends TestCase
 
         $mail = new PasswordReset($code);
 
-        $this->assertSame("$appName Password Reset", $mail->getSubject());
+        $this->assertSame("{$appName} Password Reset", $mail->getSubject());
         $this->assertSame($code->user, $mail->getUser());
     }
 }

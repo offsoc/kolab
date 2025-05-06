@@ -1,23 +1,21 @@
 <?php
 
+use App\SignupCode;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-// phpcs:ignore
 class SignupCodeRefactor extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up()
     {
         Schema::table(
             'signup_codes',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->string('email');
                 $table->string('first_name')->nullable();
                 $table->string('last_name')->nullable();
@@ -32,7 +30,7 @@ class SignupCodeRefactor extends Migration
             }
         );
 
-        \App\SignupCode::withTrashed()->get()->each(function ($code) {
+        SignupCode::withTrashed()->get()->each(static function ($code) {
             if (empty($code->data)) {
                 return;
             }
@@ -61,7 +59,7 @@ class SignupCodeRefactor extends Migration
 
         Schema::table(
             'signup_codes',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->dropColumn('data');
             }
         );
@@ -69,25 +67,23 @@ class SignupCodeRefactor extends Migration
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
     public function down()
     {
         Schema::table(
             'signup_codes',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->text('data');
             }
         );
 
-        DB::table('signup_codes')->get()->each(function ($code) {
+        DB::table('signup_codes')->get()->each(static function ($code) {
             $data = json_encode([
-                    'email' => $code->email,
-                    'first_name' => $code->first_name,
-                    'last_name' => $code->last_name,
-                    'plan' => $code->plan,
-                    'voucher' => $code->voucher,
+                'email' => $code->email,
+                'first_name' => $code->first_name,
+                'last_name' => $code->last_name,
+                'plan' => $code->plan,
+                'voucher' => $code->voucher,
             ]);
 
             DB::table('signup_codes')
@@ -97,19 +93,19 @@ class SignupCodeRefactor extends Migration
 
         Schema::table(
             'signup_codes',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->dropColumn([
-                        'created_at',
-                        'updated_at',
-                        'deleted_at',
-                        'ip_address',
-                        'email',
-                        'local_part',
-                        'domain_part',
-                        'first_name',
-                        'last_name',
-                        'plan',
-                        'voucher',
+                    'created_at',
+                    'updated_at',
+                    'deleted_at',
+                    'ip_address',
+                    'email',
+                    'local_part',
+                    'domain_part',
+                    'first_name',
+                    'last_name',
+                    'plan',
+                    'voucher',
                 ]);
             }
         );

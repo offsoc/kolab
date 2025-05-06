@@ -2,13 +2,15 @@
 
 namespace App\Handlers;
 
-class DomainRelay extends \App\Handlers\Base
+use App\Domain;
+
+class DomainRelay extends Base
 {
     /**
      * The entitleable class for this handler.
      */
     public static function entitleableClass(): string
     {
-        return \App\Domain::class;
+        return Domain::class;
     }
 }

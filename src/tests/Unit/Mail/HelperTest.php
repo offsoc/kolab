@@ -4,30 +4,29 @@ namespace Tests\Unit\Mail;
 
 use App\EventLog;
 use App\Mail\Helper;
+use App\Mail\TrialEnd;
+use App\SignupInvitation;
+use App\Sku;
+use App\Tenant;
+use App\TenantSetting;
 use App\User;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class HelperTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestUser('mail-helper-test@kolabnow.com');
-        \App\TenantSetting::truncate();
+        TenantSetting::truncate();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('mail-helper-test@kolabnow.com');
-        \App\TenantSetting::truncate();
+        TenantSetting::truncate();
 
         parent::tearDown();
     }
@@ -40,15 +39,15 @@ class HelperTest extends TestCase
         EventLog::truncate();
         Mail::fake();
 
-        $tenant = \App\Tenant::whereNotIn('id', [1])->first();
-        $invitation = new \App\SignupInvitation();
+        $tenant = Tenant::whereNotIn('id', [1])->first();
+        $invitation = new SignupInvitation();
         $invitation->id = 'test';
         $mail = new \App\Mail\SignupInvitation($invitation);
 
         Helper::sendMail($mail, null, ['to' => 'to@test.com', 'cc' => 'cc@test.com']);
 
         Mail::assertSent(\App\Mail\SignupInvitation::class, 1);
-        Mail::assertSent(\App\Mail\SignupInvitation::class, function ($mail) {
+        Mail::assertSent(\App\Mail\SignupInvitation::class, static function ($mail) {
             return $mail->hasTo('to@test.com')
                 && $mail->hasCc('cc@test.com')
                 && $mail->hasFrom(\config('mail.sender.address'), \config('mail.sender.name'))
@@ -64,7 +63,7 @@ class HelperTest extends TestCase
         Helper::sendMail($mail, $tenant->id, ['to' => 'to@test.com', 'cc' => 'cc@test.com']);
 
         Mail::assertSent(\App\Mail\SignupInvitation::class, 1);
-        Mail::assertSent(\App\Mail\SignupInvitation::class, function ($mail) {
+        Mail::assertSent(\App\Mail\SignupInvitation::class, static function ($mail) {
             return $mail->hasTo('to@test.com')
                 && $mail->hasCc('cc@test.com')
                 && $mail->hasFrom(\config('mail.sender.address'), \config('mail.sender.name'))
@@ -86,7 +85,7 @@ class HelperTest extends TestCase
         Helper::sendMail($mail, $tenant->id, ['to' => 'to@test.com']);
 
         Mail::assertSent(\App\Mail\SignupInvitation::class, 1);
-        Mail::assertSent(\App\Mail\SignupInvitation::class, function ($mail) {
+        Mail::assertSent(\App\Mail\SignupInvitation::class, static function ($mail) {
             return $mail->hasTo('to@test.com')
                 && $mail->hasFrom('from@test.com', 'from name')
                 && $mail->hasReplyTo('replyto@test.com', 'replyto name');
@@ -97,7 +96,7 @@ class HelperTest extends TestCase
 
         // Assert EventLog entry
         $user = $this->getTestUser('mail-helper-test@kolabnow.com');
-        $mail = new \App\Mail\TrialEnd($user);
+        $mail = new TrialEnd($user);
 
         Helper::sendMail($mail, $tenant->id, ['to' => 'to@test.com', 'cc' => 'cc@test.com']);
 
@@ -118,50 +117,50 @@ class HelperTest extends TestCase
         $user = $this->getTestUser('mail-helper-test@kolabnow.com', ['status' => $status]);
 
         // User with no mailbox and no external email
-        list($to, $cc) = Helper::userEmails($user);
+        [$to, $cc] = Helper::userEmails($user);
 
-        $this->assertSame(null, $to);
+        $this->assertNull($to);
         $this->assertSame([], $cc);
 
-        list($to, $cc) = Helper::userEmails($user, true);
+        [$to, $cc] = Helper::userEmails($user, true);
 
-        $this->assertSame(null, $to);
+        $this->assertNull($to);
         $this->assertSame([], $cc);
 
         // User with no mailbox but with external email
         $user->setSetting('external_email', 'external@test.com');
-        list($to, $cc) = Helper::userEmails($user);
+        [$to, $cc] = Helper::userEmails($user);
 
         $this->assertSame('external@test.com', $to);
         $this->assertSame([], $cc);
 
-        list($to, $cc) = Helper::userEmails($user, true);
+        [$to, $cc] = Helper::userEmails($user, true);
 
         $this->assertSame('external@test.com', $to);
         $this->assertSame([], $cc);
 
         // User with mailbox and external email
-        $sku = \App\Sku::withEnvTenantContext()->where('title', 'mailbox')->first();
+        $sku = Sku::withEnvTenantContext()->where('title', 'mailbox')->first();
         $user->assignSku($sku);
 
-        list($to, $cc) = Helper::userEmails($user);
+        [$to, $cc] = Helper::userEmails($user);
 
         $this->assertSame($user->email, $to);
         $this->assertSame([], $cc);
 
-        list($to, $cc) = Helper::userEmails($user, true);
+        [$to, $cc] = Helper::userEmails($user, true);
 
         $this->assertSame($user->email, $to);
         $this->assertSame(['external@test.com'], $cc);
 
         // User with mailbox, but no external email
         $user->setSetting('external_email', null);
-        list($to, $cc) = Helper::userEmails($user);
+        [$to, $cc] = Helper::userEmails($user);
 
         $this->assertSame($user->email, $to);
         $this->assertSame([], $cc);
 
-        list($to, $cc) = Helper::userEmails($user, true);
+        [$to, $cc] = Helper::userEmails($user, true);
 
         $this->assertSame($user->email, $to);
         $this->assertSame([], $cc);
@@ -171,9 +170,9 @@ class HelperTest extends TestCase
         $user->status = User::STATUS_ACTIVE | User::STATUS_LDAP_READY;
         $user->save();
 
-        list($to, $cc) = Helper::userEmails($user, true);
+        [$to, $cc] = Helper::userEmails($user, true);
 
-        $this->assertSame(null, $to);
+        $this->assertNull($to);
         $this->assertSame(['external@test.com'], $cc);
     }
 }

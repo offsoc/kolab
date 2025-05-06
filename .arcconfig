@@ -1,4 +1,4 @@
 {
     "phabricator.uri": "https://git.kolab.org",
-    "load": [".arc/arc-phpstan"]
+    "load": ["src/vendor/diablomedia/arcanist-extensions/extensions/"]
 }

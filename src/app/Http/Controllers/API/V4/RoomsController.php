@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\API\V4;
 
+use App\Entitlement;
 use App\Http\Controllers\RelationController;
 use App\Meet\Room;
 use App\Permission;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -23,13 +25,12 @@ class RoomsController extends RelationController
     /** @var array Common object properties in the API response */
     protected $objectProps = ['name', 'description'];
 
-
     /**
      * Delete a room
      *
      * @param string $id Room identifier
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function destroy($id)
     {
@@ -41,25 +42,25 @@ class RoomsController extends RelationController
         $room->delete();
 
         return response()->json([
-                'status' => 'success',
-                'message' => self::trans("app.room-delete-success"),
+            'status' => 'success',
+            'message' => self::trans("app.room-delete-success"),
         ]);
     }
 
     /**
      * Listing of rooms that belong to the authenticated user.
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function index()
     {
         $user = $this->guard()->user();
 
-        $shared = Room::whereIn('id', function ($query) use ($user) {
-               $query->select('permissible_id')
-                   ->from('permissions')
-                   ->where('permissible_type', Room::class)
-                   ->where('user', $user->email);
+        $shared = Room::whereIn('id', static function ($query) use ($user) {
+            $query->select('permissible_id')
+                ->from('permissions')
+                ->where('permissible_type', Room::class)
+                ->where('user', $user->email);
         });
 
         // Create a "private" room for the user
@@ -89,7 +90,7 @@ class RoomsController extends RelationController
      *
      * @param int|string $id Room identifier (or name)
      *
-     * @return \Illuminate\Http\JsonResponse|void
+     * @return JsonResponse|void
      */
     public function setConfig($id)
     {
@@ -112,17 +113,17 @@ class RoomsController extends RelationController
         }
 
         return response()->json([
-                'status' => 'success',
-                'message' => self::trans("app.room-setconfig-success"),
+            'status' => 'success',
+            'message' => self::trans("app.room-setconfig-success"),
         ]);
     }
 
     /**
      * Display information of a room specified by $id.
      *
-     * @param string $id The room to show information for.
+     * @param string $id the room to show information for
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function show($id)
     {
@@ -145,7 +146,7 @@ class RoomsController extends RelationController
             unset($response['config']['acl']);
         }
 
-        $response['skus'] = \App\Entitlement::objectEntitlementsSummary($room);
+        $response['skus'] = Entitlement::objectEntitlementsSummary($room);
         $response['wallet'] = $wallet->toArray();
 
         if ($wallet->discount) {
@@ -167,7 +168,7 @@ class RoomsController extends RelationController
      *
      * @param int $id Room identifier
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function skus($id)
     {
@@ -182,9 +183,9 @@ class RoomsController extends RelationController
     /**
      * Create a new room.
      *
-     * @param \Illuminate\Http\Request $request The API request.
+     * @param Request $request the API request
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function store(Request $request)
     {
@@ -199,7 +200,7 @@ class RoomsController extends RelationController
         $v = Validator::make(
             $request->all(),
             [
-                'description' => 'nullable|string|max:191'
+                'description' => 'nullable|string|max:191',
             ]
         );
 
@@ -210,7 +211,7 @@ class RoomsController extends RelationController
         DB::beginTransaction();
 
         $room = Room::create([
-                'description' => $request->input('description'),
+            'description' => $request->input('description'),
         ]);
 
         if (!empty($request->skus)) {
@@ -222,18 +223,18 @@ class RoomsController extends RelationController
         DB::commit();
 
         return response()->json([
-                'status' => 'success',
-                'message' => self::trans("app.room-create-success"),
+            'status' => 'success',
+            'message' => self::trans("app.room-create-success"),
         ]);
     }
 
     /**
      * Update a room.
      *
-     * @param \Illuminate\Http\Request $request The API request.
-     * @param string                   $id      Room identifier
+     * @param Request $request the API request
+     * @param string  $id      Room identifier
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function update(Request $request, $id)
     {
@@ -246,7 +247,7 @@ class RoomsController extends RelationController
         $v = Validator::make(
             request()->all(),
             [
-                'description' => 'nullable|string|max:191'
+                'description' => 'nullable|string|max:191',
             ]
         );
 
@@ -268,20 +269,20 @@ class RoomsController extends RelationController
         DB::commit();
 
         return response()->json([
-                'status' => 'success',
-                'message' => self::trans("app.room-update-success"),
+            'status' => 'success',
+            'message' => self::trans("app.room-update-success"),
         ]);
     }
 
     /**
      * Get the input room object, check permissions.
      *
-     * @param int|string       $id         Room identifier (or name)
-     * @param ?int             $rights     Required access rights
-     * @param ?\App\Permission $permission Room permission reference if the user has permissions
-     *                                     to the room and is not the owner
+     * @param int|string  $id         Room identifier (or name)
+     * @param ?int        $rights     Required access rights
+     * @param ?Permission $permission Room permission reference if the user has permissions
+     *                                to the room and is not the owner
      *
-     * @return \App\Meet\Room|int File object or error code
+     * @return Room|int File object or error code
      */
     protected function inputRoom($id, $rights = 0, &$permission = null): int|Room
     {

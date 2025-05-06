@@ -5,9 +5,11 @@ namespace Tests\Browser;
 use App\Delegation;
 use App\Discount;
 use App\Entitlement;
+use App\Package;
 use App\Sku;
 use App\User;
 use App\UserAlias;
+use App\VerificationCode;
 use Tests\Browser;
 use Tests\Browser\Components\CountrySelect;
 use Tests\Browser\Components\Dialog;
@@ -35,10 +37,7 @@ class UsersTest extends TestCaseDusk
         'phone' => '+1 509-248-1111',
     ];
 
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -64,17 +63,14 @@ class UsersTest extends TestCaseDusk
         $this->clearBetaEntitlements();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('julia.roberts@kolab.org');
 
         $john = User::where('email', 'john@kolab.org')->first();
         $john->setSettings($this->profile);
         $john->aliases()->where('alias', 'john.test@kolab.org')->delete();
-        $john->delegators()->each(function ($user) {
+        $john->delegators()->each(static function ($user) {
             $user->delegation->delete();
         });
 
@@ -114,7 +110,7 @@ class UsersTest extends TestCaseDusk
                 ->on(new UserInfo())
                 ->assertSeeIn('#user-info .card-title', 'User account')
                 ->assertSeeIn('@nav #tab-general', 'General')
-                ->with('@general', function (Browser $browser) {
+                ->with('@general', static function (Browser $browser) {
                     // Assert the General tab content
                     $browser->assertSeeIn('div.row:nth-child(1) label', 'Status')
                         ->assertSeeIn('div.row:nth-child(1) #status', 'Active')
@@ -123,7 +119,7 @@ class UsersTest extends TestCaseDusk
                         ->assertDisabled('div.row:nth-child(2) input[type=text]')
                         ->assertSeeIn('div.row:nth-child(3) label', 'Email Aliases')
                         ->assertVisible('div.row:nth-child(3) .list-input')
-                        ->with(new ListInput('#aliases'), function (Browser $browser) {
+                        ->with(new ListInput('#aliases'), static function (Browser $browser) {
                             $browser->assertListInputValue(['john.doe@kolab.org'])
                                 ->assertValue('@input', '');
                         })
@@ -138,7 +134,7 @@ class UsersTest extends TestCaseDusk
                     // Test error handling (password)
                     $browser->type('#password', 'aaaaaA')
                         ->vueClear('#password_confirmation')
-                        ->whenAvailable('#password_policy', function (Browser $browser) {
+                        ->whenAvailable('#password_policy', static function (Browser $browser) {
                             $browser->assertElementsCount('li', 3)
                                 ->assertMissing('li:nth-child(1) svg.text-success')
                                 ->assertSeeIn('li:nth-child(1) small', "Minimum password length: 10 characters")
@@ -161,13 +157,13 @@ class UsersTest extends TestCaseDusk
                     // Test form error handling (aliases)
                     $browser->vueClear('#password')
                         ->vueClear('#password_confirmation')
-                        ->with(new ListInput('#aliases'), function (Browser $browser) {
+                        ->with(new ListInput('#aliases'), static function (Browser $browser) {
                             $browser->addListEntry('invalid address');
                         })
                         ->scrollTo('button[type=submit]')->pause(500)
                         ->click('button[type=submit]')
                         ->assertToast(Toast::TYPE_ERROR, 'Form validation error')
-                        ->with(new ListInput('#aliases'), function (Browser $browser) {
+                        ->with(new ListInput('#aliases'), static function (Browser $browser) {
                             $browser->assertFormError(2, 'The specified alias is invalid.', false)
                                 // Test adding aliases
                                 ->removeListEntry(2)
@@ -184,10 +180,10 @@ class UsersTest extends TestCaseDusk
             $this->assertTrue(!empty($alias));
 
             // Test subscriptions
-            $browser->with('@general', function (Browser $browser) {
+            $browser->with('@general', static function (Browser $browser) {
                 $browser->assertSeeIn('div.row:nth-child(5) label', 'Subscriptions')
                     ->assertVisible('@skus.row:nth-child(5)')
-                    ->with('@skus', function ($browser) {
+                    ->with('@skus', static function ($browser) {
                         $browser->assertElementsCount('tbody tr', 5)
                             // Mailbox SKU
                             ->assertSeeIn('tbody tr:nth-child(1) td.name', 'User Mailbox')
@@ -207,7 +203,7 @@ class UsersTest extends TestCaseDusk
                                 'tbody tr:nth-child(2) td.buttons button',
                                 'Some wiggle room'
                             )
-                            ->with(new QuotaInput('tbody tr:nth-child(2) .range-input'), function ($browser) {
+                            ->with(new QuotaInput('tbody tr:nth-child(2) .range-input'), static function ($browser) {
                                 $browser->assertQuotaValue(5)->setQuotaValue(6);
                             })
                             ->assertSeeIn('tr:nth-child(2) td.price', '0,25 CHF/month')
@@ -253,8 +249,8 @@ class UsersTest extends TestCaseDusk
             $this->assertEntitlements($john->fresh(), $expected);
 
             // Test subscriptions interaction
-            $browser->with('@general', function (Browser $browser) {
-                $browser->with('@skus', function ($browser) {
+            $browser->with('@general', static function (Browser $browser) {
+                $browser->with('@skus', static function ($browser) {
                     // Uncheck 'groupware', expect activesync unchecked
                     $browser->click('#sku-input-groupware')
                         ->assertNotChecked('#sku-input-groupware')
@@ -279,7 +275,7 @@ class UsersTest extends TestCaseDusk
             });
 
             // Test password reset link delete and create
-            $code = new \App\VerificationCode(['mode' => 'password-reset']);
+            $code = new VerificationCode(['mode' => 'password-reset']);
             $jack->verificationcodes()->save($code);
 
             $browser->visit('/user/' . $jack->id)
@@ -383,13 +379,13 @@ class UsersTest extends TestCaseDusk
                 ->on(new UserList());
 
             $this->assertSame('Arnie', $john->getSetting('first_name'));
-            $this->assertSame(null, $john->getSetting('last_name'));
+            $this->assertNull($john->getSetting('last_name'));
 
             // Test the non-controller user
             $browser->visit('/user/' . $jack->id)
                 ->on(new UserInfo())
                 ->click('#tab-personal')
-                ->with('@personal', function (Browser $browser) {
+                ->with('@personal', static function (Browser $browser) {
                     $browser->assertSeeIn('div.row:nth-child(1) label', 'First Name')
                         ->assertValue('div.row:nth-child(1) input[type=text]', 'Jack')
                         ->assertSeeIn('div.row:nth-child(2) label', 'Last Name')
@@ -419,13 +415,13 @@ class UsersTest extends TestCaseDusk
         $john->setSetting('guam_enabled', null);
         $john->setSetting('limit_geo', null);
 
-        $this->browse(function (Browser $browser) use ($john) {
+        $this->browse(static function (Browser $browser) use ($john) {
             $browser->visit('/user/' . $john->id)
                 ->on(new UserInfo())
                 ->assertSeeIn('@nav #tab-settings', 'Settings')
                 ->click('@nav #tab-settings')
                 ->assertSeeIn('@setting-options-head', 'Main Options')
-                ->with('@setting-options', function (Browser $browser) {
+                ->with('@setting-options', static function (Browser $browser) {
                     $browser->assertSeeIn('div.row:nth-child(1) label', 'Greylisting')
                         ->assertMissing('div.row:nth-child(2)') // guam and geo-lockin settings are hidden
                         ->click('div.row:nth-child(1) input[type=checkbox]:checked')
@@ -447,7 +443,7 @@ class UsersTest extends TestCaseDusk
                         ->assertSeeIn('div.row:nth-child(2) label', 'IMAP proxy')
                         ->assertNotChecked('div.row:nth-child(2) input')
                         ->assertSeeIn('div.row:nth-child(3) label', 'Geo-lockin')
-                        ->with(new CountrySelect('#limit_geo'), function ($browser) {
+                        ->with(new CountrySelect('#limit_geo'), static function ($browser) {
                             $browser->assertCountries([])
                                 ->setCountries(['CH', 'PL'])
                                 ->assertCountries(['CH', 'PL']);
@@ -460,7 +456,7 @@ class UsersTest extends TestCaseDusk
                     $this->assertSame('true', $john->getSetting('guam_enabled'));
 
                     $browser
-                        ->with(new CountrySelect('#limit_geo'), function ($browser) {
+                        ->with(new CountrySelect('#limit_geo'), static function ($browser) {
                             $browser->setCountries([])
                                 ->assertCountries([]);
                         })
@@ -468,8 +464,8 @@ class UsersTest extends TestCaseDusk
                         ->click('button[type=submit]')
                         ->assertToast(Toast::TYPE_SUCCESS, 'User settings updated successfully.');
 
-                    $this->assertSame(null, $john->getSetting('limit_geo'));
-                    $this->assertSame(null, $john->getSetting('guam_enabled'));
+                    $this->assertNull($john->getSetting('limit_geo'));
+                    $this->assertNull($john->getSetting('guam_enabled'));
                 });
         });
     }
@@ -490,7 +486,7 @@ class UsersTest extends TestCaseDusk
                 ->assertSeeIn('#user-info .card-title', 'New user account')
                 ->assertMissing('@nav #tab-settings')
                 ->assertMissing('@nav #tab-personal')
-                ->with('@general', function (Browser $browser) {
+                ->with('@general', static function (Browser $browser) {
                     // Assert form content
                     $browser->assertFocused('div.row:nth-child(1) input')
                         ->assertSeeIn('div.row:nth-child(1) label', 'First Name')
@@ -504,7 +500,7 @@ class UsersTest extends TestCaseDusk
                         ->assertEnabled('div.row:nth-child(4) input[type=text]')
                         ->assertSeeIn('div.row:nth-child(5) label', 'Email Aliases')
                         ->assertVisible('div.row:nth-child(5) .list-input')
-                        ->with(new ListInput('#aliases'), function (Browser $browser) {
+                        ->with(new ListInput('#aliases'), static function (Browser $browser) {
                             $browser->assertListInputValue([])
                                 ->assertValue('@input', '');
                         })
@@ -519,7 +515,7 @@ class UsersTest extends TestCaseDusk
                         ->assertMissing('div.row:nth-child(6) #password-link')
                         ->assertSeeIn('div.row:nth-child(7) label', 'Package')
                         // assert packages list widget, select "Lite Account"
-                        ->with('@packages', function ($browser) {
+                        ->with('@packages', static function ($browser) {
                             $browser->assertElementsCount('tbody tr', 2)
                                 ->assertSeeIn('tbody tr:nth-child(1)', 'Groupware Account')
                                 ->assertSeeIn('tbody tr:nth-child(2)', 'Lite Account')
@@ -534,7 +530,8 @@ class UsersTest extends TestCaseDusk
                         ->assertSeeIn('button[type=submit]', 'Submit');
 
                     // Test browser-side required fields and error handling
-                    $browser->click('button[type=submit]')
+                    $browser->scrollTo('button[type=submit]')->pause(500)
+                        ->click('button[type=submit]')
                         ->assertFocused('#email')
                         ->type('#email', 'invalid email')
                         ->type('#password', 'simple123')
@@ -549,34 +546,34 @@ class UsersTest extends TestCaseDusk
                 });
 
             // Test form error handling (aliases)
-            $browser->with('@general', function (Browser $browser) {
+            $browser->with('@general', static function (Browser $browser) {
                 $browser->type('#email', 'julia.roberts@kolab.org')
                     ->type('#password_confirmation', 'simple123')
-                    ->with(new ListInput('#aliases'), function (Browser $browser) {
+                    ->with(new ListInput('#aliases'), static function (Browser $browser) {
                         $browser->addListEntry('invalid address');
                     })
                     ->click('button[type=submit]')
                     ->assertToast(Toast::TYPE_ERROR, 'Form validation error')
-                    ->with(new ListInput('#aliases'), function (Browser $browser) {
+                    ->with(new ListInput('#aliases'), static function (Browser $browser) {
                         $browser->assertFormError(1, 'The specified alias is invalid.', false);
                     });
             });
 
             // Successful account creation
-            $browser->with('@general', function (Browser $browser) {
+            $browser->with('@general', static function (Browser $browser) {
                 $browser->type('#first_name', 'Julia')
                     ->type('#last_name', 'Roberts')
                     ->type('#organization', 'Test Org')
-                    ->with(new ListInput('#aliases'), function (Browser $browser) {
+                    ->with(new ListInput('#aliases'), static function (Browser $browser) {
                         $browser->removeListEntry(1)
                             ->addListEntry('julia.roberts2@kolab.org');
                     })
                     ->click('button[type=submit]');
             })
-            ->assertToast(Toast::TYPE_SUCCESS, 'User created successfully.')
+                ->assertToast(Toast::TYPE_SUCCESS, 'User created successfully.')
             // check redirection to users list
-            ->on(new UserList())
-                ->whenAvailable('@table', function (Browser $browser) {
+                ->on(new UserList())
+                ->whenAvailable('@table', static function (Browser $browser) {
                     $browser->assertElementsCount('tbody tr', 5)
                         ->assertSeeIn('tbody tr:nth-child(4) a', 'julia.roberts@kolab.org');
                 });
@@ -593,7 +590,7 @@ class UsersTest extends TestCaseDusk
             // Some additional tests for the list input widget
             $browser->click('@table tbody tr:nth-child(4) a')
                 ->on(new UserInfo())
-                ->with(new ListInput('#aliases'), function (Browser $browser) {
+                ->with(new ListInput('#aliases'), static function (Browser $browser) {
                     $browser->assertListInputValue(['julia.roberts2@kolab.org'])
                         ->addListEntry('invalid address')
                         ->type('.input-group:nth-child(2) input', '@kolab.org')
@@ -601,9 +598,9 @@ class UsersTest extends TestCaseDusk
                 })
                 // TODO: Investigate why this click does not work, for now we
                 // submit the form with Enter key above
-                //->click('@general button[type=submit]')
+                // ->click('@general button[type=submit]')
                 ->assertToast(Toast::TYPE_ERROR, 'Form validation error')
-                ->with(new ListInput('#aliases'), function (Browser $browser) {
+                ->with(new ListInput('#aliases'), static function (Browser $browser) {
                     $browser->assertVisible('.input-group:nth-child(2) input.is-invalid')
                         ->assertVisible('.input-group:nth-child(3) input.is-invalid')
                         ->type('.input-group:nth-child(2) input', 'julia.roberts3@kolab.org')
@@ -612,7 +609,7 @@ class UsersTest extends TestCaseDusk
                 })
                 // TODO: Investigate why this click does not work, for now we
                 // submit the form with Enter key above
-                //->click('@general button[type=submit]')
+                // ->click('@general button[type=submit]')
                 ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
 
             $julia = User::where('email', 'julia.roberts@kolab.org')->first();
@@ -632,7 +629,7 @@ class UsersTest extends TestCaseDusk
         // First create a new user
         $john = $this->getTestUser('john@kolab.org');
         $julia = $this->getTestUser('julia.roberts@kolab.org');
-        $package_kolab = \App\Package::where('title', 'kolab')->first();
+        $package_kolab = Package::where('title', 'kolab')->first();
         $john->assignPackage($package_kolab, $julia);
 
         // Test deleting non-controller user
@@ -641,7 +638,7 @@ class UsersTest extends TestCaseDusk
                 ->on(new UserInfo())
                 ->assertSeeIn('button.button-delete', 'Delete user')
                 ->click('button.button-delete')
-                ->with(new Dialog('#delete-warning'), function (Browser $browser) {
+                ->with(new Dialog('#delete-warning'), static function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Delete julia.roberts@kolab.org')
                         ->assertFocused('@button-cancel')
                         ->assertSeeIn('@button-cancel', 'Cancel')
@@ -650,13 +647,13 @@ class UsersTest extends TestCaseDusk
                 })
                 ->waitUntilMissing('#delete-warning')
                 ->click('button.button-delete')
-                ->with(new Dialog('#delete-warning'), function (Browser $browser) {
+                ->with(new Dialog('#delete-warning'), static function (Browser $browser) {
                     $browser->click('@button-action');
                 })
                 ->waitUntilMissing('#delete-warning')
                 ->assertToast(Toast::TYPE_SUCCESS, 'User deleted successfully.')
                 ->on(new UserList())
-                ->with('@table', function (Browser $browser) {
+                ->with('@table', static function (Browser $browser) {
                     $browser->assertElementsCount('tbody tr', 4)
                         ->assertSeeIn('tbody tr:nth-child(1) a', 'jack@kolab.org')
                         ->assertSeeIn('tbody tr:nth-child(2) a', 'joe@kolab.org')
@@ -669,7 +666,7 @@ class UsersTest extends TestCaseDusk
         });
 
         // Test that non-controller user cannot see/delete himself on the users list
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit('/logout')
                 ->on(new Home())
                 ->submitLogon('jack@kolab.org', 'simple123', true)
@@ -678,16 +675,16 @@ class UsersTest extends TestCaseDusk
         });
 
         // Test that controller user (Ned) can see all the users
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit('/logout')
                 ->on(new Home())
                 ->submitLogon('ned@kolab.org', 'simple123', true)
                 ->visit(new UserList())
-                ->whenAvailable('@table', function (Browser $browser) {
+                ->whenAvailable('@table', static function (Browser $browser) {
                     $browser->assertElementsCount('tbody tr', 4);
                 });
 
-                // TODO: Test the delete action in details
+            // TODO: Test the delete action in details
         });
 
         // TODO: Test what happens with the logged in user session after he's been deleted by another user
@@ -706,7 +703,7 @@ class UsersTest extends TestCaseDusk
         $wallet->save();
 
         // SKUs on user edit page
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit('/logout')
                 ->on(new Home())
                 ->submitLogon('john@kolab.org', 'simple123', true)
@@ -714,8 +711,8 @@ class UsersTest extends TestCaseDusk
                 ->waitFor('@table tr:nth-child(2)')
                 ->click('@table tr:nth-child(2) a') // joe@kolab.org
                 ->on(new UserInfo())
-                ->with('@general', function (Browser $browser) {
-                    $browser->whenAvailable('@skus', function (Browser $browser) {
+                ->with('@general', static function (Browser $browser) {
+                    $browser->whenAvailable('@skus', static function (Browser $browser) {
                         $quota_input = new QuotaInput('tbody tr:nth-child(2) .range-input');
                         $browser->waitFor('tbody tr')
                             ->assertElementsCount('tbody tr', 5)
@@ -723,7 +720,7 @@ class UsersTest extends TestCaseDusk
                             ->assertSeeIn('tbody tr:nth-child(1) td.price', '4,50 CHF/month¹')
                             // Storage SKU
                             ->assertSeeIn('tr:nth-child(2) td.price', '0,00 CHF/month¹')
-                            ->with($quota_input, function (Browser $browser) {
+                            ->with($quota_input, static function (Browser $browser) {
                                 $browser->setQuotaValue(100);
                             })
                             ->assertSeeIn('tr:nth-child(2) td.price', '21,37 CHF/month¹')
@@ -734,67 +731,67 @@ class UsersTest extends TestCaseDusk
                             // 2FA SKU
                             ->assertSeeIn('tbody tr:nth-child(5) td.price', '0,00 CHF/month¹');
                     })
-                    ->assertSeeIn('@skus table + .hint', '¹ applied discount: 10% - Test voucher');
+                        ->assertSeeIn('@skus table + .hint', '¹ applied discount: 10% - Test voucher');
                 });
         });
 
         // Packages on new user page
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit(new UserList())
                 ->click('button.user-new')
                 ->on(new UserInfo())
-                ->with('@general', function (Browser $browser) {
-                    $browser->whenAvailable('@packages', function (Browser $browser) {
+                ->with('@general', static function (Browser $browser) {
+                    $browser->whenAvailable('@packages', static function (Browser $browser) {
                         $browser->assertElementsCount('tbody tr', 2)
                             ->assertSeeIn('tbody tr:nth-child(1) .price', '8,91 CHF/month¹') // Groupware
                             ->assertSeeIn('tbody tr:nth-child(2) .price', '4,50 CHF/month¹'); // Lite
                     })
-                    ->assertSeeIn('@packages table + .hint', '¹ applied discount: 10% - Test voucher');
+                        ->assertSeeIn('@packages table + .hint', '¹ applied discount: 10% - Test voucher');
                 });
         });
 
         // Test using entitlement cost instead of the SKU cost
-        $this->browse(function (Browser $browser) use ($wallet) {
+        $this->browse(static function (Browser $browser) use ($wallet) {
             $joe = User::where('email', 'joe@kolab.org')->first();
             $beta_sku = Sku::withEnvTenantContext()->where('title', 'beta')->first();
             $storage_sku = Sku::withEnvTenantContext()->where('title', 'storage')->first();
 
             // Add an extra storage and beta entitlement with different prices
             Entitlement::create([
-                    'wallet_id' => $wallet->id,
-                    'sku_id' => $beta_sku->id,
-                    'cost' => 5010,
-                    'entitleable_id' => $joe->id,
-                    'entitleable_type' => User::class
+                'wallet_id' => $wallet->id,
+                'sku_id' => $beta_sku->id,
+                'cost' => 5010,
+                'entitleable_id' => $joe->id,
+                'entitleable_type' => User::class,
             ]);
             Entitlement::create([
-                    'wallet_id' => $wallet->id,
-                    'sku_id' => $storage_sku->id,
-                    'cost' => 5000,
-                    'entitleable_id' => $joe->id,
-                    'entitleable_type' => User::class
+                'wallet_id' => $wallet->id,
+                'sku_id' => $storage_sku->id,
+                'cost' => 5000,
+                'entitleable_id' => $joe->id,
+                'entitleable_type' => User::class,
             ]);
 
             $browser->visit('/user/' . $joe->id)
                 ->on(new UserInfo())
-                ->with('@general', function (Browser $browser) {
-                    $browser->whenAvailable('@skus', function (Browser $browser) {
+                ->with('@general', static function (Browser $browser) {
+                    $browser->whenAvailable('@skus', static function (Browser $browser) {
                         $quota_input = new QuotaInput('tbody tr:nth-child(2) .range-input');
                         $browser->waitFor('tbody tr')
                             // Beta SKU
                             ->assertSeeIn('tbody tr:nth-child(6) td.price', '45,09 CHF/month¹')
                             // Storage SKU
                             ->assertSeeIn('tr:nth-child(2) td.price', '45,00 CHF/month¹')
-                            ->with($quota_input, function (Browser $browser) {
+                            ->with($quota_input, static function (Browser $browser) {
                                 $browser->setQuotaValue(7);
                             })
                             ->assertSeeIn('tr:nth-child(2) td.price', '45,22 CHF/month¹')
-                            ->with($quota_input, function (Browser $browser) {
+                            ->with($quota_input, static function (Browser $browser) {
                                 $browser->setQuotaValue(5);
                             })
                             ->assertSeeIn('tr:nth-child(2) td.price', '0,00 CHF/month¹');
                     })
-                    ->assertSeeIn('@skus table + .hint', '¹ applied discount: 10% - Test voucher');
+                        ->assertSeeIn('@skus table + .hint', '¹ applied discount: 10% - Test voucher');
                 });
         });
     }
@@ -812,7 +809,7 @@ class UsersTest extends TestCaseDusk
         $wallet->save();
 
         // On Dashboard and the wallet page
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit('/logout')
                 ->on(new Home())
                 ->submitLogon('john@kolab.org', 'simple123', true)
@@ -824,13 +821,13 @@ class UsersTest extends TestCaseDusk
         });
 
         // SKUs on user edit page
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit(new UserList())
                 ->waitFor('@table tr:nth-child(2)')
                 ->click('@table tr:nth-child(2) a') // joe@kolab.org
                 ->on(new UserInfo())
-                ->with('@general', function (Browser $browser) {
-                    $browser->whenAvailable('@skus', function (Browser $browser) {
+                ->with('@general', static function (Browser $browser) {
+                    $browser->whenAvailable('@skus', static function (Browser $browser) {
                         $quota_input = new QuotaInput('tbody tr:nth-child(2) .range-input');
                         $browser->waitFor('tbody tr')
                             ->assertElementsCount('tbody tr', 5)
@@ -838,7 +835,7 @@ class UsersTest extends TestCaseDusk
                             ->assertSeeIn('tbody tr:nth-child(1) td.price', '5,00 €/month')
                             // Storage SKU
                             ->assertSeeIn('tr:nth-child(2) td.price', '0,00 €/month')
-                            ->with($quota_input, function (Browser $browser) {
+                            ->with($quota_input, static function (Browser $browser) {
                                 $browser->setQuotaValue(100);
                             })
                             ->assertSeeIn('tr:nth-child(2) td.price', '23,75 €/month');
@@ -847,12 +844,12 @@ class UsersTest extends TestCaseDusk
         });
 
         // Packages on new user page
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit(new UserList())
                 ->click('button.user-new')
                 ->on(new UserInfo())
-                ->with('@general', function (Browser $browser) {
-                    $browser->whenAvailable('@packages', function (Browser $browser) {
+                ->with('@general', static function (Browser $browser) {
+                    $browser->whenAvailable('@packages', static function (Browser $browser) {
                         $browser->assertElementsCount('tbody tr', 2)
                             ->assertSeeIn('tbody tr:nth-child(1) .price', '9,90 €/month') // Groupware
                             ->assertSeeIn('tbody tr:nth-child(2) .price', '5,00 €/month'); // Lite
@@ -867,7 +864,7 @@ class UsersTest extends TestCaseDusk
     public function testUserDelegation(): void
     {
         $jack = $this->getTestUser('jack@kolab.org');
-        $jack->delegatees()->each(function ($user) {
+        $jack->delegatees()->each(static function ($user) {
             $user->delegation->delete();
         });
 
@@ -884,13 +881,13 @@ class UsersTest extends TestCaseDusk
                 ->assertMissing('@setting-options-head')
                 ->assertSeeIn('@setting-delegation-head', 'Delegation')
                 // ->click('@settings .accordion-item:nth-child(2) .accordion-button')
-                ->whenAvailable('@setting-delegation', function (Browser $browser) {
+                ->whenAvailable('@setting-delegation', static function (Browser $browser) {
                     $browser->assertSeeIn('table tfoot td', 'There are no delegates.')
                         ->assertMissing('table tbody tr');
                 })
                 ->assertSeeIn('@setting-delegation-head .buttons button', 'Add delegate')
                 ->click('@setting-delegation-head .buttons button')
-                ->with(new Dialog('#delegation-create'), function (Browser $browser) {
+                ->with(new Dialog('#delegation-create'), static function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Add delegate')
                         ->assertFocused('#delegation-email')
                         ->assertValue('#delegation-email', '')
@@ -922,7 +919,7 @@ class UsersTest extends TestCaseDusk
 
             // Remove delegation
             $browser->waitFor('@setting-delegation table tbody tr')
-                ->whenAvailable('@setting-delegation', function (Browser $browser) {
+                ->whenAvailable('@setting-delegation', static function (Browser $browser) {
                     $browser->assertMissing('table tfoot td')
                         ->assertSeeIn('table tbody tr td:first-child', 'john@kolab.org')
                         ->click('table button.text-danger');

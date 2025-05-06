@@ -6,20 +6,12 @@ use Tests\TestCase;
 
 class InitTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
-    {
-    }
+    protected function tearDown(): void {}
 
     /**
      * Test the command

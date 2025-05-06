@@ -3,7 +3,13 @@
 namespace App\Console\Commands\Tenant;
 
 use App\Console\Command;
+use App\Domain;
 use App\Http\Controllers\API\V4\UsersController;
+use App\Package;
+use App\Plan;
+use App\Sku;
+use App\Tenant;
+use App\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 
@@ -32,12 +38,12 @@ class CreateCommand extends Command
     {
         $email = $this->argument('user');
 
-        if ($user = \App\User::where('email', $email)->first()) {
+        if ($user = User::where('email', $email)->first()) {
             $this->error("The user already exists.");
             return 1;
         }
 
-        if ($domain = \App\Domain::where('namespace', $this->argument('domain'))->first()) {
+        if ($domain = Domain::where('namespace', $this->argument('domain'))->first()) {
             $this->error("The domain already exists.");
             return 1;
         }
@@ -45,21 +51,21 @@ class CreateCommand extends Command
         DB::beginTransaction();
 
         // Create a tenant
-        $tenant = \App\Tenant::create(['title' => $this->option('title')]);
+        $tenant = Tenant::create(['title' => $this->option('title')]);
 
         // Clone plans, packages, skus for the tenant
-        $sku_map = \App\Sku::withEnvTenantContext()->where('active', true)->get()
-            ->mapWithKeys(function ($sku) use ($tenant) {
-                $sku_new = \App\Sku::create([
-                        'title' => $sku->title,
-                        'name' => $sku->getTranslations('name'),
-                        'description' => $sku->getTranslations('description'),
-                        'cost' => $sku->cost,
-                        'units_free' => $sku->units_free,
-                        'period' => $sku->period,
-                        'handler_class' => $sku->handler_class,
-                        'active' => true,
-                        'fee' => $sku->fee,
+        $sku_map = Sku::withEnvTenantContext()->where('active', true)->get()
+            ->mapWithKeys(static function ($sku) use ($tenant) {
+                $sku_new = Sku::create([
+                    'title' => $sku->title,
+                    'name' => $sku->getTranslations('name'),
+                    'description' => $sku->getTranslations('description'),
+                    'cost' => $sku->cost,
+                    'units_free' => $sku->units_free,
+                    'period' => $sku->period,
+                    'handler_class' => $sku->handler_class,
+                    'active' => true,
+                    'fee' => $sku->fee,
                 ]);
 
                 $sku_new->tenant_id = $tenant->id;
@@ -69,18 +75,18 @@ class CreateCommand extends Command
             })
             ->all();
 
-        $plan_map = \App\Plan::withEnvTenantContext()->get()
-            ->mapWithKeys(function ($plan) use ($tenant) {
-                $plan_new = \App\Plan::create([
-                        'title' => $plan->title,
-                        'name' => $plan->getTranslations('name'),
-                        'description' => $plan->getTranslations('description'),
-                        'promo_from' => $plan->promo_from,
-                        'promo_to' => $plan->promo_to,
-                        'qty_min' => $plan->qty_min,
-                        'qty_max' => $plan->qty_max,
-                        'discount_qty' => $plan->discount_qty,
-                        'discount_rate' => $plan->discount_rate,
+        $plan_map = Plan::withEnvTenantContext()->get()
+            ->mapWithKeys(static function ($plan) use ($tenant) {
+                $plan_new = Plan::create([
+                    'title' => $plan->title,
+                    'name' => $plan->getTranslations('name'),
+                    'description' => $plan->getTranslations('description'),
+                    'promo_from' => $plan->promo_from,
+                    'promo_to' => $plan->promo_to,
+                    'qty_min' => $plan->qty_min,
+                    'qty_max' => $plan->qty_max,
+                    'discount_qty' => $plan->discount_qty,
+                    'discount_rate' => $plan->discount_rate,
                 ]);
 
                 $plan_new->tenant_id = $tenant->id;
@@ -90,13 +96,13 @@ class CreateCommand extends Command
             })
             ->all();
 
-        $package_map = \App\Package::withEnvTenantContext()->get()
-            ->mapWithKeys(function ($package) use ($tenant) {
-                $package_new = \App\Package::create([
-                        'title' => $package->title,
-                        'name' => $package->getTranslations('name'),
-                        'description' => $package->getTranslations('description'),
-                        'discount_rate' => $package->discount_rate,
+        $package_map = Package::withEnvTenantContext()->get()
+            ->mapWithKeys(static function ($package) use ($tenant) {
+                $package_new = Package::create([
+                    'title' => $package->title,
+                    'name' => $package->getTranslations('name'),
+                    'description' => $package->getTranslations('description'),
+                    'discount_rate' => $package->discount_rate,
                 ]);
 
                 $package_new->tenant_id = $tenant->id;
@@ -107,28 +113,28 @@ class CreateCommand extends Command
             ->all();
 
         DB::table('package_skus')->whereIn('package_id', array_keys($package_map))->get()
-            ->each(function ($item) use ($package_map, $sku_map) {
+            ->each(static function ($item) use ($package_map, $sku_map) {
                 if (isset($sku_map[$item->sku_id])) {
                     DB::table('package_skus')->insert([
-                            'qty' => $item->qty,
-                            'cost' => $item->cost,
-                            'sku_id' => $sku_map[$item->sku_id],
-                            'package_id' => $package_map[$item->package_id],
+                        'qty' => $item->qty,
+                        'cost' => $item->cost,
+                        'sku_id' => $sku_map[$item->sku_id],
+                        'package_id' => $package_map[$item->package_id],
                     ]);
                 }
             });
 
         DB::table('plan_packages')->whereIn('plan_id', array_keys($plan_map))->get()
-            ->each(function ($item) use ($package_map, $plan_map) {
+            ->each(static function ($item) use ($package_map, $plan_map) {
                 if (isset($package_map[$item->package_id])) {
                     DB::table('plan_packages')->insert([
-                            'qty' => $item->qty,
-                            'qty_min' => $item->qty_min,
-                            'qty_max' => $item->qty_max,
-                            'discount_qty' => $item->discount_qty,
-                            'discount_rate' => $item->discount_rate,
-                            'plan_id' => $plan_map[$item->plan_id],
-                            'package_id' => $package_map[$item->package_id],
+                        'qty' => $item->qty,
+                        'qty_min' => $item->qty_min,
+                        'qty_max' => $item->qty_max,
+                        'discount_qty' => $item->discount_qty,
+                        'discount_rate' => $item->discount_rate,
+                        'plan_id' => $plan_map[$item->plan_id],
+                        'package_id' => $package_map[$item->package_id],
                     ]);
                 }
             });
@@ -138,7 +144,7 @@ class CreateCommand extends Command
         Queue::fake();
 
         // Make sure the transaction wasn't aborted
-        $tenant = \App\Tenant::find($tenant->id);
+        $tenant = Tenant::find($tenant->id);
 
         if (!$tenant) {
             $this->error("Failed to create a tenant.");
@@ -148,18 +154,18 @@ class CreateCommand extends Command
         $this->info("Created tenant {$tenant->id}.");
 
         // Set up the primary tenant domain
-        $domain = \App\Domain::create(
+        $domain = Domain::create(
             [
                 'namespace' => $this->argument('domain'),
-                'type' => \App\Domain::TYPE_PUBLIC,
+                'type' => Domain::TYPE_PUBLIC,
             ]
         );
         $domain->tenant_id = $tenant->id;
-        $domain->status = \App\Domain::STATUS_CONFIRMED | \App\Domain::STATUS_ACTIVE;
+        $domain->status = Domain::STATUS_CONFIRMED | Domain::STATUS_ACTIVE;
         $domain->save();
         $this->info("Created domain {$domain->id}.");
 
-        $user = new \App\User();
+        $user = new User();
         $user->email = $email;
         $user->password = $this->option('password');
         $user->role = 'reseller';

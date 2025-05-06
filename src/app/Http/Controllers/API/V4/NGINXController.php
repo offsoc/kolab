@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\V4;
 use App\Http\Controllers\Controller;
 use App\User;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class NGINXController extends Controller
 {
@@ -14,9 +15,9 @@ class NGINXController extends Controller
      * @param string $login    The login name
      * @param string $password The password
      *
-     * @return \App\User The user
+     * @return User The user
      *
-     * @throws \Exception If the authorization fails.
+     * @throws \Exception if the authorization fails
      */
     private function authorizeRequestCredentialsOnly($login, $password)
     {
@@ -40,13 +41,13 @@ class NGINXController extends Controller
     /**
      * Authorize with the provided credentials.
      *
-     * @param string $login The login name
+     * @param string $login    The login name
      * @param string $password The password
      * @param string $clientIP The client ip
      *
-     * @return \App\User The user
+     * @return User The user
      *
-     * @throws \Exception If the authorization fails.
+     * @throws \Exception if the authorization fails
      */
     private function authorizeRequest($login, $password, $clientIP)
     {
@@ -79,7 +80,7 @@ class NGINXController extends Controller
     /**
      * Convert domain.tld\username into username@domain for activesync
      *
-     * @param string $username The original username.
+     * @param string $username the original username
      *
      * @return string The username in canonical form
      */
@@ -100,25 +101,25 @@ class NGINXController extends Controller
     /**
      * Authentication request from the ngx_http_auth_request_module
      *
-     * @param \Illuminate\Http\Request $request The API request.
+     * @param Request $request the API request
      *
-     * @return \Illuminate\Http\Response The response
+     * @return Response The response
      */
     public function httpauth(Request $request)
     {
-        /**
-            Php-Auth-Pw:               simple123
-            Php-Auth-User:             john@kolab.org
-            Sec-Fetch-Dest:            document
-            Sec-Fetch-Mode:            navigate
-            Sec-Fetch-Site:            cross-site
-            Sec-Gpc:                   1
-            Upgrade-Insecure-Requests: 1
-            User-Agent:                Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:93.0) Gecko/20100101 Firefox/93.0
-            X-Forwarded-For:           31.10.153.58
-            X-Forwarded-Proto:         https
-            X-Original-Uri:            /iRony/
-            X-Real-Ip:                 31.10.153.58
+        /*
+         * Php-Auth-Pw:               simple123
+         * Php-Auth-User:             john@kolab.org
+         * Sec-Fetch-Dest:            document
+         * Sec-Fetch-Mode:            navigate
+         * Sec-Fetch-Site:            cross-site
+         * Sec-Gpc:                   1
+         * Upgrade-Insecure-Requests: 1
+         * User-Agent:                Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:93.0) Gecko/20100101 Firefox/93.0
+         * X-Forwarded-For:           31.10.153.58
+         * X-Forwarded-Proto:         https
+         * X-Original-Uri:            /iRony/
+         * X-Real-Ip:                 31.10.153.58
          */
 
         $username = $this->normalizeUsername($request->headers->get('Php-Auth-User', ''));
@@ -149,9 +150,9 @@ class NGINXController extends Controller
     /**
      * Authentication request from the cyrus sasl
      *
-     * @param \Illuminate\Http\Request $request The API request.
+     * @param Request $request the API request
      *
-     * @return \Illuminate\Http\Response The response
+     * @return Response The response
      */
     public function cyrussasl(Request $request)
     {
@@ -169,17 +170,17 @@ class NGINXController extends Controller
         $password = $array[2];
 
         if (!empty($realm)) {
-            $username = "$username@$realm";
+            $username = "{$username}@{$realm}";
         }
 
         try {
             $this->authorizeRequestCredentialsOnly($username, $password);
         } catch (\Exception $e) {
-            \Log::debug("Authentication attempt failed for $username: {$e->getMessage()}");
+            \Log::debug("Authentication attempt failed for {$username}: {$e->getMessage()}");
             return response('', 403);
         }
 
-        \Log::debug("Authentication attempt succeeded for $username");
+        \Log::debug("Authentication attempt succeeded for {$username}");
         return response('');
     }
 
@@ -189,13 +190,13 @@ class NGINXController extends Controller
      * @todo: Separate IMAP(+STARTTLS) from IMAPS, same for SMTP/submission. =>
      *   I suppose that's not necessary given that we have the information avialable in the headers?
      *
-     * @param \Illuminate\Http\Request $request The API request.
+     * @param Request $request the API request
      *
-     * @return \Illuminate\Http\Response The response
+     * @return Response The response
      */
     public function authenticate(Request $request)
     {
-        /**
+        /*
          *  Auth-Login-Attempt: 1
          *  Auth-Method:        plain
          *  Auth-Pass:          simple123
@@ -237,13 +238,13 @@ class NGINXController extends Controller
     /**
      * Authentication request for roundcube imap.
      *
-     * @param \Illuminate\Http\Request $request The API request.
+     * @param Request $request the API request
      *
-     * @return \Illuminate\Http\Response The response
+     * @return Response The response
      */
     public function authenticateRoundcube(Request $request)
     {
-        /**
+        /*
          *  Auth-Login-Attempt: 1
          *  Auth-Method:        plain
          *  Auth-Pass:          simple123
@@ -283,11 +284,11 @@ class NGINXController extends Controller
     /**
      * Create an imap authentication response.
      *
-     * @param \Illuminate\Http\Request $request The API request.
-     * @param bool   $prefGuam Whether or not Guam is enabled.
-     * @param string $password The password to include in the response.
+     * @param Request $request  the API request
+     * @param bool    $prefGuam whether or not Guam is enabled
+     * @param string  $password the password to include in the response
      *
-     * @return \Illuminate\Http\Response The response
+     * @return Response The response
      */
     private function authenticateIMAP(Request $request, $prefGuam, $password)
     {
@@ -302,7 +303,7 @@ class NGINXController extends Controller
                 "Auth-Status" => "OK",
                 "Auth-Server" => gethostbyname(\config('services.imap.host')),
                 "Auth-Port" => $port,
-                "Auth-Pass" => $password
+                "Auth-Pass" => $password,
             ]
         );
 
@@ -312,10 +313,10 @@ class NGINXController extends Controller
     /**
      * Create an smtp authentication response.
      *
-     * @param \Illuminate\Http\Request $request The API request.
-     * @param string $password The password to include in the response.
+     * @param Request $request  the API request
+     * @param string  $password the password to include in the response
      *
-     * @return \Illuminate\Http\Response The response
+     * @return Response The response
      */
     private function authenticateSMTP(Request $request, $password)
     {
@@ -324,7 +325,7 @@ class NGINXController extends Controller
                 "Auth-Status" => "OK",
                 "Auth-Server" => gethostbyname(\config('services.smtp.host')),
                 "Auth-Port" => \config('services.smtp.port'),
-                "Auth-Pass" => $password
+                "Auth-Pass" => $password,
             ]
         );
 
@@ -334,10 +335,10 @@ class NGINXController extends Controller
     /**
      * Create a failed-authentication response.
      *
-     * @param \Illuminate\Http\Request $request The API request.
-     * @param string $reason The reason for the failure.
+     * @param Request $request the API request
+     * @param string  $reason  the reason for the failure
      *
-     * @return \Illuminate\Http\Response The response
+     * @return Response The response
      */
     private function byebye(Request $request, $reason = null)
     {
@@ -346,7 +347,7 @@ class NGINXController extends Controller
         $response = response('')->withHeaders(
             [
                 "Auth-Status" => "authentication failure",
-                "Auth-Wait" => 3
+                "Auth-Wait" => 3,
             ]
         );
 

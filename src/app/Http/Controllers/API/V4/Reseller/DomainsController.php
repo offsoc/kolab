@@ -4,13 +4,14 @@ namespace App\Http\Controllers\API\V4\Reseller;
 
 use App\Domain;
 use App\User;
+use Illuminate\Http\JsonResponse;
 
 class DomainsController extends \App\Http\Controllers\API\V4\Admin\DomainsController
 {
     /**
      * Search for domains
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function index()
     {

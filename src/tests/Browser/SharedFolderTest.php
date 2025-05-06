@@ -16,20 +16,14 @@ use Tests\TestCaseDusk;
 
 class SharedFolderTest extends TestCaseDusk
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         SharedFolder::whereNotIn('email', ['folder-event@kolab.org', 'folder-contact@kolab.org'])->delete();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         SharedFolder::whereNotIn('email', ['folder-event@kolab.org', 'folder-contact@kolab.org'])->delete();
 
@@ -42,7 +36,7 @@ class SharedFolderTest extends TestCaseDusk
     public function testInfoUnauth(): void
     {
         // Test that the page requires authentication
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit('/shared-folder/abc')->on(new Home());
         });
     }
@@ -53,7 +47,7 @@ class SharedFolderTest extends TestCaseDusk
     public function testListUnauth(): void
     {
         // Test that the page requires authentication
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit('/shared-folders')->on(new Home());
         });
     }
@@ -70,14 +64,14 @@ class SharedFolderTest extends TestCaseDusk
         $folder->save();
 
         // Log on the user
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit(new Home())
                 ->submitLogon('john@kolab.org', 'simple123', true)
                 ->on(new Dashboard())
                 ->assertSeeIn('@links .link-shared-folders', 'Shared folders')
                 ->click('@links .link-shared-folders')
                 ->on(new SharedFolderList())
-                ->whenAvailable('@table', function (Browser $browser) {
+                ->whenAvailable('@table', static function (Browser $browser) {
                     $browser->waitFor('tbody tr')
                         ->assertElementsCount('thead th', 2)
                         ->assertSeeIn('thead tr th:nth-child(1)', 'Name')
@@ -109,7 +103,7 @@ class SharedFolderTest extends TestCaseDusk
                 ->assertSeeIn('#folder-info .card-title', 'New shared folder')
                 ->assertSeeIn('@nav #tab-general', 'General')
                 ->assertMissing('@nav #tab-settings')
-                ->with('@general', function (Browser $browser) {
+                ->with('@general', static function (Browser $browser) {
                     // Assert form content
                     $browser->assertMissing('#status')
                         ->assertFocused('#name')
@@ -125,12 +119,12 @@ class SharedFolderTest extends TestCaseDusk
                         ->assertSelectHasOptions('div.row:nth-child(3) select', ['kolab.org'])
                         ->assertValue('div.row:nth-child(3) select', 'kolab.org')
                         ->assertSeeIn('div.row:nth-child(4) label', 'Email Addresses')
-                        ->with(new ListInput('#aliases'), function (Browser $browser) {
+                        ->with(new ListInput('#aliases'), static function (Browser $browser) {
                             $browser->assertListInputValue([])
                                 ->assertValue('@input', '');
                         })
                         ->assertSeeIn('div.row:nth-child(5) label', 'Subscriptions')
-                        ->with('@skus', function ($browser) {
+                        ->with('@skus', static function ($browser) {
                             $browser->assertElementsCount('tbody tr', 1)
                                 ->assertSeeIn('tbody tr:nth-child(1) td.name', 'Shared Folder')
                                 ->assertSeeIn('tbody tr:nth-child(1) td.price', '0,89 CHF/month')
@@ -155,13 +149,13 @@ class SharedFolderTest extends TestCaseDusk
                 // Test error handling on aliases input
                 ->type('#name', 'Test Folder')
                 ->select('#type', 'mail')
-                ->with(new ListInput('#aliases'), function (Browser $browser) {
+                ->with(new ListInput('#aliases'), static function (Browser $browser) {
                     $browser->addListEntry('folder-alias@unknown');
                 })
                 ->click('@general button[type=submit]')
                 ->assertMissing('#name + .invalid-feedback')
                 ->waitFor('#aliases + .invalid-feedback')
-                ->with(new ListInput('#aliases'), function (Browser $browser) {
+                ->with(new ListInput('#aliases'), static function (Browser $browser) {
                     $browser->assertFormError(1, "The specified domain is invalid.", true);
                 })
                 ->assertToast(Toast::TYPE_ERROR, 'Form validation error')
@@ -179,7 +173,7 @@ class SharedFolderTest extends TestCaseDusk
             $browser->click('@table tr:nth-child(3) td:first-child a')
                 ->on(new SharedFolderInfo())
                 ->assertSeeIn('#folder-info .card-title', 'Shared folder')
-                ->with('@general', function (Browser $browser) {
+                ->with('@general', static function (Browser $browser) {
                     // Assert form content
                     $browser->assertFocused('#name')
                         ->assertSeeIn('div.row:nth-child(1) label', 'Status')
@@ -227,7 +221,7 @@ class SharedFolderTest extends TestCaseDusk
                 ->click('button.shared-folder-new')
                 ->on(new SharedFolderInfo())
                 ->type('#name', 'Test Folder2')
-                ->with(new ListInput('#aliases'), function (Browser $browser) {
+                ->with(new ListInput('#aliases'), static function (Browser $browser) {
                     $browser->addListEntry('folder-alias1@kolab.org')
                         ->addListEntry('folder-alias2@kolab.org');
                 })
@@ -246,16 +240,16 @@ class SharedFolderTest extends TestCaseDusk
             // Test folder update
             $browser->click('@table tr:nth-child(3) td:first-child a')
                 ->on(new SharedFolderInfo())
-                ->with('@general', function (Browser $browser) {
+                ->with('@general', static function (Browser $browser) {
                     // Assert form content
                     $browser->assertFocused('#name')
                         ->assertValue('div.row:nth-child(2) input[type=text]', 'Test Folder2')
                         ->assertSelected('div.row:nth-child(3) select:disabled', 'mail')
-                        ->with(new ListInput('#aliases'), function (Browser $browser) {
+                        ->with(new ListInput('#aliases'), static function (Browser $browser) {
                             $browser->assertListInputValue(['folder-alias1@kolab.org', 'folder-alias2@kolab.org'])
                                 ->assertValue('@input', '');
                         })
-                        ->with('@skus', function ($browser) {
+                        ->with('@skus', static function ($browser) {
                             $browser->assertElementsCount('tbody tr', 1)
                                 ->assertSeeIn('tbody tr:nth-child(1) td.name', 'Shared Folder')
                                 ->assertSeeIn('tbody tr:nth-child(1) td.price', '0,89 CHF/month')
@@ -269,7 +263,7 @@ class SharedFolderTest extends TestCaseDusk
                 })
                 // change folder name, and remove one alias
                 ->type('#name', 'Test Folder Update2')
-                ->with(new ListInput('#aliases'), function (Browser $browser) {
+                ->with(new ListInput('#aliases'), static function (Browser $browser) {
                     $browser->removeListEntry(2);
                 })
                 ->click('@general button[type=submit]')
@@ -295,11 +289,11 @@ class SharedFolderTest extends TestCaseDusk
 
         $this->assertFalse($folder->isImapReady());
 
-        $this->browse(function ($browser) use ($folder) {
+        $this->browse(static function ($browser) use ($folder) {
             // Test auto-refresh
             $browser->visit('/shared-folder/' . $folder->id)
                 ->on(new SharedFolderInfo())
-                ->with(new Status(), function ($browser) {
+                ->with(new Status(), static function ($browser) {
                     $browser->assertSeeIn('@body', 'We are preparing the shared folder')
                         ->assertProgress(\config('app.with_ldap') ? 85 : 80, 'Creating a shared folder...', 'pending')
                         ->assertMissing('@refresh-button')
@@ -326,7 +320,7 @@ class SharedFolderTest extends TestCaseDusk
         $folder = $this->getTestSharedFolder('folder-event@kolab.org');
         $folder->setSetting('acl', null);
 
-        $this->browse(function ($browser) use ($folder) {
+        $this->browse(static function ($browser) use ($folder) {
             $aclInput = new AclInput('@settings #acl');
             // Test auto-refresh
             $browser->visit('/shared-folder/' . $folder->id)
@@ -334,41 +328,41 @@ class SharedFolderTest extends TestCaseDusk
                 ->assertSeeIn('@nav #tab-general', 'General')
                 ->assertSeeIn('@nav #tab-settings', 'Settings')
                 ->click('@nav #tab-settings')
-                ->with('@settings form', function (Browser $browser) {
+                ->with('@settings form', static function (Browser $browser) {
                     // Assert form content
                     $browser->assertSeeIn('div.row:nth-child(1) label', 'Access rights')
                         ->assertSeeIn('div.row:nth-child(1) #acl-hint', 'permissions')
                         ->assertSeeIn('button[type=submit]', 'Submit');
                 })
                 // Test the AclInput widget
-                ->with($aclInput, function (Browser $browser) {
+                ->with($aclInput, static function (Browser $browser) {
                     $browser->assertAclValue([])
                         ->addAclEntry('anyone, read-only')
                         ->addAclEntry('test, read-write')
                         ->addAclEntry('john@kolab.org, full')
                         ->assertAclValue([
-                                'anyone, read-only',
-                                'test, read-write',
-                                'john@kolab.org, full',
+                            'anyone, read-only',
+                            'test, read-write',
+                            'john@kolab.org, full',
                         ]);
                 })
                 // Test error handling
                 ->click('@settings button[type=submit]')
-                ->with($aclInput, function (Browser $browser) {
+                ->with($aclInput, static function (Browser $browser) {
                     $browser->assertFormError(2, 'The specified email address is invalid.');
                 })
                 ->assertToast(Toast::TYPE_ERROR, 'Form validation error')
                 // Test successful update
-                ->with($aclInput, function (Browser $browser) {
+                ->with($aclInput, static function (Browser $browser) {
                     $browser->removeAclEntry(2)
                         ->assertAclValue([
-                                'anyone, read-only',
-                                'john@kolab.org, full',
+                            'anyone, read-only',
+                            'john@kolab.org, full',
                         ])
                         ->updateAclEntry(2, 'jack@kolab.org, read-write')
                         ->assertAclValue([
-                                'anyone, read-only',
-                                'jack@kolab.org, read-write',
+                            'anyone, read-only',
+                            'jack@kolab.org, read-write',
                         ]);
                 })
                 ->click('@settings button[type=submit]')
@@ -378,10 +372,10 @@ class SharedFolderTest extends TestCaseDusk
                 ->refresh()
                 ->on(new SharedFolderInfo())
                 ->click('@nav #tab-settings')
-                ->with($aclInput, function (Browser $browser) {
+                ->with($aclInput, static function (Browser $browser) {
                     $browser->assertAclValue([
-                            'anyone, read-only',
-                            'jack@kolab.org, read-write',
+                        'anyone, read-only',
+                        'jack@kolab.org, read-write',
                     ]);
                 });
         });

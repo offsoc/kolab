@@ -3,13 +3,14 @@
 namespace App\Jobs\Resource;
 
 use App\Jobs\ResourceJob;
+use App\Resource;
+use App\Support\Facades\IMAP;
+use App\Support\Facades\LDAP;
 
 class DeleteJob extends ResourceJob
 {
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle()
     {
@@ -31,23 +32,23 @@ class DeleteJob extends ResourceJob
         }
 
         if (\config('app.with_ldap') && $resource->isLdapReady()) {
-            \App\Support\Facades\LDAP::deleteResource($resource);
+            LDAP::deleteResource($resource);
 
-            $resource->status ^= \App\Resource::STATUS_LDAP_READY;
+            $resource->status ^= Resource::STATUS_LDAP_READY;
             $resource->save();
         }
 
         if ($resource->isImapReady()) {
             if (\config('app.with_imap')) {
-                if (!\App\Support\Facades\IMAP::deleteResource($resource)) {
+                if (!IMAP::deleteResource($resource)) {
                     throw new \Exception("Failed to delete mailbox for resource {$this->resourceId}.");
                 }
             }
 
-            $resource->status ^= \App\Resource::STATUS_IMAP_READY;
+            $resource->status ^= Resource::STATUS_IMAP_READY;
         }
 
-        $resource->status |= \App\Resource::STATUS_DELETED;
+        $resource->status |= Resource::STATUS_DELETED;
         $resource->save();
     }
 }

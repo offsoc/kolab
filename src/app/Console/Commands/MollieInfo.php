@@ -65,7 +65,7 @@ class MollieInfo extends Command
                 $this->info("Auto-payment: none");
             }
 
-            // TODO: List user payments history
+        // TODO: List user payments history
         } else {
             $this->info("Available payment methods:");
 

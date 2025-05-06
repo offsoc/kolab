@@ -2,26 +2,21 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\Mail\SignupInvitationJob;
 use App\SignupInvitation as SI;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class SignupInvitationTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         SI::truncate();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         SI::truncate();
 
@@ -42,11 +37,11 @@ class SignupInvitationTest extends TestCase
         $this->assertSame(\config('app.tenant_id'), $invitation->tenant_id);
         $this->assertTrue(preg_match('/^[a-f0-9-]{36}$/', $invitation->id) > 0);
 
-        Queue::assertPushed(\App\Jobs\Mail\SignupInvitationJob::class, 1);
+        Queue::assertPushed(SignupInvitationJob::class, 1);
 
         Queue::assertPushed(
-            \App\Jobs\Mail\SignupInvitationJob::class,
-            function ($job) use ($invitation) {
+            SignupInvitationJob::class,
+            static function ($job) use ($invitation) {
                 $inv = TestCase::getObjectProperty($job, 'invitation');
 
                 return $inv->id === $invitation->id && $inv->email === $invitation->email;
@@ -85,11 +80,11 @@ class SignupInvitationTest extends TestCase
         $invitation->status = SI::STATUS_NEW;
         $invitation->save();
 
-        Queue::assertPushed(\App\Jobs\Mail\SignupInvitationJob::class, 1);
+        Queue::assertPushed(SignupInvitationJob::class, 1);
 
         Queue::assertPushed(
-            \App\Jobs\Mail\SignupInvitationJob::class,
-            function ($job) use ($invitation) {
+            SignupInvitationJob::class,
+            static function ($job) use ($invitation) {
                 $inv = TestCase::getObjectProperty($job, 'invitation');
 
                 return $inv->id === $invitation->id && $inv->email === $invitation->email;
@@ -104,11 +99,11 @@ class SignupInvitationTest extends TestCase
         $invitation->status = SI::STATUS_NEW;
         $invitation->save();
 
-        Queue::assertPushed(\App\Jobs\Mail\SignupInvitationJob::class, 1);
+        Queue::assertPushed(SignupInvitationJob::class, 1);
 
         Queue::assertPushed(
-            \App\Jobs\Mail\SignupInvitationJob::class,
-            function ($job) use ($invitation) {
+            SignupInvitationJob::class,
+            static function ($job) use ($invitation) {
                 $inv = TestCase::getObjectProperty($job, 'invitation');
 
                 return $inv->id === $invitation->id && $inv->email === $invitation->email;

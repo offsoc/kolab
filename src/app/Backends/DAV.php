@@ -2,6 +2,7 @@
 
 namespace App\Backends;
 
+use App\Auth\Utils;
 use App\User;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
@@ -25,7 +26,6 @@ class DAV
     protected $responseHeaders = [];
     protected $homes;
 
-
     /**
      * Get object instance for user/password/location
      *
@@ -35,7 +35,7 @@ class DAV
      *
      * @return DAV DAV client instance
      */
-    public static function getInstance($user, $password, $url = null): DAV
+    public static function getInstance($user, $password, $url = null): self
     {
         $dav = new self();
         $dav->setCredentials($user, $password);
@@ -62,7 +62,7 @@ class DAV
      */
     public function setCredentials($user, $password): void
     {
-        $this->user     = $user;
+        $this->user = $user;
         $this->password = $password;
     }
 
@@ -77,7 +77,7 @@ class DAV
             return $this->homes;
         }
 
-        $path = parse_url($this->url, PHP_URL_PATH);
+        $path = parse_url($this->url, \PHP_URL_PATH);
 
         $body = '<?xml version="1.0" encoding="utf-8"?>'
             . '<d:propfind xmlns:d="DAV:">'
@@ -204,7 +204,7 @@ class DAV
         }
 
         // Note: Cyrus CardDAV service requires Depth:1 (CalDAV works without it)
-        $headers =  ['Depth' => 1, 'Prefer' => 'return-minimal'];
+        $headers = ['Depth' => 1, 'Prefer' => 'return-minimal'];
 
         $response = $this->request($root_href, 'PROPFIND', DAV\Folder::propfindXML(), $headers);
 
@@ -396,7 +396,7 @@ class DAV
 
         foreach ($folders as $props) {
             $folder = new DAV\Folder();
-            $folder->href = $props['type'] . 's' . '/user/' . $user->email . '/' . $props['path'];
+            $folder->href = $props['type'] . 's/user/' . $user->email . '/' . $props['path'];
             $folder->types = ['collection', $props['type']];
             $folder->name = $props['displayname'] ?? '';
             $folder->components = $props['components'] ?? [];
@@ -582,7 +582,7 @@ class DAV
 
             if (!empty($acl[$type])) {
                 $folders[] = [
-                    'href' => $folder['type'] . 's' . '/user/' . $user->email . '/' . $folder['path'],
+                    'href' => $folder['type'] . 's/user/' . $user->email . '/' . $folder['path'],
                     'acl' => $acl[$type] == 'read-write'
                         ? DAV\ShareResource::ACCESS_READ_WRITE : DAV\ShareResource::ACCESS_READ,
                 ];
@@ -731,12 +731,12 @@ class DAV
     /**
      * Create DAV client instance for a user (using generated auth token as password)
      */
-    protected static function getClientForUser(User $user): DAV
+    protected static function getClientForUser(User $user): self
     {
         // Cyrus DAV does not support proxy authorization via DAV. Even though it has
         // the Authorize-As header, it is used only for cummunication with Murder backends.
         // We use a one-time token instead. It's valid for 10 seconds, assume it's enough time.
-        $password = \App\Auth\Utils::tokenCreate((string) $user->id);
+        $password = Utils::tokenCreate((string) $user->id);
 
         if ($password === null) {
             throw new \Exception("Failed to create an authentication token for DAV");
@@ -830,7 +830,7 @@ class DAV
         // TODO: This might need to be configurable or discovered somehow,
         // maybe get it from current-user-principal property that we read in discover()
         $path = '/principals/user/';
-        if ($host_path = parse_url($this->url, PHP_URL_PATH)) {
+        if ($host_path = parse_url($this->url, \PHP_URL_PATH)) {
             $path = '/' . trim($host_path, '/') . $path;
         }
 
@@ -849,7 +849,7 @@ class DAV
 
         // Remove the duplicate path prefix
         if ($path) {
-            $rootPath = parse_url($url, PHP_URL_PATH);
+            $rootPath = parse_url($url, \PHP_URL_PATH);
             $path = '/' . ltrim($path, '/');
 
             if ($rootPath && str_starts_with($path, $rootPath)) {
@@ -877,7 +877,7 @@ class DAV
 
         if ($debug) {
             $body = $this->debugBody($body, $headers);
-            \Log::debug("C: {$method}: {$url}" . (strlen($body) > 0 ? "\n$body" : ''));
+            \Log::debug("C: {$method}: {$url}" . (strlen($body) > 0 ? "\n{$body}" : ''));
         }
 
         $response = $client->send($method, $url);

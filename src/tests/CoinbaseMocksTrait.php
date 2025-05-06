@@ -2,6 +2,7 @@
 
 namespace Tests;
 
+use App\Providers\Payment\Coinbase;
 use GuzzleHttp\Client;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
@@ -16,7 +17,7 @@ trait CoinbaseMocksTrait
      *
      * @see http://docs.guzzlephp.org/en/stable/testing.html
      *
-     * @return \GuzzleHttp\Handler\MockHandler
+     * @return MockHandler
      */
     public function mockCoinbase()
     {
@@ -28,13 +29,13 @@ trait CoinbaseMocksTrait
             Middleware::history($this->coinbaseRequestHistory)
         );
 
-        \App\Providers\Payment\Coinbase::$testClient = new Client(['handler' => $handler]);
+        Coinbase::$testClient = new Client(['handler' => $handler]);
 
         return $mockHandler;
     }
 
     public function unmockCoinbase()
     {
-        \App\Providers\Payment\Coinbase::$testClient = null;
+        Coinbase::$testClient = null;
     }
 }

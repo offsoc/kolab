@@ -7,7 +7,6 @@
  */
 
 return [
-
     'app' => [
         'faq' => "FAQ",
     ],
@@ -64,7 +63,7 @@ return [
         'sender-policy-text' => "Cette liste vous permet de spécifier qui peut envoyer du courrier à la liste de distribution."
             . " Vous pouvez mettre une adresse e-mail complète (jane@kolab.org), un domaine (kolab.org) ou un suffixe (.org)"
             . " auquel l'adresse électronique de l'expéditeur est assimilée."
-            . " Si la liste est vide, le courriels de quiconque est autorisé."
+            . " Si la liste est vide, le courriels de quiconque est autorisé.",
     ],
 
     'domain' => [
@@ -171,7 +170,7 @@ return [
         'forgot_password' => "Mot de passe oublié?",
         'header' => "Veuillez vous connecter",
         'sign_in' => "Se connecter",
-        'webmail' => "Webmail"
+        'webmail' => "Webmail",
     ],
 
     'meet' => [

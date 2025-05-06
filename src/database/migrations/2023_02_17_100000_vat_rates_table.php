@@ -1,20 +1,18 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
+use App\VatRate;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up()
     {
-        Schema::create('vat_rates', function (Blueprint $table) {
+        Schema::create('vat_rates', static function (Blueprint $table) {
             $table->string('id', 36)->primary();
             $table->string('country', 2);
             $table->timestamp('start')->useCurrent();
@@ -25,7 +23,7 @@ return new class extends Migration
 
         Schema::table(
             'payments',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->string('vat_rate_id', 36)->nullable();
                 $table->integer('credit_amount')->nullable(); // temporarily allow null
 
@@ -37,7 +35,7 @@ return new class extends Migration
 
         Schema::table(
             'payments',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->integer('credit_amount')->nullable(false)->change(); // remove nullable
             }
         );
@@ -47,37 +45,35 @@ return new class extends Migration
             $countries = explode(',', strtoupper(trim($countries)));
 
             foreach ($countries as $country) {
-                $vatRate = \App\VatRate::create([
-                        'start' => new DateTime('2010-01-01 00:00:00'),
-                        'rate' => $rate,
-                        'country' => $country,
+                $vatRate = VatRate::create([
+                    'start' => new DateTime('2010-01-01 00:00:00'),
+                    'rate' => $rate,
+                    'country' => $country,
                 ]);
 
-                DB::table('payments')->whereIn('wallet_id', function ($query) use ($country) {
+                DB::table('payments')->whereIn('wallet_id', static function ($query) use ($country) {
                     $query->select('id')
                         ->from('wallets')
-                        ->whereIn('user_id', function ($query) use ($country) {
+                        ->whereIn('user_id', static function ($query) use ($country) {
                             $query->select('user_id')
                                 ->from('user_settings')
                                 ->where('key', 'country')
                                 ->where('value', $country);
                         });
                 })
-                ->update(['vat_rate_id' => $vatRate->id]);
+                    ->update(['vat_rate_id' => $vatRate->id]);
             }
         }
     }
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
     public function down()
     {
         Schema::table(
             'payments',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->dropForeign(['vat_rate_id']);
                 $table->dropColumn('vat_rate_id');
                 $table->dropColumn('credit_amount');

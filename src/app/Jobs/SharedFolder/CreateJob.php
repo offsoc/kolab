@@ -3,6 +3,7 @@
 namespace App\Jobs\SharedFolder;
 
 use App\Jobs\SharedFolderJob;
+use App\SharedFolder;
 use App\Support\Facades\IMAP;
 use App\Support\Facades\LDAP;
 
@@ -10,8 +11,6 @@ class CreateJob extends SharedFolderJob
 {
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle()
     {
@@ -55,7 +54,7 @@ class CreateJob extends SharedFolderJob
         if ($withLdap && !$folder->isLdapReady()) {
             LDAP::createSharedFolder($folder);
 
-            $folder->status |= \App\SharedFolder::STATUS_LDAP_READY;
+            $folder->status |= SharedFolder::STATUS_LDAP_READY;
             $folder->save();
         }
 
@@ -73,10 +72,10 @@ class CreateJob extends SharedFolderJob
                 }
             }
 
-            $folder->status |= \App\SharedFolder::STATUS_IMAP_READY;
+            $folder->status |= SharedFolder::STATUS_IMAP_READY;
         }
 
-        $folder->status |= \App\SharedFolder::STATUS_ACTIVE;
+        $folder->status |= SharedFolder::STATUS_ACTIVE;
         $folder->save();
     }
 }

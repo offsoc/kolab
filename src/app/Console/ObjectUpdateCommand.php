@@ -56,7 +56,7 @@ abstract class ObjectUpdateCommand extends ObjectCommand
         if (preg_match_all('/@property\s+([^$\s]+)\s+\$([a-z_]+)/', $reflector->getDocComment(), $matches)) {
             foreach ($matches[1] as $key => $type) {
                 $type = preg_replace('/[\?]/', '', $type);
-                if (preg_match('/^(int|string|float|bool|\\Carbon\\Carbon)$/', $type)) {
+                if (preg_match('/^(int|string|float|bool|\Carbon\Carbon)$/', $type)) {
                     $list[] = $matches[2][$key];
                 }
             }

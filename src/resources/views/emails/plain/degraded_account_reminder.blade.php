@@ -12,6 +12,6 @@
 
 {!! __('mail.degradedaccountreminder-body5', $vars) !!}
 
--- 
+--
 {!! __('mail.footer1', $vars) !!}
 {!! __('mail.footer2', $vars) !!}

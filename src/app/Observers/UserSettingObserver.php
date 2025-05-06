@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Jobs\User\UpdateJob;
 use App\UserSetting;
 
 class UserSettingObserver
@@ -9,9 +10,7 @@ class UserSettingObserver
     /**
      * Handle the user setting "created" event.
      *
-     * @param \App\UserSetting $userSetting Settings object
-     *
-     * @return void
+     * @param UserSetting $userSetting Settings object
      */
     public function created(UserSetting $userSetting)
     {
@@ -21,9 +20,7 @@ class UserSettingObserver
     /**
      * Handle the user setting "updated" event.
      *
-     * @param \App\UserSetting $userSetting Settings object
-     *
-     * @return void
+     * @param UserSetting $userSetting Settings object
      */
     public function updated(UserSetting $userSetting)
     {
@@ -33,9 +30,7 @@ class UserSettingObserver
     /**
      * Handle the user setting "deleted" event.
      *
-     * @param \App\UserSetting $userSetting Settings object
-     *
-     * @return void
+     * @param UserSetting $userSetting Settings object
      */
     public function deleted(UserSetting $userSetting)
     {
@@ -45,12 +40,12 @@ class UserSettingObserver
     /**
      * Dispatch the user update job (if needed).
      *
-     * @param \App\UserSetting $userSetting Settings object
+     * @param UserSetting $userSetting Settings object
      */
     private function dispatchUpdateJob(UserSetting $userSetting): void
     {
         if ($userSetting->isBackendSetting()) {
-            \App\Jobs\User\UpdateJob::dispatch($userSetting->user_id);
+            UpdateJob::dispatch($userSetting->user_id);
         }
     }
 }

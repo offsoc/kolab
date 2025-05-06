@@ -5,8 +5,8 @@ namespace App\Http\Controllers\API\V4\Admin;
 use App\Discount;
 use App\Http\Controllers\API\V4\PaymentsController;
 use App\Providers\PaymentProvider;
-use App\Transaction;
 use App\Wallet;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -18,7 +18,7 @@ class WalletsController extends \App\Http\Controllers\API\V4\WalletsController
      *
      * @param string $id A wallet identifier
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function show($id)
     {
@@ -52,10 +52,10 @@ class WalletsController extends \App\Http\Controllers\API\V4\WalletsController
     /**
      * Award/penalize a wallet.
      *
-     * @param \Illuminate\Http\Request $request The API request.
-     * @param string                   $id      Wallet identifier
+     * @param Request $request the API request
+     * @param string  $id      Wallet identifier
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function oneOff(Request $request, $id)
     {
@@ -99,7 +99,7 @@ class WalletsController extends \App\Http\Controllers\API\V4\WalletsController
         $response = [
             'status' => 'success',
             'message' => self::trans("app.wallet-{$method}-success"),
-            'balance' => $wallet->balance
+            'balance' => $wallet->balance,
         ];
 
         return response()->json($response);
@@ -108,10 +108,10 @@ class WalletsController extends \App\Http\Controllers\API\V4\WalletsController
     /**
      * Update wallet data.
      *
-     * @param \Illuminate\Http\Request $request The API request.
-     * @param string                   $id      Wallet identifier
+     * @param Request $request the API request
+     * @param string  $id      Wallet identifier
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function update(Request $request, $id)
     {

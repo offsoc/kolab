@@ -11,9 +11,7 @@ class PlanPackageObserver
      *
      * Ensures that the entries belong to the same tenant.
      *
-     * @param \App\PlanPackage $planPackage The plan-package relation
-     *
-     * @return void
+     * @param PlanPackage $planPackage The plan-package relation
      */
     public function creating(PlanPackage $planPackage)
     {

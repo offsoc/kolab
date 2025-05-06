@@ -434,10 +434,8 @@ class MailParser
         switch ($encoding) {
             case 'quoted-printable':
                 return \Mail_mimePart::quotedPrintableEncode($data, 76, "\r\n");
-
             case 'base64':
                 return rtrim(chunk_split(base64_encode($data), 76, "\r\n"));
-
             case '8bit':
             case '7bit':
             default:

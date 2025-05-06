@@ -4,17 +4,14 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-// phpcs:ignore
 class CreatePowerDNSTables extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up()
     {
-        //Drop the tables from the mysql initialization
+        // Drop the tables from the mysql initialization
         Schema::dropIfExists('powerdns_domains');
         Schema::dropIfExists('powerdns_records');
         Schema::dropIfExists('powerdns_masters');
@@ -25,7 +22,7 @@ class CreatePowerDNSTables extends Migration
 
         Schema::create(
             'powerdns_domains',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->string('name', 255)->unique()->index();
                 $table->string('master', 128)->nullable();
@@ -39,7 +36,7 @@ class CreatePowerDNSTables extends Migration
 
         Schema::create(
             'powerdns_records',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->bigInteger('domain_id')->unsigned();
                 $table->string('name', 255)->nullable();
@@ -57,13 +54,13 @@ class CreatePowerDNSTables extends Migration
 
                 $table->index('domain_id');
                 $table->index(['name', 'type']);
-                //$table->index('ordername');
+                // $table->index('ordername');
             }
         );
 
         Schema::create(
             'powerdns_masters',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->string('ip', 64);
                 $table->string('nameserver', 255);
                 $table->string('account', 40);
@@ -76,7 +73,7 @@ class CreatePowerDNSTables extends Migration
 
         Schema::create(
             'powerdns_comments',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->bigInteger('domain_id')->unsigned();
                 $table->string('name', 255);
@@ -95,7 +92,7 @@ class CreatePowerDNSTables extends Migration
 
         Schema::create(
             'powerdns_domain_settings',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->bigInteger('domain_id')->unsigned();
                 $table->string('kind', 32);
@@ -109,7 +106,7 @@ class CreatePowerDNSTables extends Migration
 
         Schema::create(
             'powerdns_cryptokeys',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->bigInteger('domain_id')->unsigned();
                 $table->integer('flags');
@@ -126,7 +123,7 @@ class CreatePowerDNSTables extends Migration
 
         Schema::create(
             'powerdns_tsigkeys',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->string('name', 255);
                 $table->string('algorithm', 50);
@@ -140,8 +137,6 @@ class CreatePowerDNSTables extends Migration
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
     public function down()
     {

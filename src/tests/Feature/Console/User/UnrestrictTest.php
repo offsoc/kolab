@@ -2,25 +2,20 @@
 
 namespace Tests\Feature\Console\User;
 
+use App\User;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class UnrestrictTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestUser('user-restrict-test@kolabnow.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('user-restrict-test@kolabnow.com');
 
@@ -41,7 +36,7 @@ class UnrestrictTest extends TestCase
         $this->assertSame(1, $code);
         $this->assertSame("User not found.", $output);
 
-        $user = $this->getTestUser('user-restrict-test@kolabnow.com', ['status' => \App\User::STATUS_RESTRICTED]);
+        $user = $this->getTestUser('user-restrict-test@kolabnow.com', ['status' => User::STATUS_RESTRICTED]);
 
         $this->assertTrue($user->isRestricted());
 

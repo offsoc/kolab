@@ -3,6 +3,7 @@
 namespace App\Jobs\User;
 
 use App\Domain;
+use App\Jobs\Domain\CreateJob;
 use App\Jobs\UserJob;
 use App\Support\Facades\IMAP;
 use App\Support\Facades\LDAP;
@@ -12,8 +13,6 @@ class ResyncJob extends UserJob
 {
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle()
     {
@@ -32,7 +31,7 @@ class ResyncJob extends UserJob
 
         $withLdap = \config('app.with_ldap');
 
-        $userJob = \App\Jobs\User\UpdateJob::class;
+        $userJob = UpdateJob::class;
 
         // Make sure the LDAP entry exists, fix that
         if ($withLdap && $user->isLdapReady()) {
@@ -42,7 +41,7 @@ class ResyncJob extends UserJob
                 $domain->status &= ~Domain::STATUS_LDAP_READY;
                 $domain->save();
 
-                \App\Jobs\Domain\CreateJob::dispatchSync($domain->id);
+                CreateJob::dispatchSync($domain->id);
             }
 
             if (!LDAP::getUser($user->email)) {

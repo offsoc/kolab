@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands\AuthAttempt;
 
-use App\Console\Command;
 use App\AuthAttempt;
+use App\Console\Command;
 use Carbon\Carbon;
 
 class PurgeCommand extends Command

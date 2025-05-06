@@ -9,10 +9,7 @@ use Tests\TestCase;
 
 class DelegationTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -20,10 +17,7 @@ class DelegationTest extends TestCase
         Delegation::query()->delete();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('deleted@kolabnow.com');
         Delegation::query()->delete();
@@ -236,7 +230,7 @@ class DelegationTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertEquals('success', $json['status']);
-        $this->assertEquals('Delegation deleted successfully.', $json['message']);
+        $this->assertSame('success', $json['status']);
+        $this->assertSame('Delegation deleted successfully.', $json['message']);
     }
 }

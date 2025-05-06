@@ -28,7 +28,7 @@ class VerifyTimezoneCommand extends Command
      */
     public function handle()
     {
-        $result = \Illuminate\Support\Facades\DB::select("SHOW VARIABLES WHERE Variable_name = 'time_zone'");
+        $result = DB::select("SHOW VARIABLES WHERE Variable_name = 'time_zone'");
 
         $appTimezone = \config('app.timezone');
 

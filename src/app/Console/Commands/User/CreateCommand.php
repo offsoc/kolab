@@ -2,13 +2,19 @@
 
 namespace App\Console\Commands\User;
 
+use App\Console\Command;
+use App\Group;
 use App\Http\Controllers\API\V4\UsersController;
+use App\Package;
+use App\Resource;
 use App\Rules\ExternalEmail;
+use App\SharedFolder;
 use App\User;
+use App\Utils;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
-class CreateCommand extends \App\Console\Command
+class CreateCommand extends Command
 {
     /**
      * The name and signature of the console command.
@@ -38,7 +44,7 @@ class CreateCommand extends \App\Console\Command
 
         $email = $this->argument('email');
         $packages = $this->option('package');
-        $password = $this->option('password') ?: \App\Utils::generatePassphrase();
+        $password = $this->option('password') ?: Utils::generatePassphrase();
         $role = $this->option('role');
 
         $existingDeletedUser = null;
@@ -52,10 +58,10 @@ class CreateCommand extends \App\Console\Command
                 return 1;
             }
 
-            // TODO: Assigning user to an existing account
-            // TODO: Making him an operator of the reseller wallet
+        // TODO: Assigning user to an existing account
+        // TODO: Making him an operator of the reseller wallet
         } else {
-            list($local, $domainName) = explode('@', $email, 2);
+            [$local, $domainName] = explode('@', $email, 2);
 
             $domain = $this->getDomain($domainName);
 
@@ -72,7 +78,7 @@ class CreateCommand extends \App\Console\Command
             $this->tenantId = $domain->tenant_id;
 
             foreach ($packages as $package) {
-                $userPackage = $this->getObject(\App\Package::class, $package, 'title', false);
+                $userPackage = $this->getObject(Package::class, $package, 'title', false);
                 if (!$userPackage) {
                     $this->error("Invalid package: {$package}");
                     return 1;
@@ -82,7 +88,7 @@ class CreateCommand extends \App\Console\Command
         }
 
         try {
-            $user = new \App\User();
+            $user = new User();
             $user->email = $email;
             $user->password = $password;
             $user->role = $role;
@@ -145,10 +151,10 @@ class CreateCommand extends \App\Console\Command
         if (
             User::emailExists($email, true)
             || User::aliasExists($email)
-            || \App\Group::emailExists($email, true)
-            || \App\Resource::emailExists($email, true)
-            || \App\SharedFolder::emailExists($email, true)
-            || \App\SharedFolder::aliasExists($email)
+            || Group::emailExists($email, true)
+            || Resource::emailExists($email, true)
+            || SharedFolder::emailExists($email, true)
+            || SharedFolder::aliasExists($email)
         ) {
             return "Email address is already in use";
         }

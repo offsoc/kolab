@@ -3,6 +3,11 @@
 namespace App\Console\Commands\Wallet;
 
 use App\Console\Command;
+use App\Jobs\Wallet\ChargeJob;
+use App\Jobs\Wallet\CheckJob;
+use App\User;
+use App\Wallet;
+use Illuminate\Database\Query\JoinClause;
 
 class ChargeCommand extends Command
 {
@@ -44,19 +49,19 @@ class ChargeCommand extends Command
             $wallets = [$wallet];
         } elseif ($this->option('topup')) {
             // Find wallets that need to be topped up
-            $wallets = \App\Wallet::select('wallets.id')
+            $wallets = Wallet::select('wallets.id')
                 ->join('users', 'users.id', '=', 'wallets.user_id')
-                ->join('wallet_settings', function (\Illuminate\Database\Query\JoinClause $join) {
+                ->join('wallet_settings', static function (JoinClause $join) {
                     $join->on('wallet_settings.wallet_id', '=', 'wallets.id')
                         ->where('wallet_settings.key', '=', 'mandate_balance');
                 })
                 ->whereNull('users.deleted_at')
                 ->whereRaw('wallets.balance < (wallet_settings.value * 100)')
-                ->whereNot('users.status', '&', \App\User::STATUS_DEGRADED | \App\User::STATUS_SUSPENDED)
+                ->whereNot('users.status', '&', User::STATUS_DEGRADED | User::STATUS_SUSPENDED)
                 ->cursor();
         } else {
             // Get all wallets, excluding deleted accounts
-            $wallets = \App\Wallet::select('wallets.id')
+            $wallets = Wallet::select('wallets.id')
                 ->join('users', 'users.id', '=', 'wallets.user_id')
                 ->whereNull('users.deleted_at')
                 ->cursor();
@@ -68,9 +73,9 @@ class ChargeCommand extends Command
             } else {
                 if ($this->option('topup')) {
                     $this->info("Dispatching wallet charge for {$wallet->id}");
-                    \App\Jobs\Wallet\ChargeJob::dispatch($wallet->id);
+                    ChargeJob::dispatch($wallet->id);
                 } else {
-                    \App\Jobs\Wallet\CheckJob::dispatch($wallet->id);
+                    CheckJob::dispatch($wallet->id);
                 }
             }
         }

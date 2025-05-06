@@ -3,8 +3,8 @@
 namespace Tests\Unit;
 
 use App\User;
-use App\Wallet;
 use Tests\TestCase;
+use Tests\Utils;
 
 class UserTest extends TestCase
 {
@@ -54,7 +54,7 @@ class UserTest extends TestCase
         $this->assertSame(User::ROLE_RESELLER, $user->role);
 
         $user->role = null;
-        $this->assertSame(null, $user->role);
+        $this->assertNull($user->role);
 
         $this->expectException(\Exception::class);
         $user->role = 'unknown';
@@ -76,7 +76,7 @@ class UserTest extends TestCase
             User::STATUS_RESTRICTED,
         ];
 
-        $users = \Tests\Utils::powerSet($statuses);
+        $users = Utils::powerSet($statuses);
 
         foreach ($users as $user_statuses) {
             $user = new User(

@@ -2,17 +2,16 @@
 
 namespace Tests\Infrastructure;
 
+use App\User;
+use GuzzleHttp\Client;
 use Tests\TestCase;
 
 class WOPITest extends TestCase
 {
-    private static ?\GuzzleHttp\Client $client = null;
-    private static ?\App\User $user = null;
+    private static ?Client $client = null;
+    private static ?User $user = null;
 
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -21,12 +20,12 @@ class WOPITest extends TestCase
         }
 
         if (!self::$client) {
-            self::$client = new \GuzzleHttp\Client([
+            self::$client = new Client([
                 'base_uri' => \config('services.wopi.uri'),
                 'verify' => false,
                 'auth' => [self::$user->email, 'simple123'],
                 'connect_timeout' => 10,
-                'timeout' => 10
+                'timeout' => 10,
             ]);
         }
     }
@@ -34,23 +33,23 @@ class WOPITest extends TestCase
     public function testAccess()
     {
         $response = self::$client->request('GET', 'api/?method=authenticate&version=4');
-        $this->assertEquals($response->getStatusCode(), 200);
+        $this->assertSame($response->getStatusCode(), 200);
         $json = json_decode($response->getBody(), true);
 
-        $this->assertEquals('OK', $json['status']);
+        $this->assertSame('OK', $json['status']);
         $token = $json['result']['token'];
         $this->assertTrue(!empty($token));
 
-        //FIXME the session token doesn't seem to be required here?
+        // FIXME the session token doesn't seem to be required here?
         $response = self::$client->request('GET', 'api/?method=mimetypes', [
             'headers' => [
-                'X-Session_token' => $token
-            ]
+                'X-Session_token' => $token,
+            ],
         ]);
-        $this->assertEquals($response->getStatusCode(), 200);
+        $this->assertSame($response->getStatusCode(), 200);
         $json = json_decode($response->getBody(), true);
-        $this->assertEquals('OK', $json['status']);
-        $this->assertEquals('OK', $json['status']);
+        $this->assertSame('OK', $json['status']);
+        $this->assertSame('OK', $json['status']);
         $this->assertContains('image/png', $json['result']['view']);
         $this->assertArrayHasKey('text/plain', $json['result']['edit']);
     }

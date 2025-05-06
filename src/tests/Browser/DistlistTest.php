@@ -8,27 +8,21 @@ use Tests\Browser\Components\ListInput;
 use Tests\Browser\Components\Status;
 use Tests\Browser\Components\Toast;
 use Tests\Browser\Pages\Dashboard;
-use Tests\Browser\Pages\Home;
 use Tests\Browser\Pages\DistlistInfo;
 use Tests\Browser\Pages\DistlistList;
+use Tests\Browser\Pages\Home;
 use Tests\TestCaseDusk;
 
 class DistlistTest extends TestCaseDusk
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestGroup('group-test@kolab.org');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestGroup('group-test@kolab.org');
 
@@ -41,7 +35,7 @@ class DistlistTest extends TestCaseDusk
     public function testInfoUnauth(): void
     {
         // Test that the page requires authentication
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit('/distlist/abc')->on(new Home());
         });
     }
@@ -52,7 +46,7 @@ class DistlistTest extends TestCaseDusk
     public function testListUnauth(): void
     {
         // Test that the page requires authentication
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit('/distlists')->on(new Home());
         });
     }
@@ -68,14 +62,14 @@ class DistlistTest extends TestCaseDusk
         $group->assignToWallet($john->wallets->first());
 
         // Log on the user
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit(new Home())
                 ->submitLogon('john@kolab.org', 'simple123', true)
                 ->on(new Dashboard())
                 ->assertSeeIn('@links .link-distlists', 'Distribution lists')
                 ->click('@links .link-distlists')
                 ->on(new DistlistList())
-                ->whenAvailable('@table', function (Browser $browser) {
+                ->whenAvailable('@table', static function (Browser $browser) {
                     $browser->waitFor('tbody tr')
                         ->assertSeeIn('thead tr th:nth-child(1)', 'Name')
                         ->assertSeeIn('thead tr th:nth-child(2)', 'Email')
@@ -104,7 +98,7 @@ class DistlistTest extends TestCaseDusk
                 ->assertSeeIn('#distlist-info .card-title', 'New distribution list')
                 ->assertSeeIn('@nav #tab-general', 'General')
                 ->assertMissing('@nav #tab-settings')
-                ->with('@general', function (Browser $browser) {
+                ->with('@general', static function (Browser $browser) {
                     // Assert form content
                     $browser->assertMissing('#status')
                         ->assertFocused('#name')
@@ -114,12 +108,12 @@ class DistlistTest extends TestCaseDusk
                         ->assertValue('div.row:nth-child(2) input[type=text]', '')
                         ->assertSeeIn('div.row:nth-child(3) label', 'Recipients')
                         ->assertVisible('div.row:nth-child(3) .list-input')
-                        ->with(new ListInput('#members'), function (Browser $browser) {
+                        ->with(new ListInput('#members'), static function (Browser $browser) {
                             $browser->assertListInputValue([])
                                 ->assertValue('@input', '');
                         })
                         ->assertSeeIn('div.row:nth-child(4) label', 'Subscriptions')
-                        ->with('@skus', function ($browser) {
+                        ->with('@skus', static function ($browser) {
                             $browser->assertElementsCount('tbody tr', 1)
                                 ->assertSeeIn('tbody tr:nth-child(1) td.name', 'Distribution list')
                                 ->assertSeeIn('tbody tr:nth-child(1) td.price', '0,00 CHF/month')
@@ -145,7 +139,7 @@ class DistlistTest extends TestCaseDusk
                 // Test successful group creation
                 ->type('#name', 'Test Group')
                 ->type('#email', 'group-test@kolab.org')
-                ->with(new ListInput('#members'), function (Browser $browser) {
+                ->with(new ListInput('#members'), static function (Browser $browser) {
                     $browser->addListEntry('test1@gmail.com')
                         ->addListEntry('test2@gmail.com');
                 })
@@ -158,7 +152,7 @@ class DistlistTest extends TestCaseDusk
             $browser->click('@table tr:nth-child(1) td:first-child a')
                 ->on(new DistlistInfo())
                 ->assertSeeIn('#distlist-info .card-title', 'Distribution list')
-                ->with('@general', function (Browser $browser) {
+                ->with('@general', static function (Browser $browser) {
                     // Assert form content
                     $browser->assertFocused('#name')
                         ->assertSeeIn('div.row:nth-child(1) label', 'Status')
@@ -169,12 +163,12 @@ class DistlistTest extends TestCaseDusk
                         ->assertValue('div.row:nth-child(3) input[type=text]:disabled', 'group-test@kolab.org')
                         ->assertSeeIn('div.row:nth-child(4) label', 'Recipients')
                         ->assertVisible('div.row:nth-child(4) .list-input')
-                        ->with(new ListInput('#members'), function (Browser $browser) {
+                        ->with(new ListInput('#members'), static function (Browser $browser) {
                             $browser->assertListInputValue(['test1@gmail.com', 'test2@gmail.com'])
                                 ->assertValue('@input', '');
                         })
                         ->assertSeeIn('div.row:nth-child(5) label', 'Subscriptions')
-                        ->with('@skus', function ($browser) {
+                        ->with('@skus', static function ($browser) {
                             $browser->assertElementsCount('tbody tr', 1)
                                 ->assertSeeIn('tbody tr:nth-child(1) td.name', 'Distribution list')
                                 ->assertSeeIn('tbody tr:nth-child(1) td.price', '0,00 CHF/month')
@@ -188,7 +182,7 @@ class DistlistTest extends TestCaseDusk
                         ->assertSeeIn('button[type=submit]', 'Submit');
                 })
                 // Test error handling
-                ->with(new ListInput('#members'), function (Browser $browser) {
+                ->with(new ListInput('#members'), static function (Browser $browser) {
                     $browser->addListEntry('invalid address');
                 })
                 ->click('@general button[type=submit]')
@@ -197,7 +191,7 @@ class DistlistTest extends TestCaseDusk
                 ->assertVisible('#members .input-group:nth-child(4) input.is-invalid')
                 ->assertToast(Toast::TYPE_ERROR, 'Form validation error')
                 // Test successful update
-                ->with(new ListInput('#members'), function (Browser $browser) {
+                ->with(new ListInput('#members'), static function (Browser $browser) {
                     $browser->removeListEntry(3)->removeListEntry(2);
                 })
                 ->click('@general button[type=submit]')
@@ -242,11 +236,11 @@ class DistlistTest extends TestCaseDusk
 
         $this->assertFalse($group->isLdapReady());
 
-        $this->browse(function ($browser) use ($group) {
+        $this->browse(static function ($browser) use ($group) {
             // Test auto-refresh
             $browser->visit('/distlist/' . $group->id)
                 ->on(new DistlistInfo())
-                ->with(new Status(), function ($browser) {
+                ->with(new Status(), static function ($browser) {
                     $browser->assertSeeIn('@body', 'We are preparing the distribution list')
                         ->assertProgress(83, 'Creating a distribution list...', 'pending')
                         ->assertMissing('@refresh-button')
@@ -276,25 +270,25 @@ class DistlistTest extends TestCaseDusk
         $group->status = Group::STATUS_NEW | Group::STATUS_ACTIVE;
         $group->save();
 
-        $this->browse(function ($browser) use ($group) {
+        $this->browse(static function ($browser) use ($group) {
             // Test auto-refresh
             $browser->visit('/distlist/' . $group->id)
                 ->on(new DistlistInfo())
                 ->assertSeeIn('@nav #tab-general', 'General')
                 ->assertSeeIn('@nav #tab-settings', 'Settings')
                 ->click('@nav #tab-settings')
-                ->with('@settings form', function (Browser $browser) {
+                ->with('@settings form', static function (Browser $browser) {
                     // Assert form content
                     $browser->assertSeeIn('div.row:nth-child(1) label', 'Sender Access List')
                         ->assertVisible('div.row:nth-child(1) .list-input')
-                        ->with(new ListInput('#sender-policy'), function (Browser $browser) {
+                        ->with(new ListInput('#sender-policy'), static function (Browser $browser) {
                             $browser->assertListInputValue([])
                                 ->assertValue('@input', '');
                         })
                         ->assertSeeIn('button[type=submit]', 'Submit');
                 })
                 // Test error handling
-                ->with(new ListInput('#sender-policy'), function (Browser $browser) {
+                ->with(new ListInput('#sender-policy'), static function (Browser $browser) {
                     $browser->addListEntry('test.com');
                 })
                 ->click('@settings button[type=submit]')
@@ -303,8 +297,8 @@ class DistlistTest extends TestCaseDusk
                 ->refresh()
                 ->on(new DistlistInfo())
                 ->click('@nav #tab-settings')
-                ->with('@settings form', function (Browser $browser) {
-                    $browser->with(new ListInput('#sender-policy'), function (Browser $browser) {
+                ->with('@settings form', static function (Browser $browser) {
+                    $browser->with(new ListInput('#sender-policy'), static function (Browser $browser) {
                         $browser->assertListInputValue(['test.com'])
                             ->assertValue('@input', '');
                     });

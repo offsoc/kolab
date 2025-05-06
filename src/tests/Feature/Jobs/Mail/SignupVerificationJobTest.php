@@ -11,20 +11,14 @@ use Tests\TestCase;
 
 class SignupVerificationJobTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         SignupCode::where('email', 'SignupVerificationEmailTest1@' . \config('app.domain'))->delete();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         SignupCode::where('email', 'SignupVerificationEmailTest1@' . \config('app.domain'))->delete();
 
@@ -59,7 +53,7 @@ class SignupVerificationJobTest extends TestCase
         Mail::assertSent(SignupVerification::class, 1);
 
         // Assert the mail was sent to the code's email
-        Mail::assertSent(SignupVerification::class, function ($mail) use ($code) {
+        Mail::assertSent(SignupVerification::class, static function ($mail) use ($code) {
             return $mail->hasTo($code->email) && $mail->hasFrom('sender@tenant', 'Tenant');
         });
     }

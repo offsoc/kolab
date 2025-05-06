@@ -2,39 +2,40 @@
 
 namespace Tests;
 
+use App\Wallet;
 use Facebook\WebDriver\Chrome\ChromeOptions;
-use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
+use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Laravel\Dusk\Chrome\SupportsChrome;
 use Mollie\Laravel\Facades\Mollie;
+use Tests\Browser\Pages\PaymentMollie;
 
 trait BrowserAddonTrait
 {
     use SupportsChrome;
 
-    protected $browser;
-
+    protected static $browser;
 
     /**
      * Initialize and start Chrome driver and browser
      *
      * @returns Browser The browser
      */
-    protected function startBrowser(): Browser
+    public static function startBrowser(): Browser
     {
         $driver = retry(5, function () {
-            return $this->driver();
+            return self::driver();
         }, 50);
 
-        $this->browser = new Browser($driver);
+        self::$browser = new Browser($driver);
 
         $screenshots_dir = __DIR__ . '/Browser/screenshots/';
         Browser::$storeScreenshotsAt = $screenshots_dir;
         if (!file_exists($screenshots_dir)) {
-            mkdir($screenshots_dir, 0777, true);
+            mkdir($screenshots_dir, 0o777, true);
         }
 
-        return $this->browser;
+        return self::$browser;
     }
 
     /**
@@ -42,19 +43,19 @@ trait BrowserAddonTrait
      *
      * @afterClass
      */
-    protected function stopBrowser(): void
+    public static function stopBrowser(): void
     {
-        if ($this->browser) {
-            $this->browser->quit();
+        if (self::$browser) {
+            self::$browser->quit();
             static::stopChromeDriver();
-            $this->browser = null;
+            self::$browser = null;
         }
     }
 
     /**
      * Initialize and start Chrome driver
      */
-    protected function driver()
+    protected static function driver()
     {
         static::startChromeDriver(['--port=9515']);
 
@@ -76,8 +77,6 @@ trait BrowserAddonTrait
 
     /**
      * Register an "after class" tear down callback.
-     *
-     * @param \Closure $callback
      */
     public static function afterClass(\Closure $callback): void
     {
@@ -87,7 +86,7 @@ trait BrowserAddonTrait
     /**
      * Create Mollie's auto-payment mandate using our API and Chrome browser
      */
-    public function createMollieMandate(\App\Wallet $wallet, array $params)
+    public function createMollieMandate(Wallet $wallet, array $params)
     {
         $wallet->setSetting('mollie_mandate_id', null);
 
@@ -102,12 +101,11 @@ trait BrowserAddonTrait
         // There's no easy way to confirm a created mandate.
         // The only way seems to be to fire up Chrome on checkout page
         // and do actions with use of Dusk browser.
-        $this->startBrowser()->visit($json['redirectUrl']);
-
-        $molliePage = new \Tests\Browser\Pages\PaymentMollie();
-        $this->browser->on($molliePage);
-        $molliePage->assert($this->browser);
-        $molliePage->submitPayment($this->browser, 'paid');
+        $this->startBrowser()
+            ->visit($json['redirectUrl'])
+            ->on(new PaymentMollie())
+            ->submitPayment('paid');
+        $this->stopBrowser();
 
         // Because of https://github.com/mollie/mollie-api-php/issues/649 mandate does not
         // exist until payment is paid. As we do not expect a webhook to be handled, we
@@ -119,8 +117,6 @@ trait BrowserAddonTrait
             $wallet->setSetting('mollie_mandate_id', $mollie_payment->mandateId);
             $json['mandateId'] = $mollie_payment->mandateId;
         }
-
-        $this->stopBrowser();
 
         return $json;
     }

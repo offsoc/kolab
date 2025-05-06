@@ -3,6 +3,8 @@
 namespace Tests\Feature\Jobs\User;
 
 use App\Domain;
+use App\Jobs\Domain\CreateJob;
+use App\Jobs\User\ResyncJob;
 use App\Support\Facades\IMAP;
 use App\Support\Facades\LDAP;
 use App\User;
@@ -11,10 +13,7 @@ use Tests\TestCase;
 
 class ResyncTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -22,10 +21,7 @@ class ResyncTest extends TestCase
         $this->deleteTestDomain('resync-job.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('user@resync-job.com');
         $this->deleteTestDomain('resync-job.com');
@@ -61,7 +57,7 @@ class ResyncTest extends TestCase
         LDAP::shouldReceive('getUser')->once()->with($user->email)->andReturn(false);
         IMAP::shouldReceive('verifyAccount')->once()->with($user->email)->andReturn(false);
 
-        $job = new \App\Jobs\User\ResyncJob($user->id);
+        $job = new ResyncJob($user->id);
         $job->handle();
 
         $user->refresh();
@@ -71,10 +67,10 @@ class ResyncTest extends TestCase
         $this->assertFalse($user->isImapReady());
         $this->assertFalse($domain->isLdapReady());
 
-        Queue::assertPushed(\App\Jobs\Domain\CreateJob::class, 1);
+        Queue::assertPushed(CreateJob::class, 1);
         Queue::assertPushed(
-            \App\Jobs\Domain\CreateJob::class,
-            function ($job) use ($domain) {
+            CreateJob::class,
+            static function ($job) use ($domain) {
                 return $domain->id == TestCase::getObjectProperty($job, 'domainId');
             }
         );
@@ -82,7 +78,7 @@ class ResyncTest extends TestCase
         Queue::assertPushed(\App\Jobs\User\CreateJob::class, 1);
         Queue::assertPushed(
             \App\Jobs\User\CreateJob::class,
-            function ($job) use ($user) {
+            static function ($job) use ($user) {
                 return $user->id == TestCase::getObjectProperty($job, 'userId');
             }
         );

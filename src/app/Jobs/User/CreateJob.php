@@ -2,10 +2,13 @@
 
 namespace App\Jobs\User;
 
+use App\EventLog;
 use App\Jobs\UserJob;
+use App\Plan;
 use App\Support\Facades\DAV;
 use App\Support\Facades\IMAP;
 use App\Support\Facades\LDAP;
+use App\User;
 
 /**
  * Create the \App\User in LDAP.
@@ -23,8 +26,6 @@ class CreateJob extends UserJob
 
     /**
      * Execute the job.
-     *
-     * @return void
      *
      * @throws \Exception
      */
@@ -85,16 +86,16 @@ class CreateJob extends UserJob
             if ($code == 2) {
                 $msg = "Abuse check detected suspected spammer";
                 \Log::info("{$msg}: {$this->userId} {$user->email}");
-                \App\EventLog::createFor($user, \App\EventLog::TYPE_SUSPENDED, $msg);
+                EventLog::createFor($user, EventLog::TYPE_SUSPENDED, $msg);
 
-                $user->status |= \App\User::STATUS_SUSPENDED;
+                $user->status |= User::STATUS_SUSPENDED;
             }
         }
 
         if ($withLdap && !$user->isLdapReady()) {
             LDAP::createUser($user);
 
-            $user->status |= \App\User::STATUS_LDAP_READY;
+            $user->status |= User::STATUS_LDAP_READY;
             $user->save();
         }
 
@@ -110,7 +111,7 @@ class CreateJob extends UserJob
                 }
             }
 
-            $user->status |= \App\User::STATUS_IMAP_READY;
+            $user->status |= User::STATUS_IMAP_READY;
         }
 
         // FIXME: Should we ignore exceptions on this operation or introduce DAV_READY status?
@@ -120,9 +121,9 @@ class CreateJob extends UserJob
         if (
             !($wallet = $user->wallet())
             || !($plan = $user->wallet()->plan())
-            || $plan->mode != \App\Plan::MODE_MANDATE
+            || $plan->mode != Plan::MODE_MANDATE
         ) {
-            $user->status |= \App\User::STATUS_ACTIVE;
+            $user->status |= User::STATUS_ACTIVE;
         }
 
         $user->save();

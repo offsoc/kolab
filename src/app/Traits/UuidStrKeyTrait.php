@@ -2,6 +2,8 @@
 
 namespace App\Traits;
 
+use App\Utils;
+
 trait UuidStrKeyTrait
 {
     /**
@@ -9,18 +11,18 @@ trait UuidStrKeyTrait
      */
     protected static function bootUuidStrKeyTrait()
     {
-        static::creating(function ($model) {
+        static::creating(static function ($model) {
             if (empty($model->{$model->getKeyName()})) {
-                $allegedly_unique = \App\Utils::uuidStr();
+                $allegedly_unique = Utils::uuidStr();
 
                 // Verify if unique
                 $finder = $model;
-                if (\App\Utils::isSoftDeletable($model)) {
+                if (Utils::isSoftDeletable($model)) {
                     $finder = $finder->withTrashed();
                 }
 
                 while ($finder->find($allegedly_unique)) {
-                    $allegedly_unique = \App\Utils::uuidStr();
+                    $allegedly_unique = Utils::uuidStr();
                 }
 
                 $model->{$model->getKeyName()} = $allegedly_unique;

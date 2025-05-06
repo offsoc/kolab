@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Domain;
 use App\Entitlement;
+use App\Jobs\User\UpdateJob;
 use App\Package;
 use App\Sku;
 use App\User;
@@ -13,10 +14,7 @@ use Tests\TestCase;
 
 class EntitlementTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -26,10 +24,7 @@ class EntitlementTest extends TestCase
         $this->deleteTestDomain('custom-domain.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('entitlement-test@kolabnow.com');
         $this->deleteTestUser('entitled-user@custom-domain.com');
@@ -53,16 +48,16 @@ class EntitlementTest extends TestCase
         $user = $this->getTestUser('entitlement-test@kolabnow.com');
         $wallet = $user->wallets->first();
 
-        $assertPushedUserUpdateJob = function ($ifLdap = false) use ($user) {
+        $assertPushedUserUpdateJob = static function ($ifLdap = false) use ($user) {
             if ($ifLdap && !\config('app.with_ldap')) {
-                Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 0);
+                Queue::assertPushed(UpdateJob::class, 0);
                 return;
             }
 
-            Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 1);
+            Queue::assertPushed(UpdateJob::class, 1);
             Queue::assertPushed(
-                \App\Jobs\User\UpdateJob::class,
-                function ($job) use ($user) {
+                UpdateJob::class,
+                static function ($job) use ($user) {
                     return $user->id === TestCase::getObjectProperty($job, 'userId');
                 }
             );
@@ -73,10 +68,10 @@ class EntitlementTest extends TestCase
         // 'mailbox' SKU should not dispatch update jobs
         $this->fakeQueueReset();
         $user->assignSku($skuMailbox, 1, $wallet);
-        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 0);
+        Queue::assertPushed(UpdateJob::class, 0);
         $this->fakeQueueReset();
         $user->entitlements()->where('sku_id', $skuMailbox->id)->first()->delete();
-        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 0);
+        Queue::assertPushed(UpdateJob::class, 0);
 
         // Test dispatching update jobs for the user - 'storage' SKU
         $this->fakeQueueReset();
@@ -113,10 +108,10 @@ class EntitlementTest extends TestCase
         // Beta SKU should not trigger a user update job
         $this->fakeQueueReset();
         $user->assignSku($skuBeta, 1, $wallet);
-        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 0);
+        Queue::assertPushed(UpdateJob::class, 0);
         $this->fakeQueueReset();
         $user->entitlements()->where('sku_id', $skuBeta->id)->first()->delete();
-        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 0);
+        Queue::assertPushed(UpdateJob::class, 0);
 
         // TODO: Assert 'creating' checks
         // TODO: Assert transaction records being created
@@ -126,6 +121,7 @@ class EntitlementTest extends TestCase
 
     /**
      * Tests for entitlements
+     *
      * @todo This really should be in User or Wallet tests file
      */
     public function testEntitlements(): void
@@ -191,9 +187,9 @@ class EntitlementTest extends TestCase
         $user->assignPackage($packageKolab);
         $group->assignToWallet($wallet);
 
-        $sku_mailbox = \App\Sku::withEnvTenantContext()->where('title', 'mailbox')->first();
-        $sku_group = \App\Sku::withEnvTenantContext()->where('title', 'group')->first();
-        $sku_domain = \App\Sku::withEnvTenantContext()->where('title', 'domain-hosting')->first();
+        $sku_mailbox = Sku::withEnvTenantContext()->where('title', 'mailbox')->first();
+        $sku_group = Sku::withEnvTenantContext()->where('title', 'group')->first();
+        $sku_domain = Sku::withEnvTenantContext()->where('title', 'domain-hosting')->first();
 
         $entitlement = Entitlement::where('wallet_id', $wallet->id)
             ->where('sku_id', $sku_mailbox->id)->first();
@@ -225,7 +221,7 @@ class EntitlementTest extends TestCase
     public function testEntitleableRemoveSku(): void
     {
         $user = $this->getTestUser('entitlement-test@kolabnow.com');
-        $storage = \App\Sku::withEnvTenantContext()->where('title', 'storage')->first();
+        $storage = Sku::withEnvTenantContext()->where('title', 'storage')->first();
 
         $user->assignSku($storage, 6);
 

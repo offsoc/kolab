@@ -2,13 +2,17 @@
 
 namespace Tests\Feature;
 
+use App\Entitlement;
+use App\Jobs\Resource\CreateJob;
+use App\Jobs\Resource\DeleteJob;
+use App\Jobs\Resource\UpdateJob;
 use App\Resource;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class ResourceTest extends TestCase
 {
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -18,7 +22,7 @@ class ResourceTest extends TestCase
         });
     }
 
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('user-test@kolabnow.com');
         Resource::withTrashed()->where('email', 'like', '%@kolabnow.com')->each(function ($resource) {
@@ -124,8 +128,8 @@ class ResourceTest extends TestCase
         $this->assertSame('shared/Resources/Reśo@kolabnow.com', $settings[0]->value);
 
         Queue::assertPushed(
-            \App\Jobs\Resource\CreateJob::class,
-            function ($job) use ($resource) {
+            CreateJob::class,
+            static function ($job) use ($resource) {
                 $resourceEmail = TestCase::getObjectProperty($job, 'resourceEmail');
                 $resourceId = TestCase::getObjectProperty($job, 'resourceId');
 
@@ -146,7 +150,7 @@ class ResourceTest extends TestCase
         $resource = $this->getTestResource('resource-test@kolabnow.com');
         $resource->assignToWallet($user->wallets->first());
 
-        $entitlements = \App\Entitlement::where('entitleable_id', $resource->id);
+        $entitlements = Entitlement::where('entitleable_id', $resource->id);
 
         $this->assertSame(1, $entitlements->count());
 
@@ -156,11 +160,11 @@ class ResourceTest extends TestCase
         $this->assertSame(0, $entitlements->count());
         $this->assertSame(1, $entitlements->withTrashed()->count());
 
-        Queue::assertPushed(\App\Jobs\Resource\UpdateJob::class, 0);
-        Queue::assertPushed(\App\Jobs\Resource\DeleteJob::class, 1);
+        Queue::assertPushed(UpdateJob::class, 0);
+        Queue::assertPushed(DeleteJob::class, 1);
         Queue::assertPushed(
-            \App\Jobs\Resource\DeleteJob::class,
-            function ($job) use ($resource) {
+            DeleteJob::class,
+            static function ($job) use ($resource) {
                 $resourceEmail = TestCase::getObjectProperty($job, 'resourceEmail');
                 $resourceId = TestCase::getObjectProperty($job, 'resourceId');
 
@@ -176,8 +180,8 @@ class ResourceTest extends TestCase
         $this->assertSame(0, $entitlements->withTrashed()->count());
         $this->assertCount(0, Resource::withTrashed()->where('id', $resource->id)->get());
 
-        Queue::assertPushed(\App\Jobs\Resource\UpdateJob::class, 0);
-        Queue::assertPushed(\App\Jobs\Resource\DeleteJob::class, 0);
+        Queue::assertPushed(UpdateJob::class, 0);
+        Queue::assertPushed(DeleteJob::class, 0);
     }
 
     /**
@@ -213,20 +217,20 @@ class ResourceTest extends TestCase
 
         $resource = $this->getTestResource('resource-test@kolabnow.com');
 
-        Queue::assertPushed(\App\Jobs\Resource\UpdateJob::class, 0);
+        Queue::assertPushed(UpdateJob::class, 0);
 
         // Add a setting
         $resource->setSetting('unknown', 'test');
 
-        Queue::assertPushed(\App\Jobs\Resource\UpdateJob::class, 0);
+        Queue::assertPushed(UpdateJob::class, 0);
 
         // Add a setting that is synced to LDAP
         $resource->setSetting('invitation_policy', 'accept');
 
-        Queue::assertPushed(\App\Jobs\Resource\UpdateJob::class, 1);
+        Queue::assertPushed(UpdateJob::class, 1);
         Queue::assertPushed(
-            \App\Jobs\Resource\UpdateJob::class,
-            function ($job) use ($resource) {
+            UpdateJob::class,
+            static function ($job) use ($resource) {
                 return $resource->id === TestCase::getObjectProperty($job, 'resourceId')
                     && ['invitation_policy' => null] === TestCase::getObjectProperty($job, 'properties');
             }
@@ -242,15 +246,15 @@ class ResourceTest extends TestCase
         // Update a setting
         $resource->setSetting('unknown', 'test1');
 
-        Queue::assertPushed(\App\Jobs\Resource\UpdateJob::class, 0);
+        Queue::assertPushed(UpdateJob::class, 0);
 
         // Update a setting that is synced to LDAP
         $resource->setSetting('invitation_policy', 'reject');
 
-        Queue::assertPushed(\App\Jobs\Resource\UpdateJob::class, 1);
+        Queue::assertPushed(UpdateJob::class, 1);
         Queue::assertPushed(
-            \App\Jobs\Resource\UpdateJob::class,
-            function ($job) use ($resource) {
+            UpdateJob::class,
+            static function ($job) use ($resource) {
                 return $resource->id === TestCase::getObjectProperty($job, 'resourceId')
                     && ['invitation_policy' => 'accept'] === TestCase::getObjectProperty($job, 'properties');
             }
@@ -264,22 +268,22 @@ class ResourceTest extends TestCase
         // Delete a setting (null)
         $resource->setSetting('unknown', null);
 
-        Queue::assertPushed(\App\Jobs\Resource\UpdateJob::class, 0);
+        Queue::assertPushed(UpdateJob::class, 0);
 
         // Delete a setting that is synced to LDAP
         $resource->setSetting('invitation_policy', null);
 
-        Queue::assertPushed(\App\Jobs\Resource\UpdateJob::class, 1);
+        Queue::assertPushed(UpdateJob::class, 1);
         Queue::assertPushed(
-            \App\Jobs\Resource\UpdateJob::class,
-            function ($job) use ($resource) {
+            UpdateJob::class,
+            static function ($job) use ($resource) {
                 return $resource->id === TestCase::getObjectProperty($job, 'resourceId')
                     && ['invitation_policy' => 'reject'] === TestCase::getObjectProperty($job, 'properties');
             }
         );
 
-        $this->assertSame(null, $resource->getSetting('unknown'));
-        $this->assertSame(null, $resource->fresh()->getSetting('invitation_policy'));
+        $this->assertNull($resource->getSetting('unknown'));
+        $this->assertNull($resource->fresh()->getSetting('invitation_policy'));
     }
 
     /**
@@ -289,51 +293,51 @@ class ResourceTest extends TestCase
     {
         $resource = new Resource();
 
-        $this->assertSame(false, $resource->isNew());
-        $this->assertSame(false, $resource->isActive());
-        $this->assertSame(false, $resource->isDeleted());
-        $this->assertSame(false, $resource->isLdapReady());
-        $this->assertSame(false, $resource->isImapReady());
+        $this->assertFalse($resource->isNew());
+        $this->assertFalse($resource->isActive());
+        $this->assertFalse($resource->isDeleted());
+        $this->assertFalse($resource->isLdapReady());
+        $this->assertFalse($resource->isImapReady());
 
         $resource->status = Resource::STATUS_NEW;
 
-        $this->assertSame(true, $resource->isNew());
-        $this->assertSame(false, $resource->isActive());
-        $this->assertSame(false, $resource->isDeleted());
-        $this->assertSame(false, $resource->isLdapReady());
-        $this->assertSame(false, $resource->isImapReady());
+        $this->assertTrue($resource->isNew());
+        $this->assertFalse($resource->isActive());
+        $this->assertFalse($resource->isDeleted());
+        $this->assertFalse($resource->isLdapReady());
+        $this->assertFalse($resource->isImapReady());
 
         $resource->status |= Resource::STATUS_ACTIVE;
 
-        $this->assertSame(true, $resource->isNew());
-        $this->assertSame(true, $resource->isActive());
-        $this->assertSame(false, $resource->isDeleted());
-        $this->assertSame(false, $resource->isLdapReady());
-        $this->assertSame(false, $resource->isImapReady());
+        $this->assertTrue($resource->isNew());
+        $this->assertTrue($resource->isActive());
+        $this->assertFalse($resource->isDeleted());
+        $this->assertFalse($resource->isLdapReady());
+        $this->assertFalse($resource->isImapReady());
 
         $resource->status |= Resource::STATUS_LDAP_READY;
 
-        $this->assertSame(true, $resource->isNew());
-        $this->assertSame(true, $resource->isActive());
-        $this->assertSame(false, $resource->isDeleted());
-        $this->assertSame(true, $resource->isLdapReady());
-        $this->assertSame(false, $resource->isImapReady());
+        $this->assertTrue($resource->isNew());
+        $this->assertTrue($resource->isActive());
+        $this->assertFalse($resource->isDeleted());
+        $this->assertTrue($resource->isLdapReady());
+        $this->assertFalse($resource->isImapReady());
 
         $resource->status |= Resource::STATUS_DELETED;
 
-        $this->assertSame(true, $resource->isNew());
-        $this->assertSame(true, $resource->isActive());
-        $this->assertSame(true, $resource->isDeleted());
-        $this->assertSame(true, $resource->isLdapReady());
-        $this->assertSame(false, $resource->isImapReady());
+        $this->assertTrue($resource->isNew());
+        $this->assertTrue($resource->isActive());
+        $this->assertTrue($resource->isDeleted());
+        $this->assertTrue($resource->isLdapReady());
+        $this->assertFalse($resource->isImapReady());
 
         $resource->status |= Resource::STATUS_IMAP_READY;
 
-        $this->assertSame(true, $resource->isNew());
-        $this->assertSame(true, $resource->isActive());
-        $this->assertSame(true, $resource->isDeleted());
-        $this->assertSame(true, $resource->isLdapReady());
-        $this->assertSame(true, $resource->isImapReady());
+        $this->assertTrue($resource->isNew());
+        $this->assertTrue($resource->isActive());
+        $this->assertTrue($resource->isDeleted());
+        $this->assertTrue($resource->isLdapReady());
+        $this->assertTrue($resource->isImapReady());
 
         // Unknown status value
         $this->expectException(\Exception::class);
@@ -357,10 +361,10 @@ class ResourceTest extends TestCase
         $this->assertCount(1, $settings);
         $this->assertSame('shared/Resources/New@kolabnow.com', $settings[0]->value);
 
-        Queue::assertPushed(\App\Jobs\Resource\UpdateJob::class, 1);
+        Queue::assertPushed(UpdateJob::class, 1);
         Queue::assertPushed(
-            \App\Jobs\Resource\UpdateJob::class,
-            function ($job) use ($resource) {
+            UpdateJob::class,
+            static function ($job) use ($resource) {
                 $resourceEmail = TestCase::getObjectProperty($job, 'resourceEmail');
                 $resourceId = TestCase::getObjectProperty($job, 'resourceId');
 

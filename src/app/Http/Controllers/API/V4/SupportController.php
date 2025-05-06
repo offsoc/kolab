@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\V4;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
@@ -12,9 +13,7 @@ class SupportController extends Controller
     /**
      * Submit contact request form.
      *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function request(Request $request)
     {
@@ -51,7 +50,7 @@ class SupportController extends Controller
             $params['body'],
         );
 
-        Mail::raw($content, function ($message) use ($params, $to) {
+        Mail::raw($content, static function ($message) use ($params, $to) {
             // Remove the global reply-to addressee
             $message->getHeaders()->remove('Reply-To');
 
@@ -62,8 +61,8 @@ class SupportController extends Controller
         });
 
         return response()->json([
-                'status' => 'success',
-                'message' => self::trans('app.support-request-success'),
+            'status' => 'success',
+            'message' => self::trans('app.support-request-success'),
         ]);
     }
 }

@@ -3,6 +3,8 @@
 namespace App\Backends;
 
 use App\User;
+use App\UserAlias;
+use Illuminate\Database\ConnectionInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
@@ -15,11 +17,10 @@ class Roundcube
     /** @var array List of GnuPG files to store */
     private static $enigma_files = ['pubring.gpg', 'secring.gpg', 'pubring.kbx'];
 
-
     /**
      * Return connection to the Roundcube database
      *
-     * @return \Illuminate\Database\ConnectionInterface
+     * @return ConnectionInterface
      */
     public static function dbh()
     {
@@ -138,16 +139,16 @@ class Roundcube
                 $data = $record ? base64_decode($record->data) : false;
 
                 if ($data === false) {
-                    \Log::error("Failed to sync $file ({$file_id}). Decode error.");
+                    \Log::error("Failed to sync {$file} ({$file_id}). Decode error.");
                     continue;
                 }
 
                 if ($fs->put($file, $data, true)) {
                     // Note: Laravel Filesystem API does not provide touch method
-                    touch("$root/$file", $record->mtime);
+                    touch("{$root}/{$file}", $record->mtime);
 
                     if ($debug) {
-                        \Log::debug("[SYNC] Fetched file: $file");
+                        \Log::debug("[SYNC] Fetched file: {$file}");
                     }
                 }
             }
@@ -159,7 +160,7 @@ class Roundcube
 
             if ($fs->delete($file)) {
                 if ($debug) {
-                    \Log::debug("[SYNC] Removed file: $file");
+                    \Log::debug("[SYNC] Removed file: {$file}");
                 }
             }
         }
@@ -203,23 +204,23 @@ class Roundcube
 
             if ($mtime && (empty($existing) || $mtime > $existing->mtime)) {
                 $data = base64_encode($fs->get($file));
-/*
-                if (empty($maxsize)) {
-                    $maxsize = min($db->get_variable('max_allowed_packet', 1048500), 4*1024*1024) - 2000;
-                }
+                /*
+                                if (empty($maxsize)) {
+                                    $maxsize = min($db->get_variable('max_allowed_packet', 1048500), 4*1024*1024) - 2000;
+                                }
 
-                if (strlen($data) > $maxsize) {
-                    \Log::error("Failed to save $file. Size exceeds max_allowed_packet.");
-                    continue;
-                }
-*/
+                                if (strlen($data) > $maxsize) {
+                                    \Log::error("Failed to save $file. Size exceeds max_allowed_packet.");
+                                    continue;
+                                }
+                */
                 $result = $db->table(self::FILESTORE_TABLE)->updateOrInsert(
                     ['user_id' => $user_id, 'context' => 'enigma', 'filename' => $filename],
                     ['mtime' => $mtime, 'data' => $data]
                 );
 
                 if ($debug) {
-                    \Log::debug("[SYNC] Pushed file: $file");
+                    \Log::debug("[SYNC] Pushed file: {$file}");
                 }
             }
         }
@@ -234,7 +235,7 @@ class Roundcube
                 ->delete();
 
             if ($debug) {
-                \Log::debug("[SYNC] Removed file: $file");
+                \Log::debug("[SYNC] Removed file: {$file}");
             }
         }
     }
@@ -279,7 +280,7 @@ class Roundcube
         // Collect email addresses
         $users = $user->delegators()->pluck('email', 'user_id')->all();
         $users[$user->id] = $user->email;
-        $aliases = \App\UserAlias::whereIn('user_id', array_keys($users))->pluck('alias')->all();
+        $aliases = UserAlias::whereIn('user_id', array_keys($users))->pluck('alias')->all();
         $all_addresses = array_merge(array_values($users), $aliases);
 
         // Delete excessive identities
@@ -326,11 +327,11 @@ class Roundcube
             $username = User::where('email', $email)->first()->name();
 
             $db->table(self::IDENTITIES_TABLE)->insert([
-                    'user_id' => $user_id,
-                    'email' => $email,
-                    'name' => $username,
-                    'changed' => now()->toDateTimeString(),
-                    'standard' => 1,
+                'user_id' => $user_id,
+                'email' => $email,
+                'name' => $username,
+                'changed' => now()->toDateTimeString(),
+                'standard' => 1,
             ]);
 
             return $user_id;

@@ -4,13 +4,16 @@ namespace App\Documents;
 
 use App\Payment;
 use App\User;
+use App\Utils;
+use App\VatRate;
 use App\Wallet;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\View\View;
 
 class Receipt
 {
-    /** @var \App\Wallet The wallet */
+    /** @var Wallet The wallet */
     protected $wallet;
 
     /** @var int Transactions date year */
@@ -22,15 +25,12 @@ class Receipt
     /** @var bool Enable fake data mode */
     protected static $fakeMode = false;
 
-
     /**
      * Document constructor.
      *
-     * @param \App\Wallet $wallet A wallet containing transactions
-     * @param int         $year   A year to list transactions from
-     * @param int         $month  A month to list transactions from
-     *
-     * @return void
+     * @param Wallet $wallet A wallet containing transactions
+     * @param int    $year   A year to list transactions from
+     * @param int    $month  A month to list transactions from
      */
     public function __construct(Wallet $wallet, int $year, int $month)
     {
@@ -49,7 +49,7 @@ class Receipt
     public static function fakeRender(string $type = 'html'): string
     {
         $wallet = new Wallet(['currency' => 'CHF']);
-        $wallet->id = \App\Utils::uuidStr();
+        $wallet->id = Utils::uuidStr();
         $wallet->owner = new User(['id' => 123456789]);
 
         $receipt = new self($wallet, (int) date('Y'), (int) date('n'));
@@ -58,7 +58,8 @@ class Receipt
 
         if ($type == 'pdf') {
             return $receipt->pdfOutput();
-        } elseif ($type !== 'html') {
+        }
+        if ($type !== 'html') {
             throw new \Exception("Unsupported output format");
         }
 
@@ -114,7 +115,7 @@ class Receipt
     /**
      * Build the document
      *
-     * @return \Illuminate\View\View The template object
+     * @return View The template object
      */
     protected function build()
     {
@@ -122,7 +123,7 @@ class Receipt
         $start = Carbon::create($this->year, $this->month, 1, 0, 0, 0);
         $end = $start->copy()->endOfMonth();
 
-        $month = \trans('documents.month' . intval($this->month));
+        $month = \trans('documents.month' . (int) $this->month);
         $title = \trans('documents.receipt-title', ['year' => $this->year, 'month' => $month]);
         $company = $this->companyData();
 
@@ -152,8 +153,8 @@ class Receipt
                 ],
             ]);
 
-            $items = $items->map(function ($payment) {
-                $payment->vatRate = new \App\VatRate();
+            $items = $items->map(static function ($payment) {
+                $payment->vatRate = new VatRate();
                 $payment->vatRate->rate = 7.7;
                 $payment->credit_amount = $payment->amount + round($payment->amount * $payment->vatRate->rate / 100);
                 return $payment;
@@ -205,16 +206,16 @@ class Receipt
         // Load the template
         $view = view('documents.receipt')
             ->with([
-                    'site' => $appName,
-                    'title' => $title,
-                    'company' => $company,
-                    'customer' => $customer,
-                    'items' => $items,
-                    'subTotal' => $this->wallet->money($total),
-                    'total' => $this->wallet->money($total + $totalVat),
-                    'totalVat' => $this->wallet->money($totalVat),
-                    'vatRate' => preg_replace('/(\.00|0|\.)$/', '', sprintf('%.2F', $vatRate)),
-                    'vat' => $vatRate > 0,
+                'site' => $appName,
+                'title' => $title,
+                'company' => $company,
+                'customer' => $customer,
+                'items' => $items,
+                'subTotal' => $this->wallet->money($total),
+                'total' => $this->wallet->money($total + $totalVat),
+                'totalVat' => $this->wallet->money($totalVat),
+                'vatRate' => preg_replace('/(\.00|0|\.)$/', '', sprintf('%.2F', $vatRate)),
+                'vat' => $vatRate > 0,
             ]);
 
         return $view;
@@ -264,12 +265,12 @@ class Receipt
                 . sprintf('<a href="mailto:%s">%s</a>', $contact, $contact);
         }
 
-        if ($logo && strpos($logo, '/') === false) {
-            $logo = "/themes/$theme/images/$logo";
+        if ($logo && !str_contains($logo, '/')) {
+            $logo = "/themes/{$theme}/images/{$logo}";
         }
 
         return [
-            'logo' => $logo ? "<img src=\"$logo\" width=300>" : '',
+            'logo' => $logo ? "<img src=\"{$logo}\" width=300>" : '',
             'header' => $header,
             'footer' => $footer,
         ];

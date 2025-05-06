@@ -2,16 +2,12 @@
 
 namespace Tests\Feature\Console\SharedFolder;
 
-use App\SharedFolder;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class DeleteTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -19,10 +15,7 @@ class DeleteTest extends TestCase
         $this->deleteTestUser('folder-owner@kolabnow.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestSharedFolder('folder-test@kolabnow.com');
         $this->deleteTestUser('folder-owner@kolabnow.com');

@@ -2,23 +2,26 @@
 
 namespace App;
 
-use App\AuthAttempt;
+use App\Auth\SecondFactor;
 use App\Auth\Utils as AuthUtils;
 use App\Traits\AliasesTrait;
 use App\Traits\BelongsToTenantTrait;
-use App\Traits\EntitleableTrait;
 use App\Traits\EmailPropertyTrait;
-use App\Traits\UserConfigTrait;
-use App\Traits\UuidIntKeyTrait;
+use App\Traits\EntitleableTrait;
 use App\Traits\SettingsTrait;
 use App\Traits\StatusPropertyTrait;
+use App\Traits\UserConfigTrait;
+use App\Traits\UuidIntKeyTrait;
 use Dyrynda\Database\Support\NullableFields;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Passport\HasApiTokens;
 use League\OAuth2\Server\Exception\OAuthServerException;
 
@@ -38,30 +41,30 @@ class User extends Authenticatable
     use AliasesTrait;
     use BelongsToTenantTrait;
     use EntitleableTrait;
-    use EmailPropertyTrait;
     use HasApiTokens;
     use Notifiable;
     use NullableFields;
-    use UserConfigTrait;
-    use UuidIntKeyTrait;
     use SettingsTrait;
     use SoftDeletes;
     use StatusPropertyTrait;
+    use UserConfigTrait;
+    use UuidIntKeyTrait;
+    use EmailPropertyTrait; // must be after UuidIntKeyTrait
 
     // a new user, default on creation
-    public const STATUS_NEW        = 1 << 0;
+    public const STATUS_NEW = 1 << 0;
     // it's been activated
-    public const STATUS_ACTIVE     = 1 << 1;
+    public const STATUS_ACTIVE = 1 << 1;
     // user has been suspended
-    public const STATUS_SUSPENDED  = 1 << 2;
+    public const STATUS_SUSPENDED = 1 << 2;
     // user has been deleted
-    public const STATUS_DELETED    = 1 << 3;
+    public const STATUS_DELETED = 1 << 3;
     // user has been created in LDAP
     public const STATUS_LDAP_READY = 1 << 4;
     // user mailbox has been created in IMAP
     public const STATUS_IMAP_READY = 1 << 5;
     // user in "limited feature-set" state
-    public const STATUS_DEGRADED   = 1 << 6;
+    public const STATUS_DEGRADED = 1 << 6;
     // a restricted user
     public const STATUS_RESTRICTED = 1 << 7;
 
@@ -70,14 +73,14 @@ class User extends Authenticatable
     public const ROLE_SERVICE = 'service';
 
     /** @var int The allowed states for this object used in StatusPropertyTrait */
-    private int $allowed_states = self::STATUS_NEW |
-        self::STATUS_ACTIVE |
-        self::STATUS_SUSPENDED |
-        self::STATUS_DELETED |
-        self::STATUS_LDAP_READY |
-        self::STATUS_IMAP_READY |
-        self::STATUS_DEGRADED |
-        self::STATUS_RESTRICTED;
+    private int $allowed_states = self::STATUS_NEW
+        | self::STATUS_ACTIVE
+        | self::STATUS_SUSPENDED
+        | self::STATUS_DELETED
+        | self::STATUS_LDAP_READY
+        | self::STATUS_IMAP_READY
+        | self::STATUS_DEGRADED
+        | self::STATUS_RESTRICTED;
 
     /** @var list<string> The attributes that are mass assignable */
     protected $fillable = [
@@ -92,7 +95,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'password_ldap',
-        'role'
+        'role',
     ];
 
     /** @var array<int, string> The attributes that can be null */
@@ -114,7 +117,7 @@ class User extends Authenticatable
      *
      * This does not include wallets owned by the user.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<Wallet, $this>
+     * @return BelongsToMany<Wallet, $this>
      */
     public function accounts()
     {
@@ -129,10 +132,10 @@ class User extends Authenticatable
     /**
      * Assign a package to a user. The user should not have any existing entitlements.
      *
-     * @param \App\Package   $package The package to assign.
-     * @param \App\User|null $user    Assign the package to another user.
+     * @param Package   $package the package to assign
+     * @param User|null $user    assign the package to another user
      *
-     * @return \App\User
+     * @return User
      */
     public function assignPackage($package, $user = null)
     {
@@ -146,15 +149,16 @@ class User extends Authenticatable
     /**
      * Assign a package plan to a user.
      *
-     * @param \App\Plan   $plan   The plan to assign
-     * @param \App\Domain $domain Optional domain object
+     * @param Plan   $plan   The plan to assign
+     * @param Domain $domain Optional domain object
      *
-     * @return \App\User Self
+     * @return User Self
+     *
      * @throws \Exception
      */
-    public function assignPlan($plan, $domain = null): User
+    public function assignPlan($plan, $domain = null): self
     {
-        $domain_packages = $plan->packages->filter(function ($package) {
+        $domain_packages = $plan->packages->filter(static function ($package) {
             return $package->isDomain();
         });
 
@@ -213,12 +217,12 @@ class User extends Authenticatable
             return true;
         }
 
-        if ($object instanceof User && $this->id == $object->id) {
+        if ($object instanceof self && $this->id == $object->id) {
             return true;
         }
 
         if ($this->role == self::ROLE_RESELLER) {
-            if ($object instanceof User && $object->role == self::ROLE_ADMIN) {
+            if ($object instanceof self && $object->role == self::ROLE_ADMIN) {
                 return false;
             }
 
@@ -251,7 +255,7 @@ class User extends Authenticatable
      */
     public function canUpdate($object): bool
     {
-        if ($object instanceof User && $this->id == $object->id) {
+        if ($object instanceof self && $this->id == $object->id) {
             return true;
         }
 
@@ -260,7 +264,7 @@ class User extends Authenticatable
         }
 
         if ($this->role == self::ROLE_RESELLER) {
-            if ($object instanceof User && $object->role == self::ROLE_ADMIN) {
+            if ($object instanceof self && $object->role == self::ROLE_ADMIN) {
                 return false;
             }
 
@@ -277,7 +281,7 @@ class User extends Authenticatable
     /**
      * Contacts (global addressbook) for this user.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Contact, $this>
+     * @return HasMany<Contact, $this>
      */
     public function contacts()
     {
@@ -286,8 +290,6 @@ class User extends Authenticatable
 
     /**
      * Degrade the user
-     *
-     * @return void
      */
     public function degrade(): void
     {
@@ -295,18 +297,18 @@ class User extends Authenticatable
             return;
         }
 
-        $this->status |= User::STATUS_DEGRADED;
+        $this->status |= self::STATUS_DEGRADED;
         $this->save();
     }
 
     /**
      * Users that this user is delegatee of.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<User, $this, Delegation>
+     * @return BelongsToMany<User, $this, Delegation>
      */
     public function delegators()
     {
-        return $this->belongsToMany(User::class, 'delegations', 'delegatee_id', 'user_id')
+        return $this->belongsToMany(self::class, 'delegations', 'delegatee_id', 'user_id')
             ->as('delegation')
             ->using(Delegation::class);
     }
@@ -314,11 +316,11 @@ class User extends Authenticatable
     /**
      * Users that are delegatees of this user.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<User, $this, Delegation>
+     * @return BelongsToMany<User, $this, Delegation>
      */
     public function delegatees()
     {
-        return $this->belongsToMany(User::class, 'delegations', 'user_id', 'delegatee_id')
+        return $this->belongsToMany(self::class, 'delegations', 'user_id', 'delegatee_id')
             ->as('delegation')
             ->using(Delegation::class)
             ->withPivot('options');
@@ -327,11 +329,11 @@ class User extends Authenticatable
     /**
      * List the domains to which this user is entitled.
      *
-     * @param bool $with_accounts Include domains assigned to wallets
-     *                            the current user controls but not owns.
-     * @param bool $with_public   Include active public domains (for the user tenant).
+     * @param bool $with_accounts include domains assigned to wallets
+     *                            the current user controls but not owns
+     * @param bool $with_public   include active public domains (for the user tenant)
      *
-     * @return \Illuminate\Database\Eloquent\Builder Query builder
+     * @return Builder Query builder
      */
     public function domains($with_accounts = true, $with_public = true)
     {
@@ -357,10 +359,10 @@ class User extends Authenticatable
      * Return entitleable objects of a specified type controlled by the current user.
      *
      * @param string $class         Object class
-     * @param bool   $with_accounts Include objects assigned to wallets
-     *                              the current user controls, but not owns.
+     * @param bool   $with_accounts include objects assigned to wallets
+     *                              the current user controls, but not owns
      *
-     * @return \Illuminate\Database\Eloquent\Builder Query builder
+     * @return Builder Query builder
      */
     private function entitleables(string $class, bool $with_accounts = true)
     {
@@ -374,7 +376,7 @@ class User extends Authenticatable
         $table = $object->getTable();
 
         return $object->select("{$table}.*")
-            ->whereExists(function ($query) use ($table, $wallets, $class) {
+            ->whereExists(static function ($query) use ($table, $wallets, $class) {
                 $query->select(DB::raw(1))
                     ->from('entitlements')
                     ->whereColumn('entitleable_id', "{$table}.id")
@@ -392,11 +394,11 @@ class User extends Authenticatable
      * @param string $email    Email address
      * @param bool   $external Search also for an external email
      *
-     * @return \App\User|null User model object if found
+     * @return User|null User model object if found
      */
-    public static function findByEmail(string $email, bool $external = false): ?User
+    public static function findByEmail(string $email, bool $external = false): ?self
     {
-        if (strpos($email, '@') === false) {
+        if (!str_contains($email, '@')) {
             return null;
         }
 
@@ -422,7 +424,7 @@ class User extends Authenticatable
     /**
      * Storage items for this user.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Fs\Item, $this>
+     * @return HasMany<Fs\Item, $this>
      */
     public function fsItems()
     {
@@ -432,10 +434,10 @@ class User extends Authenticatable
     /**
      * Return groups controlled by the current user.
      *
-     * @param bool $with_accounts Include groups assigned to wallets
-     *                            the current user controls but not owns.
+     * @param bool $with_accounts include groups assigned to wallets
+     *                            the current user controls but not owns
      *
-     * @return \Illuminate\Database\Eloquent\Builder Query builder
+     * @return Builder Query builder
      */
     public function groups($with_accounts = true)
     {
@@ -446,8 +448,6 @@ class User extends Authenticatable
      * Returns whether this user (or its wallet owner) is degraded.
      *
      * @param bool $owner Check also the wallet owner instead just the user himself
-     *
-     * @return bool
      */
     public function isDegraded(bool $owner = false): bool
     {
@@ -464,20 +464,16 @@ class User extends Authenticatable
 
     /**
      * Check if multi factor authentication is enabled
-     *
-     * @return bool
      */
     public function isMFAEnabled(): bool
     {
-        return \App\CompanionApp::where('user_id', $this->id)
+        return CompanionApp::where('user_id', $this->id)
             ->where('mfa_enabled', true)
             ->exists();
     }
 
     /**
      * Returns whether this user is restricted.
-     *
-     * @return bool
      */
     public function isRestricted(): bool
     {
@@ -487,7 +483,7 @@ class User extends Authenticatable
     /**
      * Licenses whis user has.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<License, $this>
+     * @return HasMany<License, $this>
      */
     public function licenses()
     {
@@ -517,7 +513,7 @@ class User extends Authenticatable
     /**
      * Old passwords for this user.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<UserPassword, $this>
+     * @return HasMany<UserPassword, $this>
      */
     public function passwords()
     {
@@ -526,8 +522,6 @@ class User extends Authenticatable
 
     /**
      * Restrict this user.
-     *
-     * @return void
      */
     public function restrict(): void
     {
@@ -535,17 +529,17 @@ class User extends Authenticatable
             return;
         }
 
-        $this->status |= User::STATUS_RESTRICTED;
+        $this->status |= self::STATUS_RESTRICTED;
         $this->save();
     }
 
     /**
      * Return resources controlled by the current user.
      *
-     * @param bool $with_accounts Include resources assigned to wallets
-     *                            the current user controls but not owns.
+     * @param bool $with_accounts include resources assigned to wallets
+     *                            the current user controls but not owns
      *
-     * @return \Illuminate\Database\Eloquent\Builder Query builder
+     * @return Builder Query builder
      */
     public function resources($with_accounts = true)
     {
@@ -555,10 +549,10 @@ class User extends Authenticatable
     /**
      * Return rooms controlled by the current user.
      *
-     * @param bool $with_accounts Include rooms assigned to wallets
-     *                            the current user controls but not owns.
+     * @param bool $with_accounts include rooms assigned to wallets
+     *                            the current user controls but not owns
      *
-     * @return \Illuminate\Database\Eloquent\Builder Query builder
+     * @return Builder Query builder
      */
     public function rooms($with_accounts = true)
     {
@@ -568,10 +562,10 @@ class User extends Authenticatable
     /**
      * Return shared folders controlled by the current user.
      *
-     * @param bool $with_accounts Include folders assigned to wallets
-     *                            the current user controls but not owns.
+     * @param bool $with_accounts include folders assigned to wallets
+     *                            the current user controls but not owns
      *
-     * @return \Illuminate\Database\Eloquent\Builder Query builder
+     * @return Builder Query builder
      */
     public function sharedFolders($with_accounts = true)
     {
@@ -581,11 +575,11 @@ class User extends Authenticatable
     /**
      * Return companion apps by the current user.
      *
-     * @return \Illuminate\Database\Eloquent\Builder Query builder
+     * @return Builder Query builder
      */
     public function companionApps()
     {
-        return \App\CompanionApp::where('user_id', $this->id);
+        return CompanionApp::where('user_id', $this->id);
     }
 
     public function senderPolicyFrameworkWhitelist($clientName)
@@ -612,7 +606,7 @@ class User extends Authenticatable
             }
 
             if (substr($entry, 0, 1) == '.') {
-                if (substr($clientName, (-1 * strlen($entry))) == $entry) {
+                if (substr($clientName, -1 * strlen($entry)) == $entry) {
                     $matchFound = true;
                 }
 
@@ -630,8 +624,6 @@ class User extends Authenticatable
 
     /**
      * Un-degrade this user.
-     *
-     * @return void
      */
     public function undegrade(): void
     {
@@ -639,7 +631,7 @@ class User extends Authenticatable
             return;
         }
 
-        $this->status ^= User::STATUS_DEGRADED;
+        $this->status ^= self::STATUS_DEGRADED;
         $this->save();
     }
 
@@ -647,22 +639,20 @@ class User extends Authenticatable
      * Un-restrict this user.
      *
      * @param bool $deep Unrestrict also all users in the account
-     *
-     * @return void
      */
     public function unrestrict(bool $deep = false): void
     {
         if ($this->isRestricted()) {
-            $this->status ^= User::STATUS_RESTRICTED;
+            $this->status ^= self::STATUS_RESTRICTED;
             $this->save();
         }
 
         // Remove the flag from all users in the user's wallets
         if ($deep) {
-            $this->wallets->each(function ($wallet) {
+            $this->wallets->each(static function ($wallet) {
                 User::whereIn('id', $wallet->entitlements()->select('entitleable_id')
                     ->where('entitleable_type', User::class))
-                    ->each(function ($user) {
+                    ->each(static function ($user) {
                         $user->unrestrict();
                     });
             });
@@ -672,20 +662,20 @@ class User extends Authenticatable
     /**
      * Return users controlled by the current user.
      *
-     * @param bool $with_accounts Include users assigned to wallets
-     *                            the current user controls but not owns.
+     * @param bool $with_accounts include users assigned to wallets
+     *                            the current user controls but not owns
      *
-     * @return \Illuminate\Database\Eloquent\Builder Query builder
+     * @return Builder Query builder
      */
     public function users($with_accounts = true)
     {
-        return $this->entitleables(User::class, $with_accounts);
+        return $this->entitleables(self::class, $with_accounts);
     }
 
     /**
      * Verification codes for this user.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<VerificationCode, $this>
+     * @return HasMany<VerificationCode, $this>
      */
     public function verificationcodes()
     {
@@ -695,7 +685,7 @@ class User extends Authenticatable
     /**
      * Wallets this user owns.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Wallet, $this>
+     * @return HasMany<Wallet, $this>
      */
     public function wallets()
     {
@@ -705,9 +695,7 @@ class User extends Authenticatable
     /**
      * User password mutator
      *
-     * @param string $password The password in plain text.
-     *
-     * @return void
+     * @param string $password the password in plain text
      */
     public function setPasswordAttribute($password)
     {
@@ -722,9 +710,7 @@ class User extends Authenticatable
     /**
      * User LDAP password mutator
      *
-     * @param string $password The password in plain text.
-     *
-     * @return void
+     * @param string $password the password in plain text
      */
     public function setPasswordLdapAttribute($password)
     {
@@ -756,7 +742,7 @@ class User extends Authenticatable
             $wallet->entitlements()->select('entitleable_id', 'entitleable_type')
                 ->distinct()
                 ->get()
-                ->each(function ($entitlement) {
+                ->each(static function ($entitlement) {
                     if (
                         defined($entitlement->entitleable_type . '::STATUS_SUSPENDED')
                         && $entitlement->entitleable
@@ -770,7 +756,7 @@ class User extends Authenticatable
     /**
      * Validate the user credentials
      *
-     * @param string $password The password in plain text.
+     * @param string $password the password in plain text
      */
     public function validatePassword(string $password): bool
     {
@@ -808,8 +794,6 @@ class User extends Authenticatable
      * Validate request location regarding geo-lockin
      *
      * @param string $ip IP address to check, usually request()->ip()
-     *
-     * @return bool
      */
     public function validateLocation($ip): bool
     {
@@ -819,15 +803,15 @@ class User extends Authenticatable
             return true;
         }
 
-        return in_array(\App\Utils::countryForIP($ip), $countryCodes);
+        return in_array(Utils::countryForIP($ip), $countryCodes);
     }
 
     /**
      * Retrieve and authenticate a user
      *
-     * @param string  $username The username
-     * @param string  $password The password in plain text
-     * @param ?string $clientIP The IP address of the client
+     * @param string  $username   The username
+     * @param string  $password   The password in plain text
+     * @param ?string $clientIP   The IP address of the client
      * @param ?bool   $withChecks Enable MFA and location checks
      *
      * @return array ['user', 'reason', 'errorMessage']
@@ -840,7 +824,7 @@ class User extends Authenticatable
             $clientIP = request()->ip();
         }
 
-        $user = User::where('email', $username)->first();
+        $user = self::where('email', $username)->first();
 
         if (!$user) {
             $error = AuthAttempt::REASON_NOTFOUND;
@@ -853,7 +837,7 @@ class User extends Authenticatable
                 }
             } else {
                 if (!$withChecks) {
-                    $cacheId = hash('sha256', "{$user->id}-$password");
+                    $cacheId = hash('sha256', "{$user->id}-{$password}");
                     // Skip the slow password verification for cases where we also don't verify mfa.
                     // We rely on this for fast cyrus-sasl authentication.
                     if (Cache::has($cacheId)) {
@@ -877,7 +861,7 @@ class User extends Authenticatable
             // Check 2FA
             if (!$error) {
                 try {
-                    (new \App\Auth\SecondFactor($user))->validate(request()->secondfactor);
+                    (new SecondFactor($user))->validate(request()->secondfactor);
                 } catch (\Exception $e) {
                     $error = AuthAttempt::REASON_2FA_GENERIC;
                     $message = $e->getMessage();
@@ -904,7 +888,7 @@ class User extends Authenticatable
             }
 
             if ($user) {
-                \Log::info("Authentication failed for {$user->email}. Error: $error");
+                \Log::info("Authentication failed for {$user->email}. Error: {$error}");
             }
 
             return ['reason' => $error, 'errorMessage' => $message ?? \trans("auth.error.{$error}")];
@@ -923,11 +907,11 @@ class User extends Authenticatable
     /**
      * Hook for passport
      *
-     * @throws \Throwable
+     * @return User User model object if found
      *
-     * @return \App\User User model object if found
+     * @throws \Throwable
      */
-    public static function findAndValidateForPassport($username, $password): User
+    public static function findAndValidateForPassport($username, $password): self
     {
         $verifyMFA = true;
         if (request()->scope == "mfa") {

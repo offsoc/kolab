@@ -25,10 +25,7 @@ class SettingsTest extends TestCaseDusk
         'organization' => 'Kolab Developers',
     ];
 
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -36,10 +33,7 @@ class SettingsTest extends TestCaseDusk
         $this->deleteTestUser('profile-delete@kolabnow.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         User::where('email', 'john@kolab.org')->first()->setSettings($this->profile);
         $this->deleteTestUser('profile-delete@kolabnow.com');
@@ -53,7 +47,7 @@ class SettingsTest extends TestCaseDusk
     public function testSettingsUnauth(): void
     {
         // Test that the page requires authentication
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit('/settings')->on(new Home());
         });
     }
@@ -76,7 +70,7 @@ class SettingsTest extends TestCaseDusk
                 ->assertSeeIn('#user-info button.button-delete', 'Delete account')
                 ->assertSeeIn('#user-info .card-title', 'My account')
                 ->assertSeeIn('@nav #tab-general', 'General')
-                ->with('@general', function (Browser $browser) use ($user) {
+                ->with('@general', static function (Browser $browser) use ($user) {
                     $browser->assertSeeIn('div.row:nth-child(1) label', 'Status (Customer No.)')
                         ->assertSeeIn('div.row:nth-child(1) #status', 'Active')
                         ->assertSeeIn('div.row:nth-child(1) #userid', "({$user->id})")
@@ -85,7 +79,7 @@ class SettingsTest extends TestCaseDusk
                         ->assertDisabled('div.row:nth-child(2) input[type=text]')
                         ->assertSeeIn('div.row:nth-child(3) label', 'Email Aliases')
                         ->assertVisible('div.row:nth-child(3) .list-input')
-                        ->with(new ListInput('#aliases'), function (Browser $browser) {
+                        ->with(new ListInput('#aliases'), static function (Browser $browser) {
                             $browser->assertListInputValue(['john.doe@kolab.org'])
                                 ->assertValue('@input', '');
                         })
@@ -101,7 +95,7 @@ class SettingsTest extends TestCaseDusk
                 })
                 ->assertSeeIn('@nav #tab-settings', 'Settings')
                 ->click('@nav #tab-settings')
-                ->with('@settings', function (Browser $browser) {
+                ->with('@settings', static function (Browser $browser) {
                     $browser->assertSeeIn('div.row:nth-child(1) label', 'Greylisting')
                         ->click('div.row:nth-child(1) input[type=checkbox]');
                 })
@@ -140,7 +134,7 @@ class SettingsTest extends TestCaseDusk
         $user->setSetting('password_policy', 'min:10,upper,digit');
 
         // Test acting as non-controller
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit(new Home())
                 ->submitLogon('jack@kolab.org', 'simple123', true)
                 ->on(new Dashboard())
@@ -150,7 +144,7 @@ class SettingsTest extends TestCaseDusk
                 ->assertMissing('#user-info button.button-delete')
                 ->assertSeeIn('#user-info .card-title', 'My account')
                 ->assertSeeIn('@nav #tab-general', 'General')
-                ->with('@general', function (Browser $browser) {
+                ->with('@general', static function (Browser $browser) {
                     $browser->assertSeeIn('div.row:nth-child(1) label', 'Email')
                         ->assertValue('div.row:nth-child(1) input[type=text]', 'jack@kolab.org')
                         ->assertSeeIn('div.row:nth-child(2) label', 'Password')
@@ -161,7 +155,7 @@ class SettingsTest extends TestCaseDusk
                         ->assertMissing('div.row:nth-child(2) .btn-group')
                         ->assertMissing('div.row:nth-child(2) #password-link')
                         ->assertMissing('div.row:nth-child(3)')
-                        ->whenAvailable('#password_policy', function (Browser $browser) {
+                        ->whenAvailable('#password_policy', static function (Browser $browser) {
                             $browser->assertElementsCount('li', 3)
                                 ->assertMissing('li:nth-child(1) svg.text-success')
                                 ->assertSeeIn('li:nth-child(1) small', "Minimum password length: 10 characters")
@@ -171,10 +165,9 @@ class SettingsTest extends TestCaseDusk
                                 ->assertSeeIn('li:nth-child(3) small', "Password contains a digit");
                         });
                 })
-                ->assertMissing('@nav #tab-settings')
                 ->assertSeeIn('@nav #tab-personal', 'Personal information')
                 ->click('@nav #tab-personal')
-                ->with('@personal', function (Browser $browser) {
+                ->with('@personal', static function (Browser $browser) {
                     $browser->assertSeeIn('div.row:nth-child(1) label', 'First Name')
                         ->assertValue('div.row:nth-child(1) input[type=text]', 'Jack')
                         ->assertSeeIn('div.row:nth-child(2) label', 'Last Name')
@@ -186,21 +179,23 @@ class SettingsTest extends TestCaseDusk
                         ->assertSeeIn('div.row:nth-child(7) label', 'Country')
                         ->click('button[type=submit]');
                 })
-                ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.');
+                ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.')
+                // Settings tab is tested in another place
+                ->assertSeeIn('@nav #tab-settings', 'Settings');
         });
 
         $user = $this->getTestUser('profile-delete@kolabnow.com', ['password' => 'simple123']);
         $oldpassword = $user->password;
 
         // Test password change
-        $this->browse(function (Browser $browser) use ($user) {
+        $this->browse(static function (Browser $browser) use ($user) {
             $browser->visit(new Home())
                 ->submitLogon($user->email, 'simple123', true)
                 ->on(new Dashboard())
                 ->click('@links .link-settings')
                 ->on(new UserInfo())
                 ->assertSeeIn('@nav #tab-general', 'General')
-                ->with('@general', function (Browser $browser) {
+                ->with('@general', static function (Browser $browser) {
                     $browser
                         ->type('input#password', '12345678')
                         ->type('input#password_confirmation', '12345678')
@@ -229,7 +224,7 @@ class SettingsTest extends TestCaseDusk
                 ->on(new UserInfo())
                 ->assertSeeIn('#user-info button.button-delete', 'Delete account')
                 ->click('#user-info button.button-delete')
-                ->with(new Dialog('#delete-warning'), function (Browser $browser) {
+                ->with(new Dialog('#delete-warning'), static function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Delete this account?')
                         ->assertSeeIn('@body', 'This will delete the account as well as all domains')
                         ->assertSeeIn('@body strong', 'This operation is irreversible')
@@ -240,7 +235,7 @@ class SettingsTest extends TestCaseDusk
                 })
                 ->waitUntilMissing('#delete-warning')
                 ->click('#user-info button.button-delete')
-                ->with(new Dialog('#delete-warning'), function (Browser $browser) {
+                ->with(new Dialog('#delete-warning'), static function (Browser $browser) {
                     $browser->click('@button-action');
                 })
                 ->waitUntilMissing('#delete-warning')

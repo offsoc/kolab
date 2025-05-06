@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands\Data\Import;
 
-use App\VatRate;
 use App\Console\Command;
+use App\VatRate;
 
 class VatRatesCommand extends Command
 {
@@ -69,9 +69,9 @@ class VatRatesCommand extends Command
 
                 if (!$existing || $existing->rate != $rate) {
                     VatRate::create([
-                            'start' => $date,
-                            'rate' => $rate,
-                            'country' => strtoupper($country),
+                        'start' => $date,
+                        'rate' => $rate,
+                        'country' => strtoupper($country),
                     ]);
 
                     $this->info("Added {$country}:{$rate}");

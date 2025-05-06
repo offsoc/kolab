@@ -13,20 +13,14 @@ use Tests\TestCaseDusk;
 
 class PasswordResetTest extends TestCaseDusk
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestUser('passwordresettestdusk@' . \config('app.domain'));
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('passwordresettestdusk@' . \config('app.domain'));
 
@@ -38,7 +32,7 @@ class PasswordResetTest extends TestCaseDusk
      */
     public function testLinkOnLogon(): void
     {
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit(new Home())
                 ->assertSeeLink('Forgot password?')
                 ->clickLink('Forgot password?')
@@ -55,27 +49,27 @@ class PasswordResetTest extends TestCaseDusk
         $user = $this->getTestUser('passwordresettestdusk@' . \config('app.domain'));
         $user->setSetting('external_email', 'external@domain.tld');
 
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit(new PasswordReset());
 
             $browser->assertVisible('@step1');
 
             // Here we expect email input and submit button
-            $browser->with('@step1', function ($step) {
+            $browser->with('@step1', static function ($step) {
                 $step->assertVisible('#reset_email');
                 $step->assertFocused('#reset_email');
                 $step->assertVisible('[type=submit]');
             });
 
             // Submit empty form
-            $browser->with('@step1', function ($step) {
+            $browser->with('@step1', static function ($step) {
                 $step->click('[type=submit]');
                 $step->assertFocused('#reset_email');
             });
 
             // Submit invalid email
             // We expect email input to have is-invalid class added, with .invalid-feedback element
-            $browser->with('@step1', function ($step) use ($browser) {
+            $browser->with('@step1', static function ($step) use ($browser) {
                 $step->type('#reset_email', '@test');
                 $step->click('[type=submit]');
 
@@ -86,7 +80,7 @@ class PasswordResetTest extends TestCaseDusk
             });
 
             // Submit valid data
-            $browser->with('@step1', function ($step) {
+            $browser->with('@step1', static function ($step) {
                 $step->type('#reset_email', 'passwordresettestdusk@' . \config('app.domain'));
                 $step->click('[type=submit]');
 
@@ -114,7 +108,7 @@ class PasswordResetTest extends TestCaseDusk
             $browser->assertVisible('@step2');
 
             // Here we expect one text input, Back and Continue buttons
-            $browser->with('@step2', function ($step) {
+            $browser->with('@step2', static function ($step) {
                 $step->assertVisible('#reset_short_code');
                 $step->assertFocused('#reset_short_code');
                 $step->assertVisible('[type=button]');
@@ -128,7 +122,7 @@ class PasswordResetTest extends TestCaseDusk
             $browser->assertMissing('@step2');
 
             // Submit valid Step 1 data (again)
-            $browser->with('@step1', function ($step) {
+            $browser->with('@step1', static function ($step) {
                 $step->type('#reset_email', 'passwordresettestdusk@' . \config('app.domain'));
                 $step->click('[type=submit]');
             });
@@ -138,7 +132,7 @@ class PasswordResetTest extends TestCaseDusk
 
             // Submit invalid code
             // We expect code input to have is-invalid class added, with .invalid-feedback element
-            $browser->with('@step2', function ($step) use ($browser) {
+            $browser->with('@step2', static function ($step) use ($browser) {
                 $step->type('#reset_short_code', 'XXXXX');
                 $step->click('[type=submit]');
 
@@ -191,7 +185,7 @@ class PasswordResetTest extends TestCaseDusk
                 ->clearToasts();
 
             // Here we expect 2 text inputs, Back and Continue buttons
-            $browser->with('@step3', function (Browser $step) {
+            $browser->with('@step3', static function (Browser $step) {
                 $step->assertVisible('#reset_password')
                     ->assertVisible('#reset_password_confirmation')
                     ->assertVisible('[type=button]')
@@ -217,7 +211,7 @@ class PasswordResetTest extends TestCaseDusk
                 ->assertMissing('@step2');
 
             // Submit valid data
-            $browser->with('@step1', function ($step) {
+            $browser->with('@step1', static function ($step) {
                 $step->type('#reset_email', 'passwordresettestdusk@' . \config('app.domain'));
                 $step->click('[type=submit]');
             });
@@ -240,9 +234,9 @@ class PasswordResetTest extends TestCaseDusk
             $browser->waitFor('@step3');
 
             // Submit invalid data
-            $browser->with('@step3', function ($step) use ($browser) {
+            $browser->with('@step3', static function ($step) use ($browser) {
                 $step->assertFocused('#reset_password')
-                    ->whenAvailable('#reset_password_policy', function (Browser $browser) {
+                    ->whenAvailable('#reset_password_policy', static function (Browser $browser) {
                         $browser->assertElementsCount('li', 2)
                             ->assertMissing('li:first-child svg.text-success')
                             ->assertSeeIn('li:first-child small', "Password contains an upper-case character")
@@ -251,7 +245,7 @@ class PasswordResetTest extends TestCaseDusk
                     })
                     ->type('#reset_password', 'A2345678')
                     ->type('#reset_password_confirmation', '123456789')
-                    ->with('#reset_password_policy', function (Browser $browser) {
+                    ->with('#reset_password_policy', static function (Browser $browser) {
                         $browser->waitFor('li:first-child svg.text-success')
                             ->waitFor('li:last-child svg.text-success');
                     });
@@ -268,7 +262,7 @@ class PasswordResetTest extends TestCaseDusk
             });
 
             // Submit valid data
-            $browser->with('@step3', function ($step) {
+            $browser->with('@step3', static function ($step) {
                 $step->type('#reset_password_confirmation', 'A2345678')
                     ->click('[type=submit]');
             });
@@ -300,7 +294,7 @@ class PasswordResetTest extends TestCaseDusk
                 ->waitFor('@step3')
                 ->assertMissing('@step1')
                 ->assertMissing('@step2')
-                ->with('@step3', function ($step) {
+                ->with('@step3', static function ($step) {
                     $step->type('#reset_password', 'A2345678')
                         ->type('#reset_password_confirmation', 'A2345678')
                         ->click('[type=submit]');
@@ -308,7 +302,7 @@ class PasswordResetTest extends TestCaseDusk
                 ->waitUntilMissing('@step3')
                 // At this point we should be auto-logged-in to dashboard
                 ->on(new Dashboard())
-                ->within(new Menu(), function ($browser) {
+                ->within(new Menu(), static function ($browser) {
                     $browser->clickMenuItem('logout');
                 });
 

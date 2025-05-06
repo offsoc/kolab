@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\User;
 use App\Wallet;
+use Carbon\Carbon;
 
 /**
  * This is an observer for the Wallet model definition.
@@ -12,10 +13,6 @@ class WalletObserver
 {
     /**
      * Ensure the wallet ID is a custom ID (uuid).
-     *
-     * @param Wallet $wallet
-     *
-     * @return void
      */
     public function creating(Wallet $wallet)
     {
@@ -31,9 +28,7 @@ class WalletObserver
      *
      * Ensures that no entitlements are being billed to the wallet currently.
      *
-     * @param Wallet $wallet The wallet being deleted.
-     *
-     * @return bool
+     * @param Wallet $wallet the wallet being deleted
      */
     public function deleting(Wallet $wallet): bool
     {
@@ -55,12 +50,12 @@ class WalletObserver
         if ($wallet->entitlements()->count() > 0) {
             return false;
         }
-/*
-        // can't remove a wallet that has payments attached.
-        if ($wallet->payments()->count() > 0) {
-            return false;
-        }
-*/
+        /*
+                // can't remove a wallet that has payments attached.
+                if ($wallet->payments()->count() > 0) {
+                    return false;
+                }
+        */
 
         return true;
     }
@@ -68,9 +63,7 @@ class WalletObserver
     /**
      * Handle the wallet "updated" event.
      *
-     * @param \App\Wallet $wallet The wallet.
-     *
-     * @return void
+     * @param Wallet $wallet the wallet
      */
     public function updated(Wallet $wallet)
     {
@@ -78,16 +71,16 @@ class WalletObserver
 
         if ($wallet->balance < 0) {
             if (!$negative_since) {
-                $now = \Carbon\Carbon::now()->toDateTimeString();
+                $now = Carbon::now()->toDateTimeString();
                 $wallet->setSetting('balance_negative_since', $now);
             }
         } elseif ($negative_since) {
             $wallet->setSettings([
-                    'balance_negative_since' => null,
-                    'balance_warning_initial' => null,
-                    'balance_warning_reminder' => null,
-                    'balance_warning_suspended' => null,
-                    'balance_warning_before_delete' => null,
+                'balance_negative_since' => null,
+                'balance_warning_initial' => null,
+                'balance_warning_reminder' => null,
+                'balance_warning_suspended' => null,
+                'balance_warning_before_delete' => null,
             ]);
 
             // FIXME: Since we use account degradation, should we leave suspended state untouched?

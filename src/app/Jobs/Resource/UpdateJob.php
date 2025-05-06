@@ -3,13 +3,13 @@
 namespace App\Jobs\Resource;
 
 use App\Jobs\ResourceJob;
+use App\Support\Facades\IMAP;
+use App\Support\Facades\LDAP;
 
 class UpdateJob extends ResourceJob
 {
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle()
     {
@@ -26,11 +26,11 @@ class UpdateJob extends ResourceJob
         }
 
         if (\config('app.with_ldap') && $resource->isLdapReady()) {
-            \App\Support\Facades\LDAP::updateResource($resource);
+            LDAP::updateResource($resource);
         }
 
         if (\config('app.with_imap') && $resource->isImapReady()) {
-            if (!\App\Support\Facades\IMAP::updateResource($resource, $this->properties)) {
+            if (!IMAP::updateResource($resource, $this->properties)) {
                 throw new \Exception("Failed to update mailbox for resource {$this->resourceId}.");
             }
         }

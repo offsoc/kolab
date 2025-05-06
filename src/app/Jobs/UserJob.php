@@ -2,6 +2,8 @@
 
 namespace App\Jobs;
 
+use App\User;
+
 /**
  * The abstract \App\Jobs\UserJob implements the logic needed for all dispatchable Jobs related to
  * \App\User objects.
@@ -34,9 +36,7 @@ abstract class UserJob extends CommonJob
     /**
      * Create a new job instance.
      *
-     * @param int $userId The ID for the user to create.
-     *
-     * @return void
+     * @param int $userId the ID for the user to create
      */
     public function __construct(int $userId)
     {
@@ -52,13 +52,13 @@ abstract class UserJob extends CommonJob
     /**
      * Get the \App\User entry associated with this job.
      *
-     * @return \App\User|null
+     * @return User|null
      *
      * @throws \Exception
      */
     protected function getUser()
     {
-        $user = \App\User::withTrashed()->find($this->userId);
+        $user = User::withTrashed()->find($this->userId);
 
         if (!$user) {
             // The record might not exist yet in case of a db replication environment

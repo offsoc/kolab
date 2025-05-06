@@ -14,7 +14,6 @@ class Tags
     private const METADATA_ROOT = 'INBOX';
     private const METADATA_TAGS_KEY = '/private/vendor/kolab/tags/v1';
 
-
     /**
      * Get all tag properties, resolve tag members
      *
@@ -290,7 +289,7 @@ class Tags
      */
     public static function saveKolab4Tags($imap, array $tags): void
     {
-        $metadata = json_encode($tags, JSON_INVALID_UTF8_IGNORE | JSON_UNESCAPED_UNICODE);
+        $metadata = json_encode($tags, \JSON_INVALID_UTF8_IGNORE | \JSON_UNESCAPED_UNICODE);
 
         if (!$imap->setMetadata(self::METADATA_ROOT, [self::METADATA_TAGS_KEY => $metadata])) {
             throw new \Exception("Failed to store tags in IMAP. Error: {$imap->error}");

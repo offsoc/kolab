@@ -9,13 +9,12 @@ trait EmailPropertyTrait
     /** @var ?string Domain name for the to-be-created object */
     public $domainName;
 
-
     /**
      * Boot function from Laravel.
      */
     protected static function bootEmailPropertyTrait()
     {
-        static::creating(function ($model) {
+        static::creating(static function ($model) {
             if (empty($model->email) && defined('static::EMAIL_TEMPLATE')) {
                 $template = static::EMAIL_TEMPLATE; // @phpstan-ignore-line
                 $defaults = [
@@ -23,7 +22,7 @@ trait EmailPropertyTrait
                 ];
 
                 foreach (['id', 'domainName', 'type'] as $prop) {
-                    if (strpos($template, "{{$prop}}") === false) {
+                    if (!str_contains($template, "{{$prop}}")) {
                         continue;
                     }
 
@@ -84,7 +83,7 @@ trait EmailPropertyTrait
      */
     public static function emailExists(string $email, bool $return_object = false)
     {
-        if (strpos($email, '@') === false) {
+        if (!str_contains($email, '@')) {
             return false;
         }
 

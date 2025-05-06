@@ -3,6 +3,7 @@
 namespace App\Jobs\PGP;
 
 use App\Jobs\UserJob;
+use App\Support\Facades\PGP;
 
 /**
  * Create a GPG keypair for a user (or alias).
@@ -19,10 +20,8 @@ class KeyCreateJob extends UserJob
     /**
      * Create a new job instance.
      *
-     * @param int    $userId    User identifier.
+     * @param int    $userId    user identifier
      * @param string $userEmail User email address for the key
-     *
-     * @return void
      */
     public function __construct(int $userId, string $userEmail)
     {
@@ -32,8 +31,6 @@ class KeyCreateJob extends UserJob
 
     /**
      * Execute the job.
-     *
-     * @return void
      *
      * @throws \Exception
      */
@@ -64,6 +61,6 @@ class KeyCreateJob extends UserJob
             return;
         }
 
-        \App\Support\Facades\PGP::keypairCreate($user, $this->userEmail);
+        PGP::keypairCreate($user, $this->userEmail);
     }
 }

@@ -7,20 +7,14 @@ use Tests\TestCase;
 
 class AuthAttemptTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestUser('jane@kolabnow.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('jane@kolabnow.com');
 
@@ -30,16 +24,16 @@ class AuthAttemptTest extends TestCase
     public function testRecord(): void
     {
         $user = $this->getTestUser('jane@kolabnow.com');
-        $authAttempt = \App\AuthAttempt::recordAuthAttempt($user, "10.0.0.1");
-        $this->assertEquals($authAttempt->user_id, $user->id);
-        $this->assertEquals($authAttempt->ip, "10.0.0.1");
+        $authAttempt = AuthAttempt::recordAuthAttempt($user, "10.0.0.1");
+        $this->assertSame($authAttempt->user_id, $user->id);
+        $this->assertSame($authAttempt->ip, "10.0.0.1");
         $authAttempt->refresh();
-        $this->assertEquals($authAttempt->status, "NEW");
+        $this->assertSame($authAttempt->status, "NEW");
 
-        $authAttempt2 = \App\AuthAttempt::recordAuthAttempt($user, "10.0.0.1");
-        $this->assertEquals($authAttempt->id, $authAttempt2->id);
+        $authAttempt2 = AuthAttempt::recordAuthAttempt($user, "10.0.0.1");
+        $this->assertSame($authAttempt->id, $authAttempt2->id);
 
-        $authAttempt3 = \App\AuthAttempt::recordAuthAttempt($user, "10.0.0.2");
-        $this->assertNotEquals($authAttempt->id, $authAttempt3->id);
+        $authAttempt3 = AuthAttempt::recordAuthAttempt($user, "10.0.0.2");
+        $this->assertNotSame($authAttempt->id, $authAttempt3->id);
     }
 }

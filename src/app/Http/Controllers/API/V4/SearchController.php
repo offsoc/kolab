@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\V4;
 use App\Http\Controllers\Controller;
 use App\User;
 use App\UserSetting;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -19,15 +20,15 @@ class SearchController extends Controller
     /**
      * Search request for user's contacts
      *
-     * @param \Illuminate\Http\Request $request The API request.
+     * @param Request $request the API request
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function searchContacts(Request $request)
     {
         $user = $this->guard()->user();
         $search = trim(request()->input('search'));
-        $limit = intval(request()->input('limit'));
+        $limit = (int) request()->input('limit');
 
         if ($limit <= 0) {
             $limit = 15;
@@ -45,7 +46,7 @@ class SearchController extends Controller
         $query = $owner->contacts();
 
         if (strlen($search)) {
-            $query->Where(function ($query) use ($search) {
+            $query->Where(static function ($query) use ($search) {
                 $query->whereLike('name', "%{$search}%")
                     ->orWhereLike('email', "%{$search}%");
             });
@@ -53,7 +54,7 @@ class SearchController extends Controller
 
         // Execute the query
         $result = $query->orderBy('email')->limit($limit)->get()
-            ->map(function ($contact) {
+            ->map(static function ($contact) {
                 return [
                     'email' => $contact->email,
                     'name' => $contact->name,
@@ -69,16 +70,16 @@ class SearchController extends Controller
     /**
      * Search request for user's email addresses
      *
-     * @param \Illuminate\Http\Request $request The API request.
+     * @param Request $request the API request
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function searchSelf(Request $request)
     {
         $user = $this->guard()->user();
         $search = trim(request()->input('search'));
         $with_aliases = !empty(request()->input('alias'));
-        $limit = intval(request()->input('limit'));
+        $limit = (int) request()->input('limit');
 
         if ($limit <= 0) {
             $limit = 15;
@@ -114,16 +115,16 @@ class SearchController extends Controller
     /**
      * Search request for addresses of all users (in an account)
      *
-     * @param \Illuminate\Http\Request $request The API request.
+     * @param Request $request the API request
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function searchUser(Request $request)
     {
         $user = $this->guard()->user();
         $search = trim(request()->input('search'));
         $with_aliases = !empty(request()->input('alias'));
-        $limit = intval(request()->input('limit'));
+        $limit = (int) request()->input('limit');
 
         if ($limit <= 0) {
             $limit = 15;
@@ -151,12 +152,12 @@ class SearchController extends Controller
             ->whereIn('user_id', $allUsers);
 
         if (strlen($search)) {
-            $query->where(function ($query) use ($foundUserIds, $search) {
+            $query->where(static function ($query) use ($foundUserIds, $search) {
                 $query->whereLike('email', "%{$search}%")
                     ->orWhereIn('id', $foundUserIds);
             });
 
-            $aliases->where(function ($query) use ($foundUserIds, $search) {
+            $aliases->where(static function ($query) use ($foundUserIds, $search) {
                 $query->whereLike('alias', "%{$search}%")
                     ->orWhereIn('user_id', $foundUserIds);
             });
@@ -187,21 +188,21 @@ class SearchController extends Controller
             $settings = UserSetting::whereIn('key', ['first_name', 'last_name'])
                 ->whereIn('user_id', $result->pluck('id'))
                 ->get()
-                ->mapWithKeys(function ($item) {
+                ->mapWithKeys(static function ($item) {
                     return [($item->user_id . ':' . $item->key) => $item->value];
                 })
                 ->all();
 
             // "Format" the result, include user names
-            $result = $result->map(function ($record) use ($settings) {
-                    return [
-                        'email' => $record->email,
-                        'name' => trim(
-                            ($settings["{$record->id}:first_name"] ?? '')
-                            . ' '
-                            . ($settings["{$record->id}:last_name"] ?? '')
-                        ),
-                    ];
+            $result = $result->map(static function ($record) use ($settings) {
+                return [
+                    'email' => $record->email,
+                    'name' => trim(
+                        ($settings["{$record->id}:first_name"] ?? '')
+                        . ' '
+                        . ($settings["{$record->id}:last_name"] ?? '')
+                    ),
+                ];
             })
                 ->sortBy(['name', 'email'])
                 ->values();

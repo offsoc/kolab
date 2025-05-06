@@ -9,12 +9,12 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * The eloquent definition of a VerificationCode
  *
- * @property bool           $active      Active status
- * @property string         $code        The code
- * @property \Carbon\Carbon $expires_at  Expiration date-time
- * @property string         $mode        Mode, e.g. password-reset
- * @property int            $user_id     User identifier
- * @property string         $short_code  Short code
+ * @property bool   $active     Active status
+ * @property string $code       The code
+ * @property Carbon $expires_at Expiration date-time
+ * @property string $mode       Mode, e.g. password-reset
+ * @property int    $user_id    User identifier
+ * @property string $short_code Short code
  */
 class VerificationCode extends Model
 {
@@ -49,17 +49,14 @@ class VerificationCode extends Model
     /** @var list<string> The attributes that are mass assignable */
     protected $fillable = ['user_id', 'code', 'short_code', 'mode', 'expires_at', 'active'];
 
-
     /**
      * Generate a short code (for human).
-     *
-     * @return string
      */
     public static function generateShortCode(): string
     {
         $code_length = env('VERIFICATION_CODE_LENGTH', self::SHORTCODE_LENGTH);
 
-        return \App\Utils::randStr($code_length);
+        return Utils::randStr($code_length);
     }
 
     /**

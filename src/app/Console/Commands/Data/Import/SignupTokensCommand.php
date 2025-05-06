@@ -2,9 +2,10 @@
 
 namespace App\Console\Commands\Data\Import;
 
+use App\Console\Command;
 use App\Plan;
 use App\SignupToken;
-use App\Console\Command;
+use App\UserSetting;
 
 class SignupTokensCommand extends Command
 {
@@ -49,14 +50,14 @@ class SignupTokensCommand extends Command
         $file = $this->argument('file');
 
         if (!file_exists($file)) {
-            $this->error("File '$file' does not exist");
+            $this->error("File '{$file}' does not exist");
             return 1;
         }
 
         $list = file($file);
 
         if (empty($list)) {
-            $this->error("File '$file' is empty");
+            $this->error("File '{$file}' is empty");
             return 1;
         }
 
@@ -72,7 +73,7 @@ class SignupTokensCommand extends Command
                 unset($list[$idx]);
             } elseif (strlen($token) > 191) {
                 $bar->finish();
-                $this->error("Token '$token' is too long");
+                $this->error("Token '{$token}' is too long");
                 return 1;
             } elseif (SignupToken::find($token)) {
                 // Skip existing tokens
@@ -98,11 +99,11 @@ class SignupTokensCommand extends Command
         // Import tokens
         foreach ($list as $token) {
             $plan->signupTokens()->create([
-                    'id' => $token,
-                    // This allows us to update counter when importing old tokens in migration.
-                    // It can be removed later
-                    'counter' => \App\UserSetting::where('key', 'signup_token')
-                        ->whereRaw('UPPER(value) = ?', [$token])->count(),
+                'id' => $token,
+                // This allows us to update counter when importing old tokens in migration.
+                // It can be removed later
+                'counter' => UserSetting::where('key', 'signup_token')
+                    ->whereRaw('UPPER(value) = ?', [$token])->count(),
             ]);
 
             $bar->advance();

@@ -7,10 +7,7 @@ use Tests\TestCase;
 
 class SkusTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         self::useResellerUrl();
@@ -20,10 +17,7 @@ class SkusTest extends TestCase
         $this->clearBetaEntitlements();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         Sku::where('title', 'test')->delete();
 

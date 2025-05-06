@@ -9,29 +9,9 @@ use Tests\TestCase;
 class ExternalEmailTest extends TestCase
 {
     /**
-     * List of email address validation cases for testExternalEmail()
-     *
-     * @return array Arguments for testExternalEmail()
-     */
-    public static function dataExternalEmail(): array
-    {
-        return [
-            // invalid
-            ['example.org', 'The specified email address is invalid.'],
-            ['@example.org', 'The specified email address is invalid.'],
-            ['test@localhost', 'The specified email address is invalid.'],
-            // FIXME: empty - valid ??????
-            ['', null],
-            // valid
-            ['test@domain.tld', null],
-            ['&@example.org', null],
-        ];
-    }
-
-    /**
      * Test external email validation
      *
-     * @dataProvider dataExternalEmail
+     * @dataProvider provideExternalEmailCases
      */
     public function testExternalEmail($email, $expected_result): void
     {
@@ -48,5 +28,25 @@ class ExternalEmailTest extends TestCase
         }
 
         $this->assertSame($expected_result, $result);
+    }
+
+    /**
+     * List of email address validation cases for testExternalEmail()
+     *
+     * @return array Arguments for testExternalEmail()
+     */
+    public static function provideExternalEmailCases(): iterable
+    {
+        return [
+            // invalid
+            ['example.org', 'The specified email address is invalid.'],
+            ['@example.org', 'The specified email address is invalid.'],
+            ['test@localhost', 'The specified email address is invalid.'],
+            // FIXME: empty - valid ??????
+            ['', null],
+            // valid
+            ['test@domain.tld', null],
+            ['&@example.org', null],
+        ];
     }
 }

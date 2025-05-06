@@ -2,7 +2,9 @@
 
 namespace Tests\Browser\Pages;
 
+use App\Auth\SecondFactor;
 use Laravel\Dusk\Page;
+use Tests\Browser;
 
 class Home extends Page
 {
@@ -20,8 +22,6 @@ class Home extends Page
      * Assert that the browser is on the page.
      *
      * @param \Laravel\Dusk\Browser $browser The browser object
-     *
-     * @return void
      */
     public function assert($browser)
     {
@@ -42,20 +42,18 @@ class Home extends Page
             '@email-input' => '#inputEmail',
             '@password-input' => '#inputPassword',
             '@second-factor-input' => '#secondfactor',
-            '@logon-button' => '#logon-form button.btn-primary'
+            '@logon-button' => '#logon-form button.btn-primary',
         ];
     }
 
     /**
      * Submit logon form.
      *
-     * @param \Tests\Browser $browser  The browser object
-     * @param string         $username User name
-     * @param string         $password User password
-     * @param bool           $wait_for_dashboard
-     * @param array          $config   Client-site config
-     *
-     * @return void
+     * @param Browser $browser            The browser object
+     * @param string  $username           User name
+     * @param string  $password           User password
+     * @param bool    $wait_for_dashboard
+     * @param array   $config             Client-site config
      */
     public function submitLogon(
         $browser,
@@ -69,7 +67,7 @@ class Home extends Page
             ->type('@password-input', $password);
 
         if ($username == 'ned@kolab.org') {
-            $code = \App\Auth\SecondFactor::code('ned@kolab.org');
+            $code = SecondFactor::code('ned@kolab.org');
             $browser->type('@second-factor-input', $code);
         }
 

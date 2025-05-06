@@ -4,6 +4,7 @@ namespace App\Policy;
 
 use App\User;
 use App\UserAlias;
+use App\Utils;
 
 class SmtpAccess
 {
@@ -17,7 +18,7 @@ class SmtpAccess
         // TODO: The old SMTP access policy had an option ('empty_sender_hosts') to allow
         // sending mail with no sender from configured networks.
 
-        list($local, $domain) = \App\Utils::normalizeAddress($data['sender'], true);
+        [$local, $domain] = Utils::normalizeAddress($data['sender'], true);
 
         if (empty($local) || empty($domain)) {
             return new Response(Response::ACTION_REJECT, 'Invalid sender', 403);
@@ -25,7 +26,7 @@ class SmtpAccess
 
         $sender = $local . '@' . $domain;
 
-        list($local, $domain) = \App\Utils::normalizeAddress($data['user'], true);
+        [$local, $domain] = Utils::normalizeAddress($data['user'], true);
 
         if (empty($local) || empty($domain)) {
             return new Response(Response::ACTION_REJECT, 'Invalid user', 403);
@@ -33,13 +34,13 @@ class SmtpAccess
 
         $sasl_user = $local . '@' . $domain;
 
-        $user = \App\User::where('email', $sasl_user)->first();
+        $user = User::where('email', $sasl_user)->first();
 
         if (!$user) {
             return new Response(Response::ACTION_REJECT, "Could not find user {$data['user']}", 403);
         }
 
-        if (!SmtpAccess::verifySender($user, $sender)) {
+        if (!self::verifySender($user, $sender)) {
             $reason = "{$sasl_user} is unauthorized to send mail as {$sender}";
             return new Response(Response::ACTION_REJECT, $reason, 403);
         }
@@ -59,7 +60,7 @@ class SmtpAccess
      */
     public static function verifySender(User $user, string $email): bool
     {
-        if ($user->isSuspended() || strpos($email, '@') === false) {
+        if ($user->isSuspended() || !str_contains($email, '@')) {
             return false;
         }
 

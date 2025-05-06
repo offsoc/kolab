@@ -9,10 +9,7 @@ use Tests\TestCase;
 
 class GroupsTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         self::useAdminUrl();
@@ -20,10 +17,7 @@ class GroupsTest extends TestCase
         $this->deleteTestGroup('group-test@kolab.org');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestGroup('group-test@kolab.org');
 
@@ -114,10 +108,10 @@ class GroupsTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertEquals($group->id, $json['id']);
-        $this->assertEquals($group->email, $json['email']);
-        $this->assertEquals($group->name, $json['name']);
-        $this->assertEquals($group->status, $json['status']);
+        $this->assertSame($group->id, $json['id']);
+        $this->assertSame($group->email, $json['email']);
+        $this->assertSame($group->name, $json['name']);
+        $this->assertSame($group->status, $json['status']);
     }
 
     /**
@@ -198,7 +192,7 @@ class GroupsTest extends TestCase
             'object_id' => $group->id,
             'object_type' => Group::class,
             'type' => EventLog::TYPE_SUSPENDED,
-            'comment' => 'Test'
+            'comment' => 'Test',
         ];
 
         $this->assertSame(1, EventLog::where($where)->count());
@@ -251,7 +245,7 @@ class GroupsTest extends TestCase
             'object_id' => $group->id,
             'object_type' => Group::class,
             'type' => EventLog::TYPE_UNSUSPENDED,
-            'comment' => 'Test'
+            'comment' => 'Test',
         ];
 
         $this->assertSame(1, EventLog::where($where)->count());

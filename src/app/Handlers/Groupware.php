@@ -3,15 +3,17 @@
 namespace App\Handlers;
 
 use App\Entitlement;
+use App\Jobs\User\UpdateJob;
+use App\User;
 
-class Groupware extends \App\Handlers\Base
+class Groupware extends Base
 {
     /**
      * The entitleable class for this handler.
      */
     public static function entitleableClass(): string
     {
-        return \App\User::class;
+        return User::class;
     }
 
     /**
@@ -20,7 +22,7 @@ class Groupware extends \App\Handlers\Base
     public static function entitlementCreated(Entitlement $entitlement): void
     {
         if (\config('app.with_ldap')) {
-            \App\Jobs\User\UpdateJob::dispatch($entitlement->entitleable_id);
+            UpdateJob::dispatch($entitlement->entitleable_id);
         }
     }
 
@@ -30,7 +32,7 @@ class Groupware extends \App\Handlers\Base
     public static function entitlementDeleted(Entitlement $entitlement): void
     {
         if (\config('app.with_ldap')) {
-            \App\Jobs\User\UpdateJob::dispatch($entitlement->entitleable_id);
+            UpdateJob::dispatch($entitlement->entitleable_id);
         }
     }
 

@@ -2,17 +2,18 @@
 
 namespace App;
 
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 
 /**
  * Link SKUs to Packages.
  *
- * @property int          $cost
- * @property string       $package_id
- * @property \App\Package $package
- * @property int          $qty
- * @property \App\Sku     $sku
- * @property string       $sku_id
+ * @property int     $cost
+ * @property string  $package_id
+ * @property Package $package
+ * @property int     $qty
+ * @property Sku     $sku
+ * @property string  $sku_id
  */
 class PackageSku extends Pivot
 {
@@ -23,13 +24,13 @@ class PackageSku extends Pivot
         // to set the costs here overrides the sku->cost and package->discount_rate, see function
         // cost() for more detail
         'cost',
-        'qty'
+        'qty',
     ];
 
     /** @var array<string, string> The attributes that should be cast */
     protected $casts = [
         'cost' => 'integer',
-        'qty' => 'integer'
+        'qty' => 'integer',
     ];
 
     /** @var list<string> The attributes that can be not set */
@@ -43,11 +44,10 @@ class PackageSku extends Pivot
     /** @var bool Indicates if the model should be timestamped. */
     public $timestamps = false;
 
-
     /**
      * Under this package, how much does this SKU cost?
      *
-     * @return int The costs of this SKU under this package in cents.
+     * @return int the costs of this SKU under this package in cents
      */
     public function cost(): int
     {
@@ -82,7 +82,7 @@ class PackageSku extends Pivot
     /**
      * Under this package, what fee this SKU has?
      *
-     * @return int The fee for this SKU under this package in cents.
+     * @return int the fee for this SKU under this package in cents
      */
     public function fee()
     {
@@ -98,7 +98,7 @@ class PackageSku extends Pivot
     /**
      * The package for this relation.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Package, $this>
+     * @return BelongsTo<Package, $this>
      */
     public function package()
     {
@@ -108,7 +108,7 @@ class PackageSku extends Pivot
     /**
      * The SKU for this relation.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Sku, $this>
+     * @return BelongsTo<Sku, $this>
      */
     public function sku()
     {

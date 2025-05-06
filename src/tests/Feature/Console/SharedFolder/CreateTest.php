@@ -8,10 +8,7 @@ use Tests\TestCase;
 
 class CreateTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -20,10 +17,7 @@ class CreateTest extends TestCase
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         if ($folder = SharedFolder::withTrashed()->where('name', 'Tasks')->first()) {
             $folder->forceDelete();
@@ -78,7 +72,7 @@ class CreateTest extends TestCase
 
         // Create a folder
         $acl = '--acl="anyone, read-only" --acl="jack@kolab.org, full"';
-        $code = \Artisan::call("sharedfolder:create kolab.org Tasks --type=task $acl");
+        $code = \Artisan::call("sharedfolder:create kolab.org Tasks --type=task {$acl}");
         $output = trim(\Artisan::output());
 
         $folder = SharedFolder::find($output);

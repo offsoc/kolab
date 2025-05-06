@@ -3,6 +3,9 @@
 namespace App\Console\Commands;
 
 use App\Console\Command;
+use App\Package;
+use App\Sku;
+use App\User;
 
 class MigratePrices extends Command
 {
@@ -37,33 +40,33 @@ class MigratePrices extends Command
 
         // 1. Set the list price for the SKU 'mailbox' to 500.
         $bar->advance();
-        $mailbox_sku = \App\Sku::where('title', 'mailbox')->first();
+        $mailbox_sku = Sku::where('title', 'mailbox')->first();
         $mailbox_sku->cost = 500;
         $mailbox_sku->save();
 
         // 2. Set the list price for the SKU 'groupware' to 490.
         $bar->advance();
-        $groupware_sku = \App\Sku::where('title', 'groupware')->first();
+        $groupware_sku = Sku::where('title', 'groupware')->first();
         $groupware_sku->cost = 490;
         $groupware_sku->save();
 
         // 3. Set the list price for the SKU 'activesync' to 0.
         $bar->advance();
-        $activesync_sku = \App\Sku::where('title', 'activesync')->first();
+        $activesync_sku = Sku::where('title', 'activesync')->first();
         $activesync_sku->cost = 0;
         $activesync_sku->save();
 
         // 4. Set the units free for the SKU 'storage' to 5.
         $bar->advance();
-        $storage_sku = \App\Sku::where('title', 'storage')->first();
+        $storage_sku = Sku::where('title', 'storage')->first();
         $storage_sku->units_free = 5;
         $storage_sku->save();
 
         // 5. Set the number of units for storage to 5 for the 'lite' and 'kolab' packages.
         $bar->advance();
-        $kolab_package = \App\Package::where('title', 'kolab')->first();
+        $kolab_package = Package::where('title', 'kolab')->first();
         $kolab_package->skus()->updateExistingPivot($storage_sku, ['qty' => 5], false);
-        $lite_package = \App\Package::where('title', 'lite')->first();
+        $lite_package = Package::where('title', 'lite')->first();
         $lite_package->skus()->updateExistingPivot($storage_sku, ['qty' => 5], false);
 
         // 6. Set the cost for the 'mailbox' unit for the 'lite' and 'kolab' packages to 500.
@@ -86,14 +89,14 @@ class MigratePrices extends Command
 
     private function updateEntitlements()
     {
-        $users = \App\User::all();
+        $users = User::all();
 
         $bar = $this->createProgressBar(count($users), "Updating entitlements");
 
-        $groupware_sku = \App\Sku::where('title', 'groupware')->first();
-        $activesync_sku = \App\Sku::where('title', 'activesync')->first();
-        $storage_sku = \App\Sku::where('title', 'storage')->first();
-        $mailbox_sku = \App\Sku::where('title', 'mailbox')->first();
+        $groupware_sku = Sku::where('title', 'groupware')->first();
+        $activesync_sku = Sku::where('title', 'activesync')->first();
+        $storage_sku = Sku::where('title', 'storage')->first();
+        $mailbox_sku = Sku::where('title', 'mailbox')->first();
 
         foreach ($users as $user) {
             $bar->advance();

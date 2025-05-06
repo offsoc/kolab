@@ -33,7 +33,7 @@ class PingCommand extends Command
                 try {
                     $result = DB::select("SELECT 1");
 
-                    if (sizeof($result) > 0) {
+                    if (count($result) > 0) {
                         break;
                     }
                 } catch (\Exception $exception) {

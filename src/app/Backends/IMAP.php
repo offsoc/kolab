@@ -17,13 +17,13 @@ class IMAP
         'full' => 'lrswipkxtecdn',
     ];
 
-
     /**
      * Create a mailbox.
      *
-     * @param \App\User $user User
+     * @param User $user User
      *
      * @return bool True if a mailbox was created successfully, False otherwise
+     *
      * @throws \Exception
      */
     public static function createUser(User $user): bool
@@ -49,7 +49,7 @@ class IMAP
 
         // Wait until it's propagated (for Cyrus Murder setup)
         // FIXME: Do we still need this?
-        if (strpos($imap->conn->data['GREETING'] ?? '', 'Cyrus IMAP Murder') !== false) {
+        if (str_contains($imap->conn->data['GREETING'] ?? '', 'Cyrus IMAP Murder')) {
             $tries = 30;
             while ($tries-- > 0) {
                 $folders = $imap->listMailboxes('', $mailbox);
@@ -78,7 +78,7 @@ class IMAP
     /**
      * Create default folders for the user.
      *
-     * @param \App\User $user User
+     * @param User $user User
      */
     public static function createDefaultFolders(User $user): void
     {
@@ -101,9 +101,10 @@ class IMAP
     /**
      * Delete a group.
      *
-     * @param \App\Group $group Group
+     * @param Group $group Group
      *
      * @return bool True if a group was deleted successfully, False otherwise
+     *
      * @throws \Exception
      */
     public static function deleteGroup(Group $group): bool
@@ -137,9 +138,9 @@ class IMAP
         // Ignore the error if the folder doesn't exist (maybe it was removed already).
         if (
             $result === false && $imap->errornum == $imap::ERROR_NO
-            && strpos($imap->error, 'Mailbox does not exist') !== false
+            && str_contains($imap->error, 'Mailbox does not exist')
         ) {
-            \Log::info("The mailbox to delete was already removed: $mailbox");
+            \Log::info("The mailbox to delete was already removed: {$mailbox}");
             $result = true;
         } else {
             // Delete the mailbox (no need to delete subfolders?)
@@ -174,9 +175,10 @@ class IMAP
     /**
      * Delete a user mailbox.
      *
-     * @param \App\User $user User
+     * @param User $user User
      *
      * @return bool True if a mailbox was deleted successfully, False otherwise
+     *
      * @throws \Exception
      */
     public static function deleteUser(User $user): bool
@@ -189,9 +191,10 @@ class IMAP
     /**
      * Update a mailbox (quota).
      *
-     * @param \App\User $user User
+     * @param User $user User
      *
      * @return bool True if a mailbox was updated successfully, False otherwise
+     *
      * @throws \Exception
      */
     public static function updateUser(User $user): bool
@@ -216,9 +219,10 @@ class IMAP
     /**
      * Create a resource.
      *
-     * @param \App\Resource $resource Resource
+     * @param Resource $resource Resource
      *
      * @return bool True if a resource was created successfully, False otherwise
+     *
      * @throws \Exception
      */
     public static function createResource(Resource $resource): bool
@@ -247,10 +251,11 @@ class IMAP
     /**
      * Update a resource.
      *
-     * @param \App\Resource $resource Resource
-     * @param array         $props    Old resource properties
+     * @param Resource $resource Resource
+     * @param array    $props    Old resource properties
      *
      * @return bool True if a resource was updated successfully, False otherwise
+     *
      * @throws \Exception
      */
     public static function updateResource(Resource $resource, array $props = []): bool
@@ -291,9 +296,10 @@ class IMAP
     /**
      * Delete a resource.
      *
-     * @param \App\Resource $resource Resource
+     * @param Resource $resource Resource
      *
      * @return bool True if a resource was deleted successfully, False otherwise
+     *
      * @throws \Exception
      */
     public static function deleteResource(Resource $resource): bool
@@ -307,9 +313,10 @@ class IMAP
     /**
      * Create a shared folder.
      *
-     * @param \App\SharedFolder $folder Shared folder
+     * @param SharedFolder $folder Shared folder
      *
      * @return bool True if a falder was created successfully, False otherwise
+     *
      * @throws \Exception
      */
     public static function createSharedFolder(SharedFolder $folder): bool
@@ -332,10 +339,11 @@ class IMAP
     /**
      * Update a shared folder.
      *
-     * @param \App\SharedFolder $folder Shared folder
-     * @param array             $props  Old folder properties
+     * @param SharedFolder $folder Shared folder
+     * @param array        $props  Old folder properties
      *
      * @return bool True if a falder was updated successfully, False otherwise
+     *
      * @throws \Exception
      */
     public static function updateSharedFolder(SharedFolder $folder, array $props = []): bool
@@ -372,9 +380,10 @@ class IMAP
     /**
      * Delete a shared folder.
      *
-     * @param \App\SharedFolder $folder Shared folder
+     * @param SharedFolder $folder Shared folder
      *
      * @return bool True if a falder was deleted successfully, False otherwise
+     *
      * @throws \Exception
      */
     public static function deleteSharedFolder(SharedFolder $folder): bool
@@ -429,6 +438,7 @@ class IMAP
      * @param string $targetMailbox Target Mailbox
      *
      * @return bool True if the mailbox was renamed successfully, False otherwise
+     *
      * @throws \Exception
      */
     public static function renameMailbox($sourceMailbox, $targetMailbox): bool
@@ -468,6 +478,7 @@ class IMAP
      * @param string $user The user
      *
      * @return array List of mailboxes
+     *
      * @throws \Exception
      */
     public static function listMailboxes(string $user): array
@@ -508,7 +519,7 @@ class IMAP
         }
 
         foreach (\config('services.imap.default_folders') as $folder_name => $props) {
-            [$type, ] = explode('.', $props['metadata']['/private/vendor/kolab/folder-type'] ?? 'mail');
+            [$type] = explode('.', $props['metadata']['/private/vendor/kolab/folder-type'] ?? 'mail');
             if (!empty($acl[$type])) {
                 $folders[$folder_name] = $acl[$type];
             }
@@ -536,7 +547,7 @@ class IMAP
 
         // Subscribe folders for the delegatee
         $imap = self::initIMAP($config, $to->email);
-        [$local, ] = explode('@', $user->email);
+        [$local] = explode('@', $user->email);
 
         foreach ($folders as $folder => $rights) {
             // Note: This code assumes that "Other Users/" is the namespace prefix
@@ -597,7 +608,7 @@ class IMAP
     {
         $config = self::getConfig();
         $imap = self::initIMAP($config, $user->email);
-        [$local, ] = explode('@', $email);
+        [$local] = explode('@', $email);
 
         // FIXME: should we unsubscribe all or only default folders (ones that we auto-subscribe on delegation)?
         $root = "Other Users/{$local}";
@@ -691,7 +702,7 @@ class IMAP
             $domain = explode('@', $ident, 2)[1];
         }
 
-        $callback = function ($folder) use ($imap, $ident) {
+        $callback = static function ($folder) use ($imap, $ident) {
             $acl = $imap->getACL($folder);
             if (is_array($acl) && isset($acl[$ident])) {
                 \Log::info("Cleanup: Removing {$ident} from ACL on {$folder}");
@@ -739,7 +750,7 @@ class IMAP
             ->concat(['anyone', 'anonymous', $config['user']])
             ->all();
 
-        $callback = function ($folder) use ($imap, $idents, $dry_run) {
+        $callback = static function ($folder) use ($imap, $idents, $dry_run) {
             $acl = $imap->getACL($folder);
             if (is_array($acl)) {
                 $owner = null;
@@ -787,13 +798,14 @@ class IMAP
     /**
      * Create a folder and set some default properties
      *
-     * @param \rcube_imap_generic $imap The imap instance
-     * @param string $mailbox Mailbox name
-     * @param bool $subscribe Subscribe to the folder
-     * @param array $metadata Metadata to set on the folder
-     * @param array $acl Acl to set on the folder
+     * @param \rcube_imap_generic $imap      The imap instance
+     * @param string              $mailbox   Mailbox name
+     * @param bool                $subscribe Subscribe to the folder
+     * @param array               $metadata  Metadata to set on the folder
+     * @param array               $acl       Acl to set on the folder
      *
-     * @return bool True when having a folder created, False if it already existed.
+     * @return bool true when having a folder created, False if it already existed
+     *
      * @throws \Exception
      */
     private static function createFolder($imap, string $mailbox, $subscribe = false, $metadata = null, $acl = null)
@@ -831,8 +843,8 @@ class IMAP
         }
 
         return \collect($acl)
-            ->mapWithKeys(function ($item, $key) {
-                list($user, $rights) = explode(',', $item, 2);
+            ->mapWithKeys(static function ($item, $key) {
+                [$user, $rights] = explode(',', $item, 2);
                 $rights = trim($rights);
                 return [trim($user) => self::ACL_MAP[$rights] ?? $rights];
             })
@@ -879,7 +891,7 @@ class IMAP
     /**
      * Initialize connection to IMAP
      */
-    private static function initIMAP(array $config, string $login_as = null)
+    private static function initIMAP(array $config, ?string $login_as = null)
     {
         $imap = new \rcube_imap_generic();
 
@@ -938,7 +950,7 @@ class IMAP
                     'ssl' => [
                         'verify_peer' => \config('services.imap.verify_peer'),
                         'verify_peer_name' => \config('services.imap.verify_peer'),
-                        'verify_host' => \config('services.imap.verify_host')
+                        'verify_host' => \config('services.imap.verify_host'),
                     ],
                 ],
             ],

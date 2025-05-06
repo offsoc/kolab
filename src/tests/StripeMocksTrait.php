@@ -9,7 +9,7 @@ trait StripeMocksTrait
     /**
      * Mock Stripe's HTTP client
      *
-     * @return \Tests\StripeMockClient
+     * @return StripeMockClient
      */
     public function mockStripe()
     {

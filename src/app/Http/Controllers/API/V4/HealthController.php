@@ -3,13 +3,14 @@
 namespace App\Http\Controllers\API\V4;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 
 class HealthController extends Controller
 {
     /**
      * Liveness probe
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function liveness()
     {
@@ -21,7 +22,7 @@ class HealthController extends Controller
     /**
      * Readiness probe
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function readiness()
     {

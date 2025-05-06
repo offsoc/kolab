@@ -3,6 +3,7 @@
 namespace Tests\Browser;
 
 use App\Domain;
+use App\Package;
 use App\Plan;
 use App\User;
 use Tests\Browser;
@@ -17,10 +18,7 @@ use Tests\TestCaseDusk;
 
 class DomainTest extends TestCaseDusk
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -28,10 +26,7 @@ class DomainTest extends TestCaseDusk
         $this->deleteTestUser('testuserdomain@' . \config('app.domain'));
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestDomain('testdomain.com');
         $this->deleteTestUser('testuserdomain@' . \config('app.domain'));
@@ -45,7 +40,7 @@ class DomainTest extends TestCaseDusk
     public function testDomainInfoUnauth(): void
     {
         // Test that the page requires authentication
-        $this->browse(function ($browser) {
+        $this->browse(static function ($browser) {
             $browser->visit('/domain/123')->on(new Home());
         });
     }
@@ -56,18 +51,19 @@ class DomainTest extends TestCaseDusk
     public function testDomainListUnauth(): void
     {
         // Test that the page requires authentication
-        $this->browse(function ($browser) {
+        $this->browse(static function ($browser) {
             $browser->visit('/domains')->on(new Home());
         });
     }
 
     /**
      * Test domain info page (non-existing domain id)
+     *
      * @group skipci
      */
     public function testDomainInfo404(): void
     {
-        $this->browse(function ($browser) {
+        $this->browse(static function ($browser) {
             // FIXME: I couldn't make loginAs() method working
 
             // Note: Here we're also testing that unauthenticated request
@@ -83,11 +79,12 @@ class DomainTest extends TestCaseDusk
      * Test domain info page (existing domain)
      *
      * @depends testDomainInfo404
+     *
      * @group skipci
      */
     public function testDomainInfo(): void
     {
-        $this->browse(function ($browser) {
+        $this->browse(static function ($browser) {
             // Unconfirmed domain
             $domain = Domain::where('namespace', 'kolab.org')->first();
             if ($domain->isConfirmed()) {
@@ -100,14 +97,14 @@ class DomainTest extends TestCaseDusk
             $browser->visit('/domain/' . $domain->id)
                 ->on(new DomainInfo())
                 ->assertSeeIn('.card-title', 'Domain')
-                ->whenAvailable('@general', function ($browser) use ($domain) {
+                ->whenAvailable('@general', static function ($browser) use ($domain) {
                     $browser->assertSeeIn('form div:nth-child(1) label', 'Status')
                         ->assertSeeIn('form div:nth-child(1) #status.text-danger', 'Not Ready')
                         ->assertSeeIn('form div:nth-child(2) label', 'Name')
                         ->assertValue('form div:nth-child(2) input:disabled', $domain->namespace)
                         ->assertSeeIn('form div:nth-child(3) label', 'Subscriptions');
                 })
-                ->whenAvailable('@general form div:nth-child(3) table', function ($browser) {
+                ->whenAvailable('@general form div:nth-child(3) table', static function ($browser) {
                     $browser->assertElementsCount('tbody tr', 1)
                         ->assertVisible('tbody tr td.selection input:checked:disabled')
                         ->assertSeeIn('tbody tr td.name', 'External Domain')
@@ -117,16 +114,16 @@ class DomainTest extends TestCaseDusk
                             'Host a domain that is externally registered'
                         );
                 })
-                ->whenAvailable('@confirm', function ($browser) use ($domain) {
+                ->whenAvailable('@confirm', static function ($browser) use ($domain) {
                     $browser->assertSeeIn('pre', $domain->namespace)
                         ->assertSeeIn('pre', $domain->hash())
                         ->scrollTo('button')->pause(500)
                         ->click('button')
                         ->assertToast(Toast::TYPE_SUCCESS, 'Domain ownership confirmed successfully.');
 
-                        // TODO: Test scenario when a domain confirmation failed
+                    // TODO: Test scenario when a domain confirmation failed
                 })
-                ->whenAvailable('@config', function ($browser) use ($domain) {
+                ->whenAvailable('@config', static function ($browser) use ($domain) {
                     $browser->assertSeeIn('pre', $domain->namespace);
                 })
                 ->assertMissing('@general button[type=submit]')
@@ -142,11 +139,12 @@ class DomainTest extends TestCaseDusk
 
     /**
      * Test domain settings
+     *
      * @group skipci
      */
     public function testDomainSettings(): void
     {
-        $this->browse(function ($browser) {
+        $this->browse(static function ($browser) {
             $domain = Domain::where('namespace', 'kolab.org')->first();
             $domain->setSetting('spf_whitelist', \json_encode(['.test.com']));
 
@@ -156,20 +154,20 @@ class DomainTest extends TestCaseDusk
                 ->assertSeeIn('@nav #tab-general', 'General')
                 ->assertSeeIn('@nav #tab-settings', 'Settings')
                 ->click('@nav #tab-settings')
-                ->with('#settings form', function (Browser $browser) {
+                ->with('#settings form', static function (Browser $browser) {
                     // Test whitelist widget
                     $widget = new ListInput('#spf_whitelist');
 
                     $browser->assertSeeIn('div.row:nth-child(1) label', 'SPF Whitelist')
                         ->assertVisible('div.row:nth-child(1) .list-input')
-                        ->with($widget, function (Browser $browser) {
+                        ->with($widget, static function (Browser $browser) {
                             $browser->assertListInputValue(['.test.com'])
                                 ->assertValue('@input', '')
                                 ->addListEntry('invalid domain');
                         })
                         ->click('button[type=submit]')
                         ->assertToast(Toast::TYPE_ERROR, 'Form validation error')
-                        ->with($widget, function (Browser $browser) {
+                        ->with($widget, static function (Browser $browser) {
                             $err = 'The entry format is invalid. Expected a domain name starting with a dot.';
                             $browser->assertFormError(2, $err, false)
                                 ->removeListEntry(2)
@@ -186,11 +184,12 @@ class DomainTest extends TestCaseDusk
      * Test domains list page
      *
      * @depends testDomainListUnauth
+     *
      * @group skipci
      */
     public function testDomainList(): void
     {
-        $this->browse(function ($browser) {
+        $this->browse(static function ($browser) {
             // Login the user
             $browser->visit('/login')
                 ->on(new Home())
@@ -209,7 +208,7 @@ class DomainTest extends TestCaseDusk
                 ->click('@table tbody tr:first-child td:first-child a')
                 // On Domain Info page verify that's the clicked domain
                 ->on(new DomainInfo())
-                ->whenAvailable('@config', function ($browser) {
+                ->whenAvailable('@config', static function ($browser) {
                     $browser->assertSeeIn('pre', 'kolab.org');
                 });
         });
@@ -223,7 +222,7 @@ class DomainTest extends TestCaseDusk
     public function testDomainListEmpty(): void
     {
         // User is not a wallet controller
-        $this->browse(function ($browser) {
+        $this->browse(static function ($browser) {
             $browser->visit('/login')
                 ->on(new Home())
                 ->submitLogon('jack@kolab.org', 'simple123', true)
@@ -239,7 +238,7 @@ class DomainTest extends TestCaseDusk
         $plan = Plan::withObjectTenantContext($user)->where('title', 'group')->first();
         $user->setSetting('plan_id', $plan->id);
 
-        $this->browse(function ($browser) use ($user) {
+        $this->browse(static function ($browser) use ($user) {
             $browser->visit('/login')
                 ->on(new Home())
                 ->submitLogon($user->email, 'simple123', true)
@@ -267,7 +266,7 @@ class DomainTest extends TestCaseDusk
                 ->on(new DomainInfo())
                 ->waitFor('button.button-delete')
                 ->click('button.button-delete')
-                ->with(new Dialog('#delete-warning'), function ($browser) {
+                ->with(new Dialog('#delete-warning'), static function ($browser) {
                     $browser->click('@button-action');
                 })
                 ->waitUntilMissing('#delete-warning')
@@ -282,11 +281,12 @@ class DomainTest extends TestCaseDusk
 
     /**
      * Test domain creation page
+     *
      * @group skipci
      */
     public function testDomainCreate(): void
     {
-        $this->browse(function ($browser) {
+        $this->browse(static function ($browser) {
             $browser->visit('/login')
                 ->on(new Home())
                 ->submitLogon('john@kolab.org', 'simple123', true)
@@ -298,14 +298,14 @@ class DomainTest extends TestCaseDusk
                 ->assertSeeIn('.card-title', 'New domain')
                 ->assertElementsCount('@nav li', 1)
                 ->assertSeeIn('@nav li:first-child', 'General')
-                ->whenAvailable('@general', function ($browser) {
+                ->whenAvailable('@general', static function ($browser) {
                     $browser->assertSeeIn('form div:nth-child(1) label', 'Name')
                         ->assertValue('form div:nth-child(1) input:not(:disabled)', '')
                         ->assertFocused('form div:nth-child(1) input')
                         ->assertSeeIn('form div:nth-child(2) label', 'Package')
                         ->assertMissing('form div:nth-child(3)');
                 })
-                ->whenAvailable('@general form div:nth-child(2) table', function ($browser) {
+                ->whenAvailable('@general form div:nth-child(2) table', static function ($browser) {
                     $browser->assertElementsCount('tbody tr', 1)
                         ->assertVisible('tbody tr td.selection input:checked[readonly]')
                         ->assertSeeIn('tbody tr td.name', 'Domain Hosting')
@@ -343,6 +343,7 @@ class DomainTest extends TestCaseDusk
 
     /**
      * Test domain deletion
+     *
      * @group skipci
      */
     public function testDomainDelete(): void
@@ -350,10 +351,10 @@ class DomainTest extends TestCaseDusk
         // Create the domain to delete
         $john = $this->getTestUser('john@kolab.org');
         $domain = $this->getTestDomain('testdomain.com', ['type' => Domain::TYPE_EXTERNAL]);
-        $packageDomain = \App\Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
+        $packageDomain = Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
         $domain->assignPackage($packageDomain, $john);
 
-        $this->browse(function ($browser) {
+        $this->browse(static function ($browser) {
             $browser->visit('/login')
                 ->on(new Home())
                 ->submitLogon('john@kolab.org', 'simple123')
@@ -366,7 +367,7 @@ class DomainTest extends TestCaseDusk
                 ->waitFor('button.button-delete')
                 ->assertSeeIn('button.button-delete', 'Delete domain')
                 ->click('button.button-delete')
-                ->with(new Dialog('#delete-warning'), function ($browser) {
+                ->with(new Dialog('#delete-warning'), static function ($browser) {
                     $browser->assertSeeIn('@title', 'Delete testdomain.com')
                         ->assertFocused('@button-cancel')
                         ->assertSeeIn('@button-cancel', 'Cancel')
@@ -375,7 +376,7 @@ class DomainTest extends TestCaseDusk
                 })
                 ->waitUntilMissing('#delete-warning')
                 ->click('button.button-delete')
-                ->with(new Dialog('#delete-warning'), function (Browser $browser) {
+                ->with(new Dialog('#delete-warning'), static function (Browser $browser) {
                     $browser->click('@button-action');
                 })
                 ->waitUntilMissing('#delete-warning')
@@ -389,7 +390,7 @@ class DomainTest extends TestCaseDusk
                 ->on(new DomainInfo())
                 ->waitFor('button.button-delete')
                 ->click('button.button-delete')
-                ->with(new Dialog('#delete-warning'), function ($browser) {
+                ->with(new Dialog('#delete-warning'), static function ($browser) {
                     $browser->click('@button-action');
                 })
                 ->assertToast(Toast::TYPE_ERROR, $err);

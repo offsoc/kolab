@@ -2,6 +2,8 @@
 
 namespace App\Console;
 
+use App\Utils;
+
 /**
  * This abstract class provides a means to treat objects in our model using CRUD.
  */
@@ -17,7 +19,7 @@ abstract class ObjectDeleteCommand extends ObjectCommand
             $this->objectName
         );
 
-        if (\App\Utils::isSoftDeletable($this->objectClass)) {
+        if (Utils::isSoftDeletable($this->objectClass)) {
             $this->signature .= " {--with-deleted : Consider deleted {$this->objectName}s}";
         }
 

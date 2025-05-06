@@ -3,15 +3,14 @@
 namespace App\Observers;
 
 use App\GroupSetting;
+use App\Jobs\Group\UpdateJob;
 
 class GroupSettingObserver
 {
     /**
      * Handle the group setting "created" event.
      *
-     * @param \App\GroupSetting $groupSetting Settings object
-     *
-     * @return void
+     * @param GroupSetting $groupSetting Settings object
      */
     public function created(GroupSetting $groupSetting)
     {
@@ -21,9 +20,7 @@ class GroupSettingObserver
     /**
      * Handle the group setting "updated" event.
      *
-     * @param \App\GroupSetting $groupSetting Settings object
-     *
-     * @return void
+     * @param GroupSetting $groupSetting Settings object
      */
     public function updated(GroupSetting $groupSetting)
     {
@@ -33,9 +30,7 @@ class GroupSettingObserver
     /**
      * Handle the group setting "deleted" event.
      *
-     * @param \App\GroupSetting $groupSetting Settings object
-     *
-     * @return void
+     * @param GroupSetting $groupSetting Settings object
      */
     public function deleted(GroupSetting $groupSetting)
     {
@@ -45,12 +40,12 @@ class GroupSettingObserver
     /**
      * Dispatch group update job (if needed).
      *
-     * @param \App\GroupSetting $groupSetting Settings object
+     * @param GroupSetting $groupSetting Settings object
      */
     private function dispatchUpdateJob(GroupSetting $groupSetting): void
     {
         if ($groupSetting->isBackendSetting()) {
-            \App\Jobs\Group\UpdateJob::dispatch($groupSetting->group_id);
+            UpdateJob::dispatch($groupSetting->group_id);
         }
     }
 }

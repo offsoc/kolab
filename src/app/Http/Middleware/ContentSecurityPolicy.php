@@ -2,26 +2,25 @@
 
 namespace App\Http\Middleware;
 
-use Closure;
+use Illuminate\Http\Request;
 
 class ContentSecurityPolicy
 {
     /**
      * Handle an incoming request.
      *
-     * @param \Illuminate\Http\Request $request
-     * @param \Closure                 $next
+     * @param Request $request
      *
      * @return mixed
      */
-    public function handle($request, Closure $next)
+    public function handle($request, \Closure $next)
     {
         $headers = [
             'csp' => 'Content-Security-Policy',
             'xfo' => 'X-Frame-Options',
         ];
 
-        //Exclude horizon routes, per https://github.com/laravel/horizon/issues/576
+        // Exclude horizon routes, per https://github.com/laravel/horizon/issues/576
         if ($request->is('horizon*')) {
             $headers = [];
         }

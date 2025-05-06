@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\V4\Admin;
 
 use App\EventLog;
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class EventLogController extends Controller
@@ -11,11 +12,11 @@ class EventLogController extends Controller
     /**
      * Listing of eventlog entries.
      *
-     * @param \Illuminate\Http\Request $request     HTTP Request
-     * @param string                   $object_type Object type
-     * @param string                   $object_id   Object id
+     * @param Request $request     HTTP Request
+     * @param string  $object_type Object type
+     * @param string  $object_id   Object id
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function index(Request $request, string $object_type, string $object_id)
     {
@@ -31,7 +32,7 @@ class EventLogController extends Controller
             return $this->errorResponse(404);
         }
 
-        $page = intval($request->input('page')) ?: 1;
+        $page = (int) ($request->input('page')) ?: 1;
         $pageSize = 20;
         $hasMore = false;
 
@@ -47,7 +48,7 @@ class EventLogController extends Controller
             $hasMore = true;
         }
 
-        $result = $result->map(function ($event) {
+        $result = $result->map(static function ($event) {
             return [
                 'id' => $event->id,
                 'comment' => $event->comment,

@@ -2,7 +2,6 @@
 
 namespace Tests\Browser;
 
-use App\Wallet;
 use Tests\Browser;
 use Tests\Browser\Components\Dialog;
 use Tests\Browser\Components\Toast;
@@ -13,10 +12,7 @@ use Tests\TestCaseDusk;
 
 class PaymentCoinbaseTest extends TestCaseDusk
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -27,10 +23,7 @@ class PaymentCoinbaseTest extends TestCaseDusk
         $this->deleteTestUser('payment-test@kolabnow.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         if (\config('services.coinbase.key')) {
             $this->deleteTestUser('payment-test@kolabnow.com');
@@ -47,7 +40,7 @@ class PaymentCoinbaseTest extends TestCaseDusk
     public function testPayment(): void
     {
         $user = $this->getTestUser('payment-test@kolabnow.com', [
-                'password' => 'simple123',
+            'password' => 'simple123',
         ]);
 
         $this->browse(function (Browser $browser) use ($user) {
@@ -58,12 +51,12 @@ class PaymentCoinbaseTest extends TestCaseDusk
                 ->on(new WalletPage())
                 ->assertSeeIn('@main button', 'Add credit')
                 ->click('@main button')
-                ->with(new Dialog('@payment-dialog'), function (Browser $browser) {
+                ->with(new Dialog('@payment-dialog'), static function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Top up your wallet')
                         ->waitFor('#payment-method-selection .link-bitcoin svg')
                         ->click('#payment-method-selection .link-bitcoin');
                 })
-                ->with(new Dialog('@payment-dialog'), function (Browser $browser) {
+                ->with(new Dialog('@payment-dialog'), static function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Top up your wallet')
                         ->assertFocused('#amount')
                         ->assertSeeIn('@button-cancel', 'Cancel')

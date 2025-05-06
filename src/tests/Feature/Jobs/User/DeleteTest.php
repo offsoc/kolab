@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Jobs\User;
 
+use App\Jobs\User\DeleteJob;
+use App\Jobs\User\UpdateJob;
 use App\Support\Facades\IMAP;
 use App\Support\Facades\LDAP;
 use App\Support\Facades\Roundcube;
@@ -11,20 +13,14 @@ use Tests\TestCase;
 
 class DeleteTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestUser('new-job-user@' . \config('app.domain'));
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('new-job-user@' . \config('app.domain'));
 
@@ -50,7 +46,7 @@ class DeleteTest extends TestCase
         \config(['app.with_imap' => true]);
 
         // Test job failure (user not yet deleted)
-        $job = (new \App\Jobs\User\DeleteJob($user->id))->withFakeQueueInteractions();
+        $job = (new DeleteJob($user->id))->withFakeQueueInteractions();
         $job->handle();
         $job->assertFailedWith("User {$user->id} is not deleted.");
 
@@ -59,7 +55,7 @@ class DeleteTest extends TestCase
         $user->deleted_at = \now();
         $user->saveQuietly();
 
-        $job = (new \App\Jobs\User\DeleteJob($user->id))->withFakeQueueInteractions();
+        $job = (new DeleteJob($user->id))->withFakeQueueInteractions();
         $job->handle();
         $job->assertFailedWith("User {$user->id} is already marked as deleted.");
 
@@ -76,7 +72,7 @@ class DeleteTest extends TestCase
         LDAP::shouldReceive('deleteUser')->once()->with($user)->andReturn(true);
         Roundcube::shouldReceive('deleteUser')->once()->with($user->email);
 
-        $job = (new \App\Jobs\User\DeleteJob($user->id))->withFakeQueueInteractions();
+        $job = (new DeleteJob($user->id))->withFakeQueueInteractions();
         $job->handle();
         $job->assertNotFailed();
 
@@ -86,7 +82,7 @@ class DeleteTest extends TestCase
         $this->assertFalse($user->isImapReady());
         $this->assertTrue($user->isDeleted());
 
-        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 0);
+        Queue::assertPushed(UpdateJob::class, 0);
 
         /*
         if (\config('app.with_imap')) {

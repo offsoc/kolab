@@ -3,8 +3,11 @@
 namespace App\Auth;
 
 use App\Support\Facades\Roundcube;
-use Illuminate\Support\Facades\Auth;
+use App\User;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Kolab2FA\Driver\Base as DriverBase;
+use Kolab2FA\Driver\TOTP;
 use Kolab2FA\Storage\Base as StorageBase;
 
 /**
@@ -18,11 +21,10 @@ class SecondFactor extends StorageBase
         'keymap' => [],
     ];
 
-
     /**
      * Class constructor
      *
-     * @param \App\User $user User object
+     * @param User $user User object
      */
     public function __construct($user)
     {
@@ -35,7 +37,7 @@ class SecondFactor extends StorageBase
     /**
      * Validate 2-factor authentication code
      *
-     * @param string $secondfactor The 2-factor authentication code.
+     * @param string $secondfactor the 2-factor authentication code
      *
      * @throws \Exception on validation failure
      */
@@ -67,11 +69,11 @@ class SecondFactor extends StorageBase
     /**
      * Validate 2-factor authentication code
      *
-     * @param \Illuminate\Http\Request $request The API request.
+     * @param Request $request the API request
      *
-     * @return \Illuminate\Http\JsonResponse|null
+     * @return JsonResponse|null
      */
-    public function requestHandler(\Illuminate\Http\Request $request)
+    public function requestHandler(Request $request)
     {
         try {
             $this->validate($request->secondfactor);
@@ -92,7 +94,7 @@ class SecondFactor extends StorageBase
         $this->cache = [];
 
         $prefs = [];
-        $prefs[$this->key2property('blob')]    = null;
+        $prefs[$this->key2property('blob')] = null;
         $prefs[$this->key2property('factors')] = null;
 
         return $this->savePrefs($prefs);
@@ -137,7 +139,7 @@ class SecondFactor extends StorageBase
      */
     protected function getDriver(string $factor)
     {
-        list($method) = explode(':', $factor, 2);
+        [$method] = explode(':', $factor, 2);
 
         $config = \config('2fa.' . $method, []);
 
@@ -168,7 +170,7 @@ class SecondFactor extends StorageBase
             'kolab_2fa_factors' => [
                 'totp:8132a46b1f741f88de25f47e',
                 // 'dummy:dummy',
-            ]
+            ],
         ];
 
         Roundcube::dbh()->table('users')->updateOrInsert(
@@ -186,18 +188,17 @@ class SecondFactor extends StorageBase
      */
     public static function code(string $email): string
     {
-        $sf = new self(\App\User::where('email', $email)->first());
+        $sf = new self(User::where('email', $email)->first());
 
-        /** @var \Kolab2FA\Driver\TOTP $driver */
+        /** @var TOTP $driver */
         $driver = $sf->getDriver('totp:8132a46b1f741f88de25f47e');
 
         return (string) $driver->get_code();
     }
 
-
-    //******************************************************
+    // ******************************************************
     //      Methods required by Kolab2FA Storage Base
-    //******************************************************
+    // ******************************************************
 
     /**
      * Initialize the storage driver with the given config options
@@ -213,7 +214,7 @@ class SecondFactor extends StorageBase
     public function enumerate()
     {
         if ($factors = $this->getFactors()) {
-            return array_keys(array_filter($factors, function ($prop) {
+            return array_keys(array_filter($factors, static function ($prop) {
                 return !empty($prop['active']);
             }));
         }
@@ -228,7 +229,7 @@ class SecondFactor extends StorageBase
     {
         if (!isset($this->cache[$key])) {
             $factors = $this->getFactors();
-            $this->cache[$key] = isset($factors[$key]) ? $factors[$key] : null;
+            $this->cache[$key] = $factors[$key] ?? null;
         }
 
         return $this->cache[$key];
@@ -253,9 +254,6 @@ class SecondFactor extends StorageBase
         return $this->write($key, null);
     }
 
-    /**
-     *
-     */
     protected function getFactors(): array
     {
         $prefs = $this->getPrefs();
@@ -264,9 +262,6 @@ class SecondFactor extends StorageBase
         return isset($prefs[$key]) ? (array) $prefs[$key] : [];
     }
 
-    /**
-     *
-     */
     protected function key2property($key)
     {
         // map key to configured property name
@@ -304,7 +299,7 @@ class SecondFactor extends StorageBase
         }
 
         $prefs = array_merge($old_prefs, $prefs);
-        $prefs = array_filter($prefs, fn($v) => !is_null($v));
+        $prefs = array_filter($prefs, static fn ($v) => $v !== null);
 
         Roundcube::dbh()->table('users')
             ->where('username', strtolower($this->user->email))

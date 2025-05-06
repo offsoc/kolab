@@ -3,6 +3,7 @@
 namespace App\Console\Commands\Imap;
 
 use App\Console\Command;
+use App\Support\Facades\IMAP;
 
 class ListCommand extends Command
 {
@@ -28,8 +29,8 @@ class ListCommand extends Command
     public function handle()
     {
         $user = $this->argument('user');
-        foreach (\App\Support\Facades\IMAP::listMailboxes($user) as $mailbox) {
-            $this->info("$mailbox");
+        foreach (IMAP::listMailboxes($user) as $mailbox) {
+            $this->info("{$mailbox}");
         }
     }
 }

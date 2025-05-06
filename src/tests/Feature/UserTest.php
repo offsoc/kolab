@@ -2,16 +2,27 @@
 
 namespace Tests\Feature;
 
+use App\Auth\Utils as AuthUtils;
 use App\Delegation;
 use App\Domain;
+use App\Entitlement;
 use App\EventLog;
 use App\Group;
+use App\Jobs\PGP\KeyCreateJob;
+use App\Jobs\PGP\KeyDeleteJob;
+use App\Jobs\User\CreateJob;
+use App\Jobs\User\DeleteJob;
+use App\Jobs\User\UpdateJob;
 use App\Package;
-use App\PackageSku;
 use App\Plan;
+use App\Resource;
+use App\SharedFolder;
 use App\Sku;
+use App\Tenant;
+use App\TenantSetting;
+use App\Transaction;
 use App\User;
-use App\Auth\Utils as AuthUtils;
+use App\Wallet;
 use Carbon\Carbon;
 use Illuminate\Support\Benchmark;
 use Illuminate\Support\Facades\Queue;
@@ -19,10 +30,7 @@ use Tests\TestCase;
 
 class UserTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -38,12 +46,9 @@ class UserTest extends TestCase
         Package::where('title', 'test-package')->delete();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
-        \App\TenantSetting::truncate();
+        TenantSetting::truncate();
         Package::where('title', 'test-package')->delete();
         $this->deleteTestUser('user-test@' . \config('app.domain'));
         $this->deleteTestUser('UserAccountA@UserAccount.com');
@@ -69,17 +74,17 @@ class UserTest extends TestCase
         $skuMailbox = Sku::withEnvTenantContext()->where('title', 'mailbox')->first();      // cost: 500
         $skuStorage = Sku::withEnvTenantContext()->where('title', 'storage')->first();      // cost: 25
         $package = Package::create([
-                'title' => 'test-package',
-                'name' => 'Test Account',
-                'description' => 'Test account.',
-                'discount_rate' => 0,
+            'title' => 'test-package',
+            'name' => 'Test Account',
+            'description' => 'Test account.',
+            'discount_rate' => 0,
         ]);
 
         // WARNING: saveMany() sets package_skus.cost = skus.cost
         $package->skus()->saveMany([
-                $skuMailbox,
-                $skuGroupware,
-                $skuStorage
+            $skuMailbox,
+            $skuGroupware,
+            $skuStorage,
         ]);
 
         $package->skus()->updateExistingPivot($skuStorage, ['qty' => 2, 'cost' => null], false);
@@ -93,22 +98,22 @@ class UserTest extends TestCase
         $entitlement = $wallet->entitlements()->where('sku_id', $skuMailbox->id)->first();
         $this->assertSame($skuMailbox->id, $entitlement->sku->id);
         $this->assertSame($wallet->id, $entitlement->wallet->id);
-        $this->assertEquals($user->id, $entitlement->entitleable_id);
-        $this->assertTrue($entitlement->entitleable instanceof \App\User);
+        $this->assertSame($user->id, $entitlement->entitleable_id);
+        $this->assertTrue($entitlement->entitleable instanceof User);
         $this->assertSame($skuMailbox->cost, $entitlement->cost);
 
         $entitlement = $wallet->entitlements()->where('sku_id', $skuGroupware->id)->first();
         $this->assertSame($skuGroupware->id, $entitlement->sku->id);
         $this->assertSame($wallet->id, $entitlement->wallet->id);
-        $this->assertEquals($user->id, $entitlement->entitleable_id);
-        $this->assertTrue($entitlement->entitleable instanceof \App\User);
+        $this->assertSame($user->id, $entitlement->entitleable_id);
+        $this->assertTrue($entitlement->entitleable instanceof User);
         $this->assertSame(100, $entitlement->cost);
 
         $entitlement = $wallet->entitlements()->where('sku_id', $skuStorage->id)->first();
         $this->assertSame($skuStorage->id, $entitlement->sku->id);
         $this->assertSame($wallet->id, $entitlement->wallet->id);
-        $this->assertEquals($user->id, $entitlement->entitleable_id);
-        $this->assertTrue($entitlement->entitleable instanceof \App\User);
+        $this->assertSame($user->id, $entitlement->entitleable_id);
+        $this->assertTrue($entitlement->entitleable instanceof User);
         $this->assertSame(0, $entitlement->cost);
     }
 
@@ -118,8 +123,8 @@ class UserTest extends TestCase
     public function testAssignPlan(): void
     {
         $domain = $this->getTestDomain('useraccount.com', [
-                'status' => Domain::STATUS_NEW | Domain::STATUS_ACTIVE,
-                'type' => Domain::TYPE_EXTERNAL,
+            'status' => Domain::STATUS_NEW | Domain::STATUS_ACTIVE,
+            'type' => Domain::TYPE_EXTERNAL,
         ]);
         $user = $this->getTestUser('useraccounta@' . $domain->namespace);
         $plan = Plan::withObjectTenantContext($user)->where('title', 'group')->first();
@@ -166,8 +171,8 @@ class UserTest extends TestCase
         $entitlement = $wallet->entitlements()->where('sku_id', $skuMailbox->id)->first();
         $this->assertSame($skuMailbox->id, $entitlement->sku->id);
         $this->assertSame($wallet->id, $entitlement->wallet->id);
-        $this->assertEquals($user->id, $entitlement->entitleable_id);
-        $this->assertTrue($entitlement->entitleable instanceof \App\User);
+        $this->assertSame($user->id, $entitlement->entitleable_id);
+        $this->assertTrue($entitlement->entitleable instanceof User);
         $this->assertSame($skuMailbox->cost, $entitlement->cost);
 
         // Test units_free handling
@@ -198,7 +203,7 @@ class UserTest extends TestCase
         $this->assertTrue($userA->wallets()->count() == 1);
 
         $userA->wallets()->each(
-            function ($wallet) use ($userB) {
+            static function ($wallet) use ($userB) {
                 $wallet->addController($userB);
             }
         );
@@ -410,25 +415,25 @@ class UserTest extends TestCase
 
         $domain = \config('app.domain');
 
-        \App\Tenant::find(\config('app.tenant_id'))->setSetting('pgp.enable', '0');
+        Tenant::find(\config('app.tenant_id'))->setSetting('pgp.enable', '0');
         $user = User::create([
-                'email' => 'USER-test@' . \strtoupper($domain),
-                'password' => 'test',
+            'email' => 'USER-test@' . \strtoupper($domain),
+            'password' => 'test',
         ]);
 
-        $result = User::where('email', "user-test@$domain")->first();
+        $result = User::where('email', "user-test@{$domain}")->first();
 
-        $this->assertSame("user-test@$domain", $result->email);
+        $this->assertSame("user-test@{$domain}", $result->email);
         $this->assertSame($user->id, $result->id);
         $this->assertSame(User::STATUS_NEW, $result->status);
         $this->assertSame(0, $user->passwords()->count());
 
-        Queue::assertPushed(\App\Jobs\User\CreateJob::class, 1);
-        Queue::assertPushed(\App\Jobs\PGP\KeyCreateJob::class, 0);
+        Queue::assertPushed(CreateJob::class, 1);
+        Queue::assertPushed(KeyCreateJob::class, 0);
 
         Queue::assertPushed(
-            \App\Jobs\User\CreateJob::class,
-            function ($job) use ($user) {
+            CreateJob::class,
+            static function ($job) use ($user) {
                 $userEmail = TestCase::getObjectProperty($job, 'userEmail');
                 $userId = TestCase::getObjectProperty($job, 'userId');
 
@@ -438,17 +443,17 @@ class UserTest extends TestCase
         );
 
         // Test invoking KeyCreateJob
-        $this->deleteTestUser("user-test@$domain");
+        $this->deleteTestUser("user-test@{$domain}");
 
-        \App\Tenant::find(\config('app.tenant_id'))->setSetting('pgp.enable', '1');
+        Tenant::find(\config('app.tenant_id'))->setSetting('pgp.enable', '1');
 
-        $user = User::create(['email' => "user-test@$domain", 'password' => 'test']);
+        $user = User::create(['email' => "user-test@{$domain}", 'password' => 'test']);
 
-        Queue::assertPushed(\App\Jobs\PGP\KeyCreateJob::class, 1);
+        Queue::assertPushed(KeyCreateJob::class, 1);
 
         Queue::assertPushed(
-            \App\Jobs\PGP\KeyCreateJob::class,
-            function ($job) use ($user) {
+            KeyCreateJob::class,
+            static function ($job) use ($user) {
                 $userEmail = TestCase::getObjectProperty($job, 'userEmail');
                 $userId = TestCase::getObjectProperty($job, 'userId');
 
@@ -463,7 +468,7 @@ class UserTest extends TestCase
         $user->password = 'test123';
         $user->save();
 
-        $this->assertNotEquals($oldPassword, $user->password);
+        $this->assertNotSame($oldPassword, $user->password);
         $this->assertSame(0, $user->passwords()->count());
         $this->assertNull($user->getSetting('password_expiration_warning'));
         $this->assertMatchesRegularExpression(
@@ -471,10 +476,10 @@ class UserTest extends TestCase
             $user->getSetting('password_update')
         );
 
-        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 1);
+        Queue::assertPushed(UpdateJob::class, 1);
         Queue::assertPushed(
-            \App\Jobs\User\UpdateJob::class,
-            function ($job) use ($user) {
+            UpdateJob::class,
+            static function ($job) use ($user) {
                 $userEmail = TestCase::getObjectProperty($job, 'userEmail');
                 $userId = TestCase::getObjectProperty($job, 'userId');
 
@@ -510,8 +515,8 @@ class UserTest extends TestCase
         $user = $this->getTestUser('john@kolab.org');
 
         $domain = $this->getTestDomain('useraccount.com', [
-                'status' => Domain::STATUS_NEW | Domain::STATUS_ACTIVE,
-                'type' => Domain::TYPE_PUBLIC,
+            'status' => Domain::STATUS_NEW | Domain::STATUS_ACTIVE,
+            'type' => Domain::TYPE_PUBLIC,
         ]);
 
         $domains = $user->domains()->pluck('namespace')->all();
@@ -530,7 +535,7 @@ class UserTest extends TestCase
         $this->assertNotContains('kolab.org', $domains);
 
         // Public domains of other tenants should not be returned
-        $tenant = \App\Tenant::where('id', '!=', \config('app.tenant_id'))->first();
+        $tenant = Tenant::where('id', '!=', \config('app.tenant_id'))->first();
         $domain->tenant_id = $tenant->id;
         $domain->save();
 
@@ -560,43 +565,43 @@ class UserTest extends TestCase
         $user->setSetting('limit_geo', null);
 
         // greylist_enabled
-        $this->assertSame(true, $user->getConfig()['greylist_enabled']);
+        $this->assertTrue($user->getConfig()['greylist_enabled']);
 
         $result = $user->setConfig(['greylist_enabled' => false, 'unknown' => false]);
 
         $this->assertSame(['unknown' => "The requested configuration parameter is not supported."], $result);
-        $this->assertSame(false, $user->getConfig()['greylist_enabled']);
+        $this->assertFalse($user->getConfig()['greylist_enabled']);
         $this->assertSame('false', $user->getSetting('greylist_enabled'));
 
         $result = $user->setConfig(['greylist_enabled' => true]);
 
         $this->assertSame([], $result);
-        $this->assertSame(true, $user->getConfig()['greylist_enabled']);
+        $this->assertTrue($user->getConfig()['greylist_enabled']);
         $this->assertSame('true', $user->getSetting('greylist_enabled'));
 
         // guam_enabled
-        $this->assertSame(false, $user->getConfig()['guam_enabled']);
+        $this->assertFalse($user->getConfig()['guam_enabled']);
 
         $result = $user->setConfig(['guam_enabled' => false]);
 
         $this->assertSame([], $result);
-        $this->assertSame(false, $user->getConfig()['guam_enabled']);
-        $this->assertSame(null, $user->getSetting('guam_enabled'));
+        $this->assertFalse($user->getConfig()['guam_enabled']);
+        $this->assertNull($user->getSetting('guam_enabled'));
 
         $result = $user->setConfig(['guam_enabled' => true]);
 
         $this->assertSame([], $result);
-        $this->assertSame(true, $user->getConfig()['guam_enabled']);
+        $this->assertTrue($user->getConfig()['guam_enabled']);
         $this->assertSame('true', $user->getSetting('guam_enabled'));
 
         // max_apssword_age
-        $this->assertSame(null, $user->getConfig()['max_password_age']);
+        $this->assertNull($user->getConfig()['max_password_age']);
 
         $result = $user->setConfig(['max_password_age' => -1]);
 
         $this->assertSame([], $result);
-        $this->assertSame(null, $user->getConfig()['max_password_age']);
-        $this->assertSame(null, $user->getSetting('max_password_age'));
+        $this->assertNull($user->getConfig()['max_password_age']);
+        $this->assertNull($user->getSetting('max_password_age'));
 
         $result = $user->setConfig(['max_password_age' => 12]);
 
@@ -608,8 +613,8 @@ class UserTest extends TestCase
         $result = $user->setConfig(['password_policy' => true]);
 
         $this->assertSame(['password_policy' => "Specified password policy is invalid."], $result);
-        $this->assertSame(null, $user->getConfig()['password_policy']);
-        $this->assertSame(null, $user->getSetting('password_policy'));
+        $this->assertNull($user->getConfig()['password_policy']);
+        $this->assertNull($user->getSetting('password_policy'));
 
         $result = $user->setConfig(['password_policy' => 'min:-1']);
 
@@ -647,17 +652,17 @@ class UserTest extends TestCase
 
         $err = "Specified configuration is invalid. Expected a list of two-letter country codes.";
         $this->assertSame(['limit_geo' => $err], $result);
-        $this->assertSame(null, $user->getSetting('limit_geo'));
+        $this->assertNull($user->getSetting('limit_geo'));
 
         $result = $user->setConfig(['limit_geo' => ['usa']]);
 
         $this->assertSame(['limit_geo' => $err], $result);
-        $this->assertSame(null, $user->getSetting('limit_geo'));
+        $this->assertNull($user->getSetting('limit_geo'));
 
         $result = $user->setConfig(['limit_geo' => []]);
 
         $this->assertSame([], $result);
-        $this->assertSame(null, $user->getSetting('limit_geo'));
+        $this->assertNull($user->getSetting('limit_geo'));
 
         $result = $user->setConfig(['limit_geo' => ['US', 'ru']]);
 
@@ -681,19 +686,19 @@ class UserTest extends TestCase
         // Test an account with users, domain
         $userA = $this->getTestUser('UserAccountA@UserAccount.com');
         $userB = $this->getTestUser('UserAccountB@UserAccount.com');
-        $package_kolab = \App\Package::withEnvTenantContext()->where('title', 'kolab')->first();
-        $package_domain = \App\Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
+        $package_kolab = Package::withEnvTenantContext()->where('title', 'kolab')->first();
+        $package_domain = Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
         $domain = $this->getTestDomain('UserAccount.com', [
-                'status' => Domain::STATUS_NEW,
-                'type' => Domain::TYPE_HOSTED,
+            'status' => Domain::STATUS_NEW,
+            'type' => Domain::TYPE_HOSTED,
         ]);
         $userA->assignPackage($package_kolab);
         $domain->assignPackage($package_domain, $userA);
         $userA->assignPackage($package_kolab, $userB);
 
-        $entitlementsA = \App\Entitlement::where('entitleable_id', $userA->id);
-        $entitlementsB = \App\Entitlement::where('entitleable_id', $userB->id);
-        $entitlementsDomain = \App\Entitlement::where('entitleable_id', $domain->id);
+        $entitlementsA = Entitlement::where('entitleable_id', $userA->id);
+        $entitlementsB = Entitlement::where('entitleable_id', $userB->id);
+        $entitlementsDomain = Entitlement::where('entitleable_id', $domain->id);
 
         $yesterday = Carbon::now()->subDays(1);
 
@@ -713,8 +718,8 @@ class UserTest extends TestCase
         // Degrade the account/wallet owner
         $userA->degrade();
 
-        $entitlementsA = \App\Entitlement::where('entitleable_id', $userA->id);
-        $entitlementsB = \App\Entitlement::where('entitleable_id', $userB->id);
+        $entitlementsA = Entitlement::where('entitleable_id', $userA->id);
+        $entitlementsB = Entitlement::where('entitleable_id', $userB->id);
 
         $this->assertTrue($userA->fresh()->isDegraded());
         $this->assertTrue($userA->fresh()->isDegraded(true));
@@ -728,7 +733,7 @@ class UserTest extends TestCase
 
         // Expect one update job for every user
         // @phpstan-ignore-next-line
-        $userIds = Queue::pushed(\App\Jobs\User\UpdateJob::class)->map(function ($job) {
+        $userIds = Queue::pushed(UpdateJob::class)->map(static function ($job) {
             return TestCase::getObjectProperty($job, 'userId');
         })->all();
 
@@ -736,8 +741,8 @@ class UserTest extends TestCase
 
         // Un-Degrade the account/wallet owner
 
-        $entitlementsA = \App\Entitlement::where('entitleable_id', $userA->id);
-        $entitlementsB = \App\Entitlement::where('entitleable_id', $userB->id);
+        $entitlementsA = Entitlement::where('entitleable_id', $userA->id);
+        $entitlementsB = Entitlement::where('entitleable_id', $userB->id);
 
         $yesterday = Carbon::now()->subDays(1);
 
@@ -760,7 +765,7 @@ class UserTest extends TestCase
 
         // Expect one update job for every user
         // @phpstan-ignore-next-line
-        $userIds = Queue::pushed(\App\Jobs\User\UpdateJob::class)->map(function ($job) {
+        $userIds = Queue::pushed(UpdateJob::class)->map(static function ($job) {
             return TestCase::getObjectProperty($job, 'userId');
         })->all();
 
@@ -775,7 +780,7 @@ class UserTest extends TestCase
         Queue::fake();
 
         $user = $this->getTestUser('user-test@' . \config('app.domain'));
-        $package = \App\Package::withEnvTenantContext()->where('title', 'kolab')->first();
+        $package = Package::withEnvTenantContext()->where('title', 'kolab')->first();
         $user->assignPackage($package);
 
         $id = $user->id;
@@ -790,11 +795,11 @@ class UserTest extends TestCase
         $this->assertTrue($user->fresh()->trashed());
         $this->assertFalse($user->fresh()->isDeleted());
 
-        Queue::assertPushed(\App\Jobs\User\DeleteJob::class, 1);
-        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 0);
+        Queue::assertPushed(DeleteJob::class, 1);
+        Queue::assertPushed(UpdateJob::class, 0);
 
         // Delete the user for real
-        $job = new \App\Jobs\User\DeleteJob($id);
+        $job = new DeleteJob($id);
         $job->handle();
 
         $this->assertTrue(User::withTrashed()->where('id', $id)->first()->isDeleted());
@@ -805,18 +810,18 @@ class UserTest extends TestCase
 
         $this->assertCount(0, User::withTrashed()->where('id', $id)->get());
 
-        Queue::assertPushed(\App\Jobs\User\DeleteJob::class, 0);
-        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 0);
+        Queue::assertPushed(DeleteJob::class, 0);
+        Queue::assertPushed(UpdateJob::class, 0);
 
         // Test an account with users, domain, and group, and resource
         $userA = $this->getTestUser('UserAccountA@UserAccount.com');
         $userB = $this->getTestUser('UserAccountB@UserAccount.com');
         $userC = $this->getTestUser('UserAccountC@UserAccount.com');
-        $package_kolab = \App\Package::withEnvTenantContext()->where('title', 'kolab')->first();
-        $package_domain = \App\Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
+        $package_kolab = Package::withEnvTenantContext()->where('title', 'kolab')->first();
+        $package_domain = Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
         $domain = $this->getTestDomain('UserAccount.com', [
-                'status' => Domain::STATUS_NEW,
-                'type' => Domain::TYPE_HOSTED,
+            'status' => Domain::STATUS_NEW,
+            'type' => Domain::TYPE_HOSTED,
         ]);
         $userA->assignPackage($package_kolab);
         $domain->assignPackage($package_domain, $userA);
@@ -829,13 +834,13 @@ class UserTest extends TestCase
         $folder = $this->getTestSharedFolder('test-folder@UserAccount.com', ['name' => 'test']);
         $folder->assignToWallet($userA->wallets->first());
 
-        $entitlementsA = \App\Entitlement::where('entitleable_id', $userA->id);
-        $entitlementsB = \App\Entitlement::where('entitleable_id', $userB->id);
-        $entitlementsC = \App\Entitlement::where('entitleable_id', $userC->id);
-        $entitlementsDomain = \App\Entitlement::where('entitleable_id', $domain->id);
-        $entitlementsGroup = \App\Entitlement::where('entitleable_id', $group->id);
-        $entitlementsResource = \App\Entitlement::where('entitleable_id', $resource->id);
-        $entitlementsFolder = \App\Entitlement::where('entitleable_id', $folder->id);
+        $entitlementsA = Entitlement::where('entitleable_id', $userA->id);
+        $entitlementsB = Entitlement::where('entitleable_id', $userB->id);
+        $entitlementsC = Entitlement::where('entitleable_id', $userC->id);
+        $entitlementsDomain = Entitlement::where('entitleable_id', $domain->id);
+        $entitlementsGroup = Entitlement::where('entitleable_id', $group->id);
+        $entitlementsResource = Entitlement::where('entitleable_id', $resource->id);
+        $entitlementsFolder = Entitlement::where('entitleable_id', $folder->id);
 
         $this->assertSame(7, $entitlementsA->count());
         $this->assertSame(7, $entitlementsB->count());
@@ -883,8 +888,8 @@ class UserTest extends TestCase
 
         $userA->forceDelete();
 
-        $all_entitlements = \App\Entitlement::where('wallet_id', $userA->wallets->first()->id);
-        $transactions = \App\Transaction::where('object_id', $userA->wallets->first()->id);
+        $all_entitlements = Entitlement::where('wallet_id', $userA->wallets->first()->id);
+        $transactions = Transaction::where('object_id', $userA->wallets->first()->id);
 
         $this->assertSame(0, $all_entitlements->withTrashed()->count());
         $this->assertSame(0, $transactions->count());
@@ -893,8 +898,8 @@ class UserTest extends TestCase
         $this->assertCount(0, User::withTrashed()->where('id', $userC->id)->get());
         $this->assertCount(0, Domain::withTrashed()->where('id', $domain->id)->get());
         $this->assertCount(0, Group::withTrashed()->where('id', $group->id)->get());
-        $this->assertCount(0, \App\Resource::withTrashed()->where('id', $resource->id)->get());
-        $this->assertCount(0, \App\SharedFolder::withTrashed()->where('id', $folder->id)->get());
+        $this->assertCount(0, Resource::withTrashed()->where('id', $resource->id)->get());
+        $this->assertCount(0, SharedFolder::withTrashed()->where('id', $folder->id)->get());
     }
 
     /**
@@ -921,13 +926,14 @@ class UserTest extends TestCase
      * Test user deletion vs. group membership
      *
      * The first Queue::assertPushed is sometimes 1 and sometimes 2
+     *
      * @group skipci
      */
     public function testDeleteAndGroups(): void
     {
         Queue::fake();
 
-        $package_kolab = \App\Package::withEnvTenantContext()->where('title', 'kolab')->first();
+        $package_kolab = Package::withEnvTenantContext()->where('title', 'kolab')->first();
         $userA = $this->getTestUser('UserAccountA@UserAccount.com');
         $userB = $this->getTestUser('UserAccountB@UserAccount.com');
         $userA->assignPackage($package_kolab, $userB);
@@ -973,7 +979,7 @@ class UserTest extends TestCase
         Queue::assertPushed(\App\Jobs\User\Delegation\DeleteJob::class, 1);
         Queue::assertPushed(
             \App\Jobs\User\Delegation\DeleteJob::class,
-            function ($job) use ($userA, $userB) {
+            static function ($job) use ($userA, $userB) {
                 $delegator = TestCase::getObjectProperty($job, 'delegatorEmail');
                 $delegatee = TestCase::getObjectProperty($job, 'delegateeEmail');
                 return $delegator === $userA->email && $delegatee === $userB->email;
@@ -998,7 +1004,7 @@ class UserTest extends TestCase
         Queue::assertPushed(\App\Jobs\User\Delegation\DeleteJob::class, 1);
         Queue::assertPushed(
             \App\Jobs\User\Delegation\DeleteJob::class,
-            function ($job) use ($userA, $userB) {
+            static function ($job) use ($userA, $userB) {
                 $delegator = TestCase::getObjectProperty($job, 'delegatorEmail');
                 $delegatee = TestCase::getObjectProperty($job, 'delegateeEmail');
                 return $delegator === $userA->email && $delegatee === $userB->email;
@@ -1019,7 +1025,7 @@ class UserTest extends TestCase
         $user->tenant->setSetting('pgp.enable', 0);
         $user->delete();
 
-        Queue::assertPushed(\App\Jobs\PGP\KeyDeleteJob::class, 0);
+        Queue::assertPushed(KeyDeleteJob::class, 0);
 
         // Test with PGP enabled
         $this->deleteTestUser('user-test@' . \config('app.domain'));
@@ -1029,10 +1035,10 @@ class UserTest extends TestCase
         $user->delete();
         $user->tenant->setSetting('pgp.enable', 0);
 
-        Queue::assertPushed(\App\Jobs\PGP\KeyDeleteJob::class, 1);
+        Queue::assertPushed(KeyDeleteJob::class, 1);
         Queue::assertPushed(
-            \App\Jobs\PGP\KeyDeleteJob::class,
-            function ($job) use ($user) {
+            KeyDeleteJob::class,
+            static function ($job) use ($user) {
                 $userId = TestCase::getObjectProperty($job, 'userId');
                 $userEmail = TestCase::getObjectProperty($job, 'userEmail');
                 return $userId == $user->id && $userEmail === $user->email;
@@ -1209,40 +1215,40 @@ class UserTest extends TestCase
 
         // Test an account with users and domain
         $userA = $this->getTestUser('UserAccountA@UserAccount.com', [
-                'status' => User::STATUS_LDAP_READY | User::STATUS_IMAP_READY | User::STATUS_SUSPENDED,
+            'status' => User::STATUS_LDAP_READY | User::STATUS_IMAP_READY | User::STATUS_SUSPENDED,
         ]);
         $userB = $this->getTestUser('UserAccountB@UserAccount.com');
-        $package_kolab = \App\Package::withEnvTenantContext()->where('title', 'kolab')->first();
-        $package_domain = \App\Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
+        $package_kolab = Package::withEnvTenantContext()->where('title', 'kolab')->first();
+        $package_domain = Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
         $domainA = $this->getTestDomain('UserAccount.com', [
-                'status' => Domain::STATUS_NEW,
-                'type' => Domain::TYPE_HOSTED,
+            'status' => Domain::STATUS_NEW,
+            'type' => Domain::TYPE_HOSTED,
         ]);
         $domainB = $this->getTestDomain('UserAccountAdd.com', [
-                'status' => Domain::STATUS_NEW,
-                'type' => Domain::TYPE_HOSTED,
+            'status' => Domain::STATUS_NEW,
+            'type' => Domain::TYPE_HOSTED,
         ]);
         $userA->assignPackage($package_kolab);
         $domainA->assignPackage($package_domain, $userA);
         $domainB->assignPackage($package_domain, $userA);
         $userA->assignPackage($package_kolab, $userB);
 
-        $storage_sku = \App\Sku::withEnvTenantContext()->where('title', 'storage')->first();
-        $now = \Carbon\Carbon::now();
+        $storage_sku = Sku::withEnvTenantContext()->where('title', 'storage')->first();
+        $now = Carbon::now();
         $wallet_id = $userA->wallets->first()->id;
 
         // add an extra storage entitlement
-        $ent1 = \App\Entitlement::create([
-                'wallet_id' => $wallet_id,
-                'sku_id' => $storage_sku->id,
-                'cost' => 0,
-                'entitleable_id' => $userA->id,
-                'entitleable_type' => User::class,
+        $ent1 = Entitlement::create([
+            'wallet_id' => $wallet_id,
+            'sku_id' => $storage_sku->id,
+            'cost' => 0,
+            'entitleable_id' => $userA->id,
+            'entitleable_type' => User::class,
         ]);
 
-        $entitlementsA = \App\Entitlement::where('entitleable_id', $userA->id);
-        $entitlementsB = \App\Entitlement::where('entitleable_id', $userB->id);
-        $entitlementsDomain = \App\Entitlement::where('entitleable_id', $domainA->id);
+        $entitlementsA = Entitlement::where('entitleable_id', $userA->id);
+        $entitlementsB = Entitlement::where('entitleable_id', $userB->id);
+        $entitlementsDomain = Entitlement::where('entitleable_id', $domainA->id);
 
         // First delete the user
         $userA->delete();
@@ -1259,11 +1265,11 @@ class UserTest extends TestCase
         $this->assertFalse($domainA->isDeleted());
 
         // Backdate one storage entitlement (it's not expected to be restored)
-        \App\Entitlement::withTrashed()->where('id', $ent1->id)
+        Entitlement::withTrashed()->where('id', $ent1->id)
             ->update(['deleted_at' => $now->copy()->subMinutes(2)]);
 
         // Backdate entitlements to assert that they were restored with proper updated_at timestamp
-        \App\Entitlement::withTrashed()->where('wallet_id', $wallet_id)
+        Entitlement::withTrashed()->where('wallet_id', $wallet_id)
             ->update(['updated_at' => $now->subMinutes(10)]);
 
         $this->fakeQueueReset();
@@ -1288,7 +1294,7 @@ class UserTest extends TestCase
         $this->assertSame(7, $entitlementsA->count()); // mailbox + groupware + 5 x storage
         $this->assertTrue($ent1->fresh()->trashed());
         $entitlementsA->get()->each(function ($ent) {
-            $this->assertTrue($ent->updated_at->greaterThan(\Carbon\Carbon::now()->subSeconds(5)));
+            $this->assertTrue($ent->updated_at->greaterThan(Carbon::now()->subSeconds(5)));
         });
 
         // We expect only CreateJob + UpdateJob pair for both user and domain.
@@ -1298,11 +1304,11 @@ class UserTest extends TestCase
         $this->assertCount(4, Queue::pushedJobs()); // @phpstan-ignore-line
         Queue::assertPushed(\App\Jobs\Domain\UpdateJob::class, 1);
         Queue::assertPushed(\App\Jobs\Domain\CreateJob::class, 1);
-        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 1);
-        Queue::assertPushed(\App\Jobs\User\CreateJob::class, 1);
+        Queue::assertPushed(UpdateJob::class, 1);
+        Queue::assertPushed(CreateJob::class, 1);
         Queue::assertPushed(
-            \App\Jobs\User\CreateJob::class,
-            function ($job) use ($userA) {
+            CreateJob::class,
+            static function ($job) use ($userA) {
                 return $userA->id === TestCase::getObjectProperty($job, 'userId');
             }
         );
@@ -1318,11 +1324,11 @@ class UserTest extends TestCase
         // Test an account with users, domain
         $user = $this->getTestUser('UserAccountA@UserAccount.com');
         $userB = $this->getTestUser('UserAccountB@UserAccount.com');
-        $package_kolab = \App\Package::withEnvTenantContext()->where('title', 'kolab')->first();
-        $package_domain = \App\Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
+        $package_kolab = Package::withEnvTenantContext()->where('title', 'kolab')->first();
+        $package_domain = Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
         $domain = $this->getTestDomain('UserAccount.com', [
-                'status' => Domain::STATUS_NEW,
-                'type' => Domain::TYPE_HOSTED,
+            'status' => Domain::STATUS_NEW,
+            'type' => Domain::TYPE_HOSTED,
         ]);
         $user->assignPackage($package_kolab);
         $domain->assignPackage($package_domain, $user);
@@ -1337,8 +1343,8 @@ class UserTest extends TestCase
         $this->assertFalse($userB->fresh()->isRestricted());
 
         Queue::assertPushed(
-            \App\Jobs\User\UpdateJob::class,
-            function ($job) use ($user) {
+            UpdateJob::class,
+            static function ($job) use ($user) {
                 return TestCase::getObjectProperty($job, 'userId') == $user->id;
             }
         );
@@ -1355,8 +1361,8 @@ class UserTest extends TestCase
         $this->assertTrue($userB->fresh()->isRestricted());
 
         Queue::assertPushed(
-            \App\Jobs\User\UpdateJob::class,
-            function ($job) use ($user) {
+            UpdateJob::class,
+            static function ($job) use ($user) {
                 return TestCase::getObjectProperty($job, 'userId') == $user->id;
             }
         );
@@ -1369,8 +1375,8 @@ class UserTest extends TestCase
         $this->assertFalse($userB->fresh()->isRestricted());
 
         Queue::assertPushed(
-            \App\Jobs\User\UpdateJob::class,
-            function ($job) use ($userB) {
+            UpdateJob::class,
+            static function ($job) use ($userB) {
                 return TestCase::getObjectProperty($job, 'userId') == $userB->id;
             }
         );
@@ -1385,8 +1391,8 @@ class UserTest extends TestCase
 
         $user = $this->getTestUser('UserAccountA@UserAccount.com');
         $domain = $this->getTestDomain('UserAccount.com', [
-                'status' => Domain::STATUS_NEW,
-                'type' => Domain::TYPE_HOSTED,
+            'status' => Domain::STATUS_NEW,
+            'type' => Domain::TYPE_HOSTED,
         ]);
 
         $this->assertCount(0, $user->aliases->all());
@@ -1396,8 +1402,8 @@ class UserTest extends TestCase
         // Add an alias
         $user->setAliases(['UserAlias1@UserAccount.com']);
 
-        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 1);
-        Queue::assertPushed(\App\Jobs\PGP\KeyCreateJob::class, 1);
+        Queue::assertPushed(UpdateJob::class, 1);
+        Queue::assertPushed(KeyCreateJob::class, 1);
 
         $user->tenant->setSetting('pgp.enable', 0);
 
@@ -1409,8 +1415,8 @@ class UserTest extends TestCase
         $this->fakeQueueReset();
         $user->setAliases(['UserAlias1@UserAccount.com', 'UserAlias2@UserAccount.com']);
 
-        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 1);
-        Queue::assertPushed(\App\Jobs\PGP\KeyCreateJob::class, 0);
+        Queue::assertPushed(UpdateJob::class, 1);
+        Queue::assertPushed(KeyCreateJob::class, 0);
 
         $aliases = $user->aliases()->orderBy('alias')->get();
         $this->assertCount(2, $aliases);
@@ -1425,11 +1431,11 @@ class UserTest extends TestCase
 
         $user->tenant->setSetting('pgp.enable', 0);
 
-        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 1);
-        Queue::assertPushed(\App\Jobs\PGP\KeyDeleteJob::class, 1);
+        Queue::assertPushed(UpdateJob::class, 1);
+        Queue::assertPushed(KeyDeleteJob::class, 1);
         Queue::assertPushed(
-            \App\Jobs\PGP\KeyDeleteJob::class,
-            function ($job) use ($user) {
+            KeyDeleteJob::class,
+            static function ($job) use ($user) {
                 $userId = TestCase::getObjectProperty($job, 'userId');
                 $userEmail = TestCase::getObjectProperty($job, 'userEmail');
                 return $userId == $user->id && $userEmail === 'useralias2@useraccount.com';
@@ -1444,7 +1450,7 @@ class UserTest extends TestCase
         $this->fakeQueueReset();
         $user->setAliases([]);
 
-        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 1);
+        Queue::assertPushed(UpdateJob::class, 1);
 
         $this->assertCount(0, $user->aliases()->get());
     }
@@ -1470,7 +1476,7 @@ class UserTest extends TestCase
         $resource_sku = Sku::withEnvTenantContext()->where('title', 'resource')->first();
         $userB = $this->getTestUser('UserAccountB@UserAccount.com');
         $userB->assignSku($mailbox_sku, 1, $wallet);
-        $domain = $this->getTestDomain('UserAccount.com', ['type' => \App\Domain::TYPE_PUBLIC]);
+        $domain = $this->getTestDomain('UserAccount.com', ['type' => Domain::TYPE_PUBLIC]);
         $domain->assignSku($domain_sku, 1, $wallet);
         $group = $this->getTestGroup('test-group@UserAccount.com');
         $group->assignSku($group_sku, 1, $wallet);
@@ -1501,7 +1507,7 @@ class UserTest extends TestCase
 
         $user = $this->getTestUser('UserAccountA@UserAccount.com');
 
-        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 0);
+        Queue::assertPushed(UpdateJob::class, 0);
 
         // Test default settings
         // Note: Technicly this tests UserObserver::created() behavior
@@ -1516,7 +1522,7 @@ class UserTest extends TestCase
         $user->setSetting('first_name', 'Firstname');
 
         if (\config('app.with_ldap')) {
-            Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 1);
+            Queue::assertPushed(UpdateJob::class, 1);
         }
 
         // Note: We test both current user as well as fresh user object
@@ -1529,7 +1535,7 @@ class UserTest extends TestCase
         $user->setSetting('first_name', 'Firstname1');
 
         if (\config('app.with_ldap')) {
-            Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 1);
+            Queue::assertPushed(UpdateJob::class, 1);
         }
 
         // Note: We test both current user as well as fresh user object
@@ -1542,13 +1548,13 @@ class UserTest extends TestCase
         $user->setSetting('first_name', null);
 
         if (\config('app.with_ldap')) {
-            Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 1);
+            Queue::assertPushed(UpdateJob::class, 1);
         }
 
         // Note: We test both current user as well as fresh user object
         //       to make sure cache works as expected
-        $this->assertSame(null, $user->getSetting('first_name'));
-        $this->assertSame(null, $user->fresh()->getSetting('first_name'));
+        $this->assertNull($user->getSetting('first_name'));
+        $this->assertNull($user->fresh()->getSetting('first_name'));
 
         // Delete a setting (empty string)
         $this->fakeQueueReset();
@@ -1556,25 +1562,25 @@ class UserTest extends TestCase
         $user->setSetting('first_name', '');
 
         if (\config('app.with_ldap')) {
-            Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 1);
+            Queue::assertPushed(UpdateJob::class, 1);
         }
 
         // Note: We test both current user as well as fresh user object
         //       to make sure cache works as expected
-        $this->assertSame(null, $user->getSetting('first_name'));
-        $this->assertSame(null, $user->fresh()->getSetting('first_name'));
+        $this->assertNull($user->getSetting('first_name'));
+        $this->assertNull($user->fresh()->getSetting('first_name'));
 
         // Set multiple settings at once
         $this->fakeQueueReset();
         $user->setSettings([
-                'first_name' => 'Firstname2',
-                'last_name' => 'Lastname2',
-                'country' => null,
+            'first_name' => 'Firstname2',
+            'last_name' => 'Lastname2',
+            'country' => null,
         ]);
 
         // Thanks to job locking it creates a single UserUpdate job
         if (\config('app.with_ldap')) {
-            Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 1);
+            Queue::assertPushed(UpdateJob::class, 1);
         }
 
         // Note: We test both current user as well as fresh user object
@@ -1583,8 +1589,8 @@ class UserTest extends TestCase
         $this->assertSame('Firstname2', $user->fresh()->getSetting('first_name'));
         $this->assertSame('Lastname2', $user->getSetting('last_name'));
         $this->assertSame('Lastname2', $user->fresh()->getSetting('last_name'));
-        $this->assertSame(null, $user->getSetting('country'));
-        $this->assertSame(null, $user->fresh()->getSetting('country'));
+        $this->assertNull($user->getSetting('country'));
+        $this->assertNull($user->fresh()->getSetting('country'));
 
         $expected = [
             'currency' => 'CHF',
@@ -1617,10 +1623,10 @@ class UserTest extends TestCase
         $users = $john->users()->orderBy('email')->get();
 
         $this->assertCount(4, $users);
-        $this->assertEquals($jack->id, $users[0]->id);
-        $this->assertEquals($joe->id, $users[1]->id);
-        $this->assertEquals($john->id, $users[2]->id);
-        $this->assertEquals($ned->id, $users[3]->id);
+        $this->assertSame($jack->id, $users[0]->id);
+        $this->assertSame($joe->id, $users[1]->id);
+        $this->assertSame($john->id, $users[2]->id);
+        $this->assertSame($ned->id, $users[3]->id);
 
         $users = $jack->users()->orderBy('email')->get();
 
@@ -1659,11 +1665,11 @@ class UserTest extends TestCase
 
         $this->assertSame(1, $john->wallets()->count());
         $this->assertCount(1, $john->wallets);
-        $this->assertInstanceOf(\App\Wallet::class, $john->wallets->first());
+        $this->assertInstanceOf(Wallet::class, $john->wallets->first());
 
         $this->assertSame(1, $ned->wallets()->count());
         $this->assertCount(1, $ned->wallets);
-        $this->assertInstanceOf(\App\Wallet::class, $ned->wallets->first());
+        $this->assertInstanceOf(Wallet::class, $ned->wallets->first());
     }
 
     /**
@@ -1739,7 +1745,7 @@ class UserTest extends TestCase
 
         // Seed the cache
         User::findAndAuthenticate($user->email, "test");
-        $time = Benchmark::measure(function () use (&$user) {
+        $time = Benchmark::measure(static function () use (&$user) {
             User::findAndAuthenticate($user->email, "test");
         }, 10);
         // print("\nTime: $time ms\n");
@@ -1759,7 +1765,7 @@ class UserTest extends TestCase
 
         // Seed the cache
         User::findAndAuthenticate($user->email, $token);
-        $time = Benchmark::measure(function () use ($user, $token) {
+        $time = Benchmark::measure(static function () use ($user, $token) {
             User::findAndAuthenticate($user->email, $token);
         }, 10);
         // print("\nTime: $time ms\n");

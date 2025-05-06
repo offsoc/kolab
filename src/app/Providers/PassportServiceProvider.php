@@ -2,9 +2,11 @@
 
 namespace App\Providers;
 
-use Defuse\Crypto\Key as EncryptionKey;
+use App\Auth\PassportClient;
+use App\Observers\Passport\TokenObserver;
 use Defuse\Crypto\Encoding as EncryptionEncoding;
-use Laravel\Passport\Bridge;
+use Defuse\Crypto\Key;
+use Defuse\Crypto\Key as EncryptionKey;
 use Laravel\Passport\Passport;
 use OpenIDConnect\Laravel\PassportServiceProvider as ServiceProvider;
 
@@ -12,8 +14,6 @@ class PassportServiceProvider extends ServiceProvider
 {
     /**
      * Register any authentication / authorization services.
-     *
-     * @return void
      */
     public function boot()
     {
@@ -34,8 +34,8 @@ class PassportServiceProvider extends ServiceProvider
         Passport::refreshTokensExpireIn(now()->addMinutes(\config('auth.refresh_token_expiry_minutes')));
         Passport::personalAccessTokensExpireIn(now()->addMonths(6));
 
-        Passport::useClientModel(\App\Auth\PassportClient::class);
-        Passport::tokenModel()::observe(\App\Observers\Passport\TokenObserver::class);
+        Passport::useClientModel(PassportClient::class);
+        Passport::tokenModel()::observe(TokenObserver::class);
     }
 
     /**
@@ -44,7 +44,8 @@ class PassportServiceProvider extends ServiceProvider
      * Based on https://github.com/laravel/passport/pull/820
      *
      * @param string $keyBytes
-     * @return \Defuse\Crypto\Key|string
+     *
+     * @return Key|string
      */
     protected function getEncryptionKey($keyBytes)
     {

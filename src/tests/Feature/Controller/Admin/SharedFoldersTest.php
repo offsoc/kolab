@@ -2,25 +2,18 @@
 
 namespace Tests\Feature\Controller\Admin;
 
-use App\SharedFolder;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class SharedFoldersTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         self::useAdminUrl();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         parent::tearDown();
     }
@@ -109,10 +102,10 @@ class SharedFoldersTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertEquals($folder->id, $json['id']);
-        $this->assertEquals($folder->email, $json['email']);
-        $this->assertEquals($folder->name, $json['name']);
-        $this->assertEquals($folder->type, $json['type']);
+        $this->assertSame($folder->id, $json['id']);
+        $this->assertSame($folder->email, $json['email']);
+        $this->assertSame($folder->name, $json['name']);
+        $this->assertSame($folder->type, $json['type']);
     }
 
     /**

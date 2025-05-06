@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands\Data\Import;
 
-use App\License;
 use App\Console\Command;
+use App\License;
 
 class LicensesCommand extends Command
 {
@@ -37,14 +37,14 @@ class LicensesCommand extends Command
         $type = $this->argument('type');
 
         if (!file_exists($file)) {
-            $this->error("File '$file' does not exist");
+            $this->error("File '{$file}' does not exist");
             return 1;
         }
 
         $list = file($file);
 
         if (empty($list)) {
-            $this->error("File '$file' is empty");
+            $this->error("File '{$file}' is empty");
             return 1;
         }
 
@@ -55,9 +55,9 @@ class LicensesCommand extends Command
         // Import licenses
         foreach ($list as $key) {
             License::create([
-                    'key' => $key,
-                    'type' => $type,
-                    'tenant_id' => $this->tenantId,
+                'key' => $key,
+                'type' => $type,
+                'tenant_id' => $this->tenantId,
             ]);
 
             $bar->advance();

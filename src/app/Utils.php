@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Http\Controllers\ContentController;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
@@ -25,13 +26,13 @@ class Utils
      *
      * Useful for progress bars.
      *
-     * @param string $file The filepath to count the lines of.
+     * @param string $file the filepath to count the lines of
      *
      * @return int
      */
     public static function countLines($file)
     {
-        $fh = fopen($file, 'rb');
+        $fh = fopen($file, 'r');
         $numLines = 0;
 
         while (!feof($fh)) {
@@ -53,10 +54,10 @@ class Utils
      */
     public static function countryForIP($ip, $fallback = 'CH')
     {
-        if (strpos($ip, ':') === false) {
-            $net = \App\IP4Net::getNet($ip);
+        if (!str_contains($ip, ':')) {
+            $net = IP4Net::getNet($ip);
         } else {
-            $net = \App\IP6Net::getNet($ip);
+            $net = IP6Net::getNet($ip);
         }
 
         return $net && $net->country ? $net->country : $fallback;
@@ -83,7 +84,7 @@ class Utils
         $start = new Carbon('first day of last month');
         $end = new Carbon('last day of last month');
 
-        return intval($start->diffInDays($end)) + 1;
+        return (int) $start->diffInDays($end) + 1;
     }
 
     /**
@@ -106,7 +107,7 @@ class Utils
      *
      * @param string $source The source location
      * @param string $target The target location
-     * @param bool $force    Force the download (and overwrite target)
+     * @param bool   $force  Force the download (and overwrite target)
      *
      * @throws \Exception
      */
@@ -185,14 +186,14 @@ class Utils
         $alphaLow = 'abcdefghijklmnopqrstuvwxyz';
         $alphaUp = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $num = '0123456789';
-        $stdSpecial = '~`!@#$%^&*()-_+=[{]}\\|\'";:/?.>,<';
+        $stdSpecial = '~`!@#$%^&*()-_+=[{]}\|\'";:/?.>,<';
 
         $source = $alphaLow . $alphaUp . $num . $stdSpecial;
 
         $result = '';
 
         for ($x = 0; $x < 16; $x++) {
-            $result .= substr($source, rand(0, (strlen($source) - 1)), 1);
+            $result .= substr($source, random_int(0, strlen($source) - 1), 1);
         }
 
         return $result;
@@ -207,23 +208,23 @@ class Utils
      */
     public static function findObjectsByRecipientAddress($address)
     {
-        $address = \App\Utils::normalizeAddress($address);
+        $address = self::normalizeAddress($address);
 
-        list($local, $domainName) = explode('@', $address);
+        [$local, $domainName] = explode('@', $address);
 
-        $domain = \App\Domain::where('namespace', $domainName)->first();
+        $domain = Domain::where('namespace', $domainName)->first();
 
         if (!$domain) {
             return [];
         }
 
-        $user = \App\User::where('email', $address)->first();
+        $user = User::where('email', $address)->first();
 
         if ($user) {
             return [$user];
         }
 
-        $userAliases = \App\UserAlias::where('alias', $address)->get();
+        $userAliases = UserAlias::where('alias', $address)->get();
 
         if (count($userAliases) > 0) {
             $users = [];
@@ -235,7 +236,7 @@ class Utils
             return $users;
         }
 
-        $userAliases = \App\UserAlias::where('alias', "catchall@{$domain->namespace}")->get();
+        $userAliases = UserAlias::where('alias', "catchall@{$domain->namespace}")->get();
 
         if (count($userAliases) > 0) {
             $users = [];
@@ -253,23 +254,23 @@ class Utils
     /**
      * Retrieve the network ID and Type from a client address
      *
-     * @param string $clientAddress The IPv4 or IPv6 address.
+     * @param string $clientAddress the IPv4 or IPv6 address
      *
-     * @return array An array of ID and class or null and null.
+     * @return array an array of ID and class or null and null
      */
     public static function getNetFromAddress($clientAddress)
     {
-        if (strpos($clientAddress, ':') === false) {
-            $net = \App\IP4Net::getNet($clientAddress);
+        if (!str_contains($clientAddress, ':')) {
+            $net = IP4Net::getNet($clientAddress);
 
             if ($net) {
-                return [$net->id, \App\IP4Net::class];
+                return [$net->id, IP4Net::class];
             }
         } else {
-            $net = \App\IP6Net::getNet($clientAddress);
+            $net = IP6Net::getNet($clientAddress);
 
             if ($net) {
-                return [$net->id, \App\IP6Net::class];
+                return [$net->id, IP6Net::class];
             }
         }
 
@@ -279,8 +280,8 @@ class Utils
     /**
      * Calculate the broadcast address provided a net number and a prefix.
      *
-     * @param string $net A valid IPv6 network number.
-     * @param int $prefix The network prefix.
+     * @param string $net    a valid IPv6 network number
+     * @param int    $prefix the network prefix
      *
      * @return string
      */
@@ -307,7 +308,7 @@ class Utils
             $origval = hexdec($orig);
 
             // OR it with (2^flexbits)-1, with flexbits limited to 4 at a time
-            $newval = $origval | (pow(2, min(4, $flexbits)) - 1);
+            $newval = $origval | (2 ** min(4, $flexbits) - 1);
 
             // Convert it back to a hexadecimal character
             $new = dechex($newval);
@@ -317,7 +318,7 @@ class Utils
 
             // We processed one nibble, move to previous position
             $flexbits -= 4;
-            $pos -= 1;
+            $pos--;
         }
 
         // Convert the hexadecimal string to a binary string
@@ -361,13 +362,13 @@ class Utils
 
         $address = self::emailToLower($address);
 
-        if (strpos($address, '@') === false) {
+        if (!str_contains($address, '@')) {
             return $asArray ? [$address, ''] : $address;
         }
 
-        list($local, $domain) = explode('@', $address);
+        [$local, $domain] = explode('@', $address);
 
-        if (strpos($local, '+') !== false) {
+        if (str_contains($local, '+')) {
             $local = explode('+', $local)[0];
         }
 
@@ -376,8 +377,6 @@ class Utils
 
     /**
      * Returns the current user's email address or null.
-     *
-     * @return string
      */
     public static function userEmailOrNull(): ?string
     {
@@ -400,9 +399,9 @@ class Utils
      * // $roomName == '3qb-7cs-cjj'
      * ```
      *
-     * @param int $length  The length of each segment
-     * @param int $qty     The quantity of segments
-     * @param string $join The string to use to join the segments
+     * @param int    $length The length of each segment
+     * @param int    $qty    The quantity of segments
+     * @param string $join   The string to use to join the segments
      *
      * @return string
      */
@@ -416,7 +415,7 @@ class Utils
             $string = [];
 
             for ($y = 0; $y < $length; $y++) {
-                $string[] = $chars[rand(0, strlen($chars) - 1)];
+                $string[] = $chars[random_int(0, strlen($chars) - 1)];
             }
 
             shuffle($string);
@@ -429,8 +428,6 @@ class Utils
 
     /**
      * Returns a UUID in the form of an integer.
-     *
-     * @return int
      */
     public static function uuidInt(): int
     {
@@ -444,8 +441,6 @@ class Utils
 
     /**
      * Returns a UUID in the form of a string.
-     *
-     * @return string
      */
     public static function uuidStr(): string
     {
@@ -468,10 +463,10 @@ class Utils
             return $route;
         }
 
-        $url = \App\Tenant::getConfig($tenantId, 'app.public_url');
+        $url = Tenant::getConfig($tenantId, 'app.public_url');
 
         if (!$url) {
-            $url = \App\Tenant::getConfig($tenantId, 'app.url');
+            $url = Tenant::getConfig($tenantId, 'app.url');
         }
 
         return rtrim(trim($url, '/') . '/' . ltrim($route, '/'), '/');
@@ -500,7 +495,7 @@ class Utils
             'app.company.copyright',
             'app.companion_download_link',
             'app.with_signup',
-            'mail.from.address'
+            'mail.from.address',
         ];
 
         $env = \app('config')->getMany($opts);
@@ -509,17 +504,17 @@ class Utils
         $env['view'] = 'root';
         $env['jsapp'] = 'user.js';
 
-        if ($req_domain == "admin.$sys_domain") {
+        if ($req_domain == "admin.{$sys_domain}") {
             $env['jsapp'] = 'admin.js';
-        } elseif ($req_domain == "reseller.$sys_domain") {
+        } elseif ($req_domain == "reseller.{$sys_domain}") {
             $env['jsapp'] = 'reseller.js';
         }
 
         $env['paymentProvider'] = \config('services.payment_provider');
         $env['stripePK'] = \config('services.stripe.public_key');
 
-        $env['languages'] = \App\Http\Controllers\ContentController::locales();
-        $env['menu'] = \App\Http\Controllers\ContentController::menu();
+        $env['languages'] = ContentController::locales();
+        $env['menu'] = ContentController::menu();
 
         return $env;
     }
@@ -527,7 +522,7 @@ class Utils
     /**
      * Set test exchange rates.
      *
-     * @param array       $rates: Exchange rates
+     * @param array $rates: Exchange rates
      */
     public static function setTestExchangeRates(array $rates): void
     {
@@ -537,8 +532,8 @@ class Utils
     /**
      * Retrieve an exchange rate.
      *
-     * @param string       $sourceCurrency: Currency from which to convert
-     * @param string       $targetCurrency: Currency to convert to
+     * @param string $sourceCurrency: Currency from which to convert
+     * @param string $targetCurrency: Currency to convert to
      *
      * @return float Exchange rate
      */
@@ -549,18 +544,18 @@ class Utils
         }
 
         if (isset(self::$testRates[$targetCurrency])) {
-            return floatval(self::$testRates[$targetCurrency]);
+            return (float) self::$testRates[$targetCurrency];
         }
 
-        $currencyFile = resource_path("exchangerates-$sourceCurrency.php");
+        $currencyFile = resource_path("exchangerates-{$sourceCurrency}.php");
 
-        //Attempt to find the reverse exchange rate, if we don't have the file for the source currency
+        // Attempt to find the reverse exchange rate, if we don't have the file for the source currency
         if (!file_exists($currencyFile)) {
-            $rates = include resource_path("exchangerates-$targetCurrency.php");
+            $rates = include resource_path("exchangerates-{$targetCurrency}.php");
             if (!isset($rates[$sourceCurrency])) {
                 throw new \Exception("Failed to find the reverse exchange rate for " . $sourceCurrency);
             }
-            return 1.0 / floatval($rates[$sourceCurrency]);
+            return 1.0 / (float) $rates[$sourceCurrency];
         }
 
         $rates = include $currencyFile;
@@ -568,7 +563,7 @@ class Utils
             throw new \Exception("Failed to find exchange rate for " . $targetCurrency);
         }
 
-        return floatval($rates[$targetCurrency]);
+        return (float) $rates[$targetCurrency];
     }
 
     /**
@@ -599,14 +594,14 @@ class Utils
      *
      * @return string String representation, e.g. "0 %", "7.7 %"
      */
-    public static function percent(int|float $percent, $locale = 'de_DE'): string
+    public static function percent(float|int $percent, $locale = 'de_DE'): string
     {
         $nf = new \NumberFormatter($locale, \NumberFormatter::PERCENT);
         $sep = $nf->getSymbol(\NumberFormatter::DECIMAL_SEPARATOR_SYMBOL);
 
         $result = sprintf('%.2F', $percent);
         $result = preg_replace('/\.00/', '', $result);
-        $result = preg_replace('/(\.[0-9])0/', '\\1', $result);
+        $result = preg_replace('/(\.[0-9])0/', '\1', $result);
         $result = str_replace('.', $sep, $result);
 
         return $result . ' %';

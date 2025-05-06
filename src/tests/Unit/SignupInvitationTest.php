@@ -9,8 +9,6 @@ class SignupInvitationTest extends TestCase
 {
     /**
      * Test is*() methods
-     *
-     * @return void
      */
     public function testStatus()
     {

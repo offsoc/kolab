@@ -2,6 +2,66 @@
 
 namespace App\Providers;
 
+use App\Backends\DAV;
+use App\Backends\IMAP;
+use App\Backends\LDAP;
+use App\Backends\OpenExchangeRates;
+use App\Backends\PGP;
+use App\Backends\Roundcube;
+use App\Backends\Storage;
+use App\Delegation;
+use App\Domain;
+use App\Entitlement;
+use App\EventLog;
+use App\Group;
+use App\GroupSetting;
+use App\Meet\Room;
+use App\Observers\DelegationObserver;
+use App\Observers\DomainObserver;
+use App\Observers\EntitlementObserver;
+use App\Observers\EventLogObserver;
+use App\Observers\GroupObserver;
+use App\Observers\GroupSettingObserver;
+use App\Observers\Meet\RoomObserver;
+use App\Observers\PackageSkuObserver;
+use App\Observers\PlanPackageObserver;
+use App\Observers\PowerDNS\DomainObserver as DNSDomainObserver;
+use App\Observers\PowerDNS\RecordObserver as DNSRecordObserver;
+use App\Observers\ReferralCodeObserver;
+use App\Observers\ResourceObserver;
+use App\Observers\ResourceSettingObserver;
+use App\Observers\SharedFolderAliasObserver;
+use App\Observers\SharedFolderObserver;
+use App\Observers\SharedFolderSettingObserver;
+use App\Observers\SignupCodeObserver;
+use App\Observers\SignupInvitationObserver;
+use App\Observers\SignupTokenObserver;
+use App\Observers\TransactionObserver;
+use App\Observers\UserAliasObserver;
+use App\Observers\UserObserver;
+use App\Observers\UserSettingObserver;
+use App\Observers\VerificationCodeObserver;
+use App\Observers\WalletObserver;
+use App\PackageSku;
+use App\PlanPackage;
+use App\PowerDNS\Domain as DNSDomain;
+use App\PowerDNS\Record as DNSRecord;
+use App\ReferralCode;
+use App\Resource;
+use App\ResourceSetting;
+use App\SharedFolder;
+use App\SharedFolderAlias;
+use App\SharedFolderSetting;
+use App\SignupCode;
+use App\SignupInvitation;
+use App\SignupToken;
+use App\Transaction;
+use App\User;
+use App\UserAlias;
+use App\UserSetting;
+use App\VerificationCode;
+use App\Wallet;
+use GuzzleHttp\TransferStats;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Http;
@@ -19,26 +79,26 @@ class AppServiceProvider extends ServiceProvider
         // This must be here, not in PassportServiceProvider
         Passport::ignoreRoutes();
 
-        $this->app->bind('imap', function () {
-            return new \App\Backends\IMAP();
+        $this->app->bind('imap', static function () {
+            return new IMAP();
         });
-        $this->app->bind('ldap', function () {
-            return new \App\Backends\LDAP();
+        $this->app->bind('ldap', static function () {
+            return new LDAP();
         });
-        $this->app->bind('dav', function () {
-            return new \App\Backends\DAV();
+        $this->app->bind('dav', static function () {
+            return new DAV();
         });
-        $this->app->bind('roundcube', function () {
-            return new \App\Backends\Roundcube();
+        $this->app->bind('roundcube', static function () {
+            return new Roundcube();
         });
-        $this->app->bind('pgp', function () {
-            return new \App\Backends\PGP();
+        $this->app->bind('pgp', static function () {
+            return new PGP();
         });
-        $this->app->bind('filestorage', function () {
-            return new \App\Backends\Storage();
+        $this->app->bind('filestorage', static function () {
+            return new Storage();
         });
-        $this->app->bind('openexchangerates', function () {
-            return new \App\Backends\OpenExchangeRates();
+        $this->app->bind('openexchangerates', static function () {
+            return new OpenExchangeRates();
         });
     }
 
@@ -64,78 +124,77 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        \App\Delegation::observe(\App\Observers\DelegationObserver::class);
-        \App\Domain::observe(\App\Observers\DomainObserver::class);
-        \App\Entitlement::observe(\App\Observers\EntitlementObserver::class);
-        \App\EventLog::observe(\App\Observers\EventLogObserver::class);
-        \App\Group::observe(\App\Observers\GroupObserver::class);
-        \App\GroupSetting::observe(\App\Observers\GroupSettingObserver::class);
-        \App\Meet\Room::observe(\App\Observers\Meet\RoomObserver::class);
-        \App\PackageSku::observe(\App\Observers\PackageSkuObserver::class);
-        \App\PlanPackage::observe(\App\Observers\PlanPackageObserver::class);
-        \App\ReferralCode::observe(\App\Observers\ReferralCodeObserver::class);
-        \App\Resource::observe(\App\Observers\ResourceObserver::class);
-        \App\ResourceSetting::observe(\App\Observers\ResourceSettingObserver::class);
-        \App\SharedFolder::observe(\App\Observers\SharedFolderObserver::class);
-        \App\SharedFolderAlias::observe(\App\Observers\SharedFolderAliasObserver::class);
-        \App\SharedFolderSetting::observe(\App\Observers\SharedFolderSettingObserver::class);
-        \App\SignupCode::observe(\App\Observers\SignupCodeObserver::class);
-        \App\SignupInvitation::observe(\App\Observers\SignupInvitationObserver::class);
-        \App\SignupToken::observe(\App\Observers\SignupTokenObserver::class);
-        \App\Transaction::observe(\App\Observers\TransactionObserver::class);
-        \App\User::observe(\App\Observers\UserObserver::class);
-        \App\UserAlias::observe(\App\Observers\UserAliasObserver::class);
-        \App\UserSetting::observe(\App\Observers\UserSettingObserver::class);
-        \App\VerificationCode::observe(\App\Observers\VerificationCodeObserver::class);
-        \App\Wallet::observe(\App\Observers\WalletObserver::class);
-
-        \App\PowerDNS\Domain::observe(\App\Observers\PowerDNS\DomainObserver::class);
-        \App\PowerDNS\Record::observe(\App\Observers\PowerDNS\RecordObserver::class);
+        Delegation::observe(DelegationObserver::class);
+        DNSDomain::observe(DNSDomainObserver::class);
+        DNSRecord::observe(DNSRecordObserver::class);
+        Domain::observe(DomainObserver::class);
+        Entitlement::observe(EntitlementObserver::class);
+        EventLog::observe(EventLogObserver::class);
+        Group::observe(GroupObserver::class);
+        GroupSetting::observe(GroupSettingObserver::class);
+        Room::observe(RoomObserver::class);
+        PackageSku::observe(PackageSkuObserver::class);
+        PlanPackage::observe(PlanPackageObserver::class);
+        ReferralCode::observe(ReferralCodeObserver::class);
+        Resource::observe(ResourceObserver::class);
+        ResourceSetting::observe(ResourceSettingObserver::class);
+        SharedFolder::observe(SharedFolderObserver::class);
+        SharedFolderAlias::observe(SharedFolderAliasObserver::class);
+        SharedFolderSetting::observe(SharedFolderSettingObserver::class);
+        SignupCode::observe(SignupCodeObserver::class);
+        SignupInvitation::observe(SignupInvitationObserver::class);
+        SignupToken::observe(SignupTokenObserver::class);
+        Transaction::observe(TransactionObserver::class);
+        User::observe(UserObserver::class);
+        UserAlias::observe(UserAliasObserver::class);
+        UserSetting::observe(UserSettingObserver::class);
+        VerificationCode::observe(VerificationCodeObserver::class);
+        Wallet::observe(WalletObserver::class);
 
         Schema::defaultStringLength(191);
 
         // Register some template helpers
         Blade::directive(
             'theme_asset',
-            function ($path) {
+            static function ($path) {
                 $path = trim($path, '/\'"');
-                return "<?php echo secure_asset('themes/' . \$env['app.theme'] . '/' . '$path'); ?>";
+                return "<?php echo secure_asset('themes/' . \$env['app.theme'] . '/' . '{$path}'); ?>";
             }
         );
 
         Builder::macro(
             'withEnvTenantContext',
-            function (string $table = null) {
+            function (?string $table = null) {
                 $tenantId = \config('app.tenant_id');
 
                 if ($tenantId) {
-                    /** @var Builder $this */
-                    return $this->where(($table ? "$table." : "") . "tenant_id", $tenantId);
+                    // @var Builder $this
+                    return $this->where(($table ? "{$table}." : "") . "tenant_id", $tenantId);
                 }
 
-                /** @var Builder $this */
-                return $this->whereNull(($table ? "$table." : "") . "tenant_id");
+                // @var Builder $this
+                return $this->whereNull(($table ? "{$table}." : "") . "tenant_id");
             }
         );
 
         Builder::macro(
             'withObjectTenantContext',
-            function (object $object, string $table = null) {
+            function (object $object, ?string $table = null) {
                 $tenantId = $object->tenant_id;
 
                 if ($tenantId) {
-                    /** @var Builder $this */
-                    return $this->where(($table ? "$table." : "") . "tenant_id", $tenantId);
+                    // @var Builder $this
+                    return $this->where(($table ? "{$table}." : "") . "tenant_id", $tenantId);
                 }
 
-                /** @var Builder $this */
-                return $this->whereNull(($table ? "$table." : "") . "tenant_id");
+                // @var Builder $this
+                return $this->whereNull(($table ? "{$table}." : "") . "tenant_id");
             }
         );
 
         Builder::macro(
             'withSubjectTenantContext',
-            function (string $table = null) {
+            function (?string $table = null) {
                 if ($user = auth()->user()) {
                     $tenantId = $user->tenant_id;
                 } else {
@@ -143,18 +202,18 @@ class AppServiceProvider extends ServiceProvider
                 }
 
                 if ($tenantId) {
-                    /** @var Builder $this */
-                    return $this->where(($table ? "$table." : "") . "tenant_id", $tenantId);
+                    // @var Builder $this
+                    return $this->where(($table ? "{$table}." : "") . "tenant_id", $tenantId);
                 }
 
-                /** @var Builder $this */
-                return $this->whereNull(($table ? "$table." : "") . "tenant_id");
+                // @var Builder $this
+                return $this->whereNull(($table ? "{$table}." : "") . "tenant_id");
             }
         );
 
         Http::macro('withSlowLog', function () {
             return Http::withOptions([
-                'on_stats' => function (\GuzzleHttp\TransferStats $stats) {
+                'on_stats' => static function (TransferStats $stats) {
                     $threshold = \config('logging.slow_log');
                     if ($threshold && ($sec = $stats->getTransferTime()) > $threshold) {
                         $url = $stats->getEffectiveUri();

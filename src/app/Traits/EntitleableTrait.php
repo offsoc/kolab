@@ -3,8 +3,13 @@
 namespace App\Traits;
 
 use App\Entitlement;
+use App\Package;
 use App\Sku;
+use App\Transaction;
+use App\User;
 use App\Wallet;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 trait EntitleableTrait
@@ -12,12 +17,12 @@ trait EntitleableTrait
     /**
      * Assign a package to an entitleable object. It should not have any existing entitlements.
      *
-     * @param \App\Package $package The package
-     * @param \App\Wallet  $wallet  The wallet
+     * @param Package $package The package
+     * @param Wallet  $wallet  The wallet
      *
      * @return $this
      */
-    public function assignPackageAndWallet(\App\Package $package, Wallet $wallet)
+    public function assignPackageAndWallet(Package $package, Wallet $wallet)
     {
         // TODO: There should be some sanity checks here. E.g. not package can be
         // assigned to any entitleable, but we don't really have package types.
@@ -25,12 +30,12 @@ trait EntitleableTrait
         foreach ($package->skus as $sku) {
             for ($i = $sku->pivot->qty; $i > 0; $i--) {
                 Entitlement::create([
-                        'wallet_id' => $wallet->id,
-                        'sku_id' => $sku->id,
-                        'cost' => $sku->pivot->cost(),
-                        'fee' => $sku->pivot->fee(),
-                        'entitleable_id' => $this->id,
-                        'entitleable_type' => self::class
+                    'wallet_id' => $wallet->id,
+                    'sku_id' => $sku->id,
+                    'cost' => $sku->pivot->cost(),
+                    'fee' => $sku->pivot->fee(),
+                    'entitleable_id' => $this->id,
+                    'entitleable_type' => self::class,
                 ]);
             }
         }
@@ -41,11 +46,12 @@ trait EntitleableTrait
     /**
      * Assign a SKU to an entitleable object.
      *
-     * @param \App\Sku     $sku    The sku to assign.
-     * @param int          $count  Count of entitlements to add
-     * @param ?\App\Wallet $wallet The wallet to use when objects's wallet is unknown
+     * @param Sku     $sku    the sku to assign
+     * @param int     $count  Count of entitlements to add
+     * @param ?Wallet $wallet The wallet to use when objects's wallet is unknown
      *
      * @return $this
+     *
      * @throws \Exception
      */
     public function assignSku(Sku $sku, int $count = 1, $wallet = null)
@@ -67,7 +73,7 @@ trait EntitleableTrait
                 'cost' => $exists >= $sku->units_free ? $sku->cost : 0,
                 'fee' => $exists >= $sku->units_free ? $sku->fee : 0,
                 'entitleable_id' => $this->id,
-                'entitleable_type' => self::class
+                'entitleable_type' => self::class,
             ]);
 
             $exists++;
@@ -80,10 +86,11 @@ trait EntitleableTrait
     /**
      * Assign the object to a wallet.
      *
-     * @param \App\Wallet $wallet The wallet
-     * @param ?string     $title  Optional SKU title
+     * @param Wallet  $wallet The wallet
+     * @param ?string $title  Optional SKU title
      *
      * @return $this
+     *
      * @throws \Exception
      */
     public function assignToWallet(Wallet $wallet, $title = null)
@@ -111,7 +118,7 @@ trait EntitleableTrait
             'cost' => $exists >= $sku->units_free ? $sku->cost : 0,
             'fee' => $exists >= $sku->units_free ? $sku->fee : 0,
             'entitleable_id' => $this->id,
-            'entitleable_type' => self::class
+            'entitleable_type' => self::class,
         ]);
 
         return $this;
@@ -123,7 +130,7 @@ trait EntitleableTrait
     protected static function bootEntitleableTrait()
     {
         // Soft-delete and force-delete object's entitlements on object's delete
-        static::deleting(function ($model) {
+        static::deleting(static function ($model) {
             $force = $model->isForceDeleting();
             $entitlements = $model->entitlements();
 
@@ -132,7 +139,7 @@ trait EntitleableTrait
             }
 
             $list = $entitlements->get()
-                ->map(function ($entitlement) use ($force) {
+                ->map(static function ($entitlement) use ($force) {
                     if ($force) {
                         $entitlement->forceDelete();
                     } else {
@@ -144,14 +151,14 @@ trait EntitleableTrait
 
             // Remove transactions, they have no foreign key constraint
             if ($force && !empty($list)) {
-                \App\Transaction::where('object_type', \App\Entitlement::class)
+                Transaction::where('object_type', Entitlement::class)
                     ->whereIn('object_id', $list)
                     ->delete();
             }
         });
 
         // Restore object's entitlements on restore
-        static::restored(function ($model) {
+        static::restored(static function ($model) {
             $model->restoreEntitlements();
         });
     }
@@ -177,7 +184,7 @@ trait EntitleableTrait
     /**
      * Entitlements for this object.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Entitlement, $this>
+     * @return HasMany<Entitlement, $this>
      */
     public function entitlements()
     {
@@ -200,8 +207,8 @@ trait EntitleableTrait
     /**
      * Remove a number of entitlements for the SKU.
      *
-     * @param \App\Sku $sku   The SKU
-     * @param int      $count The number of entitlements to remove
+     * @param Sku $sku   The SKU
+     * @param int $count The number of entitlements to remove
      *
      * @return $this
      */
@@ -241,7 +248,7 @@ trait EntitleableTrait
         $deleted_at = $this->entitlements()->withTrashed()->max('deleted_at');
 
         if ($deleted_at) {
-            $threshold = (new \Carbon\Carbon($deleted_at))->subMinute();
+            $threshold = (new Carbon($deleted_at))->subMinute();
 
             // Restore object entitlements
             $this->entitlements()->withTrashed()
@@ -257,9 +264,9 @@ trait EntitleableTrait
     /**
      * Find the SKU object by title. Use current object's tenant context.
      *
-     * @param string $title SKU title.
+     * @param string $title SKU title
      *
-     * @return ?\App\Sku A SKU object
+     * @return ?Sku A SKU object
      */
     protected function skuByTitle(string $title): ?Sku
     {
@@ -296,7 +303,7 @@ trait EntitleableTrait
     /**
      * Returns the wallet by which the object is controlled
      *
-     * @return ?\App\Wallet A wallet object
+     * @return ?Wallet A wallet object
      */
     public function wallet(): ?Wallet
     {
@@ -308,7 +315,7 @@ trait EntitleableTrait
 
         // TODO: No entitlement should not happen, but in tests we have
         //       such cases, so we fallback to the user's wallet in this case
-        if ($this instanceof \App\User) {
+        if ($this instanceof User) {
             return $this->wallets()->first();
         }
 
@@ -318,14 +325,14 @@ trait EntitleableTrait
     /**
      * Return the owner of the wallet (account) this entitleable is assigned to
      *
-     * @return ?\App\User Account owner
+     * @return ?User Account owner
      */
-    public function walletOwner(): ?\App\User
+    public function walletOwner(): ?User
     {
         $wallet = $this->wallet();
 
         if ($wallet) {
-            if ($this instanceof \App\User && $wallet->user_id == $this->id) {
+            if ($this instanceof User && $wallet->user_id == $this->id) {
                 return $this;
             }
 

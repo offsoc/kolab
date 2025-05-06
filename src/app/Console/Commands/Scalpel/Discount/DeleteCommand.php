@@ -3,6 +3,7 @@
 namespace App\Console\Commands\Scalpel\Discount;
 
 use App\Console\ObjectDeleteCommand;
+use App\Discount;
 
 class DeleteCommand extends ObjectDeleteCommand
 {
@@ -10,7 +11,7 @@ class DeleteCommand extends ObjectDeleteCommand
     protected $hidden = true;
 
     protected $commandPrefix = 'scalpel';
-    protected $objectClass = \App\Discount::class;
+    protected $objectClass = Discount::class;
     protected $objectName = 'discount';
-    protected $objectTitle = null;
+    protected $objectTitle;
 }

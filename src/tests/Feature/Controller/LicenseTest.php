@@ -7,10 +7,7 @@ use Tests\TestCase;
 
 class LicenseTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -18,10 +15,7 @@ class LicenseTest extends TestCase
         $user->licenses()->delete();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $user = $this->getTestUser('john@kolab.org');
         $user->licenses()->delete();
@@ -42,9 +36,9 @@ class LicenseTest extends TestCase
         $response->assertStatus(401);
 
         $license = License::create([
-                'key' => (string) microtime(true),
-                'type' => 'test',
-                'tenant_id' => $user->tenant_id,
+            'key' => (string) microtime(true),
+            'type' => 'test',
+            'tenant_id' => $user->tenant_id,
         ]);
 
         // Unknow type
@@ -70,7 +64,7 @@ class LicenseTest extends TestCase
         $this->assertSame($license->type, $json['list'][0]['type']);
 
         $license->refresh();
-        $this->assertEquals($user->id, $license->user_id);
+        $this->assertSame($user->id, $license->user_id);
 
         // Try again with assigned license
         $response = $this->actingAs($user)->get("api/v4/license/test");
@@ -83,6 +77,6 @@ class LicenseTest extends TestCase
         $this->assertFalse($json['hasMore']);
         $this->assertSame($license->key, $json['list'][0]['key']);
         $this->assertSame($license->type, $json['list'][0]['type']);
-        $this->assertEquals($user->id, $license->user_id);
+        $this->assertSame($user->id, $license->user_id);
     }
 }

@@ -24,7 +24,7 @@ class EntitlementsTest extends TestCase
         $output = trim(\Artisan::output());
 
         $this->assertSame(0, $code);
-        $this->assertTrue(strpos($output, "john@kolab.org (mailbox) 5,00 CHF") !== false);
-        $this->assertTrue(strpos($output, "john@kolab.org (groupware) 4,90 CHF") !== false);
+        $this->assertTrue(str_contains($output, "john@kolab.org (mailbox) 5,00 CHF"));
+        $this->assertTrue(str_contains($output, "john@kolab.org (groupware) 4,90 CHF"));
     }
 }

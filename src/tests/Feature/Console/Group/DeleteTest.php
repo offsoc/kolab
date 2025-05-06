@@ -8,10 +8,7 @@ use Tests\TestCase;
 
 class DeleteTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -19,10 +16,7 @@ class DeleteTest extends TestCase
         $this->deleteTestUser('group-owner@kolabnow.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestGroup('group-test@kolabnow.com');
         $this->deleteTestUser('group-owner@kolabnow.com');

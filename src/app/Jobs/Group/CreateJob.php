@@ -2,14 +2,14 @@
 
 namespace App\Jobs\Group;
 
+use App\Group;
 use App\Jobs\GroupJob;
+use App\Support\Facades\LDAP;
 
 class CreateJob extends GroupJob
 {
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle()
     {
@@ -20,12 +20,12 @@ class CreateJob extends GroupJob
         }
 
         if (\config('app.with_ldap') && !$group->isLdapReady()) {
-            \App\Support\Facades\LDAP::createGroup($group);
+            LDAP::createGroup($group);
 
-            $group->status |= \App\Group::STATUS_LDAP_READY;
+            $group->status |= Group::STATUS_LDAP_READY;
         }
 
-        $group->status |= \App\Group::STATUS_ACTIVE;
+        $group->status |= Group::STATUS_ACTIVE;
         $group->save();
     }
 }

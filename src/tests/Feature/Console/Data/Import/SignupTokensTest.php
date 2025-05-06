@@ -8,10 +8,7 @@ use Tests\TestCase;
 
 class SignupTokensTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -19,10 +16,7 @@ class SignupTokensTest extends TestCase
         SignupToken::truncate();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         Plan::where('title', 'test')->delete();
         SignupToken::truncate();
@@ -55,10 +49,10 @@ class SignupTokensTest extends TestCase
         $this->assertSame("The plan is not for tokens", $output);
 
         $plan = Plan::create([
-                'title' => 'test',
-                'name' => 'Test Account',
-                'description' => 'Test',
-                'mode' => Plan::MODE_TOKEN,
+            'title' => 'test',
+            'name' => 'Test Account',
+            'description' => 'Test',
+            'mode' => Plan::MODE_TOKEN,
         ]);
 
         // Non-existent input file

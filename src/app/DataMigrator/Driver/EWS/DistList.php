@@ -11,7 +11,7 @@ class DistList extends Item
 {
     public const FOLDER_TYPE = 'IPF.Contact';
     // public const TYPE        = 'IPM.DistList';
-    public const FILE_EXT    = 'vcf';
+    public const FILE_EXT = 'vcf';
 
     /**
      * Get GetItem request parameters
@@ -44,7 +44,7 @@ class DistList extends Item
         $vcard = "BEGIN:VCARD\r\nVERSION:4.0\r\nPRODID:Kolab EWS Data Migrator\r\n";
 
         foreach ($data as $key => $prop) {
-            $vcard .= $this->formatProp($key, $prop[0], isset($prop[1]) ? $prop[1] : []);
+            $vcard .= $this->formatProp($key, $prop[0], $prop[1] ?? []);
         }
 
         // Process list members

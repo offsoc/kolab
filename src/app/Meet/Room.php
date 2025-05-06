@@ -2,6 +2,7 @@
 
 namespace App\Meet;
 
+use App\Permission;
 use App\Traits\BelongsToTenantTrait;
 use App\Traits\EntitleableTrait;
 use App\Traits\Meet\RoomConfigTrait;
@@ -26,10 +27,10 @@ class Room extends Model
 {
     use BelongsToTenantTrait;
     use EntitleableTrait;
-    use RoomConfigTrait;
     use NullableFields;
-    use SettingsTrait;
     use PermissibleTrait;
+    use RoomConfigTrait;
+    use SettingsTrait;
     use SoftDeletes;
 
     public const ROLE_SUBSCRIBER = 1 << 0;
@@ -60,7 +61,7 @@ class Room extends Model
     /**
      * Creates HTTP client for connections to Meet server
      *
-     * @return HTTP client instance
+     * @return Http client instance
      */
     private function client()
     {
@@ -97,6 +98,7 @@ class Room extends Model
      * @param int $role User role (see self::ROLE_* constants)
      *
      * @return array|null Token data on success, NULL otherwise
+     *
      * @throws \Exception if session does not exist
      */
     public function getSessionToken($role = self::ROLE_SUBSCRIBER): ?array
@@ -219,6 +221,7 @@ class Room extends Model
      * @param int    $target Limit targets by their participant role
      *
      * @return bool True on success, False on failure
+     *
      * @throws \Exception if session does not exist
      */
     public function signal(string $name, array $data = [], $target = null): bool
@@ -229,9 +232,9 @@ class Room extends Model
 
         $post = [
             'roomId' => $this->session_id,
-            'type'   => $name,
-            'role'   => $target,
-            'data'   => $data,
+            'type' => $name,
+            'role' => $target,
+            'data' => $data,
         ];
 
         $response = $this->client()->post('signal', $post);
@@ -249,7 +252,7 @@ class Room extends Model
     protected function supportedACL(): array
     {
         return [
-            'full' => \App\Permission::READ | \App\Permission::WRITE | \App\Permission::ADMIN,
+            'full' => Permission::READ | Permission::WRITE | Permission::ADMIN,
         ];
     }
 
@@ -273,7 +276,7 @@ class Room extends Model
     {
         $code = $response->status();
         if ($code != 200) {
-            \Log::error("$str [$code]");
+            \Log::error("{$str} [{$code}]");
         }
     }
 }

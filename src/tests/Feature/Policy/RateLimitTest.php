@@ -2,11 +2,12 @@
 
 namespace Tests\Feature\Policy;
 
+use App\Discount;
+use App\Domain;
 use App\Policy\RateLimit;
 use App\Policy\Response;
 use App\Transaction;
 use App\User;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
@@ -14,7 +15,7 @@ use Tests\TestCase;
  */
 class RateLimitTest extends TestCase
 {
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -24,7 +25,7 @@ class RateLimitTest extends TestCase
         Transaction::query()->delete();
     }
 
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         RateLimit::query()->delete();
         Transaction::query()->delete();
@@ -47,8 +48,8 @@ class RateLimitTest extends TestCase
         // Verify a whitelisted individual account is in fact whitelisted
         RateLimit::truncate();
         RateLimit\Whitelist::create([
-                'whitelistable_id' => $this->publicDomainUser->id,
-                'whitelistable_type' => User::class
+            'whitelistable_id' => $this->publicDomainUser->id,
+            'whitelistable_type' => User::class,
         ]);
 
         // first 9 requests
@@ -151,7 +152,7 @@ class RateLimitTest extends TestCase
         // Verify a 100% discount for individual account does not simply run out of messages
         RateLimit::truncate();
         $wallet = $this->publicDomainUser->wallets()->first();
-        $wallet->discount()->associate(\App\Discount::where('description', 'Free Account')->first());
+        $wallet->discount()->associate(Discount::where('description', 'Free Account')->first());
         $wallet->save();
 
         // first 9 requests
@@ -396,13 +397,13 @@ class RateLimitTest extends TestCase
         // Verify a whitelisted group domain is in fact whitelisted
         RateLimit::truncate();
         RateLimit\Whitelist::create([
-                'whitelistable_id' => $this->domainHosted->id,
-                'whitelistable_type' => \App\Domain::class
+            'whitelistable_id' => $this->domainHosted->id,
+            'whitelistable_type' => Domain::class,
         ]);
 
         $request = [
             'sender' => $this->domainUsers[0]->email,
-            'recipients' => []
+            'recipients' => [],
         ];
 
         // first 9 requests

@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Http\Controllers\Controller;
-use App\Jobs\Mail\SignupVerificationJob;
 use App\Discount;
 use App\Domain;
+use App\Group;
+use App\Http\Controllers\Controller;
+use App\Jobs\Mail\SignupVerificationJob;
+use App\Payment;
 use App\Plan;
 use App\Providers\PaymentProvider;
 use App\ReferralCode;
@@ -22,6 +24,7 @@ use App\Tenant;
 use App\User;
 use App\Utils;
 use App\VatRate;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -35,9 +38,9 @@ class SignupController extends Controller
     /**
      * Returns plans definitions for signup.
      *
-     * @param \Illuminate\Http\Request $request HTTP request
+     * @param Request $request HTTP request
      *
-     * @return \Illuminate\Http\JsonResponse JSON response
+     * @return JsonResponse JSON response
      */
     public function plans(Request $request)
     {
@@ -46,9 +49,9 @@ class SignupController extends Controller
         $plans = Plan::withEnvTenantContext()->where('hidden', false)
             ->orderBy('months')->orderByDesc('title')
             ->get()
-            ->map(function ($plan) {
+            ->map(static function ($plan) {
                 $button = self::trans("app.planbutton-{$plan->title}");
-                if (strpos($button, 'app.planbutton') !== false) {
+                if (str_contains($button, 'app.planbutton')) {
                     $button = self::trans('app.planbutton', ['plan' => $plan->name]);
                 }
 
@@ -69,9 +72,9 @@ class SignupController extends Controller
     /**
      * Returns list of public domains for signup.
      *
-     * @param \Illuminate\Http\Request $request HTTP request
+     * @param Request $request HTTP request
      *
-     * @return \Illuminate\Http\JsonResponse JSON response
+     * @return JsonResponse JSON response
      */
     public function domains(Request $request)
     {
@@ -84,9 +87,9 @@ class SignupController extends Controller
      * Verifies user name and email/phone, sends verification email/sms message.
      * Returns the verification code.
      *
-     * @param \Illuminate\Http\Request $request HTTP request
+     * @param Request $request HTTP request
      *
-     * @return \Illuminate\Http\JsonResponse JSON response
+     * @return JsonResponse JSON response
      */
     public function init(Request $request)
     {
@@ -115,12 +118,12 @@ class SignupController extends Controller
 
         // Generate the verification code
         $code = SignupCode::create([
-                'email' => $plan->mode == Plan::MODE_TOKEN ? $request->token : $request->email,
-                'first_name' => $request->first_name,
-                'last_name' => $request->last_name,
-                'plan' => $plan->title,
-                'voucher' => $request->voucher,
-                'referral' => $request->referral,
+            'email' => $plan->mode == Plan::MODE_TOKEN ? $request->token : $request->email,
+            'first_name' => $request->first_name,
+            'last_name' => $request->last_name,
+            'plan' => $plan->title,
+            'voucher' => $request->voucher,
+            'referral' => $request->referral,
         ]);
 
         $response = [
@@ -147,7 +150,7 @@ class SignupController extends Controller
      *
      * @param string $id Signup invitation identifier
      *
-     * @return \Illuminate\Http\JsonResponse|void
+     * @return JsonResponse|void
      */
     public function invitation($id)
     {
@@ -165,10 +168,10 @@ class SignupController extends Controller
     /**
      * Validation of the verification code.
      *
-     * @param \Illuminate\Http\Request $request HTTP request
-     * @param bool                     $update  Update the signup code record
+     * @param Request $request HTTP request
+     * @param bool    $update  Update the signup code record
      *
-     * @return \Illuminate\Http\JsonResponse JSON response
+     * @return JsonResponse JSON response
      */
     public function verify(Request $request, $update = true)
     {
@@ -216,21 +219,21 @@ class SignupController extends Controller
         // Return user name and email/phone/voucher from the codes database,
         // domains list for selection and "plan type" flag
         return response()->json([
-                'status' => 'success',
-                'email' => $code->email,
-                'first_name' => $code->first_name,
-                'last_name' => $code->last_name,
-                'voucher' => $code->voucher,
-                'is_domain' => $plan->hasDomain(),
+            'status' => 'success',
+            'email' => $code->email,
+            'first_name' => $code->first_name,
+            'last_name' => $code->last_name,
+            'voucher' => $code->voucher,
+            'is_domain' => $plan->hasDomain(),
         ]);
     }
 
     /**
      * Validates the input to the final signup request.
      *
-     * @param \Illuminate\Http\Request $request HTTP request
+     * @param Request $request HTTP request
      *
-     * @return \Illuminate\Http\JsonResponse JSON response
+     * @return JsonResponse JSON response
      */
     public function signupValidate(Request $request)
     {
@@ -344,9 +347,9 @@ class SignupController extends Controller
     /**
      * Finishes the signup process by creating the user account.
      *
-     * @param \Illuminate\Http\Request $request HTTP request
+     * @param Request $request HTTP request
      *
-     * @return \Illuminate\Http\JsonResponse JSON response
+     * @return JsonResponse JSON response
      */
     public function signup(Request $request)
     {
@@ -376,16 +379,16 @@ class SignupController extends Controller
         // Create domain record
         if ($is_domain && !Domain::withTrashed()->where('namespace', $domain_name)->exists()) {
             $domain = Domain::create([
-                    'namespace' => $domain_name,
-                    'type' => Domain::TYPE_EXTERNAL,
+                'namespace' => $domain_name,
+                'type' => Domain::TYPE_EXTERNAL,
             ]);
         }
 
         // Create user record
         $user = User::create([
-                'email' => $login . '@' . $domain_name,
-                'password' => $request->password,
-                'status' => $user_status,
+            'email' => $login . '@' . $domain_name,
+            'password' => $request->password,
+            'status' => $user_status,
         ]);
 
         if ($request->discount) {
@@ -455,11 +458,11 @@ class SignupController extends Controller
      * Collects some content to display to the user before redirect to a checkout page.
      * Optionally creates a recurrent payment mandate for specified user/plan.
      */
-    protected function mandateForPlan(Plan $plan, Discount $discount = null, User $user = null): array
+    protected function mandateForPlan(Plan $plan, ?Discount $discount = null, ?User $user = null): array
     {
         $result = [];
 
-        $min = \App\Payment::MIN_AMOUNT;
+        $min = Payment::MIN_AMOUNT;
         $planCost = $cost = $plan->cost();
         $disc = 0;
 
@@ -534,9 +537,9 @@ class SignupController extends Controller
             // TODO: app.vat.mode
             $vat = (int) round($planCost * $rate->rate / 100);
             $content = self::trans('app.vat-incl', [
-                    'rate' => Utils::percent($rate->rate),
-                    'cost' => Utils::money($planCost - $vat, $currency),
-                    'vat' => Utils::money($vat, $currency),
+                'rate' => Utils::percent($rate->rate),
+                'cost' => Utils::money($planCost - $vat, $currency),
+                'vat' => Utils::money($vat, $currency),
             ]);
 
             $summary .= '<tr class="vat-summary"><td colspan="2">*' . $content . '</td></tr>';
@@ -559,7 +562,7 @@ class SignupController extends Controller
     /**
      * Returns plan for the signup process
      *
-     * @param \Illuminate\Http\Request $request HTTP request
+     * @param Request $request HTTP request
      *
      * @returns \App\Plan Plan object selected for current signup process
      */
@@ -631,7 +634,7 @@ class SignupController extends Controller
 
         // Check if user with specified login already exists
         $email = $login . '@' . $namespace;
-        if (User::emailExists($email) || User::aliasExists($email) || \App\Group::emailExists($email)) {
+        if (User::emailExists($email) || User::aliasExists($email) || Group::emailExists($email)) {
             return ['login' => self::trans('validation.loginexists')];
         }
 

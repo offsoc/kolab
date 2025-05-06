@@ -4,18 +4,15 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up()
     {
         Schema::create(
             'eventlog',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->string('id', 36)->primary();
                 $table->string('object_id', 36);
                 $table->string('object_type', 36);
@@ -33,8 +30,6 @@ return new class extends Migration
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
     public function down()
     {

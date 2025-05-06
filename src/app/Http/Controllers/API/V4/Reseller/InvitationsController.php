@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\V4\Reseller;
 
 use App\Http\Controllers\Controller;
 use App\SignupInvitation;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -12,7 +13,7 @@ class InvitationsController extends Controller
     /**
      * Show the form for creating a new resource.
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function create()
     {
@@ -24,7 +25,7 @@ class InvitationsController extends Controller
      *
      * @param int $id Invitation identifier
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function destroy($id)
     {
@@ -37,8 +38,8 @@ class InvitationsController extends Controller
         $invitation->delete();
 
         return response()->json([
-                'status' => 'success',
-                'message' => self::trans('app.signup-invitation-delete-success'),
+            'status' => 'success',
+            'message' => self::trans('app.signup-invitation-delete-success'),
         ]);
     }
 
@@ -47,7 +48,7 @@ class InvitationsController extends Controller
      *
      * @param int $id Invitation identifier
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function edit($id)
     {
@@ -57,13 +58,13 @@ class InvitationsController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function index()
     {
         $pageSize = 10;
         $search = request()->input('search');
-        $page = intval(request()->input('page')) ?: 1;
+        $page = (int) (request()->input('page')) ?: 1;
         $hasMore = false;
 
         $result = SignupInvitation::withSubjectTenantContext()
@@ -91,11 +92,11 @@ class InvitationsController extends Controller
         });
 
         return response()->json([
-                'status' => 'success',
-                'list' => $result,
-                'count' => count($result),
-                'hasMore' => $hasMore,
-                'page' => $page,
+            'status' => 'success',
+            'list' => $result,
+            'count' => count($result),
+            'hasMore' => $hasMore,
+            'page' => $page,
         ]);
     }
 
@@ -104,7 +105,7 @@ class InvitationsController extends Controller
      *
      * @param int $id Invitation identifier
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function resend($id)
     {
@@ -121,18 +122,16 @@ class InvitationsController extends Controller
         }
 
         return response()->json([
-                'status' => 'success',
-                'message' => self::trans('app.signup-invitation-resend-success'),
-                'invitation' => $this->invitationToArray($invitation),
+            'status' => 'success',
+            'message' => self::trans('app.signup-invitation-resend-success'),
+            'invitation' => $this->invitationToArray($invitation),
         ]);
     }
 
     /**
      * Store a newly created resource in storage.
      *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function store(Request $request)
     {
@@ -207,9 +206,9 @@ class InvitationsController extends Controller
         }
 
         return response()->json([
-                'status' => 'success',
-                'message' => \trans_choice('app.signup-invitations-created', $count, ['count' => $count]),
-                'count' => $count,
+            'status' => 'success',
+            'message' => \trans_choice('app.signup-invitations-created', $count, ['count' => $count]),
+            'count' => $count,
         ]);
     }
 
@@ -218,7 +217,7 @@ class InvitationsController extends Controller
      *
      * @param int $id Invitation identifier
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function show($id)
     {
@@ -228,10 +227,9 @@ class InvitationsController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param \Illuminate\Http\Request $request
-     * @param int                      $id
+     * @param int $id
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function update(Request $request, $id)
     {
@@ -241,9 +239,7 @@ class InvitationsController extends Controller
     /**
      * Convert an invitation object to an array for output
      *
-     * @param \App\SignupInvitation $invitation The signup invitation object
-     *
-     * @return array
+     * @param SignupInvitation $invitation The signup invitation object
      */
     protected static function invitationToArray(SignupInvitation $invitation): array
     {

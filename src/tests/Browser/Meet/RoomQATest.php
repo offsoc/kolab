@@ -9,16 +9,13 @@ use Tests\TestCaseDusk;
 
 class RoomQATest extends TestCaseDusk
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         $this->resetTestRoom();
     }
 
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->resetTestRoom();
         parent::tearDown();
@@ -31,7 +28,7 @@ class RoomQATest extends TestCaseDusk
      */
     public function testQA(): void
     {
-        $this->browse(function (Browser $owner, Browser $guest1, Browser $guest2) {
+        $this->browse(static function (Browser $owner, Browser $guest1, Browser $guest2) {
             // Join the room as an owner (authenticate)
             $owner->visit(new RoomPage('john'))
                 ->click('@setup-button')
@@ -95,7 +92,7 @@ class RoomQATest extends TestCaseDusk
 
             // Demote the guest (2) to subscriber, assert Hand button in toolbar
             $owner->click('@session div.meet-video .meet-nickname')
-                ->whenAvailable('@session div.meet-video .dropdown-menu', function ($browser) {
+                ->whenAvailable('@session div.meet-video .dropdown-menu', static function ($browser) {
                     $browser->click('.action-role-publisher input');
                 });
 
@@ -111,7 +108,7 @@ class RoomQATest extends TestCaseDusk
             $owner->waitFor('@queue .dropdown:not(.self)')
                 ->pause(8000) // wait until it's not moving, otherwise click() will fail
                 ->click('@queue .dropdown:not(.self)')
-                ->whenAvailable('@queue .dropdown:not(.self) .dropdown-menu', function ($browser) {
+                ->whenAvailable('@queue .dropdown:not(.self) .dropdown-menu', static function ($browser) {
                     $browser->click('.action-role-publisher input');
                 })
                 ->waitUntilMissing('@queue .dropdown:not(.self)')
@@ -126,7 +123,7 @@ class RoomQATest extends TestCaseDusk
 
             // Finally, do the same with the owner (last in the queue)
             $owner->click('@queue .dropdown.self')
-                ->whenAvailable('@queue .dropdown.self .dropdown-menu', function ($browser) {
+                ->whenAvailable('@queue .dropdown.self .dropdown-menu', static function ($browser) {
                     $browser->click('.action-role-publisher input');
                 })
                 ->waitUntilMissing('@queue')

@@ -4,18 +4,15 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-// phpcs:ignore
 class CompanionAppUuidsOauthClient extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up()
     {
         Schema::dropIfExists('companion_apps');
-        Schema::create('companion_apps', function (Blueprint $table) {
+        Schema::create('companion_apps', static function (Blueprint $table) {
             $table->string('id', 36);
             $table->string('oauth_client_id', 36)->nullable();
             $table->bigInteger('user_id');
@@ -36,20 +33,18 @@ class CompanionAppUuidsOauthClient extends Migration
                 ->onUpdate('cascade');
 
             $table->foreign('oauth_client_id')
-                  ->references('id')->on('oauth_clients')
-                  ->onDelete('set null');
+                ->references('id')->on('oauth_clients')
+                ->onDelete('set null');
         });
     }
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
     public function down()
     {
         Schema::dropIfExists('companion_apps');
-        Schema::create('companion_apps', function (Blueprint $table) {
+        Schema::create('companion_apps', static function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->bigInteger('user_id');
             // Seems to grow over time, no clear specification.

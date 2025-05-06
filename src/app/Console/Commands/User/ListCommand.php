@@ -3,10 +3,12 @@
 namespace App\Console\Commands\User;
 
 use App\Console\ObjectListCommand;
+use App\Payment;
+use App\User;
 
 class ListCommand extends ObjectListCommand
 {
-    protected $objectClass = \App\User::class;
+    protected $objectClass = User::class;
     protected $objectName = 'user';
     protected $objectTitle = 'email';
 
@@ -24,16 +26,16 @@ class ListCommand extends ObjectListCommand
         if (preg_match('/^(with|without)-payment/i', $filter, $matches)) {
             $method = strtolower($matches[1]) == 'with' ? 'whereIn' : 'whereNotIn';
 
-            return $query->whereIn('id', function ($query) use ($method) {
+            return $query->whereIn('id', static function ($query) use ($method) {
                 // all user IDs from the entitlements
                 $query->select('entitleable_id')->distinct()
                     ->from('entitlements')
-                    ->where('entitleable_type', \App\User::class)
-                    ->{$method}('wallet_id', function ($query) {
+                    ->where('entitleable_type', User::class)
+                    ->{$method}('wallet_id', static function ($query) {
                         // wallets with a PAID payment
                         $query->select('wallet_id')->distinct()
                             ->from('payments')
-                            ->where('status', \App\Payment::STATUS_PAID);
+                            ->where('status', Payment::STATUS_PAID);
                     });
             });
         }

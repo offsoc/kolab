@@ -4,6 +4,7 @@ namespace Tests\Unit;
 
 use App\SharedFolder;
 use Tests\TestCase;
+use Tests\Utils;
 
 class SharedFolderTest extends TestCase
 {
@@ -20,7 +21,7 @@ class SharedFolderTest extends TestCase
             SharedFolder::STATUS_IMAP_READY,
         ];
 
-        $folders = \Tests\Utils::powerSet($statuses);
+        $folders = Utils::powerSet($statuses);
 
         $folder = new SharedFolder(['name' => 'test']);
 

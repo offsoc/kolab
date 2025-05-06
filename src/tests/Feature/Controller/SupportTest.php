@@ -2,7 +2,8 @@
 
 namespace Tests\Feature\Controller;
 
-use App\Http\Controllers\API\SupportController;
+use Symfony\Component\Mailer\SentMessage;
+use Symfony\Component\Mime\Email;
 use Tests\TestCase;
 
 class SupportTest extends TestCase
@@ -94,14 +95,14 @@ class SupportTest extends TestCase
     /**
      * Get all messages that have been sent
      *
-     * @return \Symfony\Component\Mime\Email[]
+     * @return Email[]
      */
     protected function getSentMessages(): array
     {
         $transport = $this->app->make('mail.manager')->mailer()->getSymfonyTransport();
 
         return $this->getObjectProperty($transport, 'messages')
-            ->map(function (\Symfony\Component\Mailer\SentMessage $item) {
+            ->map(static function (SentMessage $item) {
                 return $item->getOriginalMessage();
             })
             ->all();

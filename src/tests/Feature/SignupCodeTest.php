@@ -10,8 +10,6 @@ class SignupCodeTest extends TestCase
 {
     /**
      * Test SignupCode creation
-     *
-     * @return void
      */
     public function testSignupCodeCreate()
     {
@@ -19,7 +17,7 @@ class SignupCodeTest extends TestCase
             'email' => 'User@email.org',
         ];
 
-        Carbon::setTestNow(Carbon::createFromDate(2022, 02, 02));
+        Carbon::setTestNow(Carbon::createFromDate(2022, 2, 2));
         $now = Carbon::now();
 
         $code = SignupCode::create($data);

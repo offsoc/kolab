@@ -4,7 +4,7 @@ namespace Tests\Browser\Reseller;
 
 use App\Discount;
 use App\Transaction;
-use App\User;
+use App\Utils;
 use App\Wallet;
 use Carbon\Carbon;
 use Tests\Browser;
@@ -17,10 +17,7 @@ use Tests\TestCaseDusk;
 
 class UserFinancesTest extends TestCaseDusk
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         self::useResellerUrl();
@@ -47,16 +44,16 @@ class UserFinancesTest extends TestCaseDusk
             $page = new UserPage($jack->id);
 
             $browser->visit(new Home())
-                ->submitLogon('reseller@' . \config('app.domain'), \App\Utils::generatePassphrase(), true)
+                ->submitLogon('reseller@' . \config('app.domain'), Utils::generatePassphrase(), true)
                 ->on(new Dashboard())
                 ->visit($page)
                 ->on($page)
                 ->assertSeeIn('@nav #tab-finances', 'Finances')
-                ->with('@user-finances', function (Browser $browser) {
+                ->with('@user-finances', static function (Browser $browser) {
                     $browser->waitUntilMissing('.app-loader')
                         ->assertSeeIn('.card-title:first-child', 'Account balance')
                         ->assertSeeIn('.card-title:first-child .text-success', '0,00 CHF')
-                        ->with('form', function (Browser $browser) {
+                        ->with('form', static function (Browser $browser) {
                             $browser->assertElementsCount('.row', 2)
                                 ->assertSeeIn('.row:nth-child(1) label', 'Discount')
                                 ->assertSeeIn('.row:nth-child(1) #discount span', 'none')
@@ -64,7 +61,7 @@ class UserFinancesTest extends TestCaseDusk
                                 ->assertSeeIn('.row:nth-child(2) a', 'abc');
                         })
                         ->assertSeeIn('h2:nth-of-type(2)', 'Transactions')
-                        ->with('table', function (Browser $browser) {
+                        ->with('table', static function (Browser $browser) {
                             $browser->assertMissing('tbody')
                                 ->assertSeeIn('tfoot td', "There are no transactions for this account.");
                         })
@@ -85,12 +82,12 @@ class UserFinancesTest extends TestCaseDusk
 
             // Create test transactions
             $transaction = Transaction::create([
-                    'user_email' => 'jeroen@jeroen.jeroen',
-                    'object_id' => $wallet->id,
-                    'object_type' => Wallet::class,
-                    'type' => Transaction::WALLET_CREDIT,
-                    'amount' => 100,
-                    'description' => 'Payment',
+                'user_email' => 'jeroen@jeroen.jeroen',
+                'object_id' => $wallet->id,
+                'object_type' => Wallet::class,
+                'type' => Transaction::WALLET_CREDIT,
+                'amount' => 100,
+                'description' => 'Payment',
             ]);
             $transaction->created_at = Carbon::now()->subMonth();
             $transaction->save();
@@ -98,17 +95,17 @@ class UserFinancesTest extends TestCaseDusk
             // Click the managed-by link on Jack's page
             $browser->click('@user-info #manager a')
                 ->on($page)
-                ->with('@user-finances', function (Browser $browser) {
+                ->with('@user-finances', static function (Browser $browser) {
                     $browser->waitUntilMissing('.app-loader')
                         ->assertSeeIn('.card-title:first-child', 'Account balance')
                         ->assertSeeIn('.card-title:first-child .text-danger', '-20,10 CHF')
-                        ->with('form', function (Browser $browser) {
+                        ->with('form', static function (Browser $browser) {
                             $browser->assertElementsCount('.row', 1)
                                 ->assertSeeIn('.row:nth-child(1) label', 'Discount')
                                 ->assertSeeIn('.row:nth-child(1) #discount span', '10% - Test voucher');
                         })
                         ->assertSeeIn('h2:nth-of-type(2)', 'Transactions')
-                        ->with('table', function (Browser $browser) {
+                        ->with('table', static function (Browser $browser) {
                             $browser->assertElementsCount('tbody tr', 2)
                                 ->assertMissing('tfoot');
 
@@ -130,17 +127,17 @@ class UserFinancesTest extends TestCaseDusk
             $browser->click('@nav #tab-users')
                 ->click('@user-users tbody tr:nth-child(4) td:first-child a')
                 ->on($page)
-                ->with('@user-finances', function (Browser $browser) {
+                ->with('@user-finances', static function (Browser $browser) {
                     $browser->waitUntilMissing('.app-loader')
                         ->assertSeeIn('.card-title:first-child', 'Account balance')
                         ->assertSeeIn('.card-title:first-child .text-success', '0,00 CHF')
-                        ->with('form', function (Browser $browser) {
+                        ->with('form', static function (Browser $browser) {
                             $browser->assertElementsCount('.row', 1)
                                 ->assertSeeIn('.row:nth-child(1) label', 'Discount')
                                 ->assertSeeIn('.row:nth-child(1) #discount span', 'none');
                         })
                         ->assertSeeIn('h2:nth-of-type(2)', 'Transactions')
-                        ->with('table', function (Browser $browser) {
+                        ->with('table', static function (Browser $browser) {
                             $browser->assertMissing('tbody')
                                 ->assertSeeIn('tfoot td', "There are no transactions for this account.");
                         })
@@ -164,7 +161,7 @@ class UserFinancesTest extends TestCaseDusk
                 ->waitUntilMissing('@user-finances .app-loader')
                 ->click('@user-finances #discount button')
                 // Test dialog content, and closing it with Cancel button
-                ->with(new Dialog('#discount-dialog'), function (Browser $browser) {
+                ->with(new Dialog('#discount-dialog'), static function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Account discount')
                         ->assertFocused('@body select')
                         ->assertSelected('@body select', '')
@@ -175,7 +172,7 @@ class UserFinancesTest extends TestCaseDusk
                 ->assertMissing('#discount-dialog')
                 ->click('@user-finances #discount button')
                 // Change the discount
-                ->with(new Dialog('#discount-dialog'), function (Browser $browser) {
+                ->with(new Dialog('#discount-dialog'), static function (Browser $browser) {
                     $browser->click('@body select')
                         ->click('@body select option:nth-child(2)')
                         ->click('@button-action');
@@ -183,7 +180,7 @@ class UserFinancesTest extends TestCaseDusk
                 ->assertToast(Toast::TYPE_SUCCESS, 'User wallet updated successfully.')
                 ->assertSeeIn('#discount span', '10% - Test voucher')
                 ->click('@nav #tab-subscriptions')
-                ->with('@user-subscriptions', function (Browser $browser) {
+                ->with('@user-subscriptions', static function (Browser $browser) {
                     $browser->assertSeeIn('table tbody tr:nth-child(1) td:last-child', '4,50 CHF/month¹')
                         ->assertSeeIn('table tbody tr:nth-child(2) td:last-child', '0,00 CHF/month¹')
                         ->assertSeeIn('table tbody tr:nth-child(3) td:last-child', '4,41 CHF/month¹')
@@ -192,7 +189,7 @@ class UserFinancesTest extends TestCaseDusk
                 // Change back to 'none'
                 ->click('@nav #tab-finances')
                 ->click('@user-finances #discount button')
-                ->with(new Dialog('#discount-dialog'), function (Browser $browser) {
+                ->with(new Dialog('#discount-dialog'), static function (Browser $browser) {
                     $browser->click('@body select')
                         ->click('@body select option:nth-child(1)')
                         ->click('@button-action');
@@ -200,7 +197,7 @@ class UserFinancesTest extends TestCaseDusk
                 ->assertToast(Toast::TYPE_SUCCESS, 'User wallet updated successfully.')
                 ->assertSeeIn('#discount span', 'none')
                 ->click('@nav #tab-subscriptions')
-                ->with('@user-subscriptions', function (Browser $browser) {
+                ->with('@user-subscriptions', static function (Browser $browser) {
                     $browser->assertSeeIn('table tbody tr:nth-child(1) td:last-child', '5,00 CHF/month')
                         ->assertSeeIn('table tbody tr:nth-child(2) td:last-child', '0,00 CHF/month')
                         ->assertSeeIn('table tbody tr:nth-child(3) td:last-child', '4,90 CHF/month')
@@ -223,7 +220,7 @@ class UserFinancesTest extends TestCaseDusk
                 ->waitFor('@user-finances #button-award')
                 ->click('@user-finances #button-award')
                 // Test dialog content, and closing it with Cancel button
-                ->with(new Dialog('#oneoff-dialog'), function (Browser $browser) {
+                ->with(new Dialog('#oneoff-dialog'), static function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Add a bonus to the wallet')
                         ->assertFocused('@body input#oneoff_amount')
                         ->assertSeeIn('@body label[for="oneoff_amount"]', 'Amount')
@@ -238,7 +235,7 @@ class UserFinancesTest extends TestCaseDusk
 
             // Test bonus
             $browser->click('@user-finances #button-award')
-                ->with(new Dialog('#oneoff-dialog'), function (Browser $browser) {
+                ->with(new Dialog('#oneoff-dialog'), static function (Browser $browser) {
                     // Test input validation for a bonus
                     $browser->type('@body #oneoff_amount', 'aaa')
                         ->type('@body #oneoff_description', '')
@@ -264,7 +261,7 @@ class UserFinancesTest extends TestCaseDusk
                 ->assertMissing('#oneoff-dialog')
                 ->assertSeeIn('@user-finances .card-title span.text-success', '12,34 CHF')
                 ->waitUntilMissing('.app-loader')
-                ->with('table', function (Browser $browser) {
+                ->with('table', static function (Browser $browser) {
                     $browser->assertElementsCount('tbody tr', 3)
                         ->assertMissing('tfoot')
                         ->assertSeeIn('tbody tr:first-child td.description', 'Bonus: Test bonus')
@@ -280,7 +277,7 @@ class UserFinancesTest extends TestCaseDusk
             // Test penalty
             $browser->click('@user-finances #button-penalty')
                 // Test dialog content, and closing it with Cancel button
-                ->with(new Dialog('#oneoff-dialog'), function (Browser $browser) {
+                ->with(new Dialog('#oneoff-dialog'), static function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Add a penalty to the wallet')
                         ->assertFocused('@body input#oneoff_amount')
                         ->assertSeeIn('@body label[for="oneoff_amount"]', 'Amount')
@@ -293,7 +290,7 @@ class UserFinancesTest extends TestCaseDusk
                 })
                 ->assertMissing('#oneoff-dialog')
                 ->click('@user-finances #button-penalty')
-                ->with(new Dialog('#oneoff-dialog'), function (Browser $browser) {
+                ->with(new Dialog('#oneoff-dialog'), static function (Browser $browser) {
                     // Test input validation for a penalty
                     $browser->type('@body #oneoff_amount', '')
                         ->type('@body #oneoff_description', '')

@@ -2,9 +2,8 @@
 
 namespace App\Rules;
 
+use App\SharedFolder;
 use Illuminate\Contracts\Validation\Rule;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
 
 class SharedFolderType implements Rule
 {
@@ -15,12 +14,10 @@ class SharedFolderType implements Rule
      *
      * @param string $attribute Attribute name
      * @param mixed  $type      Shared folder type input
-     *
-     * @return bool
      */
     public function passes($attribute, $type): bool
     {
-        if (empty($type) || !is_string($type) || !in_array($type, \App\SharedFolder::SUPPORTED_TYPES)) {
+        if (empty($type) || !is_string($type) || !in_array($type, SharedFolder::SUPPORTED_TYPES)) {
             $this->message = \trans('validation.entryinvalid', ['attribute' => $attribute]);
             return false;
         }
@@ -30,8 +27,6 @@ class SharedFolderType implements Rule
 
     /**
      * Get the validation error message.
-     *
-     * @return string
      */
     public function message(): ?string
     {

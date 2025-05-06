@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\API\V4;
 
 use App\Http\Controllers\RelationController;
+use App\Jobs\Resource\CreateJob;
 use App\Resource;
 use App\Rules\ResourceName;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -23,11 +25,10 @@ class ResourcesController extends RelationController
     /** @var array Common object properties in the API response */
     protected $objectProps = ['email', 'name'];
 
-
     /**
      * Resource status (extended) information
      *
-     * @param \App\Resource $resource Resource object
+     * @param Resource $resource Resource object
      *
      * @return array Status information
      */
@@ -46,9 +47,9 @@ class ResourcesController extends RelationController
     /**
      * Create a new resource record.
      *
-     * @param \Illuminate\Http\Request $request The API request.
+     * @param Request $request the API request
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function store(Request $request)
     {
@@ -82,18 +83,18 @@ class ResourcesController extends RelationController
         DB::commit();
 
         return response()->json([
-                'status' => 'success',
-                'message' => self::trans('app.resource-create-success'),
+            'status' => 'success',
+            'message' => self::trans('app.resource-create-success'),
         ]);
     }
 
     /**
      * Update a resource.
      *
-     * @param \Illuminate\Http\Request $request The API request.
-     * @param string                   $id      Resource identifier
+     * @param Request $request the API request
+     * @param string  $id      Resource identifier
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function update(Request $request, $id)
     {
@@ -137,16 +138,16 @@ class ResourcesController extends RelationController
         $resource->save();
 
         return response()->json([
-                'status' => 'success',
-                'message' => self::trans('app.resource-update-success'),
+            'status' => 'success',
+            'message' => self::trans('app.resource-update-success'),
         ]);
     }
 
     /**
      * Execute (synchronously) specified step in a resource setup process.
      *
-     * @param \App\Resource $resource Resource object
-     * @param string        $step     Step identifier (as in self::statusInfo())
+     * @param Resource $resource Resource object
+     * @param string   $step     Step identifier (as in self::statusInfo())
      *
      * @return bool|null True if the execution succeeded, False if not, Null when
      *                   the job has been sent to the worker (result unknown)
@@ -154,7 +155,7 @@ class ResourcesController extends RelationController
     public static function execProcessStep(Resource $resource, string $step): ?bool
     {
         try {
-            if (strpos($step, 'domain-') === 0) {
+            if (str_starts_with($step, 'domain-')) {
                 return DomainsController::execProcessStep($resource->domain(), $step);
             }
 
@@ -162,7 +163,7 @@ class ResourcesController extends RelationController
                 case 'resource-ldap-ready':
                 case 'resource-imap-ready':
                     // Use worker to do the job, frontend might not have the IMAP admin credentials
-                    \App\Jobs\Resource\CreateJob::dispatch($resource->id);
+                    CreateJob::dispatch($resource->id);
                     return null;
             }
         } catch (\Exception $e) {

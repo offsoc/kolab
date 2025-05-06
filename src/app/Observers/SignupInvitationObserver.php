@@ -2,6 +2,8 @@
 
 namespace App\Observers;
 
+use App\Jobs\Mail\SignupInvitationJob;
+use App\SignupInvitation;
 use App\SignupInvitation as SI;
 
 /**
@@ -12,9 +14,7 @@ class SignupInvitationObserver
     /**
      * Ensure the invitation ID is a custom ID (uuid).
      *
-     * @param \App\SignupInvitation $invitation The invitation object
-     *
-     * @return void
+     * @param SignupInvitation $invitation The invitation object
      */
     public function creating(SI $invitation)
     {
@@ -24,21 +24,17 @@ class SignupInvitationObserver
     /**
      * Handle the invitation "created" event.
      *
-     * @param \App\SignupInvitation $invitation The invitation object
-     *
-     * @return void
+     * @param SignupInvitation $invitation The invitation object
      */
     public function created(SI $invitation)
     {
-        \App\Jobs\Mail\SignupInvitationJob::dispatch($invitation);
+        SignupInvitationJob::dispatch($invitation);
     }
 
     /**
      * Handle the invitation "updated" event.
      *
-     * @param \App\SignupInvitation $invitation The invitation object
-     *
-     * @return void
+     * @param SignupInvitation $invitation The invitation object
      */
     public function updated(SI $invitation)
     {
@@ -49,7 +45,7 @@ class SignupInvitationObserver
             $invitation->status == SI::STATUS_NEW
             && ($oldStatus == SI::STATUS_FAILED || $oldStatus == SI::STATUS_SENT)
         ) {
-            \App\Jobs\Mail\SignupInvitationJob::dispatch($invitation);
+            SignupInvitationJob::dispatch($invitation);
         }
     }
 }

@@ -10,17 +10,14 @@ use App\Wallet;
 
 class NegativeBalanceReminderDegrade extends Mailable
 {
-    /** @var \App\Wallet A wallet with a negative balance */
+    /** @var Wallet A wallet with a negative balance */
     protected $wallet;
-
 
     /**
      * Create a new message instance.
      *
-     * @param \App\Wallet $wallet A wallet
-     * @param \App\User   $user   A wallet controller to whom the email is being sent
-     *
-     * @return void
+     * @param Wallet $wallet A wallet
+     * @param User   $user   A wallet controller to whom the email is being sent
      */
     public function __construct(Wallet $wallet, User $user)
     {
@@ -50,9 +47,9 @@ class NegativeBalanceReminderDegrade extends Mailable
             ->text('emails.plain.negative_balance_reminder_degrade')
             ->subject(\trans('mail.negativebalancereminderdegrade-subject', $vars))
             ->with([
-                    'vars' => $vars,
-                    'supportUrl' => Utils::serviceUrl($supportUrl, $this->user->tenant_id),
-                    'walletUrl' => Utils::serviceUrl('/wallet', $this->user->tenant_id),
+                'vars' => $vars,
+                'supportUrl' => Utils::serviceUrl($supportUrl, $this->user->tenant_id),
+                'walletUrl' => Utils::serviceUrl('/wallet', $this->user->tenant_id),
             ]);
 
         return $this;

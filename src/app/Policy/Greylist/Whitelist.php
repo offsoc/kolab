@@ -14,6 +14,6 @@ class Whitelist extends Model
         'net_id',
         'net_type',
         'created_at',
-        'updated_at'
+        'updated_at',
     ];
 }

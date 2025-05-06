@@ -3,24 +3,19 @@
 namespace Tests\Feature\Console\Scalpel\Domain;
 
 use App\Domain;
+use App\Tenant;
 use Tests\TestCase;
 
 class CreateCommandTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestDomain('domain-delete.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestDomain('domain-delete.com');
 
@@ -42,7 +37,7 @@ class CreateCommandTest extends TestCase
         $this->assertStringContainsString('--status[=STATUS]', $output);
         $this->assertStringContainsString('--tenant_id[=TENANT_ID]', $output);
 
-        $tenant = \App\Tenant::orderBy('id', 'desc')->first();
+        $tenant = Tenant::orderBy('id', 'desc')->first();
 
         // Test successful domain creation
         $code = \Artisan::call(

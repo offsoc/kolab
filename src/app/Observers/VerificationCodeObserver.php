@@ -13,14 +13,12 @@ class VerificationCodeObserver
      *
      * Ensure that the code entry is created with a random code/short_code.
      *
-     * @param \App\VerificationCode $code The code being created.
-     *
-     * @return void
+     * @param VerificationCode $code the code being created
      */
     public function creating(VerificationCode $code): void
     {
         $code_length = VerificationCode::CODE_LENGTH;
-        $exp_hours   = env('VERIFICATION_CODE_EXPIRY', VerificationCode::CODE_EXP_HOURS);
+        $exp_hours = env('VERIFICATION_CODE_EXPIRY', VerificationCode::CODE_EXP_HOURS);
 
         if (empty($code->code)) {
             $code->short_code = VerificationCode::generateShortCode();

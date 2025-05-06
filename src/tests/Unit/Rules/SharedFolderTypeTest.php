@@ -3,6 +3,7 @@
 namespace Tests\Unit\Rules;
 
 use App\Rules\SharedFolderType;
+use App\SharedFolder;
 use Illuminate\Support\Facades\Validator;
 use Tests\TestCase;
 
@@ -26,7 +27,7 @@ class SharedFolderTypeTest extends TestCase
         $this->assertSame(['type' => ["The specified type is invalid."]], $v->errors()->toArray());
 
         // Valid type
-        foreach (\App\SharedFolder::SUPPORTED_TYPES as $type) {
+        foreach (SharedFolder::SUPPORTED_TYPES as $type) {
             $v = Validator::make(['type' => $type], $rules);
             $this->assertSame([], $v->errors()->toArray());
         }

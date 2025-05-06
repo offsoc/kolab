@@ -5,21 +5,25 @@ namespace App\Http\Controllers\API;
 use App\Auth\PassportClient;
 use App\Http\Controllers\Controller;
 use App\User;
+use App\Utils;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
-use Laravel\Passport\TokenRepository;
 use Laravel\Passport\RefreshTokenRepository;
+use Laravel\Passport\TokenRepository;
 use League\OAuth2\Server\AuthorizationServer;
-use Psr\Http\Message\ServerRequestInterface;
+use League\OAuth2\Server\Exception\OAuthServerException;
 use Nyholm\Psr7\Response as Psr7Response;
+use Psr\Http\Message\ServerRequestInterface;
+use Symfony\Component\HttpFoundation\Response;
 
 class AuthController extends Controller
 {
     /**
      * Get the authenticated User
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function info()
     {
@@ -38,11 +42,11 @@ class AuthController extends Controller
      * Helper method for other controllers with user auto-logon
      * functionality
      *
-     * @param \App\User   $user         User model object
+     * @param User        $user         User model object
      * @param string      $password     Plain text password
      * @param string|null $secondFactor Second factor code if available
      */
-    public static function logonResponse(User $user, string $password, string $secondFactor = null)
+    public static function logonResponse(User $user, string $password, ?string $secondFactor = null)
     {
         $proxyRequest = Request::create('/oauth/token', 'POST', [
             'username' => $user->email,
@@ -51,7 +55,7 @@ class AuthController extends Controller
             'client_id' => \config('auth.proxy.client_id'),
             'client_secret' => \config('auth.proxy.client_secret'),
             'scope' => 'api',
-            'secondfactor' => $secondFactor
+            'secondfactor' => $secondFactor,
         ]);
         $proxyRequest->headers->set('X-Client-IP', request()->ip());
 
@@ -63,9 +67,9 @@ class AuthController extends Controller
     /**
      * Get an oauth token via given credentials.
      *
-     * @param \Illuminate\Http\Request $request The API request.
+     * @param Request $request the API request
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function login(Request $request)
     {
@@ -81,14 +85,14 @@ class AuthController extends Controller
             return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
         }
 
-        $user = \App\User::where('email', $request->email)->first();
+        $user = User::where('email', $request->email)->first();
 
         if (!$user) {
             \Log::debug("[Auth] User not found on login: {$request->email}");
             return response()->json(['status' => 'error', 'message' => self::trans('auth.failed')], 401);
         }
 
-        if ($user->role == \App\User::ROLE_SERVICE) {
+        if ($user->role == User::ROLE_SERVICE) {
             \Log::debug("[Auth] Login with service account not allowed: {$request->email}");
             return response()->json(['status' => 'error', 'message' => self::trans('auth.failed')], 401);
         }
@@ -105,11 +109,11 @@ class AuthController extends Controller
      *
      * The implementation is based on Laravel\Passport\Http\Controllers\AuthorizationController
      *
-     * @param ServerRequestInterface   $psrRequest PSR request
-     * @param \Illuminate\Http\Request $request    The API request
-     * @param AuthorizationServer      $server     Authorization server
+     * @param ServerRequestInterface $psrRequest PSR request
+     * @param Request                $request    The API request
+     * @param AuthorizationServer    $server     Authorization server
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function oauthApprove(ServerRequestInterface $psrRequest, Request $request, AuthorizationServer $server)
     {
@@ -152,7 +156,7 @@ class AuthController extends Controller
             // we would have to store these records in SQL table. It would become handy especially
             // if we give users possibility to register external OAuth apps.
             Cache::put($cacheKey, 1, now()->addDays(14));
-        } catch (\League\OAuth2\Server\Exception\OAuthServerException $e) {
+        } catch (OAuthServerException $e) {
             // Note: We don't want 401 or 400 codes here, use 422 which is used in our API
             $code = $e->getHttpStatusCode();
             $response = $e->getPayload();
@@ -187,15 +191,15 @@ class AuthController extends Controller
         }
 
         return response()->json([
-                'status' => 'success',
-                'redirectUrl' => $response->getHeader('Location')[0],
+            'status' => 'success',
+            'redirectUrl' => $response->getHeader('Location')[0],
         ]);
     }
 
     /**
      * Get the authenticated User information (using access token claims)
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function oauthUserInfo()
     {
@@ -210,7 +214,7 @@ class AuthController extends Controller
             $response['email'] = $user->email;
             $response['email_verified'] = $user->isActive();
             // At least synapse depends on a "settings" structure being available
-            $response['settings'] = [ 'name' => $user->name() ];
+            $response['settings'] = ['name' => $user->name()];
         }
 
         // TODO: Other claims (https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims)
@@ -225,7 +229,7 @@ class AuthController extends Controller
     /**
      * Get the user (geo) location
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function location()
     {
@@ -233,7 +237,7 @@ class AuthController extends Controller
 
         $response = [
             'ipAddress' => $ip,
-            'countryCode' => \App\Utils::countryForIP($ip, ''),
+            'countryCode' => Utils::countryForIP($ip, ''),
         ];
 
         return response()->json($response);
@@ -242,7 +246,7 @@ class AuthController extends Controller
     /**
      * Log the user out (Invalidate the token)
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function logout()
     {
@@ -257,15 +261,15 @@ class AuthController extends Controller
         $refreshTokenRepository->revokeRefreshTokensByAccessTokenId($tokenId);
 
         return response()->json([
-                'status' => 'success',
-                'message' => self::trans('auth.logoutsuccess')
+            'status' => 'success',
+            'message' => self::trans('auth.logoutsuccess'),
         ]);
     }
 
     /**
      * Refresh a token.
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function refresh(Request $request)
     {
@@ -275,10 +279,10 @@ class AuthController extends Controller
     /**
      * Refresh the token and respond with it.
      *
-     * @param \Illuminate\Http\Request $request  The API request.
-     * @param ?\App\User               $user     The user being authenticated
+     * @param Request $request the API request
+     * @param ?User   $user    The user being authenticated
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     protected static function refreshAndRespond(Request $request, $user = null)
     {
@@ -297,10 +301,10 @@ class AuthController extends Controller
     /**
      * Get the token array structure.
      *
-     * @param \Symfony\Component\HttpFoundation\Response $tokenResponse The response containing the token.
-     * @param ?\App\User                                 $user          The user being authenticated
+     * @param Response $tokenResponse the response containing the token
+     * @param ?User    $user          The user being authenticated
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     protected static function respondWithToken($tokenResponse, $user = null)
     {
@@ -312,7 +316,7 @@ class AuthController extends Controller
                 return response()->json(['status' => 'error', 'errors' => $errors], 422);
             }
 
-            \Log::warning("Failed to request a token: " . strval($tokenResponse));
+            \Log::warning("Failed to request a token: " . (string) $tokenResponse);
             return response()->json(['status' => 'error', 'message' => self::trans('auth.failed')], 401);
         }
 

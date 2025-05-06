@@ -21,8 +21,8 @@ class EntitlementsTest extends TestCase
         $output = trim(\Artisan::output());
 
         $this->assertSame(0, $code);
-        $this->assertTrue(strpos($output, "storage: 5") !== false);
-        $this->assertTrue(strpos($output, "mailbox: 1") !== false);
-        $this->assertTrue(strpos($output, "groupware: 1") !== false);
+        $this->assertTrue(str_contains($output, "storage: 5"));
+        $this->assertTrue(str_contains($output, "mailbox: 1"));
+        $this->assertTrue(str_contains($output, "groupware: 1"));
     }
 }

@@ -29,8 +29,6 @@ class UserEmailDomain implements Rule
      *
      * @param string $attribute Attribute name
      * @param mixed  $domain    Domain part of email address
-     *
-     * @return bool
      */
     public function passes($attribute, $domain): bool
     {
@@ -38,7 +36,7 @@ class UserEmailDomain implements Rule
         if (
             empty($domain)
             || !is_string($domain)
-            || strpos($domain, '.') === false
+            || !str_contains($domain, '.')
             || stripos($domain, 'www.') === 0
         ) {
             $this->message = \trans('validation.domaininvalid');
@@ -71,8 +69,6 @@ class UserEmailDomain implements Rule
 
     /**
      * Get the validation error message.
-     *
-     * @return string
      */
     public function message(): ?string
     {

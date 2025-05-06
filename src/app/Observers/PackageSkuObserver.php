@@ -11,9 +11,7 @@ class PackageSkuObserver
      *
      * Ensures that the entries belong to the same tenant.
      *
-     * @param \App\PackageSku $packageSku The package-sku relation
-     *
-     * @return void
+     * @param PackageSku $packageSku The package-sku relation
      */
     public function creating(PackageSku $packageSku)
     {
@@ -28,9 +26,7 @@ class PackageSkuObserver
     /**
      * Handle the "created" event on an PackageSku relation
      *
-     * @param \App\PackageSku $packageSku The package-sku relation
-     *
-     * @return void
+     * @param PackageSku $packageSku The package-sku relation
      */
     public function created(PackageSku $packageSku)
     {

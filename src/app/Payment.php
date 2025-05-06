@@ -4,21 +4,22 @@ namespace App;
 
 use Dyrynda\Database\Support\NullableFields;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * A payment operation on a wallet.
  *
- * @property int         $amount            Amount of money in cents of system currency (payment provider)
- * @property int         $credit_amount     Amount of money in cents of system currency (wallet balance)
- * @property string      $description       Payment description
- * @property string      $id                Mollie's Payment ID
- * @property string      $status            Payment status (Payment::STATUS_*)
- * @property string      $type              Payment type (Payment::TYPE_*)
- * @property ?string     $vat_rate_id       VAT rate identifier
- * @property \App\Wallet $wallet            The wallet
- * @property string      $wallet_id         The ID of the wallet
- * @property string      $currency          Currency of this payment
- * @property int         $currency_amount   Amount of money in cents of $currency
+ * @property int     $amount          Amount of money in cents of system currency (payment provider)
+ * @property int     $credit_amount   Amount of money in cents of system currency (wallet balance)
+ * @property string  $description     Payment description
+ * @property string  $id              Mollie's Payment ID
+ * @property string  $status          Payment status (Payment::STATUS_*)
+ * @property string  $type            Payment type (Payment::TYPE_*)
+ * @property ?string $vat_rate_id     VAT rate identifier
+ * @property Wallet  $wallet          The wallet
+ * @property string  $wallet_id       The ID of the wallet
+ * @property string  $currency        Currency of this payment
+ * @property int     $currency_amount Amount of money in cents of $currency
  */
 class Payment extends Model
 {
@@ -74,17 +75,16 @@ class Payment extends Model
         'vat_rate_id',
     ];
 
-
     /**
      * Create a payment record in DB from array.
      *
      * @param array $payment Payment information (required: id, type, wallet_id, currency, amount, currency_amount)
      *
-     * @return \App\Payment Payment object
+     * @return Payment Payment object
      */
-    public static function createFromArray(array $payment): Payment
+    public static function createFromArray(array $payment): self
     {
-        $db_payment = new Payment();
+        $db_payment = new self();
         $db_payment->id = $payment['id'];
         $db_payment->description = $payment['description'] ?? '';
         $db_payment->status = $payment['status'] ?? self::STATUS_OPEN;
@@ -149,9 +149,9 @@ class Payment extends Model
      *
      * @param array $refund A refund or chargeback data (id, type, amount, currency, description)
      *
-     * @return ?\App\Payment A payment object for the refund
+     * @return ?Payment A payment object for the refund
      */
-    public function refund(array $refund): ?Payment
+    public function refund(array $refund): ?self
     {
         if (empty($refund) || empty($refund['amount'])) {
             return null;
@@ -197,7 +197,7 @@ class Payment extends Model
     /**
      * The wallet to which this payment belongs.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Wallet, $this>
+     * @return BelongsTo<Wallet, $this>
      */
     public function wallet()
     {
@@ -207,7 +207,7 @@ class Payment extends Model
     /**
      * The VAT rate assigned to this payment.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<VatRate, $this>
+     * @return BelongsTo<VatRate, $this>
      */
     public function vatRate()
     {

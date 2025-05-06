@@ -2,21 +2,20 @@
 
 namespace App\Jobs\Mail;
 
+use App\Jobs\MailJob;
+use App\Mail\Helper;
 use App\Mail\PasswordReset;
 use App\VerificationCode;
 
-class PasswordResetJob extends \App\Jobs\MailJob
+class PasswordResetJob extends MailJob
 {
-    /** @var \App\VerificationCode Verification code object */
+    /** @var VerificationCode Verification code object */
     protected $code;
-
 
     /**
      * Create a new job instance.
      *
-     * @param \App\VerificationCode $code Verification code object
-     *
-     * @return void
+     * @param VerificationCode $code Verification code object
      */
     public function __construct(VerificationCode $code)
     {
@@ -25,14 +24,12 @@ class PasswordResetJob extends \App\Jobs\MailJob
 
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle()
     {
         $email = $this->code->user->getSetting('external_email');
 
-        \App\Mail\Helper::sendMail(
+        Helper::sendMail(
             new PasswordReset($this->code),
             $this->code->user->tenant_id,
             ['to' => $email]

@@ -2,7 +2,9 @@
 
 namespace Tests\Browser;
 
+use App\Package;
 use App\Payment;
+use App\Plan;
 use App\ReferralProgram;
 use App\Transaction;
 use App\Wallet;
@@ -15,10 +17,7 @@ use Tests\TestCaseDusk;
 
 class WalletTest extends TestCaseDusk
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -29,10 +28,7 @@ class WalletTest extends TestCaseDusk
         ReferralProgram::query()->delete();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('wallets-controller@kolabnow.com');
 
@@ -49,7 +45,7 @@ class WalletTest extends TestCaseDusk
     public function testWalletUnauth(): void
     {
         // Test that the page requires authentication
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit('/wallet')->on(new Home());
         });
     }
@@ -60,7 +56,7 @@ class WalletTest extends TestCaseDusk
     public function testDashboard(): void
     {
         // Test that the page requires authentication
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit(new Home())
                 ->submitLogon('john@kolab.org', 'simple123', true)
                 ->on(new Dashboard())
@@ -76,7 +72,7 @@ class WalletTest extends TestCaseDusk
      */
     public function testWallet(): void
     {
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->click('@links .link-wallet')
                 ->on(new WalletPage())
                 ->assertSeeIn('#wallet .card-title', 'Account balance -12,34 CHF')
@@ -91,13 +87,13 @@ class WalletTest extends TestCaseDusk
     public function testReceipts(): void
     {
         $user = $this->getTestUser('wallets-controller@kolabnow.com', ['password' => 'simple123']);
-        $plan = \App\Plan::withObjectTenantContext($user)->where('title', 'individual')->first();
+        $plan = Plan::withObjectTenantContext($user)->where('title', 'individual')->first();
         $user->assignPlan($plan);
         $wallet = $user->wallets()->first();
         $wallet->payments()->delete();
 
         // Log out John and log in the test user
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit('/logout')
                 ->waitForLocation('/login')
                 ->on(new Home())
@@ -105,7 +101,7 @@ class WalletTest extends TestCaseDusk
         });
 
         // Assert Receipts tab content when there's no receipts available
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->on(new Dashboard())
                 ->click('@links .link-wallet')
                 ->on(new WalletPage())
@@ -113,7 +109,7 @@ class WalletTest extends TestCaseDusk
                 ->assertSeeIn('#wallet .card-title .text-success', '0,00 CHF')
                 ->assertSeeIn('#wallet .card-text', 'You are in your free trial period.')
                 ->assertSeeIn('@nav #tab-receipts', 'Receipts')
-                ->with('@receipts-tab', function (Browser $browser) {
+                ->with('@receipts-tab', static function (Browser $browser) {
                     $browser->waitUntilMissing('.app-loader')
                         ->assertSeeIn('td', 'There are no receipts for payments')
                         ->assertMissing('button');
@@ -122,35 +118,35 @@ class WalletTest extends TestCaseDusk
 
         // Create some sample payments
         $receipts = [];
-        $date = Carbon::create(intval(date('Y')) - 1, 3, 30);
+        $date = Carbon::create((int) date('Y') - 1, 3, 30);
         $payment = Payment::create([
-                'id' => 'AAA1',
-                'status' => Payment::STATUS_PAID,
-                'type' => Payment::TYPE_ONEOFF,
-                'description' => 'Paid in March',
-                'wallet_id' => $wallet->id,
-                'provider' => 'stripe',
-                'amount' => 1111,
-                'credit_amount' => 1111,
-                'currency_amount' => 1111,
-                'currency' => 'CHF',
+            'id' => 'AAA1',
+            'status' => Payment::STATUS_PAID,
+            'type' => Payment::TYPE_ONEOFF,
+            'description' => 'Paid in March',
+            'wallet_id' => $wallet->id,
+            'provider' => 'stripe',
+            'amount' => 1111,
+            'credit_amount' => 1111,
+            'currency_amount' => 1111,
+            'currency' => 'CHF',
         ]);
         $payment->updated_at = $date;
         $payment->save();
         $receipts[] = $date->format('Y-m');
 
-        $date = Carbon::create(intval(date('Y')) - 1, 4, 30);
+        $date = Carbon::create((int) date('Y') - 1, 4, 30);
         $payment = Payment::create([
-                'id' => 'AAA2',
-                'status' => Payment::STATUS_PAID,
-                'type' => Payment::TYPE_ONEOFF,
-                'description' => 'Paid in April',
-                'wallet_id' => $wallet->id,
-                'provider' => 'stripe',
-                'amount' => 1111,
-                'credit_amount' => 1111,
-                'currency_amount' => 1111,
-                'currency' => 'CHF',
+            'id' => 'AAA2',
+            'status' => Payment::STATUS_PAID,
+            'type' => Payment::TYPE_ONEOFF,
+            'description' => 'Paid in April',
+            'wallet_id' => $wallet->id,
+            'provider' => 'stripe',
+            'amount' => 1111,
+            'credit_amount' => 1111,
+            'currency_amount' => 1111,
+            'currency' => 'CHF',
         ]);
         $payment->updated_at = $date;
         $payment->save();
@@ -189,7 +185,7 @@ class WalletTest extends TestCaseDusk
         $wallet = $user->wallets()->first();
 
         // Log out and log-in the test user
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit('/logout')
                 ->waitForLocation('/login')
                 ->on(new Home())
@@ -197,13 +193,13 @@ class WalletTest extends TestCaseDusk
         });
 
         // Assert Referral Programs tab content when there's no programs available
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->on(new Dashboard())
                 ->click('@links .link-wallet')
                 ->on(new WalletPage())
                 ->assertSeeIn('@nav #tab-refprograms', 'Referral Programs')
                 ->click('@nav #tab-refprograms')
-                ->whenAvailable('@refprograms-tab', function (Browser $browser) {
+                ->whenAvailable('@refprograms-tab', static function (Browser $browser) {
                     $browser->waitUntilMissing('.app-loader')
                         ->assertSeeIn('div', 'There are no active referral programs at this moment.')
                         ->assertMissing('ul');
@@ -218,11 +214,11 @@ class WalletTest extends TestCaseDusk
         ]);
 
         // Assert Referral Programs tab with programs available
-        $this->browse(function (Browser $browser) use ($program, $user) {
+        $this->browse(static function (Browser $browser) use ($program, $user) {
             $browser->refresh()
                 ->on(new WalletPage())
                 ->click('@nav #tab-refprograms')
-                ->whenAvailable('@refprograms-tab', function (Browser $browser) use ($program, $user) {
+                ->whenAvailable('@refprograms-tab', static function (Browser $browser) use ($program, $user) {
                     $code = $program->codes()->where('user_id', $user->id)->first();
 
                     $browser->waitFor('ul')
@@ -244,29 +240,29 @@ class WalletTest extends TestCaseDusk
         $user = $this->getTestUser('wallets-controller@kolabnow.com', ['password' => 'simple123']);
 
         // Log out John and log in the test user
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit('/logout')
                 ->waitForLocation('/login')
                 ->on(new Home())
                 ->submitLogon('wallets-controller@kolabnow.com', 'simple123', true);
         });
 
-        $package_kolab = \App\Package::where('title', 'kolab')->first();
+        $package_kolab = Package::where('title', 'kolab')->first();
         $user->assignPackage($package_kolab);
         $wallet = $user->wallets()->first();
 
         // Create some sample transactions
         $transactions = $this->createTestTransactions($wallet);
         $transactions = array_reverse($transactions);
-        $pages = array_chunk($transactions, 10 /* page size*/);
+        $pages = array_chunk($transactions, 10 /* page size */);
 
-        $this->browse(function (Browser $browser) use ($pages) {
+        $this->browse(static function (Browser $browser) use ($pages) {
             $browser->on(new Dashboard())
                 ->click('@links .link-wallet')
                 ->on(new WalletPage())
                 ->assertSeeIn('@nav #tab-history', 'History')
                 ->click('@nav #tab-history')
-                ->with('@history-tab', function (Browser $browser) use ($pages) {
+                ->with('@history-tab', static function (Browser $browser) use ($pages) {
                     $browser->waitUntilMissing('.app-loader')
                         ->assertElementsCount('table tbody tr', 10)
                         ->assertMissing('table td.email')
@@ -275,9 +271,9 @@ class WalletTest extends TestCaseDusk
                     foreach ($pages[0] as $idx => $transaction) {
                         $selector = 'table tbody tr:nth-child(' . ($idx + 1) . ')';
                         $priceStyle = $transaction->type == Transaction::WALLET_AWARD ? 'text-success' : 'text-danger';
-                        $browser->assertSeeIn("$selector td.description", $transaction->shortDescription())
-                            ->assertMissing("$selector td.selection button")
-                            ->assertVisible("$selector td.price.{$priceStyle}");
+                        $browser->assertSeeIn("{$selector} td.description", $transaction->shortDescription())
+                            ->assertMissing("{$selector} td.selection button")
+                            ->assertVisible("{$selector} td.price.{$priceStyle}");
                         // TODO: Test more transaction details
                     }
 
@@ -291,21 +287,21 @@ class WalletTest extends TestCaseDusk
                     foreach ($pages[1] as $idx => $transaction) {
                         $selector = 'table tbody tr:nth-child(' . ($idx + 1 + 10) . ')';
                         $priceStyle = $transaction->type == Transaction::WALLET_CREDIT ? 'text-success' : 'text-danger';
-                        $browser->assertSeeIn("$selector td.description", $transaction->shortDescription());
+                        $browser->assertSeeIn("{$selector} td.description", $transaction->shortDescription());
 
                         if ($transaction->type == Transaction::WALLET_DEBIT) {
                             $debitEntry = $selector;
                         } else {
-                            $browser->assertMissing("$selector td.selection button");
+                            $browser->assertMissing("{$selector} td.selection button");
                         }
                     }
 
                     // Load sub-transactions
-                    $browser->scrollTo("$debitEntry td.selection button")->pause(500)
-                        ->click("$debitEntry td.selection button")
+                    $browser->scrollTo("{$debitEntry} td.selection button")->pause(500)
+                        ->click("{$debitEntry} td.selection button")
                         ->waitUntilMissing('.app-loader')
-                        ->assertElementsCount("$debitEntry td.description ul li", 2)
-                        ->assertMissing("$debitEntry td.selection button");
+                        ->assertElementsCount("{$debitEntry} td.description ul li", 2)
+                        ->assertMissing("{$debitEntry} td.selection button");
                 });
         });
     }
@@ -315,7 +311,7 @@ class WalletTest extends TestCaseDusk
      */
     public function testAccessDenied(): void
     {
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit('/logout')
                 ->on(new Home())
                 ->submitLogon('jack@kolab.org', 'simple123', true)

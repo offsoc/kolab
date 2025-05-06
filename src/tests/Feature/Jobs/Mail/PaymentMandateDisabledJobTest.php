@@ -10,20 +10,14 @@ use Tests\TestCase;
 
 class PaymentMandateDisabledJobTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestUser('PaymentEmail@UserAccount.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('PaymentEmail@UserAccount.com');
 
@@ -52,7 +46,7 @@ class PaymentMandateDisabledJobTest extends TestCase
         Mail::assertSent(PaymentMandateDisabled::class, 1);
 
         // Assert the mail was sent to the user's email
-        Mail::assertSent(PaymentMandateDisabled::class, function ($mail) {
+        Mail::assertSent(PaymentMandateDisabled::class, static function ($mail) {
             return $mail->hasTo('ext@email.tld') && !$mail->hasCc('ext@email.tld');
         });
     }

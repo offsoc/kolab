@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\V4\Admin;
 use App\Domain;
 use App\EventLog;
 use App\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -15,7 +16,7 @@ class DomainsController extends \App\Http\Controllers\API\V4\DomainsController
      *
      * @param string $id Domain identifier
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function destroy($id)
     {
@@ -25,7 +26,7 @@ class DomainsController extends \App\Http\Controllers\API\V4\DomainsController
     /**
      * Search for domains
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function index()
     {
@@ -71,9 +72,7 @@ class DomainsController extends \App\Http\Controllers\API\V4\DomainsController
     /**
      * Create a domain.
      *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function store(Request $request)
     {
@@ -83,10 +82,10 @@ class DomainsController extends \App\Http\Controllers\API\V4\DomainsController
     /**
      * Suspend the domain
      *
-     * @param \Illuminate\Http\Request $request The API request.
-     * @param string                   $id      Domain identifier
+     * @param Request $request the API request
+     * @param string  $id      Domain identifier
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function suspend(Request $request, $id)
     {
@@ -107,18 +106,18 @@ class DomainsController extends \App\Http\Controllers\API\V4\DomainsController
         EventLog::createFor($domain, EventLog::TYPE_SUSPENDED, $request->comment);
 
         return response()->json([
-                'status' => 'success',
-                'message' => self::trans('app.domain-suspend-success'),
+            'status' => 'success',
+            'message' => self::trans('app.domain-suspend-success'),
         ]);
     }
 
     /**
      * Un-Suspend the domain
      *
-     * @param \Illuminate\Http\Request $request The API request.
-     * @param string                   $id      Domain identifier
+     * @param Request $request the API request
+     * @param string  $id      Domain identifier
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function unsuspend(Request $request, $id)
     {
@@ -139,8 +138,8 @@ class DomainsController extends \App\Http\Controllers\API\V4\DomainsController
         EventLog::createFor($domain, EventLog::TYPE_UNSUSPENDED, $request->comment);
 
         return response()->json([
-                'status' => 'success',
-                'message' => self::trans('app.domain-unsuspend-success'),
+            'status' => 'success',
+            'message' => self::trans('app.domain-unsuspend-success'),
         ]);
     }
 }

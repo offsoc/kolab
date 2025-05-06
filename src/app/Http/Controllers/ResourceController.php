@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ResourceController extends Controller
@@ -9,7 +10,7 @@ class ResourceController extends Controller
     /**
      * Show the form for creating a new resource.
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function create()
     {
@@ -21,7 +22,7 @@ class ResourceController extends Controller
      *
      * @param string $id Resource identifier
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function destroy($id)
     {
@@ -33,7 +34,7 @@ class ResourceController extends Controller
      *
      * @param string $id Resource identifier
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function edit($id)
     {
@@ -45,7 +46,7 @@ class ResourceController extends Controller
      *
      * The resource entitlements billed to the current user wallet(s)
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function index()
     {
@@ -55,9 +56,9 @@ class ResourceController extends Controller
     /**
      * Display information of a resource specified by $id.
      *
-     * @param string $id The resource to show information for.
+     * @param string $id the resource to show information for
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function show($id)
     {
@@ -67,9 +68,9 @@ class ResourceController extends Controller
     /**
      * Create a new resource.
      *
-     * @param \Illuminate\Http\Request $request The API request.
+     * @param Request $request the API request
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function store(Request $request)
     {
@@ -79,10 +80,10 @@ class ResourceController extends Controller
     /**
      * Update a resource.
      *
-     * @param \Illuminate\Http\Request $request The API request.
-     * @param string                   $id      Resource identifier
+     * @param Request $request the API request
+     * @param string  $id      Resource identifier
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function update(Request $request, $id)
     {

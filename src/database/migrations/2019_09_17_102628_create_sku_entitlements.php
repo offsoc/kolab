@@ -1,22 +1,19 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-// phpcs:ignore
 class CreateSkuEntitlements extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up()
     {
         Schema::create(
             'skus',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->string('id', 36)->primary();
                 $table->string('title', 64);
                 // were json, but mariadb
@@ -35,7 +32,7 @@ class CreateSkuEntitlements extends Migration
 
         Schema::create(
             'entitlements',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->string('id', 36)->primary();
                 $table->bigInteger('entitleable_id');
                 $table->string('entitleable_type');
@@ -53,8 +50,6 @@ class CreateSkuEntitlements extends Migration
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
     public function down()
     {

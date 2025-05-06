@@ -2,25 +2,21 @@
 
 namespace Tests\Feature\Console\Domain;
 
+use App\Domain;
+use App\Jobs\Domain\UpdateJob;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class SetStatusTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestDomain('domain-delete.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestDomain('domain-delete.com');
 
@@ -39,20 +35,20 @@ class SetStatusTest extends TestCase
         $this->assertSame("Domain not found.", $output);
 
         $domain = $this->getTestDomain('domain-delete.com', [
-                'status' => \App\Domain::STATUS_NEW,
-                'type' => \App\Domain::TYPE_HOSTED,
+            'status' => Domain::STATUS_NEW,
+            'type' => Domain::TYPE_HOSTED,
         ]);
 
         Queue::fake();
 
-        $code = \Artisan::call("domain:set-status domain-delete.com " . \App\Domain::STATUS_LDAP_READY);
+        $code = \Artisan::call("domain:set-status domain-delete.com " . Domain::STATUS_LDAP_READY);
         $output = trim(\Artisan::output());
         $this->assertSame(0, $code);
         $this->assertSame('Status (64): ldapReady (64)', $output);
-        Queue::assertPushed(\App\Jobs\Domain\UpdateJob::class, 1);
+        Queue::assertPushed(UpdateJob::class, 1);
 
         $domain->refresh();
 
-        $this->assertSame(\App\Domain::STATUS_LDAP_READY, $domain->status);
+        $this->assertSame(Domain::STATUS_LDAP_READY, $domain->status);
     }
 }

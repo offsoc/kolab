@@ -44,7 +44,7 @@ class JobExecuteCommand extends Command
             return 1;
         }
 
-        $job = 'App\\Jobs\\' . $job;
+        $job = 'App\Jobs\\' . $job;
 
         $job::dispatchSync($object->id);
     }

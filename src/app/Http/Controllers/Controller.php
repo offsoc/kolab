@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Foundation\Bus\DispatchesJobs;
-use Illuminate\Routing\Controller as BaseController;
-use Illuminate\Foundation\Validation\ValidatesRequests;
+use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Foundation\Bus\DispatchesJobs;
+use Illuminate\Foundation\Validation\ValidatesRequests;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Facades\Auth;
 
 class Controller extends BaseController
@@ -14,7 +16,6 @@ class Controller extends BaseController
     use DispatchesJobs;
     use ValidatesRequests;
 
-
     /**
      * Common error response builder for API (JSON) responses
      *
@@ -22,7 +23,7 @@ class Controller extends BaseController
      * @param string $message Error message
      * @param array  $data    Additional response data
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public static function errorResponse(int $code, string $message = '', array $data = [])
     {
@@ -43,7 +44,7 @@ class Controller extends BaseController
         ];
 
         if (!empty($data)) {
-            $response = $response + $data;
+            $response += $data;
         }
 
         return response()->json($response, $code);
@@ -73,7 +74,7 @@ class Controller extends BaseController
     /**
      * Get the guard to be used during authentication.
      *
-     * @return \Illuminate\Contracts\Auth\Guard
+     * @return Guard
      */
     protected function guard()
     {

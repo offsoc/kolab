@@ -3,6 +3,8 @@
 namespace App\Traits;
 
 use App\Permission;
+use App\User;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Validator;
 
 trait PermissibleTrait
@@ -13,7 +15,7 @@ trait PermissibleTrait
     protected static function bootPermissibleTrait()
     {
         // Selete object's shares on object's delete
-        static::deleting(function ($model) {
+        static::deleting(static function ($model) {
             $model->permissions()->delete();
         });
     }
@@ -21,7 +23,7 @@ trait PermissibleTrait
     /**
      * Permissions for this object.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Permission, $this>
+     * @return HasMany<Permission, $this>
      */
     public function permissions()
     {
@@ -50,7 +52,7 @@ trait PermissibleTrait
             if (!is_string($v) || empty($v) || !substr_count($v, ',')) {
                 $errors[$i] = \trans('validation.acl-entry-invalid');
             } else {
-                list($user, $acl) = explode(',', $v, 2);
+                [$user, $acl] = explode(',', $v, 2);
                 $user = trim($user);
                 $acl = trim($acl);
                 $error = null;
@@ -61,7 +63,7 @@ trait PermissibleTrait
                     $errors[$i] = $error ?: \trans('validation.acl-entry-invalid');
                 }
 
-                $input[$i] = "$user, $acl";
+                $input[$i] = "{$user}, {$acl}";
                 $users[] = $user;
             }
         }
@@ -84,7 +86,7 @@ trait PermissibleTrait
             return \trans('validation.emailinvalid');
         }
 
-        $user = \App\User::where('email', \strtolower($identifier))->first();
+        $user = User::where('email', \strtolower($identifier))->first();
 
         if ($user) {
             return null;
@@ -103,7 +105,7 @@ trait PermissibleTrait
         $supported = $this->supportedACL();
 
         return $this->permissions()->get()
-            ->map(function ($permission) use ($supported) {
+            ->map(static function ($permission) use ($supported) {
                 $acl = array_search($permission->rights, $supported) ?: 'none';
                 return "{$permission->user}, {$acl}";
             })
@@ -121,12 +123,12 @@ trait PermissibleTrait
         $supported = $this->supportedACL();
 
         foreach ($acl as $item) {
-            list($user, $right) = explode(',', $item, 2);
+            [$user, $right] = explode(',', $item, 2);
             $users[\strtolower($user)] = $supported[trim($right)] ?? 0;
         }
 
         // Compare the input with existing shares
-        $this->permissions()->get()->each(function ($permission) use (&$users) {
+        $this->permissions()->get()->each(static function ($permission) use (&$users) {
             if (isset($users[$permission->user])) {
                 if ($permission->rights != $users[$permission->user]) {
                     $permission->rights = $users[$permission->user];
@@ -140,9 +142,9 @@ trait PermissibleTrait
 
         foreach ($users as $user => $rights) {
             $this->permissions()->create([
-                    'user' => $user,
-                    'rights' => $rights,
-                    'permissible_type' => self::class,
+                'user' => $user,
+                'rights' => $rights,
+                'permissible_type' => self::class,
             ]);
         }
     }

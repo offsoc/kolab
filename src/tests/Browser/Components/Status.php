@@ -2,6 +2,7 @@
 
 namespace Tests\Browser\Components;
 
+use Laravel\Dusk\Browser;
 use Laravel\Dusk\Component as BaseComponent;
 
 class Status extends BaseComponent
@@ -19,9 +20,7 @@ class Status extends BaseComponent
     /**
      * Assert that the browser page contains the component.
      *
-     * @param \Laravel\Dusk\Browser $browser The browser object
-     *
-     * @return void
+     * @param Browser $browser The browser object
      */
     public function assert($browser)
     {
@@ -37,7 +36,7 @@ class Status extends BaseComponent
     {
         return [
             '@body' => "#status-body",
-            '@progress-bar' =>  ".progress-bar",
+            '@progress-bar' => ".progress-bar",
             '@progress-label' => ".progress-label",
             '@refresh-button' => "#status-refresh",
             '@refresh-text' => "#refresh-text",
@@ -52,7 +51,7 @@ class Status extends BaseComponent
         $browser->assertVisible('@progress-bar')
             ->assertAttribute('@progress-bar', 'aria-valuenow', $percent)
             ->assertSeeIn('@progress-label', $label)
-            ->withinBody(function ($browser) use ($class) {
+            ->withinBody(static function ($browser) use ($class) {
                 $browser->assertVisible('#status-box.process-' . $class);
             });
     }

@@ -5,6 +5,7 @@ namespace App\Console\Commands\Meet;
 use App\Console\Command;
 use App\Meet\Room;
 use App\Meet\Service;
+use Carbon\Carbon;
 
 class SessionsCommand extends Command
 {
@@ -46,7 +47,7 @@ class SessionsCommand extends Command
                     "Session: %s for %s since %s (by %s)",
                     $session['roomId'],
                     $roomName,
-                    \Carbon\Carbon::parse($session['createdAt'], 'UTC'),
+                    Carbon::parse($session['createdAt'], 'UTC'),
                     $owner
                 )
             );

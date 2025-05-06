@@ -2,17 +2,20 @@
 
 namespace App\Handlers;
 
+use App\Auth\SecondFactor;
 use App\Entitlement;
+use App\Jobs\User\UpdateJob;
 use App\Sku;
+use App\User;
 
-class Auth2F extends \App\Handlers\Base
+class Auth2F extends Base
 {
     /**
      * The entitleable class for this handler.
      */
     public static function entitleableClass(): string
     {
-        return \App\User::class;
+        return User::class;
     }
 
     /**
@@ -21,7 +24,7 @@ class Auth2F extends \App\Handlers\Base
     public static function entitlementCreated(Entitlement $entitlement): void
     {
         if (\config('app.with_ldap')) {
-            \App\Jobs\User\UpdateJob::dispatch($entitlement->entitleable_id);
+            UpdateJob::dispatch($entitlement->entitleable_id);
         }
     }
 
@@ -33,11 +36,11 @@ class Auth2F extends \App\Handlers\Base
         // Remove all configured 2FA methods from Roundcube database
         if ($entitlement->entitleable && !$entitlement->entitleable->trashed()) {
             // TODO: This should be an async job
-            $sf = new \App\Auth\SecondFactor($entitlement->entitleable);
+            $sf = new SecondFactor($entitlement->entitleable);
             $sf->removeFactors();
 
             if (\config('app.with_ldap')) {
-                \App\Jobs\User\UpdateJob::dispatch($entitlement->entitleable_id);
+                UpdateJob::dispatch($entitlement->entitleable_id);
             }
         }
     }

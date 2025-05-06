@@ -2,6 +2,8 @@
 
 namespace Tests\Infrastructure;
 
+use App\User;
+use GuzzleHttp\Client;
 use Tests\TestCase;
 
 /**
@@ -9,15 +11,12 @@ use Tests\TestCase;
  */
 class DavTest extends TestCase
 {
-    private ?\GuzzleHttp\Client $client = null;
-    private ?\App\User $user = null;
+    private ?Client $client = null;
+    private ?User $user = null;
     private bool $isCyrus;
     private string $path;
 
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -26,11 +25,11 @@ class DavTest extends TestCase
         }
 
         $baseUri = \config('services.dav.uri');
-        $this->isCyrus = strpos($baseUri, '/iRony') === false;
+        $this->isCyrus = !str_contains($baseUri, '/iRony');
         $this->path = $this->isCyrus ? '/dav' : '/iRony';
 
         if (!$this->client) {
-            $this->client = new \GuzzleHttp\Client([
+            $this->client = new Client([
                 'http_errors' => false, // No exceptions
                 'base_uri' => $baseUri,
                 'verify' => false,
@@ -40,7 +39,7 @@ class DavTest extends TestCase
                 'headers' => [
                     'Content-Type' => 'application/xml; charset=utf-8',
                     'Depth' => '1',
-                ]
+                ],
             ]);
         }
     }
@@ -50,7 +49,7 @@ class DavTest extends TestCase
         $body = "<d:propfind xmlns:d='DAV:'><d:prop><d:current-user-principal/></d:prop></d:propfind>";
 
         $response = $this->client->request('PROPFIND', '', ['body' => $body]);
-        $this->assertEquals(207, $response->getStatusCode());
+        $this->assertSame(207, $response->getStatusCode());
 
         $data = $response->getBody();
         $email = $this->user->email;
@@ -73,7 +72,7 @@ class DavTest extends TestCase
             'Content-Type' => 'application/xml; charset=utf-8',
             'Depth' => '1',
             'body' => $body,
-            'auth' => ['invaliduser@kolab.org', 'invalid']
+            'auth' => ['invaliduser@kolab.org', 'invalid'],
         ];
 
         $response = $this->client->request('PROPFIND', '', $params);
@@ -93,27 +92,27 @@ class DavTest extends TestCase
         $body = "<d:propfind xmlns:d='DAV:'><d:prop><d:current-user-principal/></d:prop></d:propfind>";
         $response = $this->client->request('PROPFIND', '', [
             'body' => $body,
-            'auth' => ['davtest', 'simple123']
+            'auth' => ['davtest', 'simple123'],
         ]);
 
-        $this->assertEquals(207, $response->getStatusCode());
+        $this->assertSame(207, $response->getStatusCode());
     }
 
     public function testDiscoverCalendarHomeset(): void
     {
-        $body = <<<EOF
-            <d:propfind xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
-                <d:prop>
-                    <c:calendar-home-set />
-                </d:prop>
-            </d:propfind>
-        EOF;
+        $body = <<<'EOF'
+                <d:propfind xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
+                    <d:prop>
+                        <c:calendar-home-set />
+                    </d:prop>
+                </d:propfind>
+            EOF;
 
         $email = $this->user->email;
         $href = $this->isCyrus ? "principals/user/{$email}" : '';
 
         $response = $this->client->request('PROPFIND', $href, ['body' => $body]);
-        $this->assertEquals(207, $response->getStatusCode());
+        $this->assertSame(207, $response->getStatusCode());
         $data = $response->getBody();
 
         if ($this->isCyrus) {
@@ -125,16 +124,16 @@ class DavTest extends TestCase
 
     public function testDiscoverCalendars(): string
     {
-        $body = <<<EOF
-            <d:propfind xmlns:d="DAV:" xmlns:cs="http://calendarserver.org/ns/" xmlns:c="urn:ietf:params:xml:ns:caldav">
-                <d:prop>
-                    <d:resourcetype />
-                    <d:displayname />
-                    <cs:getctag />
-                    <c:supported-calendar-component-set />
-                </d:prop>
-            </d:propfind>
-        EOF;
+        $body = <<<'EOF'
+                <d:propfind xmlns:d="DAV:" xmlns:cs="http://calendarserver.org/ns/" xmlns:c="urn:ietf:params:xml:ns:caldav">
+                    <d:prop>
+                        <d:resourcetype />
+                        <d:displayname />
+                        <cs:getctag />
+                        <c:supported-calendar-component-set />
+                    </d:prop>
+                </d:propfind>
+            EOF;
 
         $params = [
             'headers' => [
@@ -148,7 +147,7 @@ class DavTest extends TestCase
 
         $response = $this->client->request('PROPFIND', $href, $params);
 
-        $this->assertEquals(207, $response->getStatusCode());
+        $this->assertSame(207, $response->getStatusCode());
         $data = $response->getBody();
 
         if ($this->isCyrus) {
@@ -162,7 +161,7 @@ class DavTest extends TestCase
         $response = $doc->getElementsByTagName('response')->item(1);
         $doc->getElementsByTagName('href')->item(0);
 
-        $this->assertEquals('d:href', $response->childNodes->item(0)->nodeName);
+        $this->assertSame('d:href', $response->childNodes->item(0)->nodeName);
         $href = $response->childNodes->item(0)->nodeValue;
 
         return $href;
@@ -173,19 +172,19 @@ class DavTest extends TestCase
      */
     public function testPropfindCalendar($href): void
     {
-        $body = <<<EOF
-            <d:propfind xmlns:d="DAV:" xmlns:cs="http://calendarserver.org/ns/" xmlns:c="urn:ietf:params:xml:ns:caldav">
-                <d:prop>
-                    <d:resourcetype />
-                    <d:owner/>
-                    <d:current-user-principal/>
-                    <d:current-user-privilege-set/>
-                    <d:supported-report-set/>
-                    <cs:getctag />
-                    <c:supported-calendar-component-set />
-                </d:prop>
-            </d:propfind>
-        EOF;
+        $body = <<<'EOF'
+                <d:propfind xmlns:d="DAV:" xmlns:cs="http://calendarserver.org/ns/" xmlns:c="urn:ietf:params:xml:ns:caldav">
+                    <d:prop>
+                        <d:resourcetype />
+                        <d:owner/>
+                        <d:current-user-principal/>
+                        <d:current-user-privilege-set/>
+                        <d:supported-report-set/>
+                        <cs:getctag />
+                        <c:supported-calendar-component-set />
+                    </d:prop>
+                </d:propfind>
+            EOF;
 
         $params = [
             'headers' => [
@@ -196,9 +195,9 @@ class DavTest extends TestCase
 
         $response = $this->client->request('PROPFIND', $href, $params);
 
-        $this->assertEquals(207, $response->getStatusCode());
+        $this->assertSame(207, $response->getStatusCode());
         $data = $response->getBody();
-        $this->assertStringContainsString("<d:href>$href</d:href>", $data);
+        $this->assertStringContainsString("<d:href>{$href}</d:href>", $data);
     }
 
     /**
@@ -209,19 +208,19 @@ class DavTest extends TestCase
      */
     public function testPropfindCalendarWithoutAuth($href): void
     {
-        $body = <<<EOF
-            <d:propfind xmlns:d="DAV:" xmlns:cs="http://calendarserver.org/ns/" xmlns:c="urn:ietf:params:xml:ns:caldav">
-                <d:prop>
-                    <d:resourcetype />
-                    <d:owner/>
-                    <d:current-user-principal/>
-                    <d:current-user-privilege-set/>
-                    <d:supported-report-set/>
-                    <cs:getctag />
-                    <c:supported-calendar-component-set />
-                </d:prop>
-            </d:propfind>
-        EOF;
+        $body = <<<'EOF'
+                <d:propfind xmlns:d="DAV:" xmlns:cs="http://calendarserver.org/ns/" xmlns:c="urn:ietf:params:xml:ns:caldav">
+                    <d:prop>
+                        <d:resourcetype />
+                        <d:owner/>
+                        <d:current-user-principal/>
+                        <d:current-user-privilege-set/>
+                        <d:supported-report-set/>
+                        <cs:getctag />
+                        <c:supported-calendar-component-set />
+                    </d:prop>
+                </d:propfind>
+            EOF;
 
         $params = [
             'headers' => [
@@ -233,14 +232,14 @@ class DavTest extends TestCase
 
         $response = $this->client->request('PROPFIND', $href, $params);
 
-        $this->assertEquals(401, $response->getStatusCode());
+        $this->assertSame(401, $response->getStatusCode());
         $this->assertStringContainsString('Basic realm=', $response->getHeader('WWW-Authenticate')[0]);
 
         $data = $response->getBody();
         if ($this->isCyrus) {
             $this->assertStringContainsString("Unauthorized", $data);
         } else {
-            $this->assertStringContainsString("<s:exception>Sabre\DAV\Exception\NotAuthenticated</s:exception>", $data);
+            $this->assertStringContainsString("<s:exception>Sabre\\DAV\\Exception\\NotAuthenticated</s:exception>", $data);
         }
     }
 
@@ -251,22 +250,22 @@ class DavTest extends TestCase
     {
         $response = $this->client->request('OPTIONS', "principals/{$this->user->email}");
 
-        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertSame(200, $response->getStatusCode());
         $this->assertStringContainsString('PROPFIND', implode(', ', $response->getHeader('Allow')));
     }
 
     public function testWellKnown(): void
     {
-        $body = <<<EOF
-            <d:propfind xmlns:d="DAV:" xmlns:cs="http://calendarserver.org/ns/" xmlns:c="urn:ietf:params:xml:ns:caldav">
-                <d:prop>
-                    <d:resourcetype />
-                    <d:displayname />
-                    <cs:getctag />
-                    <c:supported-calendar-component-set />
-                </d:prop>
-            </d:propfind>
-        EOF;
+        $body = <<<'EOF'
+                <d:propfind xmlns:d="DAV:" xmlns:cs="http://calendarserver.org/ns/" xmlns:c="urn:ietf:params:xml:ns:caldav">
+                    <d:prop>
+                        <d:resourcetype />
+                        <d:displayname />
+                        <cs:getctag />
+                        <c:supported-calendar-component-set />
+                    </d:prop>
+                </d:propfind>
+            EOF;
 
         $email = $this->user->email;
         $path = trim(\config('services.dav.uri'), '/');
@@ -282,29 +281,29 @@ class DavTest extends TestCase
 
         // The base URL needs to work as a redirect
         $response = $this->client->request('PROPFIND', "/.well-known/caldav/", $params);
-        $this->assertEquals(301, $response->getStatusCode());
+        $this->assertSame(301, $response->getStatusCode());
 
         $redirectTarget = $response->getHeader('location')[0];
 
-        $this->assertEquals($path . '/calendars', trim($redirectTarget, '/'));
+        $this->assertSame($path . '/calendars', trim($redirectTarget, '/'));
 
         // Follow the redirect
         $response = $this->client->request('PROPFIND', $redirectTarget, $params);
-        $this->assertEquals(207, $response->getStatusCode());
+        $this->assertSame(207, $response->getStatusCode());
 
         // Any URL should result in a redirect to the same path
         $url = $this->isCyrus ? "user/{$email}" : "calendars/{$email}";
         $response = $this->client->request('PROPFIND', "/.well-known/caldav/{$url}", $params);
-        $this->assertEquals(301, $response->getStatusCode());
+        $this->assertSame(301, $response->getStatusCode());
 
         $redirectTarget = $response->getHeader('location')[0];
 
         $expected = $path . ($this->isCyrus ? "/calendars/user/{$email}" : "/calendars/{$email}");
-        $this->assertEquals($expected, $redirectTarget);
+        $this->assertSame($expected, $redirectTarget);
 
         // Follow the redirect
         $response = $this->client->request('PROPFIND', $redirectTarget, $params);
-        $this->assertEquals(207, $response->getStatusCode());
+        $this->assertSame(207, $response->getStatusCode());
 
         $data = $response->getBody();
         if ($this->isCyrus) {

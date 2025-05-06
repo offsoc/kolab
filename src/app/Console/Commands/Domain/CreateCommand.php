@@ -55,7 +55,7 @@ class CreateCommand extends Command
                 $entitlement = Entitlement::withTrashed()->where(
                     [
                         'entitleable_id' => $domain->id,
-                        'entitleable_type' => Domain::class
+                        'entitleable_type' => Domain::class,
                     ]
                 )->first();
 

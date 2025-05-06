@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Jobs\Resource;
 
+use App\Jobs\Resource\UpdateJob;
 use App\Resource;
 use App\Support\Facades\IMAP;
 use App\Support\Facades\LDAP;
@@ -10,20 +11,14 @@ use Tests\TestCase;
 
 class UpdateTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestResource('resource-test@' . \config('app.domain'));
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestResource('resource-test@' . \config('app.domain'));
 
@@ -38,7 +33,7 @@ class UpdateTest extends TestCase
         Queue::fake();
 
         // Test non-existing resource ID
-        $job = (new \App\Jobs\Resource\UpdateJob(123))->withFakeQueueInteractions();
+        $job = (new UpdateJob(123))->withFakeQueueInteractions();
         $job->handle();
         $job->assertFailedWith("Resource 123 could not be found in the database.");
 
@@ -57,7 +52,7 @@ class UpdateTest extends TestCase
         IMAP::shouldReceive('updateResource')->once()->with($resource, [])->andReturn(true);
         LDAP::shouldReceive('updateResource')->once()->with($resource)->andReturn(true);
 
-        $job = new \App\Jobs\Resource\UpdateJob($resource->id);
+        $job = new UpdateJob($resource->id);
         $job->handle();
 
         // Test that the job is being deleted if the resource is not ldap ready or is deleted
@@ -65,7 +60,7 @@ class UpdateTest extends TestCase
         $resource->status |= Resource::STATUS_DELETED;
         $resource->save();
 
-        $job = (new \App\Jobs\Resource\UpdateJob($resource->id))->withFakeQueueInteractions();
+        $job = (new UpdateJob($resource->id))->withFakeQueueInteractions();
         $job->handle();
         $job->assertDeleted();
     }

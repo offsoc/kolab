@@ -8,8 +8,8 @@ use App\DataMigrator\Queue;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
 
 class ItemSetJob implements ShouldQueue
 {
@@ -27,13 +27,10 @@ class ItemSetJob implements ShouldQueue
     /** @var ItemSet Job data */
     protected $set;
 
-
     /**
      * Create a new job instance.
      *
      * @param ItemSet $set Set of Items to process
-     *
-     * @return void
      */
     public function __construct(ItemSet $set)
     {
@@ -42,8 +39,6 @@ class ItemSetJob implements ShouldQueue
 
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle()
     {
@@ -53,10 +48,6 @@ class ItemSetJob implements ShouldQueue
 
     /**
      * The job failed to process.
-     *
-     * @param \Exception $exception
-     *
-     * @return void
      */
     public function failed(\Exception $exception)
     {

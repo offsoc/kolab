@@ -21,7 +21,7 @@ class SkusCommand extends Command
      */
     protected $description = "List SKUs for packages.";
 
-     /** @var bool Adds --tenant option handler */
+    /** @var bool Adds --tenant option handler */
     protected $withTenant = true;
 
     /**

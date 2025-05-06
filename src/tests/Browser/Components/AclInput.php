@@ -2,13 +2,12 @@
 
 namespace Tests\Browser\Components;
 
+use Laravel\Dusk\Browser;
 use Laravel\Dusk\Component as BaseComponent;
-use PHPUnit\Framework\Assert as PHPUnit;
 
 class AclInput extends BaseComponent
 {
     protected $selector;
-
 
     public function __construct($selector)
     {
@@ -28,9 +27,7 @@ class AclInput extends BaseComponent
     /**
      * Assert that the browser page contains the component.
      *
-     * @param \Laravel\Dusk\Browser $browser
-     *
-     * @return void
+     * @param Browser $browser
      */
     public function assert($browser)
     {
@@ -68,15 +65,15 @@ class AclInput extends BaseComponent
 
         foreach ($list as $idx => $value) {
             $selector = '.input-group:nth-child(' . ($idx + 2) . ')';
-            list($ident, $acl) = preg_split('/\s*,\s*/', $value);
+            [$ident, $acl] = preg_split('/\s*,\s*/', $value);
 
             $input = $ident == 'anyone' ? 'input:read-only' : 'input:not(:read-only)';
 
-            $browser->assertVisible("$selector $input")
-                ->assertVisible("$selector select")
-                ->assertVisible("$selector a.btn")
-                ->assertValue("$selector $input", $ident)
-                ->assertSelected("$selector select", $acl);
+            $browser->assertVisible("{$selector} {$input}")
+                ->assertVisible("{$selector} select")
+                ->assertVisible("{$selector} a.btn")
+                ->assertValue("{$selector} {$input}", $ident)
+                ->assertSelected("{$selector} select", $acl);
         }
     }
 
@@ -85,7 +82,7 @@ class AclInput extends BaseComponent
      */
     public function addAclEntry($browser, string $value)
     {
-        list($ident, $acl) = preg_split('/\s*,\s*/', $value);
+        [$ident, $acl] = preg_split('/\s*,\s*/', $value);
 
         $browser->select('@mod-select', $ident == 'anyone' ? 'anyone' : 'user')
             ->select('@acl-select', $acl);
@@ -116,12 +113,12 @@ class AclInput extends BaseComponent
      */
     public function updateAclEntry($browser, int $num, $value)
     {
-        list($ident, $acl) = preg_split('/\s*,\s*/', $value);
+        [$ident, $acl] = preg_split('/\s*,\s*/', $value);
 
         $selector = '.input-group:nth-child(' . ($num + 1) . ')';
 
-        $browser->select("$selector select.acl", $acl)
-            ->type("$selector input", $ident);
+        $browser->select("{$selector} select.acl", $acl)
+            ->type("{$selector} input", $ident);
     }
 
     /**

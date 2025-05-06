@@ -17,22 +17,16 @@ class EWSTest extends TestCase
 
     private const EVENT1 = '1F3C13D7E99642A75ABE23D50487B454-8FE68B2E68E1B348';
     private const EVENT2 = '040000008200E00074C5B7101A82E00800000000B6140C77B81BDA01000000000000000'
-                         . '010000000FA0F989A1B3C20499E1DE5B68DB1E339';
+        . '010000000FA0F989A1B3C20499E1DE5B68DB1E339';
 
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         MigratorQueue::truncate();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         MigratorQueue::truncate();
 
@@ -97,8 +91,8 @@ class EWSTest extends TestCase
         $contacts = \collect($dstObjects)->keyBy('fn')->all();
 
         $this->assertCount(3, $contacts);
-        $this->assertSame(null, $contacts['Nowy Kontakt']->kind);
-        $this->assertSame(null, $contacts['Test Surname']->kind);
+        $this->assertNull($contacts['Nowy Kontakt']->kind);
+        $this->assertNull($contacts['Test Surname']->kind);
         $this->assertSame('group', $contacts['nowa lista']->kind);
     }
 
@@ -107,6 +101,7 @@ class EWSTest extends TestCase
      *
      * @group dav
      * @group ews
+     *
      * @depends testInitialMigration
      */
     public function testIncrementalMigration(): void
@@ -147,9 +142,9 @@ class EWSTest extends TestCase
         $contacts = \collect($dstObjects)->keyBy('fn')->all();
 
         $this->assertCount(4, $contacts);
-        $this->assertSame(null, $contacts['Nowy Kontakt']->kind);
-        $this->assertSame(null, $contacts['Test Surname 1']->kind);
-        $this->assertSame(null, $contacts['Test New']->kind);
+        $this->assertNull($contacts['Nowy Kontakt']->kind);
+        $this->assertNull($contacts['Test Surname 1']->kind);
+        $this->assertNull($contacts['Test New']->kind);
         $this->assertSame('group', $contacts['nowa lista']->kind);
 
         // TODO: Assert that unmodified objects aren't migrated again,
@@ -162,6 +157,7 @@ class EWSTest extends TestCase
      * Test OAuth2 use
      *
      * @group ews dav
+     *
      * @depends testIncrementalMigration
      */
     public function testOAuth2(): void
@@ -207,7 +203,7 @@ class EWSTest extends TestCase
 
         ksort($playback);
 
-        file_put_contents($dir . '/' . 'saveState.json', json_encode($playback));
+        file_put_contents($dir . '/saveState.json', json_encode($playback));
 
         return $dir;
     }

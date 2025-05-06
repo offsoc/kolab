@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers\API\V4;
 
-use App\Http\Controllers\RelationController;
 use App\Domain;
 use App\Group;
+use App\Http\Controllers\RelationController;
+use App\Jobs\Group\CreateJob;
+use App\Rules\ExternalEmail;
 use App\Rules\GroupName;
+use App\Rules\UserEmailLocal;
 use App\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -25,11 +29,10 @@ class GroupsController extends RelationController
     /** @var array Common object properties in the API response */
     protected $objectProps = ['email', 'name'];
 
-
     /**
      * Group status (extended) information
      *
-     * @param \App\Group $group Group object
+     * @param Group $group Group object
      *
      * @return array Status information
      */
@@ -47,9 +50,9 @@ class GroupsController extends RelationController
     /**
      * Create a new group record.
      *
-     * @param \Illuminate\Http\Request $request The API request.
+     * @param Request $request the API request
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function store(Request $request)
     {
@@ -68,10 +71,10 @@ class GroupsController extends RelationController
         ];
 
         // Validate group address
-        if ($error = GroupsController::validateGroupEmail($email, $owner)) {
+        if ($error = self::validateGroupEmail($email, $owner)) {
             $errors['email'] = $error;
         } else {
-            list(, $domainName) = explode('@', $email);
+            [, $domainName] = explode('@', $email);
             $rules['name'] = ['required', 'string', new GroupName($owner, $domainName)];
         }
 
@@ -88,7 +91,7 @@ class GroupsController extends RelationController
         } else {
             foreach ($members as $i => $member) {
                 if (is_string($member) && !empty($member)) {
-                    if ($error = GroupsController::validateMemberEmail($member, $owner)) {
+                    if ($error = self::validateMemberEmail($member, $owner)) {
                         $errors['members'][$i] = $error;
                     } elseif (\strtolower($member) === \strtolower($email)) {
                         $errors['members'][$i] = self::trans('validation.memberislist');
@@ -117,18 +120,18 @@ class GroupsController extends RelationController
         DB::commit();
 
         return response()->json([
-                'status' => 'success',
-                'message' => self::trans('app.distlist-create-success'),
+            'status' => 'success',
+            'message' => self::trans('app.distlist-create-success'),
         ]);
     }
 
     /**
      * Update a group.
      *
-     * @param \Illuminate\Http\Request $request The API request.
-     * @param string                   $id      Group identifier
+     * @param Request $request the API request
+     * @param string  $id      Group identifier
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function update(Request $request, $id)
     {
@@ -151,7 +154,7 @@ class GroupsController extends RelationController
 
         // Validate the group name
         if ($name !== null && $name != $group->name) {
-            list(, $domainName) = explode('@', $group->email);
+            [, $domainName] = explode('@', $group->email);
             $rules = ['name' => ['required', 'string', new GroupName($owner, $domainName)]];
 
             $v = Validator::make($request->all(), $rules);
@@ -169,7 +172,7 @@ class GroupsController extends RelationController
         } else {
             foreach ((array) $members as $i => $member) {
                 if (is_string($member) && !empty($member)) {
-                    if ($error = GroupsController::validateMemberEmail($member, $owner)) {
+                    if ($error = self::validateMemberEmail($member, $owner)) {
                         $errors['members'][$i] = $error;
                     } elseif (\strtolower($member) === $group->email) {
                         $errors['members'][$i] = self::trans('validation.memberislist');
@@ -190,16 +193,16 @@ class GroupsController extends RelationController
         $group->save();
 
         return response()->json([
-                'status' => 'success',
-                'message' => self::trans('app.distlist-update-success'),
+            'status' => 'success',
+            'message' => self::trans('app.distlist-update-success'),
         ]);
     }
 
     /**
      * Execute (synchronously) specified step in a group setup process.
      *
-     * @param \App\Group $group Group object
-     * @param string     $step  Step identifier (as in self::statusInfo())
+     * @param Group  $group Group object
+     * @param string $step  Step identifier (as in self::statusInfo())
      *
      * @return bool|null True if the execution succeeded, False if not, Null when
      *                   the job has been sent to the worker (result unknown)
@@ -207,14 +210,14 @@ class GroupsController extends RelationController
     public static function execProcessStep(Group $group, string $step): ?bool
     {
         try {
-            if (strpos($step, 'domain-') === 0) {
+            if (str_starts_with($step, 'domain-')) {
                 return DomainsController::execProcessStep($group->domain(), $step);
             }
 
             switch ($step) {
                 case 'distlist-ldap-ready':
                     // Group not in LDAP, create it
-                    \App\Jobs\Group\CreateJob::dispatch($group->id);
+                    CreateJob::dispatch($group->id);
                     return null;
             }
         } catch (\Exception $e) {
@@ -227,24 +230,24 @@ class GroupsController extends RelationController
     /**
      * Validate an email address for use as a group email
      *
-     * @param string    $email Email address
-     * @param \App\User $user  The group owner
+     * @param string $email Email address
+     * @param User   $user  The group owner
      *
      * @return ?string Error message on validation error
      */
-    public static function validateGroupEmail($email, \App\User $user): ?string
+    public static function validateGroupEmail($email, User $user): ?string
     {
         if (empty($email)) {
             return self::trans('validation.required', ['attribute' => 'email']);
         }
 
-        if (strpos($email, '@') === false) {
+        if (!str_contains($email, '@')) {
             return self::trans('validation.entryinvalid', ['attribute' => 'email']);
         }
 
-        list($login, $domain) = explode('@', \strtolower($email));
+        [$login, $domain] = explode('@', \strtolower($email));
 
-        if (strlen($login) === 0 || strlen($domain) === 0) {
+        if ($login === '' || $domain === '') {
             return self::trans('validation.entryinvalid', ['attribute' => 'email']);
         }
 
@@ -265,7 +268,7 @@ class GroupsController extends RelationController
         // Validate login part alone
         $v = Validator::make(
             ['email' => $login],
-            ['email' => [new \App\Rules\UserEmailLocal(true)]]
+            ['email' => [new UserEmailLocal(true)]]
         );
 
         if ($v->fails()) {
@@ -292,16 +295,16 @@ class GroupsController extends RelationController
     /**
      * Validate an email address for use as a group member
      *
-     * @param string    $email Email address
-     * @param \App\User $user  The group owner
+     * @param string $email Email address
+     * @param User   $user  The group owner
      *
      * @return ?string Error message on validation error
      */
-    public static function validateMemberEmail($email, \App\User $user): ?string
+    public static function validateMemberEmail($email, User $user): ?string
     {
         $v = Validator::make(
             ['email' => $email],
-            ['email' => [new \App\Rules\ExternalEmail()]]
+            ['email' => [new ExternalEmail()]]
         );
 
         if ($v->fails()) {
@@ -310,7 +313,7 @@ class GroupsController extends RelationController
 
         // A local domain user must exist
         if (!User::where('email', \strtolower($email))->first()) {
-            list($login, $domain) = explode('@', \strtolower($email));
+            [$login, $domain] = explode('@', \strtolower($email));
 
             $domain = Domain::where('namespace', $domain)->first();
 

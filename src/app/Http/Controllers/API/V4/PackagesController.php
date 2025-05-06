@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers\API\V4;
 
-use App\Package;
 use App\Http\Controllers\ResourceController;
-use Illuminate\Http\Request;
+use App\Package;
+use Illuminate\Http\JsonResponse;
 
 class PackagesController extends ResourceController
 {
     /**
      * Display a listing of packages.
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function index()
     {

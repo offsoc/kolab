@@ -2,11 +2,12 @@
 
 namespace App\Policy\Mailfilter\Modules;
 
+use App\Auth\Utils;
 use App\Backends\DAV;
-use App\Support\Facades\DAV as DAVFacade;
-use App\User;
 use App\Policy\Mailfilter\MailParser;
 use App\Policy\Mailfilter\Result;
+use App\Support\Facades\DAV as DAVFacade;
+use App\User;
 use Sabre\VObject\Component;
 use Sabre\VObject\Document;
 use Sabre\VObject\Reader;
@@ -96,11 +97,11 @@ class ItipModule
     /**
      * Get specific event/task recurrence instance from the VCALENDAR object
      */
-    protected static function extractRecurrenceInstanceComponent(COmponent $vobject, string $recurrence_id): ?Component
+    protected static function extractRecurrenceInstanceComponent(Component $vobject, string $recurrence_id): ?Component
     {
         foreach ($vobject->getComponents() as $component) {
             if ($component->name == 'VEVENT' || $component->name == 'VTODO') {
-                if (strval($component->{'RECURRENCE-ID'}) === $recurrence_id) {
+                if ((string) $component->{'RECURRENCE-ID'} === $recurrence_id) {
                     return $component;
                 }
             }
@@ -158,7 +159,7 @@ class ItipModule
     {
         // Use short-lived token to authenticate as user
         if (!$this->davTokenExpiresOn || now()->greaterThanOrEqualTo($this->davTokenExpiresOn)) {
-            $password = \App\Auth\Utils::tokenCreate((string) $user->id, $this->davTTL);
+            $password = Utils::tokenCreate((string) $user->id, $this->davTTL);
 
             $this->davTokenExpiresOn = now()->addSeconds($this->davTTL - 1);
             $this->davClient = DAVFacade::getInstance($user->email, $password);
@@ -214,10 +215,10 @@ class ItipModule
                     $this->uid = (string) $component->uid;
                     $this->type = (string) $component->name;
 
-                    // TODO: We should probably sanity check the VCALENDAR content,
-                    // e.g. we should ignore/remove all components with UID different then the main (first) one.
-                    // In case of some obvious issues, delivering the message to inbox is probably safer.
-                } elseif (strval($component->uid) != $this->uid) {
+                // TODO: We should probably sanity check the VCALENDAR content,
+                // e.g. we should ignore/remove all components with UID different then the main (first) one.
+                // In case of some obvious issues, delivering the message to inbox is probably safer.
+                } elseif ((string) $component->uid != $this->uid) {
                     continue;
                 }
 

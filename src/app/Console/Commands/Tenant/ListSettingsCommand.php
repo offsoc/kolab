@@ -3,6 +3,7 @@
 namespace App\Console\Commands\Tenant;
 
 use App\Console\Command;
+use App\Tenant;
 
 class ListSettingsCommand extends Command
 {
@@ -27,7 +28,7 @@ class ListSettingsCommand extends Command
      */
     public function handle()
     {
-        $tenant = $this->getObject(\App\Tenant::class, $this->argument('tenant'), 'title');
+        $tenant = $this->getObject(Tenant::class, $this->argument('tenant'), 'title');
 
         if (!$tenant) {
             $this->error("Unable to find the tenant.");

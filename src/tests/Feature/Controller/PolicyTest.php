@@ -3,8 +3,9 @@
 namespace Tests\Feature\Controller;
 
 use App\Domain;
+use App\IP4Net;
 use App\Policy\Greylist;
-use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 use Tests\TestCase;
 
 class PolicyTest extends TestCase
@@ -14,24 +15,24 @@ class PolicyTest extends TestCase
     private $testUser;
     private $testDomain;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->clientAddress = '127.0.0.100';
 
-        $this->net = \App\IP4Net::create([
-                'net_number' => '127.0.0.0',
-                'net_broadcast' => '127.255.255.255',
-                'net_mask' => 8,
-                'country' => 'US',
-                'rir_name' => 'test',
-                'serial' => 1,
+        $this->net = IP4Net::create([
+            'net_number' => '127.0.0.0',
+            'net_broadcast' => '127.255.255.255',
+            'net_mask' => 8,
+            'country' => 'US',
+            'rir_name' => 'test',
+            'serial' => 1,
         ]);
 
         $this->testDomain = $this->getTestDomain('test.domain', [
-                'type' => Domain::TYPE_EXTERNAL,
-                'status' => Domain::STATUS_ACTIVE | Domain::STATUS_CONFIRMED | Domain::STATUS_VERIFIED
+            'type' => Domain::TYPE_EXTERNAL,
+            'status' => Domain::STATUS_ACTIVE | Domain::STATUS_CONFIRMED | Domain::STATUS_VERIFIED,
         ]);
 
         $this->testUser = $this->getTestUser('john@test.domain');
@@ -42,7 +43,7 @@ class PolicyTest extends TestCase
         $this->useServicesUrl();
     }
 
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser($this->testUser->email);
         $this->deleteTestDomain($this->testDomain->namespace);
@@ -66,7 +67,7 @@ class PolicyTest extends TestCase
             'sender' => 'someone@sender.domain',
             'recipient' => $this->testUser->email,
             'client_address' => $this->clientAddress,
-            'client_name' => 'some.mx'
+            'client_name' => 'some.mx',
         ];
 
         $response = $this->post('/api/webhooks/policy/greylist', $post);
@@ -75,12 +76,12 @@ class PolicyTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertEquals('DEFER_IF_PERMIT', $json['response']);
-        $this->assertEquals("Greylisted for 5 minutes. Try again later.", $json['reason']);
+        $this->assertSame('DEFER_IF_PERMIT', $json['response']);
+        $this->assertSame("Greylisted for 5 minutes. Try again later.", $json['reason']);
 
         // Test 200 response
         $connect = Greylist\Connect::where('sender_domain', 'sender.domain')->first();
-        $connect->created_at = \Carbon\Carbon::now()->subMinutes(6);
+        $connect->created_at = Carbon::now()->subMinutes(6);
         $connect->save();
 
         $response = $this->post('/api/webhooks/policy/greylist', $post);
@@ -89,7 +90,7 @@ class PolicyTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertEquals('DUNNO', $json['response']);
+        $this->assertSame('DUNNO', $json['response']);
         $this->assertMatchesRegularExpression('/^Received-Greylist: greylisted from/', $json['prepend'][0]);
     }
 
@@ -142,8 +143,8 @@ class PolicyTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertEquals('REJECT', $json['response']);
-        $this->assertEquals("Invalid sender", $json['reason']);
+        $this->assertSame('REJECT', $json['response']);
+        $this->assertSame("Invalid sender", $json['reason']);
 
         // Test invalid user
         $post = [
@@ -157,8 +158,8 @@ class PolicyTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertEquals('REJECT', $json['response']);
-        $this->assertEquals("Invalid user", $json['reason']);
+        $this->assertSame('REJECT', $json['response']);
+        $this->assertSame("Invalid user", $json['reason']);
 
         // Test unknown user
         $post = [
@@ -172,8 +173,8 @@ class PolicyTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertEquals('REJECT', $json['response']);
-        $this->assertEquals("Could not find user {$post['user']}", $json['reason']);
+        $this->assertSame('REJECT', $json['response']);
+        $this->assertSame("Could not find user {$post['user']}", $json['reason']);
 
         // Test existing user and an invalid sender address
         $post = [
@@ -187,8 +188,8 @@ class PolicyTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertEquals('REJECT', $json['response']);
-        $this->assertEquals("john@test.domain is unauthorized to send mail as john1@test.domain", $json['reason']);
+        $this->assertSame('REJECT', $json['response']);
+        $this->assertSame("john@test.domain is unauthorized to send mail as john1@test.domain", $json['reason']);
 
         // Test existing user with a valid sender address
         $post = [
@@ -202,7 +203,7 @@ class PolicyTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertEquals('PERMIT', $json['response']);
+        $this->assertSame('PERMIT', $json['response']);
     }
 
     /**
@@ -285,7 +286,7 @@ class PolicyTest extends TestCase
             'sender' => 'sender@spf-fail.kolab.org',
             'client_name' => 'mx.kolabnow.com',
             'client_address' => '212.103.80.148',
-            'recipient' => $this->testUser->email
+            'recipient' => $this->testUser->email,
         ];
 
         $response = $this->post('/api/webhooks/policy/spf', $post);

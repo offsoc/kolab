@@ -4,34 +4,28 @@ namespace Tests\Feature\Backends;
 
 use App\Backends\PGP;
 use App\Backends\Roundcube;
-use App\UserAlias;
+use App\PowerDNS\Domain;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class PGPTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $user = $this->getTestUser('john@kolab.org');
         $user->aliases()->where('alias', 'test-alias@kolab.org')->delete();
         PGP::homedirCleanup($user);
-        \App\PowerDNS\Domain::where('name', '_woat.kolab.org')->delete();
+        Domain::where('name', '_woat.kolab.org')->delete();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $user = $this->getTestUser('john@kolab.org');
         $user->aliases()->where('alias', 'test-alias@kolab.org')->delete();
         PGP::homedirCleanup($user);
-        \App\PowerDNS\Domain::where('name', '_woat.kolab.org')->delete();
+        Domain::where('name', '_woat.kolab.org')->delete();
 
         parent::tearDown();
     }
@@ -67,28 +61,28 @@ class PGPTest extends TestCase
         $this->assertSame($user->email, $userIds[0]->getEmail());
         $this->assertSame('', $userIds[0]->getName());
         $this->assertSame('', $userIds[0]->getComment());
-        $this->assertSame(true, $userIds[0]->isValid());
-        $this->assertSame(false, $userIds[0]->isRevoked());
+        $this->assertTrue($userIds[0]->isValid());
+        $this->assertFalse($userIds[0]->isRevoked());
 
         $key = $keys[0]->getPrimaryKey();
         $this->assertSame(\Crypt_GPG_SubKey::ALGORITHM_RSA, $key->getAlgorithm());
         $this->assertSame(0, $key->getExpirationDate());
         $this->assertSame((int) \config('pgp.length'), $key->getLength());
-        $this->assertSame(true, $key->hasPrivate());
-        $this->assertSame(true, $key->canSign());
-        $this->assertSame(false, $key->canEncrypt());
-        $this->assertSame(false, $key->isRevoked());
+        $this->assertTrue($key->hasPrivate());
+        $this->assertTrue($key->canSign());
+        $this->assertFalse($key->canEncrypt());
+        $this->assertFalse($key->isRevoked());
 
         $key = $keys[0]->getSubKeys()[1];
         $this->assertSame(\Crypt_GPG_SubKey::ALGORITHM_RSA, $key->getAlgorithm());
         $this->assertSame(0, $key->getExpirationDate());
         $this->assertSame((int) \config('pgp.length'), $key->getLength());
-        $this->assertSame(false, $key->canSign());
-        $this->assertSame(true, $key->canEncrypt());
-        $this->assertSame(false, $key->isRevoked());
+        $this->assertFalse($key->canSign());
+        $this->assertTrue($key->canEncrypt());
+        $this->assertFalse($key->isRevoked());
 
         // Assert the public key in DNS
-        $dns_domain = \App\PowerDNS\Domain::where('name', '_woat.kolab.org')->first();
+        $dns_domain = Domain::where('name', '_woat.kolab.org')->first();
         $this->assertNotNull($dns_domain);
         $dns_record = $dns_domain->records()->where('type', 'TXT')->first();
         $this->assertNotNull($dns_record);
@@ -116,25 +110,25 @@ class PGPTest extends TestCase
         $this->assertSame('test-alias@kolab.org', $userIds[0]->getEmail());
         $this->assertSame('', $userIds[0]->getName());
         $this->assertSame('', $userIds[0]->getComment());
-        $this->assertSame(true, $userIds[0]->isValid());
-        $this->assertSame(false, $userIds[0]->isRevoked());
+        $this->assertTrue($userIds[0]->isValid());
+        $this->assertFalse($userIds[0]->isRevoked());
 
         $key = $keys[1]->getPrimaryKey();
         $this->assertSame(\Crypt_GPG_SubKey::ALGORITHM_RSA, $key->getAlgorithm());
         $this->assertSame(0, $key->getExpirationDate());
         $this->assertSame((int) \config('pgp.length'), $key->getLength());
-        $this->assertSame(true, $key->hasPrivate());
-        $this->assertSame(true, $key->canSign());
-        $this->assertSame(false, $key->canEncrypt());
-        $this->assertSame(false, $key->isRevoked());
+        $this->assertTrue($key->hasPrivate());
+        $this->assertTrue($key->canSign());
+        $this->assertFalse($key->canEncrypt());
+        $this->assertFalse($key->isRevoked());
 
         $key = $keys[1]->getSubKeys()[1];
         $this->assertSame(\Crypt_GPG_SubKey::ALGORITHM_RSA, $key->getAlgorithm());
         $this->assertSame(0, $key->getExpirationDate());
         $this->assertSame((int) \config('pgp.length'), $key->getLength());
-        $this->assertSame(false, $key->canSign());
-        $this->assertSame(true, $key->canEncrypt());
-        $this->assertSame(false, $key->isRevoked());
+        $this->assertFalse($key->canSign());
+        $this->assertTrue($key->canEncrypt());
+        $this->assertFalse($key->isRevoked());
 
         $this->assertSame(2, $dns_domain->records()->where('type', 'TXT')->count());
 

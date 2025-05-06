@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Entitlement;
 use App\Package;
 use App\PackageSku;
 use App\Sku;
@@ -10,20 +9,14 @@ use Tests\TestCase;
 
 class PackageTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         Package::where('title', 'test-package')->delete();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         Package::where('title', 'test-package')->delete();
 
@@ -40,17 +33,17 @@ class PackageTest extends TestCase
         $skuStorage = Sku::withEnvTenantContext()->where('title', 'storage')->first();      // cost: 25
 
         $package = Package::create([
-                'title' => 'test-package',
-                'name' => 'Test Account',
-                'description' => 'Test account.',
-                'discount_rate' => 0,
+            'title' => 'test-package',
+            'name' => 'Test Account',
+            'description' => 'Test account.',
+            'discount_rate' => 0,
         ]);
 
         // WARNING: saveMany() sets package_skus.cost = skus.cost, the next line will reset it to NULL
         $package->skus()->saveMany([
-                $skuMailbox,
-                $skuGroupware,
-                $skuStorage
+            $skuMailbox,
+            $skuGroupware,
+            $skuStorage,
         ]);
 
         PackageSku::where('package_id', $package->id)->update(['cost' => null]);

@@ -3,6 +3,7 @@
 namespace Tests\Infrastructure;
 
 use App\Backends\IMAP;
+use App\User;
 use Tests\TestCase;
 
 /**
@@ -10,8 +11,8 @@ use Tests\TestCase;
  */
 class IMAPTest extends TestCase
 {
-    private static ?\App\User $user = null;
-    private $imap = null;
+    private static ?User $user = null;
+    private $imap;
 
     /**
      * Get configured/initialized rcube_imap_generic instance
@@ -33,10 +34,7 @@ class IMAPTest extends TestCase
         return $this->imap = $init->invokeArgs(null, [$config]);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -53,23 +51,23 @@ class IMAPTest extends TestCase
         $mailbox = "user/{$email}/test";
 
         $imap->createFolder($mailbox);
-        $this->assertEquals(1, count($imap->listMailboxes('', $mailbox)));
+        $this->assertSame(1, count($imap->listMailboxes('', $mailbox)));
         $imap->setACL($mailbox, 'cyrus-admin', 'c');
         $this->assertTrue($imap->setMetadata($mailbox, [
             '/shared/vendor/kolab/folder-type' => 'event',
-            '/private/vendor/kolab/folder-type' => 'event'
+            '/private/vendor/kolab/folder-type' => 'event',
         ]));
 
         $metadata = $imap->getMetadata($mailbox, [
             '/shared/vendor/kolab/folder-type',
-            '/private/vendor/kolab/folder-type'
+            '/private/vendor/kolab/folder-type',
         ]);
 
-        $this->assertEquals('event', $metadata[$mailbox]['/shared/vendor/kolab/folder-type']);
-        $this->assertEquals('event', $metadata[$mailbox]['/private/vendor/kolab/folder-type']);
+        $this->assertSame('event', $metadata[$mailbox]['/shared/vendor/kolab/folder-type']);
+        $this->assertSame('event', $metadata[$mailbox]['/private/vendor/kolab/folder-type']);
 
         $this->assertTrue($imap->deleteFolder($mailbox));
-        $this->assertEquals(0, count($imap->listMailboxes('', $mailbox)));
+        $this->assertSame(0, count($imap->listMailboxes('', $mailbox)));
     }
 
     /**

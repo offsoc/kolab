@@ -103,13 +103,13 @@ class AppointmentTest extends TestCase
         $this->assertSame('Aleksander Machniak', $event->organizer['cn']);
         $this->assertSame('ORGANIZER', $event->organizer['role']);
         $this->assertSame('ACCEPTED', $event->organizer['partstat']);
-        $this->assertSame(false, $event->organizer['rsvp']);
+        $this->assertFalse($event->organizer['rsvp']);
 
         $this->assertCount(1, $event->attendees);
         $this->assertSame('alec@outlook.com', $event->attendees[0]['email']);
         $this->assertSame('Alec Machniak', $event->attendees[0]['cn']);
         $this->assertSame('REQ-PARTICIPANT', $event->attendees[0]['role']);
         $this->assertSame('NEEDS-ACTION', $event->attendees[0]['partstat']);
-        $this->assertSame(true, $event->attendees[0]['rsvp']);
+        $this->assertTrue($event->attendees[0]['rsvp']);
     }
 }

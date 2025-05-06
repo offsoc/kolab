@@ -1,9 +1,6 @@
 <?php
 
-use Illuminate\Support\Str;
-
 return [
-
     /*
     |--------------------------------------------------------------------------
     | Default Cache Store
@@ -30,7 +27,6 @@ return [
     */
 
     'stores' => [
-
         'apc' => [
             'driver' => 'apc',
         ],
@@ -90,7 +86,6 @@ return [
         'octane' => [
             'driver' => 'octane',
         ],
-
     ],
 
     /*
@@ -105,5 +100,4 @@ return [
     */
 
     'prefix' => env('CACHE_PREFIX', 'laravel_cache_'),
-
 ];

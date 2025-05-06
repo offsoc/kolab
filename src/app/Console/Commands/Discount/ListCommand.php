@@ -3,6 +3,7 @@
 namespace App\Console\Commands\Discount;
 
 use App\Console\ObjectListCommand;
+use App\Discount;
 
 /**
  * List discounts.
@@ -29,7 +30,7 @@ use App\Console\ObjectListCommand;
  */
 class ListCommand extends ObjectListCommand
 {
-    protected $objectClass = \App\Discount::class;
+    protected $objectClass = Discount::class;
     protected $objectName = 'discount';
-    protected $objectTitle = null;
+    protected $objectTitle;
 }

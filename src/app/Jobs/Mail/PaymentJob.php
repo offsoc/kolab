@@ -2,27 +2,28 @@
 
 namespace App\Jobs\Mail;
 
+use App\Jobs\MailJob;
+use App\Mail\Helper;
+use App\Mail\PaymentFailure;
+use App\Mail\PaymentSuccess;
 use App\Payment;
 use App\User;
 
-class PaymentJob extends \App\Jobs\MailJob
+class PaymentJob extends MailJob
 {
-    /** @var \App\Payment A payment object */
+    /** @var Payment A payment object */
     protected $payment;
 
-    /** @var ?\App\User A wallet controller */
+    /** @var ?User A wallet controller */
     protected $controller;
-
 
     /**
      * Create a new job instance.
      *
-     * @param \App\Payment $payment    A payment object
-     * @param \App\User    $controller A wallet controller
-     *
-     * @return void
+     * @param Payment $payment    A payment object
+     * @param User    $controller A wallet controller
      */
-    public function __construct(Payment $payment, User $controller = null)
+    public function __construct(Payment $payment, ?User $controller = null)
     {
         $this->payment = $payment;
         $this->controller = $controller;
@@ -30,8 +31,6 @@ class PaymentJob extends \App\Jobs\MailJob
 
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle()
     {
@@ -46,19 +45,19 @@ class PaymentJob extends \App\Jobs\MailJob
         }
 
         if ($this->payment->status == Payment::STATUS_PAID) {
-            $mail = new \App\Mail\PaymentSuccess($this->payment, $this->controller);
+            $mail = new PaymentSuccess($this->payment, $this->controller);
             $label = "Success";
         } elseif (
             $this->payment->status == Payment::STATUS_EXPIRED
             || $this->payment->status == Payment::STATUS_FAILED
         ) {
-            $mail = new \App\Mail\PaymentFailure($this->payment, $this->controller);
+            $mail = new PaymentFailure($this->payment, $this->controller);
             $label = "Failure";
         } else {
             return;
         }
 
-        list($to, $cc) = \App\Mail\Helper::userEmails($this->controller);
+        [$to, $cc] = Helper::userEmails($this->controller);
 
         if (!empty($to) || !empty($cc)) {
             $params = [
@@ -67,7 +66,7 @@ class PaymentJob extends \App\Jobs\MailJob
                 'add' => " for {$wallet->id}",
             ];
 
-            \App\Mail\Helper::sendMail($mail, $this->controller->tenant_id, $params);
+            Helper::sendMail($mail, $this->controller->tenant_id, $params);
         }
 
         /*

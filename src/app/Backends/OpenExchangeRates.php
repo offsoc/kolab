@@ -14,11 +14,11 @@ class OpenExchangeRates
     public static function retrieveRates($baseCurrency)
     {
         $baseCurrency = strtoupper($baseCurrency);
-        $apiKey       = \config('services.openexchangerates.api_key');
-        $query        = http_build_query(['app_id' => $apiKey, 'base' => 'USD']);
-        $url          = 'https://openexchangerates.org/api/latest.json?' . $query;
-        $html         = file_get_contents($url, false);
-        $rates        = [];
+        $apiKey = \config('services.openexchangerates.api_key');
+        $query = http_build_query(['app_id' => $apiKey, 'base' => 'USD']);
+        $url = 'https://openexchangerates.org/api/latest.json?' . $query;
+        $html = file_get_contents($url, false);
+        $rates = [];
 
         if ($html && ($result = json_decode($html, true)) && !empty($result['rates'])) {
             foreach ($result['rates'] as $code => $rate) {
@@ -64,7 +64,7 @@ class OpenExchangeRates
             $html = file_get_contents($url, false);
 
             if ($html && ($result = json_decode($html, true)) && !empty($result['status'])) {
-                print($result);
+                echo $result;
             }
 
             throw new \Exception("Failed to retrieve exchange rates status");

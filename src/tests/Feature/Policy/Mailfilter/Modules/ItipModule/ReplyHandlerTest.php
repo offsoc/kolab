@@ -64,7 +64,7 @@ class ReplyHandlerTest extends TestCase
         Notification::assertCount(1);
         Notification::assertSentTo(
             $user,
-            function (ItipNotification $notification, array $channels, object $notifiable) use ($user) {
+            static function (ItipNotification $notification, array $channels, object $notifiable) use ($user) {
                 return $notifiable->id == $user->id
                     && $notification->params->mode == 'reply'
                     && $notification->params->senderEmail == 'john@kolab.org'
@@ -145,7 +145,7 @@ class ReplyHandlerTest extends TestCase
         Notification::assertCount(1);
         Notification::assertSentTo(
             $user,
-            function (ItipNotification $notification, array $channels, object $notifiable) use ($user) {
+            static function (ItipNotification $notification, array $channels, object $notifiable) use ($user) {
                 return $notifiable->id == $user->id
                     && $notification->params->mode == 'reply'
                     && $notification->params->senderEmail == 'john@kolab.org'

@@ -15,20 +15,20 @@ class SupportTest extends TestCaseDusk
      */
     public function testSupportForm(): void
     {
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->withConfig(['app.support_email' => ""])
                 ->visit('/')
-                ->within(new Menu(), function ($browser) {
+                ->within(new Menu(), static function ($browser) {
                     $browser->clickMenuItem('support');
                 })
                 ->waitFor('#support')
                 ->assertElementsCount('.card-title', 2)
-                ->with('.row .col:last-child', function ($card) {
+                ->with('.row .col:last-child', static function ($card) {
                     $card->assertSeeIn('.card-title', 'Contact Support')
-                    ->assertSeeIn('.btn-primary', 'Contact Support')
-                    ->click('.btn-primary');
+                        ->assertSeeIn('.btn-primary', 'Contact Support')
+                        ->click('.btn-primary');
                 })
-                ->with(new Dialog('#support-dialog'), function (Browser $browser) {
+                ->with(new Dialog('#support-dialog'), static function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Contact Support')
                         ->assertFocused('#support-user')
                         ->assertSeeIn('@button-cancel', 'Cancel')
@@ -43,10 +43,10 @@ class SupportTest extends TestCaseDusk
                         ->click('@button-cancel');
                 })
                 ->assertMissing('#support-dialog')
-                ->with('.row .col:last-child', function ($card) {
+                ->with('.row .col:last-child', static function ($card) {
                     $card->click('.btn-primary');
                 })
-                ->with(new Dialog('#support-dialog'), function (Browser $browser) {
+                ->with(new Dialog('#support-dialog'), static function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Contact Support')
                         ->assertFocused('#support-user')
                         ->assertValue('#support-email', 'email@address.com')
@@ -64,10 +64,10 @@ class SupportTest extends TestCaseDusk
      */
     public function testNoSupportForm(): void
     {
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->withConfig(['app.support_email' => null])
                 ->visit('/')
-                ->within(new Menu(), function ($browser) {
+                ->within(new Menu(), static function ($browser) {
                     $browser->clickMenuItem('support');
                 })
                 ->waitFor('#support')

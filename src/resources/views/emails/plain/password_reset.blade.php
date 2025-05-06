@@ -11,6 +11,6 @@
 
 {!! __('mail.passwordreset-body4', $vars) !!}
 
--- 
+--
 {!! __('mail.footer1', $vars) !!}
 {!! __('mail.footer2', $vars) !!}

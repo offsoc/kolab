@@ -2,15 +2,14 @@
 
 namespace Tests\Feature\Console\Domain;
 
+use App\Domain;
+use App\Package;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class DeleteTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -18,10 +17,7 @@ class DeleteTest extends TestCase
         $this->deleteTestDomain('domain-delete.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('user@domain-delete.com');
         $this->deleteTestDomain('domain-delete.com');
@@ -51,11 +47,11 @@ class DeleteTest extends TestCase
         // Create a user account for delete
         $user = $this->getTestUser('user@domain-delete.com');
         $domain = $this->getTestDomain('domain-delete.com', [
-                'status' => \App\Domain::STATUS_NEW,
-                'type' => \App\Domain::TYPE_HOSTED,
+            'status' => Domain::STATUS_NEW,
+            'type' => Domain::TYPE_HOSTED,
         ]);
-        $package_kolab = \App\Package::where('title', 'kolab')->first();
-        $package_domain = \App\Package::where('title', 'domain-hosting')->first();
+        $package_kolab = Package::where('title', 'kolab')->first();
+        $package_domain = Package::where('title', 'domain-hosting')->first();
         $user->assignPackage($package_kolab);
         $domain->assignPackage($package_domain, $user);
 

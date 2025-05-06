@@ -4,6 +4,7 @@ namespace App;
 
 use App\Traits\UuidStrKeyTrait;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -11,18 +12,18 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  *
  * Owned by a {@link \App\User}, billed to a {@link \App\Wallet}.
  *
- * @property int          $cost
- * @property ?string      $description
- * @property ?object      $entitleable      The entitled object (receiver of the entitlement).
- * @property int          $entitleable_id
- * @property string       $entitleable_type
- * @property int          $fee
- * @property string       $id
- * @property \App\User    $owner            The owner of this entitlement (subject).
- * @property \App\Sku     $sku              The SKU to which this entitlement applies.
- * @property string       $sku_id
- * @property \App\Wallet  $wallet           The wallet to which this entitlement is charged.
- * @property string       $wallet_id
+ * @property int     $cost
+ * @property ?string $description
+ * @property ?object $entitleable      The entitled object (receiver of the entitlement).
+ * @property int     $entitleable_id
+ * @property string  $entitleable_type
+ * @property int     $fee
+ * @property string  $id
+ * @property User    $owner            The owner of this entitlement (subject).
+ * @property Sku     $sku              The SKU to which this entitlement applies.
+ * @property string  $sku_id
+ * @property Wallet  $wallet           The wallet to which this entitlement is charged.
+ * @property string  $wallet_id
  */
 class Entitlement extends Model
 {
@@ -43,15 +44,15 @@ class Entitlement extends Model
     /** @var array<string, string> The attributes that should be cast */
     protected $casts = [
         'cost' => 'integer',
-        'fee' => 'integer'
+        'fee' => 'integer',
     ];
 
     /**
      * Create a transaction record for this entitlement.
      *
-     * @param string $type The type of transaction ('created', 'billed', 'deleted'), but use the
-     *                     \App\Transaction constants.
-     * @param int $amount  The amount involved in cents
+     * @param string $type   the type of transaction ('created', 'billed', 'deleted'), but use the
+     *                       \App\Transaction constants
+     * @param int    $amount The amount involved in cents
      *
      * @return string The transaction ID
      */
@@ -60,9 +61,9 @@ class Entitlement extends Model
         $transaction = Transaction::create(
             [
                 'object_id' => $this->id,
-                'object_type' => Entitlement::class,
+                'object_type' => self::class,
                 'type' => $type,
-                'amount' => $amount
+                'amount' => $amount,
             ]
         );
 
@@ -110,7 +111,7 @@ class Entitlement extends Model
     /**
      * The SKU concerned.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Sku, $this>
+     * @return BelongsTo<Sku, $this>
      */
     public function sku()
     {
@@ -120,7 +121,7 @@ class Entitlement extends Model
     /**
      * The wallet this entitlement is being billed to
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Wallet, $this>
+     * @return BelongsTo<Wallet, $this>
      */
     public function wallet()
     {

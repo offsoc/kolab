@@ -2,6 +2,8 @@
 
 namespace App\Console\Commands\Policy\RateLimit;
 
+use App\Policy\RateLimit;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 
 class ExpungeCommand extends Command
@@ -27,6 +29,6 @@ class ExpungeCommand extends Command
      */
     public function handle()
     {
-        \App\Policy\RateLimit::where('updated_at', '<', \Carbon\Carbon::now()->subMonthsWithoutOverflow(6))->delete();
+        RateLimit::where('updated_at', '<', Carbon::now()->subMonthsWithoutOverflow(6))->delete();
     }
 }

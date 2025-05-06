@@ -3,6 +3,7 @@
 namespace App\Console\Commands\Scalpel\ReferralProgram;
 
 use App\Console\ObjectDeleteCommand;
+use App\ReferralProgram;
 
 class DeleteCommand extends ObjectDeleteCommand
 {
@@ -10,7 +11,7 @@ class DeleteCommand extends ObjectDeleteCommand
     protected $hidden = true;
 
     protected $commandPrefix = 'scalpel';
-    protected $objectClass = \App\ReferralProgram::class;
+    protected $objectClass = ReferralProgram::class;
     protected $objectName = 'referral-program';
-    protected $objectTitle = null;
+    protected $objectTitle;
 }

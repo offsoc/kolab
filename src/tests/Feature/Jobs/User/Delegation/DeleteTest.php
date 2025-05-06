@@ -3,6 +3,7 @@
 namespace Tests\Feature\Jobs\User\Delegation;
 
 use App\Delegation;
+use App\Jobs\User\Delegation\DeleteJob;
 use App\Support\Facades\DAV;
 use App\Support\Facades\IMAP;
 use App\Support\Facades\Roundcube;
@@ -12,10 +13,7 @@ use Tests\TestCase;
 
 class DeleteTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -23,10 +21,7 @@ class DeleteTest extends TestCase
         $this->deleteTestUser('delegation-user2@' . \config('app.domain'));
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('delegation-user1@' . \config('app.domain'));
         $this->deleteTestUser('delegation-user2@' . \config('app.domain'));
@@ -57,14 +52,14 @@ class DeleteTest extends TestCase
         DAV::shouldReceive('unshareFolders')->once()->with($user, $delegatee->email);
         Roundcube::shouldReceive('resetIdentities')->once()->with($delegatee);
 
-        $job = (new \App\Jobs\User\Delegation\DeleteJob($user->email, $delegatee->email))->withFakeQueueInteractions();
+        $job = (new DeleteJob($user->email, $delegatee->email))->withFakeQueueInteractions();
         $job->handle();
         $job->assertNotFailed();
 
         // Test that we do nothing if delegation exists
         Delegation::create(['user_id' => $user->id, 'delegatee_id' => $delegatee->id]);
 
-        $job = (new \App\Jobs\User\Delegation\DeleteJob($user->email, $delegatee->email))->withFakeQueueInteractions();
+        $job = (new DeleteJob($user->email, $delegatee->email))->withFakeQueueInteractions();
         $job->handle();
         $job->assertNotFailed();
     }

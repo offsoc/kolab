@@ -3,6 +3,9 @@
 namespace App\Console\Commands\Policy\RateLimit\Whitelist;
 
 use App\Console\Command;
+use App\Domain;
+use App\Policy\RateLimit\Whitelist;
+use App\User;
 
 class DeleteCommand extends Command
 {
@@ -29,7 +32,7 @@ class DeleteCommand extends Command
     {
         $object = $this->argument('object');
 
-        if (strpos($object, '@') === false) {
+        if (!str_contains($object, '@')) {
             $domain = $this->getDomain($object);
 
             if (!$domain) {
@@ -38,7 +41,7 @@ class DeleteCommand extends Command
             }
 
             $id = $domain->id;
-            $type = \App\Domain::class;
+            $type = Domain::class;
         } else {
             $user = $this->getUser($object);
 
@@ -48,13 +51,13 @@ class DeleteCommand extends Command
             }
 
             $id = $user->id;
-            $type = \App\User::class;
+            $type = User::class;
         }
 
-        \App\Policy\RateLimit\Whitelist::where(
+        Whitelist::where(
             [
                 'whitelistable_id' => $id,
-                'whitelistable_type' => $type
+                'whitelistable_type' => $type,
             ]
         )->delete();
     }

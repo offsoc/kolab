@@ -3,6 +3,7 @@
 namespace App\Console\Commands\Domain;
 
 use App\Console\ObjectListCommand;
+use App\Domain;
 
 /**
  * List domains.
@@ -29,7 +30,7 @@ use App\Console\ObjectListCommand;
  */
 class ListCommand extends ObjectListCommand
 {
-    protected $objectClass = \App\Domain::class;
+    protected $objectClass = Domain::class;
     protected $objectName = 'domain';
     protected $objectTitle = 'namespace';
 }

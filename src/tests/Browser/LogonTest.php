@@ -2,6 +2,7 @@
 
 namespace Tests\Browser;
 
+use App\Auth\SecondFactor;
 use Tests\Browser;
 use Tests\Browser\Components\Menu;
 use Tests\Browser\Components\Toast;
@@ -16,16 +17,16 @@ class LogonTest extends TestCaseDusk
      */
     public function testLogonMenu(): void
     {
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit(new Home())
-                ->within(new Menu(), function ($browser) {
+                ->within(new Menu(), static function ($browser) {
                     $browser->assertMenuItems(['signup', 'support', 'login', 'lang'])
                         ->assertSeeIn('#footer-copyright', \config('app.company.copyright'))
                         ->assertSeeIn('#footer-copyright', date('Y'));
                 });
 
             if ($browser->isDesktop()) {
-                $browser->within(new Menu('footer'), function ($browser) {
+                $browser->within(new Menu('footer'), static function ($browser) {
                     $browser->assertMenuItems(['signup', 'support', 'login']);
                 });
             } else {
@@ -49,12 +50,12 @@ class LogonTest extends TestCaseDusk
 
             $browser->visit(new Home())
                 // ->plainCookie('language', '')
-                ->within(new Menu(), function ($browser) {
+                ->within(new Menu(), static function ($browser) {
                     $browser->assertSeeIn('@lang', 'EN')
                         ->click('@lang');
                 })
                 // Switch English -> German
-                ->whenAvailable('nav .dropdown-menu', function (Browser $browser) {
+                ->whenAvailable('nav .dropdown-menu', static function (Browser $browser) {
                     $browser->assertElementsCount('a', 3)
                         ->assertSeeIn('a:nth-child(1)', 'EN - English')
                         ->assertSeeIn('a:nth-child(2)', 'DE - German')
@@ -62,7 +63,7 @@ class LogonTest extends TestCaseDusk
                         ->click('a:nth-child(2)');
                 })
                 ->waitUntilMissing('nav .dropdown-menu')
-                ->within(new Menu(), function ($browser) {
+                ->within(new Menu(), static function ($browser) {
                     $browser->assertSeeIn('@lang', 'DE');
                 })
                 ->waitForTextIn('#header-menu .link-login', 'EINLOGGEN')
@@ -73,17 +74,17 @@ class LogonTest extends TestCaseDusk
                 ->waitForTextIn('#header-menu .link-login', 'EINLOGGEN')
                 ->assertSeeIn('#footer-menu .link-login', 'Einloggen')
                 ->assertSeeIn('@logon-button', 'Anmelden')
-                ->within(new Menu(), function ($browser) {
+                ->within(new Menu(), static function ($browser) {
                     $browser->assertSeeIn('@lang', 'DE')
                         ->click('@lang');
                 })
                 // Switch German -> English
-                ->whenAvailable('nav .dropdown-menu', function (Browser $browser) {
+                ->whenAvailable('nav .dropdown-menu', static function (Browser $browser) {
                     $browser->assertSeeIn('a:nth-child(1)', 'Englisch')
                         ->click('a:nth-child(1)');
                 })
                 ->waitUntilMissing('nav .dropdown-menu')
-                ->within(new Menu(), function ($browser) {
+                ->within(new Menu(), static function ($browser) {
                     $browser->assertSeeIn('@lang', 'EN');
                 })
                 ->waitForTextIn('#header-menu .link-login', 'LOGIN');
@@ -95,7 +96,7 @@ class LogonTest extends TestCaseDusk
      */
     public function testRequiredAuth(): void
     {
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit('/dashboard');
 
             // Checks if we're really on the login page
@@ -109,7 +110,7 @@ class LogonTest extends TestCaseDusk
      */
     public function testLogonWrongCredentials(): void
     {
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit(new Home())
                 ->submitLogon('john@kolab.org', 'wrong');
 
@@ -126,7 +127,7 @@ class LogonTest extends TestCaseDusk
      */
     public function testLogonSuccessful(): void
     {
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit(new Home())
                 ->submitLogon('john@kolab.org', 'simple123', true)
                 // Checks if we're really on Dashboard page
@@ -136,12 +137,12 @@ class LogonTest extends TestCaseDusk
                 ->assertVisible('@links a.link-users')
                 ->assertVisible('@links a.link-wallet')
                 ->assertVisible('@links a.link-webmail')
-                ->within(new Menu(), function ($browser) {
+                ->within(new Menu(), static function ($browser) {
                     $browser->assertMenuItems(['support', 'dashboard', 'logout', 'lang']);
                 });
 
             if ($browser->isDesktop()) {
-                $browser->within(new Menu('footer'), function ($browser) {
+                $browser->within(new Menu('footer'), static function ($browser) {
                     $browser->assertMenuItems(['support', 'dashboard', 'logout']);
                 });
             } else {
@@ -175,11 +176,11 @@ class LogonTest extends TestCaseDusk
      */
     public function testLogout(): void
     {
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->on(new Dashboard());
 
             // Click the Logout button
-            $browser->within(new Menu(), function ($browser) {
+            $browser->within(new Menu(), static function ($browser) {
                 $browser->clickMenuItem('logout');
             });
 
@@ -188,7 +189,7 @@ class LogonTest extends TestCaseDusk
                 ->on(new Home());
 
             // with default menu
-            $browser->within(new Menu(), function ($browser) {
+            $browser->within(new Menu(), static function ($browser) {
                 $browser->assertMenuItems(['signup', 'support', 'login', 'lang']);
             });
 
@@ -202,7 +203,7 @@ class LogonTest extends TestCaseDusk
      */
     public function testLogoutByURL(): void
     {
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit(new Home())
                 ->submitLogon('john@kolab.org', 'simple123', true);
 
@@ -215,7 +216,7 @@ class LogonTest extends TestCaseDusk
                 ->on(new Home());
 
             // with default menu
-            $browser->within(new Menu(), function ($browser) {
+            $browser->within(new Menu(), static function ($browser) {
                 $browser->assertMenuItems(['signup', 'support', 'login', 'lang']);
             });
 
@@ -231,7 +232,7 @@ class LogonTest extends TestCaseDusk
      */
     public function test2FA(): void
     {
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             // Test missing 2fa code
             $browser->on(new Home())
                 ->type('@email-input', 'ned@kolab.org')
@@ -257,7 +258,7 @@ class LogonTest extends TestCaseDusk
                 ->assertFocused('@second-factor-input')
                 ->assertToast(Toast::TYPE_ERROR, 'Form validation error');
 
-            $code = \App\Auth\SecondFactor::code('ned@kolab.org');
+            $code = SecondFactor::code('ned@kolab.org');
 
             // Test valid (TOTP) code
             $browser->type('@second-factor-input', $code)
@@ -275,7 +276,7 @@ class LogonTest extends TestCaseDusk
      */
     public function testAfterLogonRedirect(): void
     {
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             // User is logged in, invalidate the session token and visit /settings page
             $browser->execScript("localStorage.setItem('token', '123')")
                 ->visit('/settings')

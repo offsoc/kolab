@@ -21,7 +21,7 @@ class PackagesCommand extends Command
      */
     protected $description = "List packages for plans.";
 
-     /** @var bool Adds --tenant option handler */
+    /** @var bool Adds --tenant option handler */
     protected $withTenant = true;
 
     /**

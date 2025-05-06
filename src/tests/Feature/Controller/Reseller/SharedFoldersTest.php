@@ -2,25 +2,18 @@
 
 namespace Tests\Feature\Controller\Reseller;
 
-use App\SharedFolder;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class SharedFoldersTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         self::useResellerUrl();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         parent::tearDown();
     }
@@ -137,9 +130,9 @@ class SharedFoldersTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertEquals($folder->id, $json['id']);
-        $this->assertEquals($folder->email, $json['email']);
-        $this->assertEquals($folder->name, $json['name']);
+        $this->assertSame($folder->id, $json['id']);
+        $this->assertSame($folder->email, $json['email']);
+        $this->assertSame($folder->name, $json['name']);
     }
 
     /**

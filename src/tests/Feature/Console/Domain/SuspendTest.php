@@ -2,25 +2,20 @@
 
 namespace Tests\Feature\Console\Domain;
 
+use App\Domain;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class SuspendTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestDomain('domain-delete.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestDomain('domain-delete.com');
 
@@ -41,8 +36,8 @@ class SuspendTest extends TestCase
         $this->assertSame("Domain not found.", $output);
 
         $domain = $this->getTestDomain('domain-delete.com', [
-                'status' => \App\Domain::STATUS_NEW,
-                'type' => \App\Domain::TYPE_HOSTED,
+            'status' => Domain::STATUS_NEW,
+            'type' => Domain::TYPE_HOSTED,
         ]);
 
         $code = \Artisan::call("domain:suspend {$domain->namespace}");

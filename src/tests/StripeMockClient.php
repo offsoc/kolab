@@ -11,7 +11,7 @@ class StripeMockClient implements StripeAPI\HttpClient\ClientInterface
     public function request($method, $absUrl, $headers, $params, $hasFile)
     {
         if (empty($this->responses)) {
-            throw new \Exception("StripeMockClient: Missing response for $absUrl.");
+            throw new \Exception("StripeMockClient: Missing response for {$absUrl}.");
         }
 
         $response = array_shift($this->responses);

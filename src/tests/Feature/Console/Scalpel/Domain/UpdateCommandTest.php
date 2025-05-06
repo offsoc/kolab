@@ -7,10 +7,7 @@ use Tests\TestCase;
 
 class UpdateCommandTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -18,10 +15,7 @@ class UpdateCommandTest extends TestCase
         $this->deleteTestDomain('domain-delete-mod.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestDomain('domain-delete.com');
         $this->deleteTestDomain('domain-delete-mod.com');
@@ -36,18 +30,18 @@ class UpdateCommandTest extends TestCase
     {
         // Test unknown domain
         $this->artisan("scalpel:domain:update unknown")
-             ->assertExitCode(1)
-             ->expectsOutput("No such domain unknown");
+            ->assertExitCode(1)
+            ->expectsOutput("No such domain unknown");
 
         $domain = $this->getTestDomain('domain-delete.com', [
-                'status' => Domain::STATUS_NEW,
-                'type' => Domain::TYPE_HOSTED,
+            'status' => Domain::STATUS_NEW,
+            'type' => Domain::TYPE_HOSTED,
         ]);
 
         // Test successful update
         $this->artisan("scalpel:domain:update {$domain->id}"
             . " --namespace=domain-delete-mod.com --type=" . Domain::TYPE_PUBLIC)
-             ->assertExitCode(0);
+            ->assertExitCode(0);
 
         $domain->refresh();
 

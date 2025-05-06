@@ -8,8 +8,6 @@ trait StatusPropertyTrait
 {
     /**
      * Returns whether this object is active.
-     *
-     * @return bool
      */
     public function isActive(): bool
     {
@@ -18,8 +16,6 @@ trait StatusPropertyTrait
 
     /**
      * Returns whether this object is deleted.
-     *
-     * @return bool
      */
     public function isDeleted(): bool
     {
@@ -28,8 +24,6 @@ trait StatusPropertyTrait
 
     /**
      * Returns whether this object is registered in IMAP.
-     *
-     * @return bool
      */
     public function isImapReady(): bool
     {
@@ -38,8 +32,6 @@ trait StatusPropertyTrait
 
     /**
      * Returns whether this object is registered in LDAP.
-     *
-     * @return bool
      */
     public function isLdapReady(): bool
     {
@@ -48,8 +40,6 @@ trait StatusPropertyTrait
 
     /**
      * Returns whether this object is new.
-     *
-     * @return bool
      */
     public function isNew(): bool
     {
@@ -58,8 +48,6 @@ trait StatusPropertyTrait
 
     /**
      * Returns whether this object is suspended.
-     *
-     * @return bool
      */
     public function isSuspended(): bool
     {
@@ -71,12 +59,12 @@ trait StatusPropertyTrait
      */
     public function statusText(): string
     {
-        $reflection = new \ReflectionClass(get_class($this));
+        $reflection = new \ReflectionClass(static::class);
         $result = [];
 
         foreach ($reflection->getConstants() as $const => $value) {
             if (str_starts_with($const, 'STATUS_') && ($this->status & $value) > 0) {
-                $result[] = Str::camel(strtolower(str_replace('STATUS_', '', $const))) . " ($value)";
+                $result[] = Str::camel(strtolower(str_replace('STATUS_', '', $const))) . " ({$value})";
             }
         }
 
@@ -85,8 +73,6 @@ trait StatusPropertyTrait
 
     /**
      * Suspend this object.
-     *
-     * @return void
      */
     public function suspend(): void
     {
@@ -100,8 +86,6 @@ trait StatusPropertyTrait
 
     /**
      * Unsuspend this object.
-     *
-     * @return void
      */
     public function unsuspend(): void
     {

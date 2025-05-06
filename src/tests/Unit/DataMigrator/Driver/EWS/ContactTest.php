@@ -124,7 +124,7 @@ class ContactTest extends TestCase
         $this->assertMatchesRegularExpression('/^[a-f0-9]{40}$/', $contact->uid);
         $this->assertSame('PUBLIC', $contact->class);
         $this->assertSame('Nowy Nazwisko', $contact->fn);
-        $this->assertSame(null, $contact->kind);
+        $this->assertNull($contact->kind);
         $this->assertSame('Microsoft Exchange', $contact->prodid);
         $this->assertSame('2024-07-15T11:17:39,701Z', $contact->rev);
         $this->assertSame('Notatki do kontaktu', $contact->note);

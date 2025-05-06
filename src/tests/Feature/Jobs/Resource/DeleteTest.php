@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Jobs\Resource;
 
+use App\Jobs\Resource\DeleteJob;
+use App\Jobs\Resource\UpdateJob;
 use App\Resource;
 use App\Support\Facades\IMAP;
 use App\Support\Facades\LDAP;
@@ -10,17 +12,14 @@ use Tests\TestCase;
 
 class DeleteTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestResource('resource-test@' . \config('app.domain'));
     }
 
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestResource('resource-test@' . \config('app.domain'));
 
@@ -35,12 +34,12 @@ class DeleteTest extends TestCase
         Queue::fake();
 
         // Test non-existing resource ID
-        $job = (new \App\Jobs\Resource\DeleteJob(123))->withFakeQueueInteractions();
+        $job = (new DeleteJob(123))->withFakeQueueInteractions();
         $job->handle();
         $job->assertFailedWith("Resource 123 could not be found in the database.");
 
         $resource = $this->getTestResource('resource-test@' . \config('app.domain'), [
-                'status' => Resource::STATUS_NEW | Resource::STATUS_IMAP_READY | Resource::STATUS_LDAP_READY,
+            'status' => Resource::STATUS_NEW | Resource::STATUS_IMAP_READY | Resource::STATUS_LDAP_READY,
         ]);
 
         $this->assertTrue($resource->isLdapReady());
@@ -48,7 +47,7 @@ class DeleteTest extends TestCase
         $this->assertFalse($resource->isDeleted());
 
         // Test deleting not deleted resource
-        $job = (new \App\Jobs\Resource\DeleteJob($resource->id))->withFakeQueueInteractions();
+        $job = (new DeleteJob($resource->id))->withFakeQueueInteractions();
         $job->handle();
         $job->assertFailedWith("Resource {$resource->id} is not deleted.");
 
@@ -64,7 +63,7 @@ class DeleteTest extends TestCase
         IMAP::shouldReceive('deleteResource')->once()->with($resource)->andReturn(true);
         LDAP::shouldReceive('deleteResource')->once()->with($resource)->andReturn(true);
 
-        $job = new \App\Jobs\Resource\DeleteJob($resource->id);
+        $job = new DeleteJob($resource->id);
         $job->handle();
 
         $resource->refresh();
@@ -73,10 +72,10 @@ class DeleteTest extends TestCase
         $this->assertFalse($resource->isImapReady());
         $this->assertTrue($resource->isDeleted());
 
-        Queue::assertPushed(\App\Jobs\Resource\UpdateJob::class, 0);
+        Queue::assertPushed(UpdateJob::class, 0);
 
         // Test deleting already deleted resource
-        $job = (new \App\Jobs\Resource\DeleteJob($resource->id))->withFakeQueueInteractions();
+        $job = (new DeleteJob($resource->id))->withFakeQueueInteractions();
         $job->handle();
         $job->assertFailedWith("Resource {$resource->id} is already marked as deleted.");
     }

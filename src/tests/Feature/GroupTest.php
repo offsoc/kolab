@@ -2,14 +2,19 @@
 
 namespace Tests\Feature;
 
-use App\Group;
+use App\Entitlement;
 use App\EventLog;
+use App\Group;
+use App\Jobs\Group\CreateJob;
+use App\Jobs\Group\DeleteJob;
+use App\Jobs\Group\UpdateJob;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class GroupTest extends TestCase
 {
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -17,7 +22,7 @@ class GroupTest extends TestCase
         $this->deleteTestGroup('group-test@kolabnow.com');
     }
 
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('user-test@kolabnow.com');
         $this->deleteTestGroup('group-test@kolabnow.com');
@@ -66,6 +71,7 @@ class GroupTest extends TestCase
         $this->assertSame('["test","-"]', $group->getSetting('sender_policy'));
         $this->assertSame([], $result);
     }
+
     /**
      * Test creating a group
      */
@@ -83,8 +89,8 @@ class GroupTest extends TestCase
         $this->assertFalse($group->isActive());
 
         Queue::assertPushed(
-            \App\Jobs\Group\CreateJob::class,
-            function ($job) use ($group) {
+            CreateJob::class,
+            static function ($job) use ($group) {
                 $groupEmail = TestCase::getObjectProperty($job, 'groupEmail');
                 $groupId = TestCase::getObjectProperty($job, 'groupId');
 
@@ -105,7 +111,7 @@ class GroupTest extends TestCase
         $group = $this->getTestGroup('group-test@kolabnow.com');
         $group->assignToWallet($user->wallets->first());
 
-        $entitlements = \App\Entitlement::where('entitleable_id', $group->id);
+        $entitlements = Entitlement::where('entitleable_id', $group->id);
 
         $this->assertSame(1, $entitlements->count());
 
@@ -115,11 +121,11 @@ class GroupTest extends TestCase
         $this->assertSame(0, $entitlements->count());
         $this->assertSame(1, $entitlements->withTrashed()->count());
 
-        Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 0);
-        Queue::assertPushed(\App\Jobs\Group\DeleteJob::class, 1);
+        Queue::assertPushed(UpdateJob::class, 0);
+        Queue::assertPushed(DeleteJob::class, 1);
         Queue::assertPushed(
-            \App\Jobs\Group\DeleteJob::class,
-            function ($job) use ($group) {
+            DeleteJob::class,
+            static function ($job) use ($group) {
                 $groupEmail = TestCase::getObjectProperty($job, 'groupEmail');
                 $groupId = TestCase::getObjectProperty($job, 'groupId');
 
@@ -135,8 +141,8 @@ class GroupTest extends TestCase
         $this->assertSame(0, $entitlements->withTrashed()->count());
         $this->assertCount(0, Group::withTrashed()->where('id', $group->id)->get());
 
-        Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 0);
-        Queue::assertPushed(\App\Jobs\Group\DeleteJob::class, 0);
+        Queue::assertPushed(UpdateJob::class, 0);
+        Queue::assertPushed(DeleteJob::class, 0);
     }
 
     /**
@@ -182,20 +188,18 @@ class GroupTest extends TestCase
         $this->assertSame($result->id, $group->id);
     }
 
-    /*
-     * Test group restoring
-     */
+    // Test group restoring
     public function testRestore(): void
     {
         Queue::fake();
 
         $user = $this->getTestUser('user-test@kolabnow.com');
         $group = $this->getTestGroup('group-test@kolabnow.com', [
-                'status' => Group::STATUS_ACTIVE | Group::STATUS_LDAP_READY | Group::STATUS_SUSPENDED,
+            'status' => Group::STATUS_ACTIVE | Group::STATUS_LDAP_READY | Group::STATUS_SUSPENDED,
         ]);
         $group->assignToWallet($user->wallets->first());
 
-        $entitlements = \App\Entitlement::where('entitleable_id', $group->id);
+        $entitlements = Entitlement::where('entitleable_id', $group->id);
 
         $this->assertTrue($group->isSuspended());
         if (\config('app.with_ldap')) {
@@ -226,13 +230,13 @@ class GroupTest extends TestCase
 
         $this->assertSame(1, $entitlements->count());
         $entitlements->get()->each(function ($ent) {
-            $this->assertTrue($ent->updated_at->greaterThan(\Carbon\Carbon::now()->subSeconds(5)));
+            $this->assertTrue($ent->updated_at->greaterThan(Carbon::now()->subSeconds(5)));
         });
 
-        Queue::assertPushed(\App\Jobs\Group\CreateJob::class, 1);
+        Queue::assertPushed(CreateJob::class, 1);
         Queue::assertPushed(
-            \App\Jobs\Group\CreateJob::class,
-            function ($job) use ($group) {
+            CreateJob::class,
+            static function ($job) use ($group) {
                 $groupEmail = TestCase::getObjectProperty($job, 'groupEmail');
                 $groupId = TestCase::getObjectProperty($job, 'groupId');
 
@@ -252,18 +256,18 @@ class GroupTest extends TestCase
 
         $group = $this->getTestGroup('group-test@kolabnow.com');
 
-        Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 0);
+        Queue::assertPushed(UpdateJob::class, 0);
 
         // Add a setting
         $group->setSetting('unknown', 'test');
 
-        Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 0);
+        Queue::assertPushed(UpdateJob::class, 0);
 
         // Add a setting that is synced to LDAP
         $group->setSetting('sender_policy', '[]');
 
         if (\config('app.with_ldap')) {
-            Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 1);
+            Queue::assertPushed(UpdateJob::class, 1);
         }
 
         // Note: We test both current group as well as fresh group object
@@ -276,13 +280,13 @@ class GroupTest extends TestCase
         // Update a setting
         $group->setSetting('unknown', 'test1');
 
-        Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 0);
+        Queue::assertPushed(UpdateJob::class, 0);
 
         // Update a setting that is synced to LDAP
         $group->setSetting('sender_policy', '["-"]');
 
         if (\config('app.with_ldap')) {
-            Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 1);
+            Queue::assertPushed(UpdateJob::class, 1);
         }
 
         $this->assertSame('test1', $group->getSetting('unknown'));
@@ -293,17 +297,17 @@ class GroupTest extends TestCase
         // Delete a setting (null)
         $group->setSetting('unknown', null);
 
-        Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 0);
+        Queue::assertPushed(UpdateJob::class, 0);
 
         // Delete a setting that is synced to LDAP
         $group->setSetting('sender_policy', null);
 
         if (\config('app.with_ldap')) {
-            Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 1);
+            Queue::assertPushed(UpdateJob::class, 1);
         }
 
-        $this->assertSame(null, $group->getSetting('unknown'));
-        $this->assertSame(null, $group->fresh()->getSetting('sender_policy'));
+        $this->assertNull($group->getSetting('unknown'));
+        $this->assertNull($group->fresh()->getSetting('sender_policy'));
     }
 
     /**
@@ -313,66 +317,66 @@ class GroupTest extends TestCase
     {
         $group = new Group();
 
-        $this->assertSame(false, $group->isNew());
-        $this->assertSame(false, $group->isActive());
-        $this->assertSame(false, $group->isDeleted());
+        $this->assertFalse($group->isNew());
+        $this->assertFalse($group->isActive());
+        $this->assertFalse($group->isDeleted());
         if (\config('app.with_ldap')) {
-            $this->assertSame(false, $group->isLdapReady());
+            $this->assertFalse($group->isLdapReady());
         }
-        $this->assertSame(false, $group->isSuspended());
+        $this->assertFalse($group->isSuspended());
 
         $group->status = Group::STATUS_NEW;
 
-        $this->assertSame(true, $group->isNew());
-        $this->assertSame(false, $group->isActive());
-        $this->assertSame(false, $group->isDeleted());
+        $this->assertTrue($group->isNew());
+        $this->assertFalse($group->isActive());
+        $this->assertFalse($group->isDeleted());
         if (\config('app.with_ldap')) {
-            $this->assertSame(false, $group->isLdapReady());
+            $this->assertFalse($group->isLdapReady());
         }
-        $this->assertSame(false, $group->isSuspended());
+        $this->assertFalse($group->isSuspended());
 
         $group->status |= Group::STATUS_ACTIVE;
 
-        $this->assertSame(true, $group->isNew());
-        $this->assertSame(true, $group->isActive());
-        $this->assertSame(false, $group->isDeleted());
+        $this->assertTrue($group->isNew());
+        $this->assertTrue($group->isActive());
+        $this->assertFalse($group->isDeleted());
         if (\config('app.with_ldap')) {
-            $this->assertSame(false, $group->isLdapReady());
+            $this->assertFalse($group->isLdapReady());
         }
-        $this->assertSame(false, $group->isSuspended());
+        $this->assertFalse($group->isSuspended());
 
         if (\config('app.with_ldap')) {
             $group->status |= Group::STATUS_LDAP_READY;
         }
 
-        $this->assertSame(true, $group->isNew());
-        $this->assertSame(true, $group->isActive());
-        $this->assertSame(false, $group->isDeleted());
+        $this->assertTrue($group->isNew());
+        $this->assertTrue($group->isActive());
+        $this->assertFalse($group->isDeleted());
 
         if (\config('app.with_ldap')) {
-            $this->assertSame(true, $group->isLdapReady());
+            $this->assertTrue($group->isLdapReady());
         }
-        $this->assertSame(false, $group->isSuspended());
+        $this->assertFalse($group->isSuspended());
 
         $group->status |= Group::STATUS_DELETED;
 
-        $this->assertSame(true, $group->isNew());
-        $this->assertSame(true, $group->isActive());
-        $this->assertSame(true, $group->isDeleted());
+        $this->assertTrue($group->isNew());
+        $this->assertTrue($group->isActive());
+        $this->assertTrue($group->isDeleted());
         if (\config('app.with_ldap')) {
-            $this->assertSame(true, $group->isLdapReady());
+            $this->assertTrue($group->isLdapReady());
         }
-        $this->assertSame(false, $group->isSuspended());
+        $this->assertFalse($group->isSuspended());
 
         $group->status |= Group::STATUS_SUSPENDED;
 
-        $this->assertSame(true, $group->isNew());
-        $this->assertSame(true, $group->isActive());
-        $this->assertSame(true, $group->isDeleted());
+        $this->assertTrue($group->isNew());
+        $this->assertTrue($group->isActive());
+        $this->assertTrue($group->isDeleted());
         if (\config('app.with_ldap')) {
-            $this->assertSame(true, $group->isLdapReady());
+            $this->assertTrue($group->isLdapReady());
         }
-        $this->assertSame(true, $group->isSuspended());
+        $this->assertTrue($group->isSuspended());
 
         // Unknown status value
         $this->expectException(\Exception::class);
@@ -391,10 +395,10 @@ class GroupTest extends TestCase
 
         $this->assertTrue($group->isSuspended());
 
-        Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 1);
+        Queue::assertPushed(UpdateJob::class, 1);
         Queue::assertPushed(
-            \App\Jobs\Group\UpdateJob::class,
-            function ($job) use ($group) {
+            UpdateJob::class,
+            static function ($job) use ($group) {
                 $groupEmail = TestCase::getObjectProperty($job, 'groupEmail');
                 $groupId = TestCase::getObjectProperty($job, 'groupId');
 
@@ -415,10 +419,10 @@ class GroupTest extends TestCase
         $group->status |= Group::STATUS_DELETED;
         $group->save();
 
-        Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 1);
+        Queue::assertPushed(UpdateJob::class, 1);
         Queue::assertPushed(
-            \App\Jobs\Group\UpdateJob::class,
-            function ($job) use ($group) {
+            UpdateJob::class,
+            static function ($job) use ($group) {
                 $groupEmail = TestCase::getObjectProperty($job, 'groupEmail');
                 $groupId = TestCase::getObjectProperty($job, 'groupId');
 
@@ -441,10 +445,10 @@ class GroupTest extends TestCase
 
         $this->assertFalse($group->isSuspended());
 
-        Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 1);
+        Queue::assertPushed(UpdateJob::class, 1);
         Queue::assertPushed(
-            \App\Jobs\Group\UpdateJob::class,
-            function ($job) use ($group) {
+            UpdateJob::class,
+            static function ($job) use ($group) {
                 $groupEmail = TestCase::getObjectProperty($job, 'groupEmail');
                 $groupId = TestCase::getObjectProperty($job, 'groupId');
 

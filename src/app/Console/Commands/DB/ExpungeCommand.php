@@ -2,6 +2,10 @@
 
 namespace App\Console\Commands\DB;
 
+use App\Policy\Greylist\Connect;
+use App\Policy\Greylist\Whitelist;
+use App\Policy\RateLimit;
+use App\SignupCode;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -29,16 +33,16 @@ class ExpungeCommand extends Command
      */
     public function handle()
     {
-        \App\Policy\Greylist\Connect::where('updated_at', '<', Carbon::now()->subMonthsWithoutOverflow(6))
+        Connect::where('updated_at', '<', Carbon::now()->subMonthsWithoutOverflow(6))
             ->delete();
 
-        \App\Policy\Greylist\Whitelist::where('updated_at', '<', Carbon::now()->subMonthsWithoutOverflow(6))
+        Whitelist::where('updated_at', '<', Carbon::now()->subMonthsWithoutOverflow(6))
             ->delete();
 
-        \App\Policy\RateLimit::where('updated_at', '<', Carbon::now()->subMonthsWithoutOverflow(6))
+        RateLimit::where('updated_at', '<', Carbon::now()->subMonthsWithoutOverflow(6))
             ->delete();
 
-        \App\SignupCode::where('created_at', '<', Carbon::now()->subMonthsWithoutOverflow(6))
+        SignupCode::where('created_at', '<', Carbon::now()->subMonthsWithoutOverflow(6))
             ->forceDelete();
 
         DB::table('failed_jobs')->where('failed_at', '<', Carbon::now()->subMonthsWithoutOverflow(6))

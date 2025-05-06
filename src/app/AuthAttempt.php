@@ -24,8 +24,8 @@ class AuthAttempt extends Model
     public const REASON_2FA = '2fa';
     public const REASON_2FA_GENERIC = '2fa-generic';
 
-    private const STATUS_ACCEPTED  = 'ACCEPTED';
-    private const STATUS_DENIED  = 'DENIED';
+    private const STATUS_ACCEPTED = 'ACCEPTED';
+    private const STATUS_DENIED = 'DENIED';
 
     /** @var list<string> The attributes that can be not set */
     protected $nullable = ['reason'];
@@ -43,17 +43,13 @@ class AuthAttempt extends Model
     /** @var array<string, string> The attributes that should be cast */
     protected $casts = [
         'expires_at' => 'datetime',
-        'last_seen' => 'datetime'
+        'last_seen' => 'datetime',
     ];
 
     /**
      * Prepare a date for array / JSON serialization.
      *
      * Required to not omit timezone and match the format of update_at/created_at timestamps.
-     *
-     * @param  \DateTimeInterface  $date
-     *
-     * @return string
      */
     protected function serializeDate(\DateTimeInterface $date): string
     {
@@ -62,8 +58,6 @@ class AuthAttempt extends Model
 
     /**
      * Returns true if the authentication attempt is accepted.
-     *
-     * @return bool
      */
     public function isAccepted(): bool
     {
@@ -72,8 +66,6 @@ class AuthAttempt extends Model
 
     /**
      * Returns true if the authentication attempt is denied.
-     *
-     * @return bool
      */
     public function isDenied(): bool
     {
@@ -83,7 +75,7 @@ class AuthAttempt extends Model
     /**
      * Accept the authentication attempt.
      */
-    public function accept($reason = AuthAttempt::REASON_NONE)
+    public function accept($reason = self::REASON_NONE)
     {
         $this->expires_at = Carbon::now()->addHours(8);
         $this->status = self::STATUS_ACCEPTED;
@@ -94,7 +86,7 @@ class AuthAttempt extends Model
     /**
      * Deny the authentication attempt.
      */
-    public function deny($reason = AuthAttempt::REASON_NONE)
+    public function deny($reason = self::REASON_NONE)
     {
         $this->status = self::STATUS_DENIED;
         $this->reason = $reason;
@@ -127,7 +119,7 @@ class AuthAttempt extends Model
         $confirmationTimeout = 120;
         $timeout = Carbon::now()->addSeconds($confirmationTimeout);
 
-        do {
+        while (true) {
             if ($this->isDenied()) {
                 \Log::debug("The authentication attempt was denied {$this->id}");
                 return false;
@@ -145,23 +137,23 @@ class AuthAttempt extends Model
 
             sleep(2);
             $this->refresh();
-        } while (true);
+        }
     }
 
     /**
      * Record a new authentication attempt or update an existing one.
      *
-     * @param \App\User $user     The user attempting to authenticate.
-     * @param string    $clientIP The ip the authentication attempt is coming from.
+     * @param User   $user     the user attempting to authenticate
+     * @param string $clientIP the ip the authentication attempt is coming from
      *
-     * @return \App\AuthAttempt
+     * @return AuthAttempt
      */
     public static function recordAuthAttempt(User $user, $clientIP)
     {
-        $authAttempt = AuthAttempt::where('ip', $clientIP)->where('user_id', $user->id)->first();
+        $authAttempt = self::where('ip', $clientIP)->where('user_id', $user->id)->first();
 
         if (!$authAttempt) {
-            $authAttempt = new AuthAttempt();
+            $authAttempt = new self();
             $authAttempt->ip = $clientIP;
             $authAttempt->user_id = $user->id;
         }

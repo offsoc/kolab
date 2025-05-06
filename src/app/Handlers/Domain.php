@@ -2,7 +2,7 @@
 
 namespace App\Handlers;
 
-class Domain extends \App\Handlers\Base
+class Domain extends Base
 {
     /**
      * The entitleable class for this handler.

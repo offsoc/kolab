@@ -3,16 +3,14 @@
 namespace Tests\Feature\Controller;
 
 use App\Http\Controllers\API\V4\SkusController;
+use App\Package;
 use App\Sku;
 use App\Tenant;
 use Tests\TestCase;
 
 class SkusTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -21,10 +19,7 @@ class SkusTest extends TestCase
         Sku::where('title', 'test')->delete();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('jane@kolabnow.com');
         $this->clearBetaEntitlements();
@@ -48,12 +43,12 @@ class SkusTest extends TestCase
 
         // Create an sku for another tenant, to make sure it is not included in the result
         $nsku = Sku::create([
-                'title' => 'test',
-                'name' => 'Test',
-                'description' => '',
-                'active' => true,
-                'cost' => 100,
-                'handler_class' => 'App\Handlers\Mailbox',
+            'title' => 'test',
+            'name' => 'Test',
+            'description' => '',
+            'active' => true,
+            'cost' => 100,
+            'handler_class' => 'App\Handlers\Mailbox',
         ]);
         $tenant = Tenant::whereNotIn('id', [\config('app.tenant_id')])->first();
         $nsku->tenant_id = $tenant->id;
@@ -90,7 +85,7 @@ class SkusTest extends TestCase
 
         // Test the type filter, and nextCost property (user with no domain)
         $jane = $this->getTestUser('jane@kolabnow.com');
-        $kolab = \App\Package::withEnvTenantContext()->where('title', 'kolab')->first();
+        $kolab = Package::withEnvTenantContext()->where('title', 'kolab')->first();
         $jane->assignPackage($kolab);
 
         $response = $this->actingAs($jane)->get("api/v4/skus?type=domain");

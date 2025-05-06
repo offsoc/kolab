@@ -2,12 +2,12 @@
 
 namespace Tests\Feature\Console\Status;
 
-use Tests\TestCase;
 use App\Support\Facades\DAV;
 use App\Support\Facades\IMAP;
 use App\Support\Facades\LDAP;
 use App\Support\Facades\Roundcube;
 use App\Support\Facades\Storage;
+use Tests\TestCase;
 
 class HealthTest extends TestCase
 {

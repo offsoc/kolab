@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -13,7 +12,7 @@ return new class extends Migration
     {
         Schema::create(
             'fs_items',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->string('id', 36)->primary();
                 $table->bigInteger('user_id')->index();
                 $table->integer('type')->unsigned()->default(0);
@@ -28,7 +27,7 @@ return new class extends Migration
 
         Schema::create(
             'fs_properties',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->string('item_id', 36);
                 $table->string('key')->index();
@@ -45,7 +44,7 @@ return new class extends Migration
 
         Schema::create(
             'fs_chunks',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->string('item_id', 36);
                 $table->string('chunk_id', 36);

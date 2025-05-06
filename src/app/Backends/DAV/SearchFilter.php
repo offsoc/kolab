@@ -2,8 +2,6 @@
 
 namespace App\Backends\DAV;
 
-use App\Backends\DAV;
-
 class SearchFilter
 {
     public $filters = [];

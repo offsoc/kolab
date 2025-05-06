@@ -4,6 +4,7 @@ namespace Tests\Browser;
 
 use App\Discount;
 use App\Domain;
+use App\Payment;
 use App\Plan;
 use App\ReferralProgram;
 use App\SignupCode;
@@ -14,7 +15,6 @@ use Tests\Browser;
 use Tests\Browser\Components\Menu;
 use Tests\Browser\Components\Toast;
 use Tests\Browser\Pages\Dashboard;
-use Tests\Browser\Pages\Home;
 use Tests\Browser\Pages\PaymentMollie;
 use Tests\Browser\Pages\PaymentStatus;
 use Tests\Browser\Pages\Signup;
@@ -22,10 +22,7 @@ use Tests\TestCaseDusk;
 
 class SignupTest extends TestCaseDusk
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -39,10 +36,7 @@ class SignupTest extends TestCaseDusk
         ReferralProgram::query()->delete();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('signuptestdusk@' . \config('app.domain'));
         $this->deleteTestUser('admin@user-domain-signup.com');
@@ -63,7 +57,7 @@ class SignupTest extends TestCaseDusk
     public function testSignupCodeByLink(): void
     {
         // Test invalid code (invalid format)
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             // Register Signup page element selectors we'll be using
             $browser->onWithoutAssert(new Signup());
 
@@ -80,7 +74,7 @@ class SignupTest extends TestCaseDusk
         });
 
         // Test invalid code (valid format)
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit('/signup/XXXXX-code');
 
             // FIXME: User will not be able to continue anyway, so we should
@@ -92,11 +86,11 @@ class SignupTest extends TestCaseDusk
         // Test valid code
         $this->browse(function (Browser $browser) {
             $code = SignupCode::create([
-                    'email' => 'User@example.org',
-                    'first_name' => 'User',
-                    'last_name' => 'Name',
-                    'plan' => 'individual',
-                    'voucher' => '',
+                'email' => 'User@example.org',
+                'first_name' => 'User',
+                'last_name' => 'Name',
+                'plan' => 'individual',
+                'voucher' => '',
             ]);
 
             $browser->visit('/signup/' . $code->short_code . '-' . $code->code)
@@ -116,7 +110,7 @@ class SignupTest extends TestCaseDusk
      */
     public function testSignupStep0(): void
     {
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit(new Signup());
 
             $browser->assertVisible('@step0')
@@ -124,14 +118,14 @@ class SignupTest extends TestCaseDusk
                 ->assertMissing('@step2')
                 ->assertMissing('@step3');
 
-            $browser->within(new Menu(), function ($browser) {
+            $browser->within(new Menu(), static function ($browser) {
                 $browser->assertMenuItems(['support', 'signup', 'login', 'lang'], 'signup');
             });
 
             $browser->waitFor('@step0 .plan-selector .card');
 
             // Assert first plan box and press the button
-            $browser->with('@step0 .plan-selector .plan-individual', function ($step) {
+            $browser->with('@step0 .plan-selector .plan-individual', static function ($step) {
                 $step->assertVisible('button')
                     ->assertSeeIn('button', 'Individual Account')
                     ->assertVisible('.plan-description')
@@ -149,10 +143,10 @@ class SignupTest extends TestCaseDusk
             // Click Back button
             $browser->click('@step1 [type=button]')
                 ->waitForLocation('/signup')
-                    ->assertVisible('@step0')
-                    ->assertMissing('@step1')
-                    ->assertMissing('@step2')
-                    ->assertMissing('@step3');
+                ->assertVisible('@step0')
+                ->assertMissing('@step1')
+                ->assertMissing('@step2')
+                ->assertMissing('@step3');
 
             // Choose the group account plan
             $browser->click('@step0 .plan-selector .plan-group button')
@@ -172,12 +166,12 @@ class SignupTest extends TestCaseDusk
      */
     public function testSignupStep1(): void
     {
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit('/signup/individual')
                 ->onWithoutAssert(new Signup());
 
             // Here we expect two text inputs and Back and Continue buttons
-            $browser->with('@step1', function ($step) {
+            $browser->with('@step1', static function ($step) {
                 $step->waitFor('#signup_last_name')
                     ->assertSeeIn('.card-title', 'Sign Up - Step 1/3')
                     ->assertVisible('#signup_first_name')
@@ -190,18 +184,18 @@ class SignupTest extends TestCaseDusk
             // Submit empty form
             // Email is required, so after pressing Submit
             // we expect focus to be moved to the email input
-            $browser->with('@step1', function ($step) {
+            $browser->with('@step1', static function ($step) {
                 $step->click('[type=submit]');
                 $step->assertFocused('#signup_email');
             });
 
-            $browser->within(new Menu(), function ($browser) {
+            $browser->within(new Menu(), static function ($browser) {
                 $browser->assertMenuItems(['support', 'signup', 'login', 'lang'], 'signup');
             });
 
             // Submit invalid email, and first_name
             // We expect both inputs to have is-invalid class added, with .invalid-feedback element
-            $browser->with('@step1', function ($step) {
+            $browser->with('@step1', static function ($step) {
                 $step->type('#signup_first_name', str_repeat('a', 250))
                     ->type('#signup_email', '@test')
                     ->click('[type=submit]')
@@ -214,7 +208,7 @@ class SignupTest extends TestCaseDusk
 
             // Submit valid data
             // We expect error state on email input to be removed, and Step 2 form visible
-            $browser->with('@step1', function ($step) {
+            $browser->with('@step1', static function ($step) {
                 $step->type('#signup_first_name', 'Test')
                     ->type('#signup_last_name', 'User')
                     ->type('#signup_email', 'BrowserSignupTestUser1@kolab.org')
@@ -244,7 +238,7 @@ class SignupTest extends TestCaseDusk
                 ->assertMissing('@step3');
 
             // Here we expect one text input, Back and Continue buttons
-            $browser->with('@step2', function ($step) {
+            $browser->with('@step2', static function ($step) {
                 $step->assertVisible('#signup_short_code')
                     ->assertFocused('#signup_short_code')
                     ->assertVisible('[type=button]')
@@ -258,7 +252,7 @@ class SignupTest extends TestCaseDusk
                 ->assertMissing('@step2');
 
             // Submit valid Step 1 data (again)
-            $browser->with('@step1', function ($step) {
+            $browser->with('@step1', static function ($step) {
                 $step->type('#signup_first_name', 'User')
                     ->type('#signup_last_name', 'User')
                     ->type('#signup_email', 'BrowserSignupTestUser1@kolab.org')
@@ -270,7 +264,7 @@ class SignupTest extends TestCaseDusk
 
             // Submit invalid code
             // We expect code input to have is-invalid class added, with .invalid-feedback element
-            $browser->with('@step2', function ($step) {
+            $browser->with('@step2', static function ($step) {
                 $step->type('#signup_short_code', 'XXXXX');
                 $step->click('[type=submit]');
 
@@ -314,7 +308,7 @@ class SignupTest extends TestCaseDusk
             $browser->assertVisible('@step3');
 
             // Here we expect 3 text inputs, Back and Continue buttons
-            $browser->with('@step3', function ($step) {
+            $browser->with('@step3', static function ($step) {
                 $domains = Domain::getPublicDomains();
                 $domains_count = count($domains);
 
@@ -340,7 +334,7 @@ class SignupTest extends TestCaseDusk
                     ->assertValue('#signup_login', '')
                     ->assertValue('#signup_password', '')
                     ->assertValue('#signup_password_confirmation', '')
-                    ->with('#signup_password_policy', function (Browser $browser) {
+                    ->with('#signup_password_policy', static function (Browser $browser) {
                         $browser->assertElementsCount('li', 2)
                             ->assertMissing('li:first-child svg.text-success')
                             ->assertSeeIn('li:first-child small', "Minimum password length: 6 characters")
@@ -374,12 +368,12 @@ class SignupTest extends TestCaseDusk
             $browser->waitFor('@step3');
 
             // Submit invalid data
-            $browser->with('@step3', function ($step) {
+            $browser->with('@step3', static function ($step) {
                 $step->assertFocused('#signup_login')
                     ->type('#signup_login', '*')
                     ->type('#signup_password', '12345678')
                     ->type('#signup_password_confirmation', '123456789')
-                    ->with('#signup_password_policy', function (Browser $browser) {
+                    ->with('#signup_password_policy', static function (Browser $browser) {
                         $browser->waitFor('li:first-child svg.text-success')
                             ->waitFor('li:last-child svg.text-success');
                     })
@@ -393,7 +387,7 @@ class SignupTest extends TestCaseDusk
             });
 
             // Submit invalid data (valid login, invalid password)
-            $browser->with('@step3', function ($step) {
+            $browser->with('@step3', static function ($step) {
                 $step->type('#signup_login', 'SignupTestDusk')
                     ->click('[type=submit]')
                     ->waitFor('#signup_password.is-invalid')
@@ -405,7 +399,7 @@ class SignupTest extends TestCaseDusk
             });
 
             // Submit valid data
-            $browser->with('@step3', function ($step) {
+            $browser->with('@step3', static function ($step) {
                 $step->type('#signup_password_confirmation', '12345678');
 
                 $step->click('[type=submit]');
@@ -422,7 +416,7 @@ class SignupTest extends TestCaseDusk
                 ->assertVisible('@links a.link-wallet');
 
             // Logout the user
-            $browser->within(new Menu(), function ($browser) {
+            $browser->within(new Menu(), static function ($browser) {
                 $browser->clickMenuItem('logout');
             });
         });
@@ -433,7 +427,7 @@ class SignupTest extends TestCaseDusk
      */
     public function testSignupGroup(): void
     {
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit(new Signup());
 
             // Choose the group account plan
@@ -442,7 +436,7 @@ class SignupTest extends TestCaseDusk
 
             // Submit valid data
             // We expect error state on email input to be removed, and Step 2 form visible
-            $browser->whenAvailable('@step1', function ($step) {
+            $browser->whenAvailable('@step1', static function ($step) {
                 $step->type('#signup_first_name', 'Test')
                     ->type('#signup_last_name', 'User')
                     ->type('#signup_email', 'BrowserSignupTestUser1@kolab.org')
@@ -450,7 +444,7 @@ class SignupTest extends TestCaseDusk
             });
 
             // Submit valid code
-            $browser->whenAvailable('@step2', function ($step) {
+            $browser->whenAvailable('@step2', static function ($step) {
                 // Get the code and short_code from database
                 // FIXME: Find a nice way to read javascript data without using hidden inputs
                 $code = $step->value('#signup_code');
@@ -461,7 +455,7 @@ class SignupTest extends TestCaseDusk
             });
 
             // Here we expect text inputs, as well as domain selector, and buttons
-            $browser->whenAvailable('@step3', function ($step) {
+            $browser->whenAvailable('@step3', static function ($step) {
                 $domains = Domain::getPublicDomains();
                 $domains_count = count($domains);
 
@@ -489,7 +483,7 @@ class SignupTest extends TestCaseDusk
             });
 
             // Submit invalid login and password data
-            $browser->with('@step3', function ($step) {
+            $browser->with('@step3', static function ($step) {
                 $step->type('#signup_login', '*')
                     ->type('#signup_domain', 'test.com')
                     ->type('#signup_password', '12345678')
@@ -504,7 +498,7 @@ class SignupTest extends TestCaseDusk
             });
 
             // Submit invalid domain
-            $browser->with('@step3', function ($step) {
+            $browser->with('@step3', static function ($step) {
                 $step->type('#signup_login', 'admin')
                     ->type('#signup_domain', 'aaa')
                     ->type('#signup_password', '12345678')
@@ -519,7 +513,7 @@ class SignupTest extends TestCaseDusk
             });
 
             // Submit invalid domain
-            $browser->with('@step3', function ($step) {
+            $browser->with('@step3', static function ($step) {
                 $step->type('#signup_domain', 'user-domain-signup.com')
                     ->click('[type=submit]');
             });
@@ -534,7 +528,7 @@ class SignupTest extends TestCaseDusk
                 ->assertVisible('@links a.link-users')
                 ->assertVisible('@links a.link-wallet');
 
-            $browser->within(new Menu(), function ($browser) {
+            $browser->within(new Menu(), static function ($browser) {
                 $browser->clickMenuItem('logout');
             });
         });
@@ -550,11 +544,11 @@ class SignupTest extends TestCaseDusk
         $plan->hidden = true;
         $plan->save();
 
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit(new Signup());
 
             // Submit valid data
-            $browser->whenAvailable('@step1', function ($step) {
+            $browser->whenAvailable('@step1', static function ($step) {
                 $step->type('#signup_first_name', 'Test')
                     ->type('#signup_last_name', 'User')
                     ->type('#signup_email', 'BrowserSignupTestUser1@kolab.org')
@@ -562,7 +556,7 @@ class SignupTest extends TestCaseDusk
             });
 
             // Submit valid code
-            $browser->whenAvailable('@step2', function ($step) {
+            $browser->whenAvailable('@step2', static function ($step) {
                 // Get the code and short_code from database
                 $code = $step->value('#signup_code');
                 $code = SignupCode::find($code);
@@ -572,7 +566,7 @@ class SignupTest extends TestCaseDusk
             });
 
             // Here we expect text inputs, as well as domain selector, and buttons
-            $browser->whenAvailable('@step3', function ($step) {
+            $browser->whenAvailable('@step3', static function ($step) {
                 $step->assertVisible('#signup_login')
                     ->assertVisible('#signup_password')
                     ->assertVisible('#signup_password_confirmation')
@@ -599,7 +593,7 @@ class SignupTest extends TestCaseDusk
                 ->assertMissing('@links a.link-shared-folders')
                 ->assertMissing('@links a.link-resources');
 
-            $browser->within(new Menu(), function ($browser) {
+            $browser->within(new Menu(), static function ($browser) {
                 $browser->clickMenuItem('logout');
             });
         });
@@ -621,20 +615,20 @@ class SignupTest extends TestCaseDusk
         $plan->mode = Plan::MODE_MANDATE;
         $plan->save();
 
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->withConfig(['services.payment_provider' => 'mollie'])
                 ->visit(new Signup())
                 ->waitFor('@step0 .plan-individual button')
                 ->click('@step0 .plan-individual button')
                 // Test Back button
-                ->whenAvailable('@step3', function ($browser) {
+                ->whenAvailable('@step3', static function ($browser) {
                     $browser->click('button[type=button]');
                 })
-                ->whenAvailable('@step0', function ($browser) {
+                ->whenAvailable('@step0', static function ($browser) {
                     $browser->click('.plan-individual button');
                 })
                 // Test submit
-                ->whenAvailable('@step3', function ($browser) {
+                ->whenAvailable('@step3', static function ($browser) {
                     $domains = Domain::getPublicDomains();
                     $domains_count = count($domains);
 
@@ -648,7 +642,7 @@ class SignupTest extends TestCaseDusk
                         ->type('#signup_password_confirmation', '12345678')
                         ->click('[type=submit]');
                 })
-                ->whenAvailable('@step4', function ($browser) {
+                ->whenAvailable('@step4', static function ($browser) {
                     $browser->assertSeeIn('h4', 'The account is about to be created!')
                         ->assertSeeIn('h5', 'You are choosing a monthly subscription')
                         ->assertVisible('#summary-content')
@@ -658,11 +652,11 @@ class SignupTest extends TestCaseDusk
                         ->assertSeeIn('button.btn-secondary', 'Back')
                         ->click('button.btn-secondary');
                 })
-                ->whenAvailable('@step3', function ($browser) {
+                ->whenAvailable('@step3', static function ($browser) {
                     $browser->assertValue('#signup_login', 'signuptestdusk')
                         ->click('[type=submit]');
                 })
-                ->whenAvailable('@step4', function ($browser) {
+                ->whenAvailable('@step4', static function ($browser) {
                     $browser->click('button.btn-primary');
                 })
                 ->on(new PaymentMollie())
@@ -690,12 +684,12 @@ class SignupTest extends TestCaseDusk
             // TODO: Move this to a separate tests file for PaymentStatus page
             $payment = $user->wallets()->first()->payments()->first();
             $payment->credit('Test');
-            $payment->status = \App\Payment::STATUS_PAID;
+            $payment->status = Payment::STATUS_PAID;
             $payment->save();
             $this->assertTrue($user->fresh()->isActive());
 
             $browser->waitForLocation('/dashboard', 10)
-                ->within(new Menu(), function ($browser) {
+                ->within(new Menu(), static function ($browser) {
                     $browser->clickMenuItem('logout');
                 });
         });
@@ -713,18 +707,18 @@ class SignupTest extends TestCaseDusk
         $plan->mode = Plan::MODE_MANDATE;
         $plan->save();
 
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit(new Signup())
                 ->waitFor('@step0 .plan-individual button')
                 ->click('@step0 .plan-individual button')
-                ->whenAvailable('@step3', function ($browser) {
+                ->whenAvailable('@step3', static function ($browser) {
                     $browser->type('#signup_login', 'signuptestdusk')
                         ->type('#signup_password', '12345678')
                         ->type('#signup_password_confirmation', '12345678')
                         ->type('#signup_voucher', 'FREE')
                         ->click('[type=submit]');
                 })
-                ->whenAvailable('@step4', function ($browser) {
+                ->whenAvailable('@step4', static function ($browser) {
                     $browser->assertSeeIn('h4', 'The account is about to be created!')
                         ->assertSeeIn('#summary-content', 'You are signing up for an account with 100% discount.')
                         ->assertMissing('#summary-summary')
@@ -734,7 +728,7 @@ class SignupTest extends TestCaseDusk
                 })
                 ->waitUntilMissing('@step4')
                 ->on(new Dashboard())
-                ->within(new Menu(), function ($browser) {
+                ->within(new Menu(), static function ($browser) {
                     $browser->clickMenuItem('logout');
                 });
         });
@@ -760,12 +754,12 @@ class SignupTest extends TestCaseDusk
         // Register a valid token
         $plan->signupTokens()->create(['id' => '1234567890']);
 
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit(new Signup())
                 ->waitFor('@step0 .plan-individual button')
                 ->click('@step0 .plan-individual button')
                 // Step 1
-                ->whenAvailable('@step1', function ($browser) {
+                ->whenAvailable('@step1', static function ($browser) {
                     $browser->assertSeeIn('.card-title', 'Sign Up - Step 1/2')
                         ->type('#signup_first_name', 'Test')
                         ->type('#signup_last_name', 'User')
@@ -782,7 +776,7 @@ class SignupTest extends TestCaseDusk
                         ->click('[type=submit]');
                 })
                 // Step 2
-                ->whenAvailable('@step3', function ($browser) {
+                ->whenAvailable('@step3', static function ($browser) {
                     $domains = Domain::getPublicDomains();
                     $domains_count = count($domains);
 
@@ -797,13 +791,13 @@ class SignupTest extends TestCaseDusk
                 })
                 ->waitUntilMissing('@step3')
                 ->on(new Dashboard())
-                ->within(new Menu(), function ($browser) {
+                ->within(new Menu(), static function ($browser) {
                     $browser->clickMenuItem('logout');
                 });
         });
 
         $user = User::where('email', 'signuptestdusk@' . \config('app.domain'))->first();
-        $this->assertSame(null, $user->getSetting('external_email'));
+        $this->assertNull($user->getSetting('external_email'));
 
         // Test the group plan
         $plan = Plan::withEnvTenantContext()->where('title', 'group')->first();
@@ -812,12 +806,12 @@ class SignupTest extends TestCaseDusk
         // Register a valid token
         $plan->signupTokens()->create(['id' => 'abcdefghijk']);
 
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit(new Signup())
                 ->waitFor('@step0 .plan-group button')
                 ->click('@step0 .plan-group button')
                 // Step 1
-                ->whenAvailable('@step1', function ($browser) {
+                ->whenAvailable('@step1', static function ($browser) {
                     $browser->assertSeeIn('.card-title', 'Sign Up - Step 1/2')
                         ->type('#signup_first_name', 'Test')
                         ->type('#signup_last_name', 'User')
@@ -834,7 +828,7 @@ class SignupTest extends TestCaseDusk
                         ->click('[type=submit]');
                 })
                 // Step 2
-                ->whenAvailable('@step3', function ($browser) {
+                ->whenAvailable('@step3', static function ($browser) {
                     $browser->assertSeeIn('.card-title', 'Sign Up - Step 2/2')
                         ->click('#custom_domain')
                         ->type('input#signup_domain', 'user-domain-signup.com')
@@ -845,13 +839,13 @@ class SignupTest extends TestCaseDusk
                 })
                 ->waitUntilMissing('@step3')
                 ->on(new Dashboard())
-                ->within(new Menu(), function ($browser) {
+                ->within(new Menu(), static function ($browser) {
                     $browser->clickMenuItem('logout');
                 });
         });
 
         $user = User::where('email', 'admin@user-domain-signup.com')->first();
-        $this->assertSame(null, $user->getSetting('external_email'));
+        $this->assertNull($user->getSetting('external_email'));
     }
 
     /**
@@ -865,7 +859,7 @@ class SignupTest extends TestCaseDusk
                 ->waitUntilMissing('.app-loader')
                 ->waitFor('@step0')
                 ->click('.plan-individual button')
-                ->whenAvailable('@step1', function (Browser $browser) {
+                ->whenAvailable('@step1', static function (Browser $browser) {
                     $browser->type('#signup_first_name', 'Test')
                         ->type('#signup_last_name', 'User')
                         ->type('#signup_email', 'BrowserSignupTestUser1@kolab.org')
@@ -883,7 +877,7 @@ class SignupTest extends TestCaseDusk
                     $browser->type('#signup_short_code', $code->short_code)
                         ->click('[type=submit]');
                 })
-                ->whenAvailable('@step3', function (Browser $browser) {
+                ->whenAvailable('@step3', static function (Browser $browser) {
                     // Assert that the code is filled in the input
                     // Change it and test error handling
                     $browser->assertValue('#signup_voucher', 'TEST')
@@ -905,7 +899,7 @@ class SignupTest extends TestCaseDusk
                 ->on(new Dashboard())
                 ->assertUser('signuptestdusk@' . \config('app.domain'))
                 // Logout the user
-                ->within(new Menu(), function ($browser) {
+                ->within(new Menu(), static function ($browser) {
                     $browser->clickMenuItem('logout');
                 });
         });
@@ -928,24 +922,24 @@ class SignupTest extends TestCaseDusk
         ]);
         $referral_code = $program->codes()->create(['user_id' => $referrer->id]);
 
-        $this->browse(function (Browser $browser) use ($referral_code) {
+        $this->browse(static function (Browser $browser) use ($referral_code) {
             $browser->visit('/signup/referral/' . $referral_code->code)
                 ->onWithoutAssert(new Signup())
                 ->waitUntilMissing('.app-loader')
                 ->waitFor('@step0')
                 ->click('.plan-individual button')
-                ->whenAvailable('@step1', function (Browser $browser) {
+                ->whenAvailable('@step1', static function (Browser $browser) {
                     $browser->type('#signup_first_name', 'Test')
                         ->type('#signup_last_name', 'User')
                         ->type('#signup_email', 'BrowserSignupTestUser1@kolab.org')
                         ->click('[type=submit]');
                 })
-                ->whenAvailable('@step2', function (Browser $browser) {
+                ->whenAvailable('@step2', static function (Browser $browser) {
                     $code = SignupCode::orderBy('created_at', 'desc')->first();
                     $browser->type('#signup_short_code', $code->short_code)
                         ->click('[type=submit]');
                 })
-                ->whenAvailable('@step3', function (Browser $browser) {
+                ->whenAvailable('@step3', static function (Browser $browser) {
                     $browser->type('#signup_login', 'signuptestdusk')
                         ->type('#signup_password', '123456789')
                         ->type('#signup_password_confirmation', '123456789')
@@ -956,7 +950,7 @@ class SignupTest extends TestCaseDusk
                 ->on(new Dashboard())
                 ->assertUser('signuptestdusk@' . \config('app.domain'))
                 // Logout the user
-                ->within(new Menu(), function ($browser) {
+                ->within(new Menu(), static function ($browser) {
                     $browser->clickMenuItem('logout');
                 });
         });
@@ -971,7 +965,7 @@ class SignupTest extends TestCaseDusk
     public function testSignupInvitation(): void
     {
         // Test non-existing invitation
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit('/signup/invite/TEST')
                 ->onWithoutAssert(new Signup())
                 ->waitFor('#app > #error-page')
@@ -980,13 +974,13 @@ class SignupTest extends TestCaseDusk
 
         $invitation = SignupInvitation::create(['email' => 'test@domain.org']);
 
-        $this->browse(function (Browser $browser) use ($invitation) {
+        $this->browse(static function (Browser $browser) use ($invitation) {
             $browser->visit('/signup/invite/' . $invitation->id)
                 ->onWithoutAssert(new Signup())
                 ->waitUntilMissing('.app-loader')
                 ->waitFor('@step0')
                 ->click('.plan-individual button')
-                ->with('@step3', function ($step) {
+                ->with('@step3', static function ($step) {
                     $domains_count = count(Domain::getPublicDomains());
 
                     $step->assertMissing('.card-title')
@@ -1033,7 +1027,7 @@ class SignupTest extends TestCaseDusk
                 ->on(new Dashboard())
                 ->assertUser('signuptestdusk@' . \config('app.domain'))
                 // Logout the user
-                ->within(new Menu(), function ($browser) {
+                ->within(new Menu(), static function ($browser) {
                     $browser->clickMenuItem('logout');
                 });
         });

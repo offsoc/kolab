@@ -5,7 +5,6 @@ namespace App\Console\Commands;
 use App\Console\Command;
 use App\Providers\PaymentProvider;
 use App\User;
-use Stripe as StripeAPI;
 
 class StripeInfo extends Command
 {
@@ -67,8 +66,7 @@ class StripeInfo extends Command
             }
 
             // TODO: List user payments history
-        } else {
-            // TODO: Fetch some info/stats from Stripe
         }
+        // TODO: Fetch some info/stats from Stripe
     }
 }

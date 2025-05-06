@@ -8,19 +8,13 @@ use Tests\TestCase;
 
 class ResourcesTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         self::useAdminUrl();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         parent::tearDown();
     }
@@ -109,9 +103,9 @@ class ResourcesTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertEquals($resource->id, $json['id']);
-        $this->assertEquals($resource->email, $json['email']);
-        $this->assertEquals($resource->name, $json['name']);
+        $this->assertSame($resource->id, $json['id']);
+        $this->assertSame($resource->email, $json['email']);
+        $this->assertSame($resource->name, $json['name']);
     }
 
     /**

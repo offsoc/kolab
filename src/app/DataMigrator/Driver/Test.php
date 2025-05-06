@@ -4,8 +4,8 @@ namespace App\DataMigrator\Driver;
 
 use App\DataMigrator\Account;
 use App\DataMigrator\Engine;
-use App\DataMigrator\Interface\Folder;
 use App\DataMigrator\Interface\ExporterInterface;
+use App\DataMigrator\Interface\Folder;
 use App\DataMigrator\Interface\ImporterInterface;
 use App\DataMigrator\Interface\Item;
 use App\DataMigrator\Interface\ItemSet;
@@ -24,7 +24,6 @@ class Test implements ExporterInterface, ImporterInterface
 
     /** @var Engine Data migrator engine */
     protected $engine;
-
 
     /**
      * Object constructor
@@ -47,9 +46,7 @@ class Test implements ExporterInterface, ImporterInterface
     /**
      * Check user credentials.
      */
-    public function authenticate(): void
-    {
-    }
+    public function authenticate(): void {}
 
     /**
      * Create an item in a folder.

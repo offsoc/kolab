@@ -8,10 +8,7 @@ use Tests\TestCase;
 
 class MeetRoomTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -19,10 +16,7 @@ class MeetRoomTest extends TestCase
         Room::withTrashed()->whereNotIn('name', ['shared', 'john'])->forceDelete();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('room-test@' . \config('app.domain'));
         Room::withTrashed()->whereNotIn('name', ['shared', 'john'])->forceDelete();
@@ -61,9 +55,9 @@ class MeetRoomTest extends TestCase
         $user = $this->getTestUser('room-test@' . \config('app.domain'));
         $wallet = $user->wallets()->first();
         $room = $this->getTestRoom('test', $wallet, [], [
-                'password' => 'test',
-                'acl' => ['john@kolab.org, full'],
-            ], 'group-room');
+            'password' => 'test',
+            'acl' => ['john@kolab.org, full'],
+        ], 'group-room');
 
         $this->assertCount(1, $room->entitlements()->get());
         $this->assertCount(1, $room->permissions()->get());
@@ -84,9 +78,9 @@ class MeetRoomTest extends TestCase
 
         // Now test if deleting a user deletes the room
         $room = $this->getTestRoom('test', $wallet, [], [
-                'password' => 'test',
-                'acl' => ['john@kolab.org, full'],
-            ], 'group-room');
+            'password' => 'test',
+            'acl' => ['john@kolab.org, full'],
+        ], 'group-room');
 
         $user->delete();
 
@@ -129,7 +123,7 @@ class MeetRoomTest extends TestCase
             'password' => 'test-pass',
             'nomedia' => true,
             'locked' => true,
-            'acl' => ['john@kolab.org, full']
+            'acl' => ['john@kolab.org, full'],
         ]);
 
         $config = $room->getConfig();

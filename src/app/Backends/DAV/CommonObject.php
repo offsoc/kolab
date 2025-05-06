@@ -19,7 +19,6 @@ class CommonObject
     /** @var array Custom properties (key->value) */
     public $custom = [];
 
-
     /**
      * Create DAV object from a DOMElement element
      *

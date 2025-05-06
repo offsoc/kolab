@@ -3,6 +3,7 @@
 namespace Tests\Feature\Backends;
 
 use App\Backends\IMAP;
+use App\Sku;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -15,10 +16,7 @@ class IMAPTest extends TestCase
     private $resource;
     private $folder;
 
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -27,10 +25,7 @@ class IMAPTest extends TestCase
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         if ($this->imap) {
             $this->imap->closeConnection();
@@ -74,10 +69,10 @@ class IMAPTest extends TestCase
 
         $this->assertTrue($imap->setACL('user/john@kolab.org', $user->email, 'lrs'));
         $this->assertTrue($imap->setACL('shared/Resources/Conference Room #1@kolab.org', $user->email, 'lrs'));
-/*
-        $this->assertTrue($imap->setACL('user/john@kolab.org', $group->name, 'lrs'));
-        $this->assertTrue($imap->setACL('shared/Resources/Conference Room #1@kolab.org', $group->name, 'lrs'));
-*/
+        /*
+                $this->assertTrue($imap->setACL('user/john@kolab.org', $group->name, 'lrs'));
+                $this->assertTrue($imap->setACL('shared/Resources/Conference Room #1@kolab.org', $group->name, 'lrs'));
+        */
         // Cleanup ACL of a user
         IMAP::aclCleanup($user->email);
 
@@ -86,15 +81,15 @@ class IMAPTest extends TestCase
         $acl = $imap->getACL('shared/Resources/Conference Room #1@kolab.org');
         $this->assertTrue(is_array($acl) && !isset($acl[$user->email]));
 
-/*
-        // Cleanup ACL of a group
-        IMAP::aclCleanup($group->name, 'kolab.org');
+        /*
+                // Cleanup ACL of a group
+                IMAP::aclCleanup($group->name, 'kolab.org');
 
-        $acl = $imap->getACL('user/john@kolab.org');
-        $this->assertTrue(is_array($acl) && !isset($acl[$user->email]));
-        $acl = $imap->getACL('shared/Resources/Conference Room #1@kolab.org');
-        $this->assertTrue(is_array($acl) && !isset($acl[$user->email]));
-*/
+                $acl = $imap->getACL('user/john@kolab.org');
+                $this->assertTrue(is_array($acl) && !isset($acl[$user->email]));
+                $acl = $imap->getACL('shared/Resources/Conference Room #1@kolab.org');
+                $this->assertTrue(is_array($acl) && !isset($acl[$user->email]));
+        */
     }
 
     /**
@@ -119,12 +114,12 @@ class IMAPTest extends TestCase
         $this->assertTrue($imap->setACL('shared/Resources/Conference Room #1@kolab.org', 'anyone', 'lrs'));
         $this->assertTrue($imap->setACL('shared/Resources/Conference Room #1@kolab.org', 'jack@kolab.org', 'lrs'));
         $this->assertTrue($imap->setACL('shared/Resources/Conference Room #1@kolab.org', $user->email, 'lrs'));
-/*
-        $this->assertTrue($imap->setACL('user/john@kolab.org', $group->name, 'lrs'));
-        $this->assertTrue($imap->setACL('shared/Resources/Conference Room #1@kolab.org', $group->name, 'lrs'));
+        /*
+                $this->assertTrue($imap->setACL('user/john@kolab.org', $group->name, 'lrs'));
+                $this->assertTrue($imap->setACL('shared/Resources/Conference Room #1@kolab.org', $group->name, 'lrs'));
 
-        $group->delete();
-*/
+                $group->delete();
+        */
         $user->delete();
 
         // Cleanup ACL for the domain
@@ -157,16 +152,16 @@ class IMAPTest extends TestCase
 
         $ts = str_replace('.', '', (string) microtime(true));
         $this->user = $user = $this->getTestUser("test-{$ts}@" . \config('app.domain'), []);
-        $storage = \App\Sku::withObjectTenantContext($user)->where('title', 'storage')->first();
+        $storage = Sku::withObjectTenantContext($user)->where('title', 'storage')->first();
         $user->assignSku($storage, 1, $user->wallets->first());
 
         $expectedQuota = [
             'user/' . $user->email => [
                 'storage' => [
                     'used' => 0,
-                    'total' => 1048576
-                ]
-            ]
+                    'total' => 1048576,
+                ],
+            ],
         ];
 
         // Create the mailbox

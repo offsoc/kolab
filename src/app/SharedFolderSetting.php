@@ -3,6 +3,7 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * A collection of settings for a SharedFolder.
@@ -20,7 +21,7 @@ class SharedFolderSetting extends Model
     /**
      * The folder to which this setting belongs.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<SharedFolder, $this>
+     * @return BelongsTo<SharedFolder, $this>
      */
     public function folder()
     {

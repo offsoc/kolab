@@ -3,6 +3,7 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * An email address alias for a SharedFolder.
@@ -26,13 +27,13 @@ class SharedFolderAlias extends Model
      */
     public function setAliasAttribute(string $alias)
     {
-        $this->attributes['alias'] = \App\Utils::emailToLower($alias);
+        $this->attributes['alias'] = Utils::emailToLower($alias);
     }
 
     /**
      * The shared folder to which this alias belongs.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<SharedFolder, $this>
+     * @return BelongsTo<SharedFolder, $this>
      */
     public function sharedFolder()
     {

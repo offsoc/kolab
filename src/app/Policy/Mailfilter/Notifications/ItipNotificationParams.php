@@ -7,31 +7,31 @@ use Sabre\VObject\Component;
 
 class ItipNotificationParams
 {
-    /** @var ?string $comment iTip COMMENT property */
+    /** @var ?string iTip COMMENT property */
     public ?string $comment;
 
-    /** @var ?string $mode Notification mode (iTip method) */
+    /** @var ?string Notification mode (iTip method) */
     public ?string $mode;
 
-    /** @var ?string $partstat Attendee PARTSTAT property in an iTip REPLY */
+    /** @var ?string Attendee PARTSTAT property in an iTip REPLY */
     public ?string $partstat;
 
-    /** @var ?string $recurrenceId Recurrence identifier of an event/task occurence */
+    /** @var ?string Recurrence identifier of an event/task occurence */
     public ?string $recurrenceId;
 
-    /** @var ?string $summary iTip sender (attendee or organizer) email address */
+    /** @var ?string iTip sender (attendee or organizer) email address */
     public ?string $senderEmail;
 
-    /** @var ?string $summary iTip sender (attendee or organizer) name */
+    /** @var ?string iTip sender (attendee or organizer) name */
     public ?string $senderName;
 
-    /** @var ?string $start Event/task start date or date-time */
+    /** @var ?string Event/task start date or date-time */
     public ?string $start;
 
-    /** @var ?string $summary Event/Task summary */
+    /** @var ?string Event/Task summary */
     public ?string $summary;
 
-    /** @var ?User $user The recipient of the notification */
+    /** @var ?User The recipient of the notification */
     public ?User $user;
 
     /**

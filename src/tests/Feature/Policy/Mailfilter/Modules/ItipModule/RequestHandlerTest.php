@@ -4,8 +4,6 @@ namespace Tests\Feature\Policy\Mailfilter\Modules\ItipModule;
 
 use App\DataMigrator\Account;
 use App\Policy\Mailfilter\Modules\ItipModule;
-use App\Policy\Mailfilter\Notifications\ItipNotification;
-use App\Policy\Mailfilter\Result;
 use Illuminate\Support\Facades\Notification;
 use Tests\BackendsTrait;
 use Tests\TestCase;
@@ -108,7 +106,7 @@ class RequestHandlerTest extends TestCase
         $this->assertNull($result);
 
         $list = $this->davList($account, 'Calendar', 'event');
-        $list = array_filter($list, fn ($event) => $event->uid == '5464F1DDF6DA264A3FC70E7924B729A5-333333');
+        $list = array_filter($list, static fn ($event) => $event->uid == '5464F1DDF6DA264A3FC70E7924B729A5-333333');
         $event = $list[array_key_first($list)];
 
         $this->assertCount(2, $attendees = $event->attendees);

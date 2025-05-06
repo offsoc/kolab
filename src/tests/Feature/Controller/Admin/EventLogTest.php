@@ -7,10 +7,7 @@ use Tests\TestCase;
 
 class EventLogTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         self::useAdminUrl();
@@ -18,10 +15,7 @@ class EventLogTest extends TestCase
         EventLog::query()->delete();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         EventLog::query()->delete();
 

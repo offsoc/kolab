@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\API\V4;
 
 use App\Http\Controllers\RelationController;
-use App\SharedFolder;
+use App\Jobs\SharedFolder\CreateJob;
 use App\Rules\SharedFolderName;
 use App\Rules\SharedFolderType;
+use App\SharedFolder;
+use App\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -25,11 +28,10 @@ class SharedFoldersController extends RelationController
     /** @var array Common object properties in the API response */
     protected $objectProps = ['email', 'name', 'type'];
 
-
     /**
      * SharedFolder status (extended) information
      *
-     * @param \App\SharedFolder $folder SharedFolder object
+     * @param SharedFolder $folder SharedFolder object
      *
      * @return array Status information
      */
@@ -48,9 +50,9 @@ class SharedFoldersController extends RelationController
     /**
      * Create a new shared folder record.
      *
-     * @param \Illuminate\Http\Request $request The API request.
+     * @param Request $request the API request
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function store(Request $request)
     {
@@ -83,18 +85,18 @@ class SharedFoldersController extends RelationController
         DB::commit();
 
         return response()->json([
-                'status' => 'success',
-                'message' => self::trans('app.shared-folder-create-success'),
+            'status' => 'success',
+            'message' => self::trans('app.shared-folder-create-success'),
         ]);
     }
 
     /**
      * Update a shared folder.
      *
-     * @param \Illuminate\Http\Request $request The API request.
-     * @param string                   $id      Shared folder identifier
+     * @param Request $request the API request
+     * @param string  $id      Shared folder identifier
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function update(Request $request, $id)
     {
@@ -133,16 +135,16 @@ class SharedFoldersController extends RelationController
         DB::commit();
 
         return response()->json([
-                'status' => 'success',
-                'message' => self::trans('app.shared-folder-update-success'),
+            'status' => 'success',
+            'message' => self::trans('app.shared-folder-update-success'),
         ]);
     }
 
     /**
      * Execute (synchronously) specified step in a shared folder setup process.
      *
-     * @param \App\SharedFolder $folder Shared folder object
-     * @param string            $step   Step identifier (as in self::statusInfo())
+     * @param SharedFolder $folder Shared folder object
+     * @param string       $step   Step identifier (as in self::statusInfo())
      *
      * @return bool|null True if the execution succeeded, False if not, Null when
      *                   the job has been sent to the worker (result unknown)
@@ -150,7 +152,7 @@ class SharedFoldersController extends RelationController
     public static function execProcessStep(SharedFolder $folder, string $step): ?bool
     {
         try {
-            if (strpos($step, 'domain-') === 0) {
+            if (str_starts_with($step, 'domain-')) {
                 return DomainsController::execProcessStep($folder->domain(), $step);
             }
 
@@ -158,7 +160,7 @@ class SharedFoldersController extends RelationController
                 case 'shared-folder-ldap-ready':
                 case 'shared-folder-imap-ready':
                     // Use worker to do the job, frontend might not have the IMAP admin credentials
-                    \App\Jobs\SharedFolder\CreateJob::dispatch($folder->id);
+                    CreateJob::dispatch($folder->id);
                     return null;
             }
         } catch (\Exception $e) {
@@ -171,11 +173,11 @@ class SharedFoldersController extends RelationController
     /**
      * Validate shared folder input
      *
-     * @param \Illuminate\Http\Request $request The API request.
-     * @param \App\SharedFolder|null   $folder  Shared folder
-     * @param \App\User|null           $owner   Account owner
+     * @param Request           $request the API request
+     * @param SharedFolder|null $folder  Shared folder
+     * @param User|null         $owner   Account owner
      *
-     * @return \Illuminate\Http\JsonResponse|null The error response on error
+     * @return JsonResponse|null The error response on error
      */
     protected function validateFolderRequest(Request $request, $folder, $owner)
     {
@@ -247,14 +249,14 @@ class SharedFoldersController extends RelationController
     /**
      * Email address validation for use as a shared folder alias.
      *
-     * @param string    $alias      Email address
-     * @param \App\User $owner      The account owner
-     * @param string    $folderName Folder name
-     * @param string    $domain     Folder domain
+     * @param string $alias      Email address
+     * @param User   $owner      The account owner
+     * @param string $folderName Folder name
+     * @param string $domain     Folder domain
      *
      * @return ?string Error message on validation error
      */
-    public static function validateAlias(string $alias, \App\User $owner, string $folderName, string $domain): ?string
+    public static function validateAlias(string $alias, User $owner, string $folderName, string $domain): ?string
     {
         $lmtp_alias = "shared+shared/{$folderName}@{$domain}";
 

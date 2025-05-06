@@ -3,22 +3,20 @@
 namespace Tests\Feature\Jobs\Group;
 
 use App\Group;
+use App\Jobs\Group\CreateJob;
 use App\Support\Facades\LDAP;
 use Tests\TestCase;
 
 class CreateTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestGroup('group@kolab.org');
     }
 
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestGroup('group@kolab.org');
 
@@ -38,7 +36,7 @@ class CreateTest extends TestCase
 
         LDAP::shouldReceive('createGroup')->once()->with($group)->andReturn(true);
 
-        $job = (new \App\Jobs\Group\CreateJob($group->id))->withFakeQueueInteractions();
+        $job = (new CreateJob($group->id))->withFakeQueueInteractions();
         $job->handle();
         $job->assertNotFailed();
 
@@ -48,7 +46,7 @@ class CreateTest extends TestCase
         $this->assertTrue($group->isLdapReady());
 
         // Test non-existing group ID
-        $job = (new \App\Jobs\Group\CreateJob(123))->withFakeQueueInteractions();
+        $job = (new CreateJob(123))->withFakeQueueInteractions();
         $job->handle();
         $job->assertReleased(delay: 5);
     }

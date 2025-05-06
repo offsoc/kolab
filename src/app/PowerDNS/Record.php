@@ -10,14 +10,14 @@ class Record extends Model
         'domain_id',
         'name',
         'type',
-        'content'
+        'content',
     ];
 
     protected $table = 'powerdns_records';
 
     public function domain()
     {
-        return $this->belongsTo(\App\PowerDNS\Domain::class, 'domain_id', 'id');
+        return $this->belongsTo(Domain::class, 'domain_id', 'id');
     }
 
     public function toString()

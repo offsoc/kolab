@@ -18,7 +18,7 @@ class ListTest extends TestCase
         $output = trim(\Artisan::output());
         $this->assertSame(0, $code);
 
-        $this->assertTrue(strpos($output, (string) $john->id) !== false);
+        $this->assertTrue(str_contains($output, (string) $john->id));
 
         // TODO: Test --deleted argument
         // TODO: Test output format and other attributes

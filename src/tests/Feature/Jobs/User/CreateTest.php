@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Jobs\User;
 
+use App\Domain;
+use App\Jobs\User\CreateJob;
 use App\Support\Facades\DAV;
 use App\Support\Facades\IMAP;
 use App\Support\Facades\LDAP;
@@ -11,17 +13,14 @@ use Tests\TestCase;
 
 class CreateTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestUser('new-job-user@' . \config('app.domain'));
     }
 
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('new-job-user@' . \config('app.domain'));
 
@@ -36,8 +35,8 @@ class CreateTest extends TestCase
         Queue::fake();
 
         $user = $this->getTestUser('new-job-user@' . \config('app.domain'), ['status' => User::STATUS_NEW]);
-        $domain = \App\Domain::where('namespace', \config('app.domain'))->first();
-        $domain->status |= \App\Domain::STATUS_LDAP_READY;
+        $domain = Domain::where('namespace', \config('app.domain'))->first();
+        $domain->status |= Domain::STATUS_LDAP_READY;
         $domain->save();
 
         // TODO: Make the test working with various with_imap/with_ldap combinations
@@ -53,7 +52,7 @@ class CreateTest extends TestCase
         IMAP::shouldReceive('createUser')->once()->with($user)->andReturn(true);
         LDAP::shouldReceive('createUser')->once()->with($user)->andReturn(true);
 
-        $job = (new \App\Jobs\User\CreateJob($user->id))->withFakeQueueInteractions();
+        $job = (new CreateJob($user->id))->withFakeQueueInteractions();
         $job->handle();
         $job->assertNotFailed();
 
@@ -67,7 +66,7 @@ class CreateTest extends TestCase
         $user->status |= User::STATUS_DELETED;
         $user->save();
 
-        $job = (new \App\Jobs\User\CreateJob($user->id))->withFakeQueueInteractions();
+        $job = (new CreateJob($user->id))->withFakeQueueInteractions();
         $job->handle();
         $job->assertFailedWith("User {$user->id} is marked as deleted.");
 
@@ -76,12 +75,12 @@ class CreateTest extends TestCase
         $user->save();
         $user->delete();
 
-        $job = (new \App\Jobs\User\CreateJob($user->id))->withFakeQueueInteractions();
+        $job = (new CreateJob($user->id))->withFakeQueueInteractions();
         $job->handle();
         $job->assertFailedWith("User {$user->id} is actually deleted.");
 
         // Test job failure (user unknown), the job will be released
-        $job = (new \App\Jobs\User\CreateJob(123))->withFakeQueueInteractions();
+        $job = (new CreateJob(123))->withFakeQueueInteractions();
         $job->handle();
         $job->assertReleased(delay: 5);
 

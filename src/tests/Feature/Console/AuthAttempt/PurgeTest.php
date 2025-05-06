@@ -2,25 +2,19 @@
 
 namespace Tests\Feature\Console\AuthAttempt;
 
-use Carbon\Carbon;
 use App\AuthAttempt;
+use Carbon\Carbon;
 use Tests\TestCase;
 
 class PurgeTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         AuthAttempt::truncate();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         AuthAttempt::truncate();
         parent::tearDown();

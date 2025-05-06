@@ -11,7 +11,7 @@ class Task extends Item
 {
     public const FOLDER_TYPE = 'IPF.Task';
     // public const TYPE        = 'IPM.Task';
-    public const FILE_EXT    = 'ics';
+    public const FILE_EXT = 'ics';
 
     /**
      * Get GetItem request parameters
@@ -43,10 +43,10 @@ class Task extends Item
             'UID' => [$this->getUID($item)],
             'DTSTAMP' => [$this->formatDate($item->getLastModifiedTime()), ['VALUE' => 'DATE-TIME']],
             'CREATED' => [$this->formatDate($item->getDateTimeCreated()), ['VALUE' => 'DATE-TIME']],
-            'SEQUENCE' => [intval($item->getChangeCount())],
+            'SEQUENCE' => [(int) $item->getChangeCount()],
             'SUMMARY' => [$item->getSubject()],
             'DESCRIPTION' => [(string) $item->getBody()],
-            'PERCENT-COMPLETE' => [intval($item->getPercentComplete())],
+            'PERCENT-COMPLETE' => [(int) $item->getPercentComplete()],
             'X-MS-ID' => [$this->itemId],
         ];
 
@@ -104,7 +104,7 @@ class Task extends Item
         $ical = "BEGIN:VCALENDAR\r\nMETHOD:PUBLISH\r\nVERSION:2.0\r\nPRODID:Kolab EWS Data Migrator\r\nBEGIN:VTODO\r\n";
 
         foreach ($data as $key => $prop) {
-            $ical .= $this->formatProp($key, $prop[0], isset($prop[1]) ? $prop[1] : []);
+            $ical .= $this->formatProp($key, $prop[0], $prop[1] ?? []);
         }
 
         // Attachments
@@ -220,7 +220,7 @@ class Task extends Item
             $rrule = array_filter($rrule);
             $rrule = trim(array_reduce(
                 array_keys($rrule),
-                function ($carry, $key) use ($rrule) {
+                static function ($carry, $key) use ($rrule) {
                     return $carry . ';' . $key . '=' . $rrule[$key];
                 }
             ), ';');
@@ -277,7 +277,7 @@ class Task extends Item
 
         $days = explode(' ', $days);
         $days = array_map(
-            function ($day) use ($days_map, $index_map, $index) {
+            static function ($day) use ($days_map, $index_map, $index) {
                 return ($index ? $index_map[$index] : '') . $days_map[$day];
             },
             $days
@@ -296,7 +296,7 @@ class Task extends Item
 
         $months = explode(' ', $months);
         $months = array_map(
-            function ($month) use ($months_map) {
+            static function ($month) use ($months_map) {
                 return array_search($month, $months_map) + 1;
             },
             $months

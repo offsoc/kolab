@@ -29,7 +29,7 @@ class ItipNotification extends Notification implements ShouldQueue
     {
         $this->params->user = $user;
 
-        return (new ItipNotificationMail($this->params));
+        return new ItipNotificationMail($this->params);
     }
 
     /**

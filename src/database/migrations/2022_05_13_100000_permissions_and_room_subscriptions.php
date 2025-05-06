@@ -1,11 +1,14 @@
 <?php
 
+use App\Entitlement;
+use App\Meet\Room;
+use App\Sku;
+use App\User;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -13,7 +16,7 @@ return new class extends Migration
     {
         Schema::create(
             'permissions',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->string('id', 36)->primary();
                 $table->bigInteger('permissible_id');
                 $table->string('permissible_type');
@@ -28,7 +31,7 @@ return new class extends Migration
 
         Schema::table(
             'openvidu_rooms',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->bigInteger('tenant_id')->unsigned()->nullable();
                 $table->string('description')->nullable();
                 $table->softDeletes();
@@ -38,11 +41,11 @@ return new class extends Migration
         );
 
         // Create the new SKUs
-        $sku = \App\Sku::where('title', 'room')->first();
+        $sku = Sku::where('title', 'room')->first();
 
         // Create the entitlement for every existing room
-        foreach (\App\Meet\Room::get() as $room) {
-            $user = \App\User::find($room->user_id); // @phpstan-ignore-line
+        foreach (Room::get() as $room) {
+            $user = User::find($room->user_id); // @phpstan-ignore-line
             if (!$user) {
                 $room->forceDelete();
                 continue;
@@ -56,22 +59,22 @@ return new class extends Migration
 
             $wallet = $user->wallets()->first();
 
-            \App\Entitlement::create([
-                    'wallet_id' => $wallet->id,
-                    'sku_id' => $sku->id,
-                    'cost' => 0,
-                    'fee' => 0,
-                    'entitleable_id' => $room->id,
-                    'entitleable_type' => \App\Meet\Room::class
+            Entitlement::create([
+                'wallet_id' => $wallet->id,
+                'sku_id' => $sku->id,
+                'cost' => 0,
+                'fee' => 0,
+                'entitleable_id' => $room->id,
+                'entitleable_type' => Room::class,
             ]);
         }
 
         // Remove 'meet' SKU/entitlements
-        \App\Sku::where('title', 'meet')->delete();
+        Sku::where('title', 'meet')->delete();
 
         Schema::table(
             'openvidu_rooms',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->dropForeign('openvidu_rooms_user_id_foreign');
                 $table->dropColumn('user_id');
             }
@@ -85,7 +88,7 @@ return new class extends Migration
     {
         Schema::table(
             'openvidu_rooms',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->dropForeign('openvidu_rooms_tenant_id_foreign');
                 $table->dropColumn('tenant_id');
                 $table->dropColumn('description');
@@ -96,7 +99,7 @@ return new class extends Migration
         );
 
         // Set user_id back
-        foreach (\App\Meet\Room::get() as $room) {
+        foreach (Room::get() as $room) {
             $wallet = $room->wallet();
             if (!$wallet) {
                 $room->forceDelete();
@@ -109,12 +112,12 @@ return new class extends Migration
 
         Schema::table(
             'openvidu_rooms',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->dropSoftDeletes();
             }
         );
 
-        \App\Entitlement::where('entitleable_type', \App\Meet\Room::class)->forceDelete();
+        Entitlement::where('entitleable_type', Room::class)->forceDelete();
 
         Schema::dropIfExists('permissions');
     }

@@ -3,6 +3,7 @@
 namespace App\Meet;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * A collection of settings for a Room.
@@ -23,7 +24,7 @@ class RoomSetting extends Model
     /**
      * The room to which this setting belongs.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Room, $this>
+     * @return BelongsTo<Room, $this>
      */
     public function room()
     {

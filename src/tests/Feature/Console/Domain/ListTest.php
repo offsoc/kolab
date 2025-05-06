@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Console\Domain;
 
+use App\Domain;
 use Tests\TestCase;
 
 class ListTest extends TestCase
@@ -11,8 +12,8 @@ class ListTest extends TestCase
      */
     public function testHandle(): void
     {
-        $domain1 = \App\Domain::where('namespace', 'kolab.org')->first();
-        $domain2 = \App\Domain::whereNot('tenant_id', $domain1->tenant_id)->first();
+        $domain1 = Domain::where('namespace', 'kolab.org')->first();
+        $domain2 = Domain::whereNot('tenant_id', $domain1->tenant_id)->first();
 
         // List domains for a specified tenant
         $code = \Artisan::call("domains --tenant={$domain1->tenant_id}");

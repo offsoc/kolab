@@ -27,7 +27,6 @@ class Response
     /** @var array<string> Headers to prepend */
     public array $prepends = [];
 
-
     /**
      * Object constructor
      *

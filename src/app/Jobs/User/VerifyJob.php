@@ -3,13 +3,13 @@
 namespace App\Jobs\User;
 
 use App\Jobs\UserJob;
+use App\Support\Facades\IMAP;
+use App\User;
 
 class VerifyJob extends UserJob
 {
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle()
     {
@@ -37,9 +37,9 @@ class VerifyJob extends UserJob
             return;
         }
 
-        if (\App\Support\Facades\IMAP::verifyAccount($user->email)) {
-            $user->status |= \App\User::STATUS_IMAP_READY;
-            $user->status |= \App\User::STATUS_ACTIVE;
+        if (IMAP::verifyAccount($user->email)) {
+            $user->status |= User::STATUS_IMAP_READY;
+            $user->status |= User::STATUS_ACTIVE;
             $user->save();
         }
     }

@@ -4,6 +4,9 @@ namespace App\Console\Commands\Group;
 
 use App\Console\Command;
 use App\Group;
+use App\Jobs\Group\CreateJob;
+use App\Jobs\Group\DeleteJob;
+use App\Jobs\Group\UpdateJob;
 
 class ResyncCommand extends Command
 {
@@ -45,7 +48,7 @@ class ResyncCommand extends Command
 
             if ($deleted_only) {
                 $groups->whereNotNull('deleted_at')
-                    ->where(function ($query) {
+                    ->where(static function ($query) {
                         $query->where('status', '&', Group::STATUS_LDAP_READY);
                     });
             }
@@ -70,7 +73,7 @@ class ResyncCommand extends Command
                     }
 
                     // TODO: Do this not asyncronously as an option or when a signle group is requested?
-                    \App\Jobs\Group\DeleteJob::dispatch($group->id);
+                    DeleteJob::dispatch($group->id);
 
                     $this->info("{$group->email}: pushed");
                 } else {
@@ -87,7 +90,7 @@ class ResyncCommand extends Command
                         continue;
                     }
 
-                    \App\Jobs\Group\CreateJob::dispatch($group->id);
+                    CreateJob::dispatch($group->id);
 
                     $this->info("{$group->email}: pushed");
                 } elseif (!empty($req_group)) {
@@ -98,7 +101,7 @@ class ResyncCommand extends Command
 
                     // We push the update only if a specific group is requested,
                     // We don't want to flood the database/backend with an update of all groups
-                    \App\Jobs\Group\UpdateJob::dispatch($group->id);
+                    UpdateJob::dispatch($group->id);
 
                     $this->info("{$group->email}: pushed");
                 } else {

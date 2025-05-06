@@ -3,8 +3,8 @@
 namespace App\Backends\DAV;
 
 use Illuminate\Support\Str;
-use Sabre\VObject\Reader;
 use Sabre\VObject\Property;
+use Sabre\VObject\Reader;
 use Sabre\VObject\Writer;
 
 class Vcard extends CommonObject
@@ -24,7 +24,6 @@ class Vcard extends CommonObject
     public $version;
 
     private $vobject;
-
 
     /**
      * Create event object from a DOMElement element
@@ -74,7 +73,7 @@ class Vcard extends CommonObject
         ];
 
         foreach ($vobject->children() as $prop) {
-            if (!($prop instanceof Property)) {
+            if (!$prop instanceof Property) {
                 continue;
             }
 
@@ -91,7 +90,6 @@ class Vcard extends CommonObject
                     $props['email'] = (string) $prop;
                     $this->email[] = $props;
                     break;
-
                 case 'MEMBER':
                     foreach ($prop as $member) {
                         $value = (string) $member;
@@ -100,7 +98,6 @@ class Vcard extends CommonObject
                         }
                     }
                     break;
-
                 default:
                     // map string properties
                     if (in_array($prop->name, $string_properties)) {

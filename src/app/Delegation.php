@@ -3,15 +3,16 @@
 namespace App;
 
 use App\Traits\StatusPropertyTrait;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 
 /**
  * Definition of Delegation (user to user relation).
  *
- * @property int     $delegatee_id
- * @property ?array  $options
- * @property int     $status
- * @property int     $user_id
+ * @property int    $delegatee_id
+ * @property ?array $options
+ * @property int    $status
+ * @property int    $user_id
  */
 class Delegation extends Pivot
 {
@@ -50,11 +51,10 @@ class Delegation extends Pivot
     /** @var bool Indicates if the model should be timestamped. */
     public $timestamps = false;
 
-
     /**
      * The delegator user
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<User, $this>
+     * @return BelongsTo<User, $this>
      */
     public function user()
     {
@@ -64,7 +64,7 @@ class Delegation extends Pivot
     /**
      * The delegatee user
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<User, $this>
+     * @return BelongsTo<User, $this>
      */
     public function delegatee()
     {

@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use App\Utils;
 use App\VerificationCode;
 use Tests\TestCase;
 
@@ -9,8 +10,6 @@ class VerificationCodeTest extends TestCase
 {
     /**
      * Test VerificationCode::generateShortCode()
-     *
-     * @return void
      */
     public function testGenerateShortCode()
     {
@@ -19,6 +18,6 @@ class VerificationCodeTest extends TestCase
         $code_length = env('VERIFICATION_CODE_LENGTH', VerificationCode::SHORTCODE_LENGTH);
 
         $this->assertTrue(strlen($code) === $code_length);
-        $this->assertTrue(strspn($code, \App\Utils::CHARS) === strlen($code));
+        $this->assertTrue(strspn($code, Utils::CHARS) === strlen($code));
     }
 }

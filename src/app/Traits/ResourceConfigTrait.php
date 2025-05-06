@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\User;
 use Illuminate\Support\Facades\Validator;
 
 trait ResourceConfigTrait
@@ -40,7 +41,7 @@ trait ResourceConfigTrait
                     if ($error = $this->validateInvitationPolicyUser($email)) {
                         $errors[$key] = $error;
                     } else {
-                        $value = "manual:$email";
+                        $value = "manual:{$email}";
                     }
                 } else {
                     $errors[$key] = \trans('validation.ipolicy-invalid');
@@ -72,7 +73,7 @@ trait ResourceConfigTrait
             return \trans('validation.emailinvalid');
         }
 
-        $user = \App\User::where('email', \strtolower($email))->first();
+        $user = User::where('email', \strtolower($email))->first();
 
         // The user and resource must be in the same wallet
         if ($user && ($wallet = $user->wallet())) {

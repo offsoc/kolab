@@ -3,6 +3,7 @@
 namespace App\Console\Commands\Scalpel\User;
 
 use App\Console\ObjectCreateCommand;
+use App\User;
 
 /**
  * Create a user at the lowest level of control over the exact database entry.
@@ -22,7 +23,7 @@ class CreateCommand extends ObjectCreateCommand
     protected $hidden = true;
 
     protected $commandPrefix = 'scalpel';
-    protected $objectClass = \App\User::class;
+    protected $objectClass = User::class;
     protected $objectName = 'user';
-    protected $objectTitle = null;
+    protected $objectTitle;
 }

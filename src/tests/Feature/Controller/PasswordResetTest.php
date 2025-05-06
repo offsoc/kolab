@@ -2,33 +2,30 @@
 
 namespace Tests\Feature\Controller;
 
-use App\VerificationCode;
+use App\IP4Net;
+use App\Jobs\Mail\PasswordResetJob;
+use App\Jobs\User\UpdateJob;
 use App\User;
+use App\VerificationCode;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class PasswordResetTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestUser('passwordresettest@' . \config('app.domain'));
 
-        \App\IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
+        IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('passwordresettest@' . \config('app.domain'));
 
-        \App\IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
+        IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
 
         parent::tearDown();
     }
@@ -120,17 +117,17 @@ class PasswordResetTest extends TestCase
         $this->assertNotEmpty($json['code']);
 
         // Assert the email sending job was pushed once
-        Queue::assertPushed(\App\Jobs\Mail\PasswordResetJob::class, 1);
+        Queue::assertPushed(PasswordResetJob::class, 1);
 
         // Assert the job has proper data assigned
-        Queue::assertPushed(\App\Jobs\Mail\PasswordResetJob::class, function ($job) use ($user, &$code, $json) {
+        Queue::assertPushed(PasswordResetJob::class, static function ($job) use ($user, &$code, $json) {
             $code = TestCase::getObjectProperty($job, 'code');
 
             return $code->user->id == $user->id && $code->code == $json['code'];
         });
 
         return [
-            'code' => $code
+            'code' => $code,
         ];
     }
 
@@ -157,13 +154,13 @@ class PasswordResetTest extends TestCase
         $this->assertSame('error', $json['status']);
         $this->assertSame("The request location is not allowed.", $json['errors']['email']);
 
-        \App\IP4Net::create([
-                'net_number' => '127.0.0.0',
-                'net_broadcast' => '127.255.255.255',
-                'net_mask' => 8,
-                'country' => 'US',
-                'rir_name' => 'test',
-                'serial' => 1,
+        IP4Net::create([
+            'net_number' => '127.0.0.0',
+            'net_broadcast' => '127.255.255.255',
+            'net_mask' => 8,
+            'country' => 'US',
+            'rir_name' => 'test',
+            'serial' => 1,
         ]);
 
         $response = $this->withHeaders($headers)->post('/api/auth/password-reset/init', $post);
@@ -177,8 +174,6 @@ class PasswordResetTest extends TestCase
 
     /**
      * Test password-reset/verify with invalid input
-     *
-     * @return void
      */
     public function testPasswordResetVerifyInvalidInput()
     {
@@ -230,8 +225,6 @@ class PasswordResetTest extends TestCase
 
     /**
      * Test password-reset/verify with valid input
-     *
-     * @return void
      */
     public function testPasswordResetVerifyValidInput()
     {
@@ -257,8 +250,6 @@ class PasswordResetTest extends TestCase
 
     /**
      * Test password-reset with invalid input
-     *
-     * @return void
      */
     public function testPasswordResetInvalidInput()
     {
@@ -345,8 +336,6 @@ class PasswordResetTest extends TestCase
 
     /**
      * Test password reset with valid input
-     *
-     * @return void
      */
     public function testPasswordResetValidInput()
     {
@@ -375,11 +364,11 @@ class PasswordResetTest extends TestCase
         $this->assertSame($user->email, $json['email']);
         $this->assertSame($user->id, $json['id']);
 
-        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 1);
+        Queue::assertPushed(UpdateJob::class, 1);
 
         Queue::assertPushed(
-            \App\Jobs\User\UpdateJob::class,
-            function ($job) use ($user) {
+            UpdateJob::class,
+            static function ($job) use ($user) {
                 $userEmail = TestCase::getObjectProperty($job, 'userEmail');
                 $userId = TestCase::getObjectProperty($job, 'userId');
 
@@ -397,8 +386,6 @@ class PasswordResetTest extends TestCase
 
     /**
      * Test creating a password verification code
-     *
-     * @return void
      */
     public function testCodeCreate()
     {
@@ -420,8 +407,6 @@ class PasswordResetTest extends TestCase
 
     /**
      * Test deleting a password verification code
-     *
-     * @return void
      */
     public function testCodeDelete()
     {

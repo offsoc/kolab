@@ -19,6 +19,7 @@ class IdentityEntity implements IdentityEntityInterface
 
     /**
      * The identity repository creates this entity and provides the user id
+     *
      * @param mixed $identifier
      */
     public function setIdentifier($identifier): void

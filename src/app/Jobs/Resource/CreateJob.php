@@ -3,6 +3,7 @@
 namespace App\Jobs\Resource;
 
 use App\Jobs\ResourceJob;
+use App\Resource;
 use App\Support\Facades\IMAP;
 use App\Support\Facades\LDAP;
 
@@ -10,8 +11,6 @@ class CreateJob extends ResourceJob
 {
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle()
     {
@@ -55,7 +54,7 @@ class CreateJob extends ResourceJob
         if ($withLdap && !$resource->isLdapReady()) {
             LDAP::createResource($resource);
 
-            $resource->status |= \App\Resource::STATUS_LDAP_READY;
+            $resource->status |= Resource::STATUS_LDAP_READY;
             $resource->save();
         }
 
@@ -73,10 +72,10 @@ class CreateJob extends ResourceJob
                 }
             }
 
-            $resource->status |= \App\Resource::STATUS_IMAP_READY;
+            $resource->status |= Resource::STATUS_IMAP_READY;
         }
 
-        $resource->status |= \App\Resource::STATUS_ACTIVE;
+        $resource->status |= Resource::STATUS_ACTIVE;
         $resource->save();
     }
 }

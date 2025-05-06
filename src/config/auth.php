@@ -1,7 +1,8 @@
 <?php
 
-return [
+use App\User;
 
+return [
     /*
     |--------------------------------------------------------------------------
     | Authentication Defaults
@@ -67,7 +68,7 @@ return [
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
-            'model' => App\User::class,
+            'model' => User::class,
         ],
 
         // 'users' => [
@@ -115,7 +116,6 @@ return [
     */
 
     'password_timeout' => 10800,
-
 
     /*
     |--------------------------------------------------------------------------

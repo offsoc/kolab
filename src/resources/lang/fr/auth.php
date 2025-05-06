@@ -1,7 +1,6 @@
 <?php
 
 return [
-
     /*
     |--------------------------------------------------------------------------
     | Authentication Language Lines
@@ -16,5 +15,4 @@ return [
     'failed' => "Nom d'utilisateur et mot de passe invalide.",
     'throttle' => "Trop de tentatives de connexion. Veuillez ré-essayer dans :seconds secondes.",
     'logoutsuccess' => "Déconnecté avec succès.",
-
 ];

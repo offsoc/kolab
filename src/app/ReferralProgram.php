@@ -4,20 +4,22 @@ namespace App;
 
 use App\Traits\BelongsToTenantTrait;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Translatable\HasTranslations;
 
 /**
  * The eloquent definition of a ReferralProgram.
  *
- * @property int       $award_amount       Award amount (in cents) - to apply to the referrer's wallet
- * @property int       $award_percent      Award percent - to apply to the referrer's wallet
- * @property bool      $active             Program state
- * @property string    $description        Program description
- * @property ?string   $discount_id        Discount identifier - to apply to the created account
- * @property int       $id                 Program identifier
- * @property string    $name               Program name
- * @property int       $payments_threshold Sum of payments (in cents) at which the award is applied
- * @property ?int      $tenant_id          Tenant identifier
+ * @property int     $award_amount       Award amount (in cents) - to apply to the referrer's wallet
+ * @property int     $award_percent      Award percent - to apply to the referrer's wallet
+ * @property bool    $active             Program state
+ * @property string  $description        Program description
+ * @property ?string $discount_id        Discount identifier - to apply to the created account
+ * @property int     $id                 Program identifier
+ * @property string  $name               Program name
+ * @property int     $payments_threshold Sum of payments (in cents) at which the award is applied
+ * @property ?int    $tenant_id          Tenant identifier
  */
 class ReferralProgram extends Model
 {
@@ -106,7 +108,7 @@ class ReferralProgram extends Model
     /**
      * The referral codes that use this program.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<ReferralCode, $this>
+     * @return HasMany<ReferralCode, $this>
      */
     public function codes()
     {
@@ -116,7 +118,7 @@ class ReferralProgram extends Model
     /**
      * The discount assigned to the program.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Discount, $this>
+     * @return BelongsTo<Discount, $this>
      */
     public function discount()
     {

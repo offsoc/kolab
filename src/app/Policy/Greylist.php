@@ -4,6 +4,8 @@ namespace App\Policy;
 
 use App\Policy\Greylist\Connect;
 use App\Policy\Greylist\Whitelist;
+use App\Utils;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class Greylist
@@ -13,8 +15,8 @@ class Greylist
     protected $netID;
     protected $netType;
     protected $recipientHash;
-    protected $recipientID = null;
-    protected $recipientType = null;
+    protected $recipientID;
+    protected $recipientType;
     protected $sender;
     protected $senderLocal = 'unknown';
     protected $senderDomain = 'unknown';
@@ -32,9 +34,9 @@ class Greylist
         $this->request = $request;
 
         if (array_key_exists('timestamp', $this->request)) {
-            $this->timestamp = \Carbon\Carbon::parse($this->request['timestamp']);
+            $this->timestamp = Carbon::parse($this->request['timestamp']);
         } else {
-            $this->timestamp = \Carbon\Carbon::now();
+            $this->timestamp = Carbon::now();
         }
     }
 
@@ -45,7 +47,7 @@ class Greylist
      */
     public static function handle($data): Response
     {
-        $request = new Greylist($data);
+        $request = new self($data);
 
         if ($request->shouldDefer()) {
             return new Response(Response::ACTION_DEFER_IF_PERMIT, 'Greylisted for 5 minutes. Try again later.', 403);
@@ -97,7 +99,7 @@ class Greylist
      */
     public function shouldDefer(): bool
     {
-        list($this->netID, $this->netType) = \App\Utils::getNetFromAddress($this->request['client_address']);
+        [$this->netID, $this->netType] = Utils::getNetFromAddress($this->request['client_address']);
 
         if (!$this->netID) {
             return true;
@@ -105,10 +107,10 @@ class Greylist
 
         $recipient = $this->recipientFromRequest();
 
-        $this->sender = \App\Utils::normalizeAddress($this->request['sender']);
+        $this->sender = Utils::normalizeAddress($this->request['sender']);
 
-        if (strpos($this->sender, '@') !== false) {
-            list($this->senderLocal, $this->senderDomain) = explode('@', $this->sender);
+        if (str_contains($this->sender, '@')) {
+            [$this->senderLocal, $this->senderDomain] = explode('@', $this->sender);
         }
 
         if (strlen($this->senderLocal) > 255) {
@@ -172,11 +174,11 @@ class Greylist
         } elseif ($all->count() >= 4) {
             // Automatically create a whitelist if we have at least 5 (4 existing plus this) messages from the sender
             $this->whitelist = Whitelist::create([
-                    'sender_domain' => $this->senderDomain,
-                    'net_id' => $this->netID,
-                    'net_type' => $this->netType,
-                    'created_at' => $this->timestamp,
-                    'updated_at' => $this->timestamp
+                'sender_domain' => $this->senderDomain,
+                'net_id' => $this->netID,
+                'net_type' => $this->netType,
+                'created_at' => $this->timestamp,
+                'updated_at' => $this->timestamp,
             ]);
 
             $all->where('greylisting', true)
@@ -196,7 +198,7 @@ class Greylist
 
         // Update/Create an entry for the sender/recipient/net combination
         if ($connect) {
-            $connect->connect_count += 1;
+            $connect->connect_count++;
 
             // TODO: The period of time for which the greylisting persists is configurable.
             if ($connect->created_at < $this->timestamp->copy()->subMinutes(5)) {
@@ -208,15 +210,15 @@ class Greylist
             $connect->save();
         } else {
             $connect = Connect::create([
-                    'sender_local' => $this->senderLocal,
-                    'sender_domain' => $this->senderDomain,
-                    'net_id' => $this->netID,
-                    'net_type' => $this->netType,
-                    'recipient_hash' => $this->recipientHash,
-                    'recipient_id' => $this->recipientID,
-                    'recipient_type' => $this->recipientType,
-                    'created_at' => $this->timestamp,
-                    'updated_at' => $this->timestamp
+                'sender_local' => $this->senderLocal,
+                'sender_domain' => $this->senderDomain,
+                'net_id' => $this->netID,
+                'net_type' => $this->netType,
+                'recipient_hash' => $this->recipientHash,
+                'recipient_id' => $this->recipientID,
+                'recipient_type' => $this->recipientType,
+                'created_at' => $this->timestamp,
+                'updated_at' => $this->timestamp,
             ]);
         }
 
@@ -230,19 +232,19 @@ class Greylist
     protected function findConnectsCollection()
     {
         return Connect::where([
-                'sender_local' => $this->senderLocal,
-                'sender_domain' => $this->senderDomain,
-                'recipient_hash' => $this->recipientHash,
-                'net_id' => $this->netID,
-                'net_type' => $this->netType,
+            'sender_local' => $this->senderLocal,
+            'sender_domain' => $this->senderDomain,
+            'recipient_hash' => $this->recipientHash,
+            'net_id' => $this->netID,
+            'net_type' => $this->netType,
         ]);
     }
 
     protected function recipientFromRequest()
     {
-        $recipients = \App\Utils::findObjectsByRecipientAddress($this->request['recipient']);
+        $recipients = Utils::findObjectsByRecipientAddress($this->request['recipient']);
 
-        if (sizeof($recipients) > 1) {
+        if (count($recipients) > 1) {
             \Log::warning(
                 "Only taking the first recipient from the request for {$this->request['recipient']}"
             );
@@ -252,7 +254,7 @@ class Greylist
             foreach ($recipients as $recipient) {
                 if ($recipient) {
                     $this->recipientID = $recipient->id;
-                    $this->recipientType = get_class($recipient);
+                    $this->recipientType = $recipient::class;
                     break;
                 }
             }
@@ -260,7 +262,7 @@ class Greylist
             $recipient = null;
         }
 
-        $this->recipientHash = hash('sha256', \App\Utils::normalizeAddress($this->request['recipient']));
+        $this->recipientHash = hash('sha256', Utils::normalizeAddress($this->request['recipient']));
 
         return $recipient;
     }

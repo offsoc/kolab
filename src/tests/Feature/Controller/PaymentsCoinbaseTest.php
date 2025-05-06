@@ -2,24 +2,22 @@
 
 namespace Tests\Feature\Controller;
 
+use App\Jobs\Mail\PaymentJob;
 use App\Payment;
 use App\Transaction;
+use App\Utils;
 use App\Wallet;
 use App\WalletSetting;
-use App\Utils;
 use GuzzleHttp\Psr7\Response;
 use Illuminate\Support\Facades\Bus;
-use Tests\TestCase;
 use Tests\CoinbaseMocksTrait;
+use Tests\TestCase;
 
 class PaymentsCoinbaseTest extends TestCase
 {
     use CoinbaseMocksTrait;
 
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -43,10 +41,7 @@ class PaymentsCoinbaseTest extends TestCase
         Transaction::where('object_id', $wallet->id)->whereIn('type', $types)->delete();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         if (\config('services.coinbase.key')) {
             $john = $this->getTestUser('john@kolab.org');
@@ -164,12 +159,11 @@ class PaymentsCoinbaseTest extends TestCase
         $this->assertSame('BTC', $payment->currency);
         $this->assertSame($user->tenant->title . ' Payment', $payment->description);
         $this->assertSame('open', $payment->status);
-        $this->assertEquals(0, $wallet->balance);
+        $this->assertSame(0, $wallet->balance);
 
         // Test the webhook
         $post = [
-            'event' =>
-            [
+            'event' => [
                 'api_version' => '2018-03-22',
                 'data' => [
                     'code' => $payment->id,
@@ -181,7 +175,7 @@ class PaymentsCoinbaseTest extends TestCase
         $response->assertStatus(200);
 
         $this->assertSame(Payment::STATUS_PAID, $payment->fresh()->status);
-        $this->assertEquals(1234, $wallet->fresh()->balance);
+        $this->assertSame(1234, $wallet->fresh()->balance);
 
         $transaction = $wallet->transactions()
             ->where('type', Transaction::WALLET_CREDIT)->get()->last();
@@ -194,12 +188,11 @@ class PaymentsCoinbaseTest extends TestCase
 
         // Assert that email notification job wasn't dispatched,
         // it is expected only for recurring payments
-        Bus::assertDispatchedTimes(\App\Jobs\Mail\PaymentJob::class, 0);
+        Bus::assertDispatchedTimes(PaymentJob::class, 0);
 
         // Verify "paid -> open -> paid" scenario, assert that balance didn't change
         $post = [
-            'event' =>
-            [
+            'event' => [
                 'api_version' => '2018-03-22',
                 'data' => [
                     'code' => $payment->id,
@@ -211,11 +204,10 @@ class PaymentsCoinbaseTest extends TestCase
         $response->assertStatus(200);
 
         $this->assertSame(Payment::STATUS_PAID, $payment->fresh()->status);
-        $this->assertEquals(1234, $wallet->fresh()->balance);
+        $this->assertSame(1234, $wallet->fresh()->balance);
 
         $post = [
-            'event' =>
-            [
+            'event' => [
                 'api_version' => '2018-03-22',
                 'data' => [
                     'code' => $payment->id,
@@ -228,7 +220,7 @@ class PaymentsCoinbaseTest extends TestCase
         $response->assertStatus(200);
 
         $this->assertSame(Payment::STATUS_PAID, $payment->fresh()->status);
-        $this->assertEquals(1234, $wallet->fresh()->balance);
+        $this->assertSame(1234, $wallet->fresh()->balance);
 
         // Test for payment failure
         Bus::fake();
@@ -238,8 +230,7 @@ class PaymentsCoinbaseTest extends TestCase
         $payment->save();
 
         $post = [
-            'event' =>
-            [
+            'event' => [
                 'api_version' => '2018-03-22',
                 'data' => [
                     'code' => $payment->id,
@@ -253,11 +244,11 @@ class PaymentsCoinbaseTest extends TestCase
         $response->assertStatus(200);
 
         $this->assertSame('failed', $payment->fresh()->status);
-        $this->assertEquals(1234, $wallet->fresh()->balance);
+        $this->assertSame(1234, $wallet->fresh()->balance);
 
         // Assert that email notification job wasn't dispatched,
         // it is expected only for recurring payments
-        Bus::assertDispatchedTimes(\App\Jobs\Mail\PaymentJob::class, 0);
+        Bus::assertDispatchedTimes(PaymentJob::class, 0);
     }
 
     /**
@@ -298,11 +289,10 @@ class PaymentsCoinbaseTest extends TestCase
         $this->assertSame(1234, $payment->amount);
         $this->assertSame(5, $payment->currency_amount);
         $this->assertSame('BTC', $payment->currency);
-        $this->assertEquals(0, $wallet->balance);
+        $this->assertSame(0, $wallet->balance);
 
         $post = [
-            'event' =>
-            [
+            'event' => [
                 'api_version' => '2018-03-22',
                 'data' => [
                     'code' => $payment->id,
@@ -315,7 +305,7 @@ class PaymentsCoinbaseTest extends TestCase
         $response->assertStatus(200);
 
         $this->assertSame(Payment::STATUS_PAID, $payment->fresh()->status);
-        $this->assertEquals(1234, $wallet->fresh()->balance);
+        $this->assertSame(1234, $wallet->fresh()->balance);
     }
 
     /**
@@ -343,19 +333,19 @@ class PaymentsCoinbaseTest extends TestCase
 
         $user = $this->getTestUser('john@kolab.org');
 
-        //Empty response
+        // Empty response
         $response = $this->actingAs($user)->get("api/v4/payments/pending");
         $json = $response->json();
 
         $this->assertSame('success', $json['status']);
         $this->assertSame(0, $json['count']);
         $this->assertSame(1, $json['page']);
-        $this->assertSame(false, $json['hasMore']);
+        $this->assertFalse($json['hasMore']);
         $this->assertCount(0, $json['list']);
 
         $response = $this->actingAs($user)->get("api/v4/payments/has-pending");
         $json = $response->json();
-        $this->assertSame(false, $json['hasPending']);
+        $this->assertFalse($json['hasPending']);
 
         $wallet = $user->wallets()->first();
 
@@ -379,14 +369,14 @@ class PaymentsCoinbaseTest extends TestCase
         $response = $this->actingAs($user)->post("api/v4/payments", $post);
         $response->assertStatus(200);
 
-        //A response
+        // A response
         $response = $this->actingAs($user)->get("api/v4/payments/pending");
         $json = $response->json();
 
         $this->assertSame('success', $json['status']);
         $this->assertSame(1, $json['count']);
         $this->assertSame(1, $json['page']);
-        $this->assertSame(false, $json['hasMore']);
+        $this->assertFalse($json['hasMore']);
         $this->assertCount(1, $json['list']);
         $this->assertSame(Payment::STATUS_OPEN, $json['list'][0]['status']);
         $this->assertSame('CHF', $json['list'][0]['currency']);
@@ -395,7 +385,7 @@ class PaymentsCoinbaseTest extends TestCase
 
         $response = $this->actingAs($user)->get("api/v4/payments/has-pending");
         $json = $response->json();
-        $this->assertSame(true, $json['hasPending']);
+        $this->assertTrue($json['hasPending']);
 
         // Set the payment to paid
         $payments = Payment::where('wallet_id', $wallet->id)->get();
@@ -415,7 +405,7 @@ class PaymentsCoinbaseTest extends TestCase
 
         $response = $this->actingAs($user)->get("api/v4/payments/has-pending");
         $json = $response->json();
-        $this->assertSame(false, $json['hasPending']);
+        $this->assertFalse($json['hasPending']);
     }
 
     /**

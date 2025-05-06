@@ -6,8 +6,10 @@ use App\Fs\Item;
 use App\Fs\Property;
 use App\Support\Facades\Storage;
 use App\User;
+use App\Utils;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage as LaravelStorage;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 /**
@@ -15,20 +17,14 @@ use Tests\TestCase;
  */
 class FsTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         Item::query()->forceDelete();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         Item::query()->forceDelete();
 
@@ -69,7 +65,7 @@ class FsTest extends TestCase
 
         $this->assertSame('success', $json['status']);
         $this->assertSame("File deleted successfully.", $json['message']);
-        $this->assertSame(null, Item::find($file->id));
+        $this->assertNull(Item::find($file->id));
 
         // Note: The file is expected to stay still in the filesystem, we're not testing this here.
 
@@ -92,7 +88,7 @@ class FsTest extends TestCase
 
         $this->assertSame('success', $json['status']);
         $this->assertSame("Collection deleted successfully.", $json['message']);
-        $this->assertSame(null, Item::find($collection->id));
+        $this->assertNull(Item::find($collection->id));
     }
 
     /**
@@ -245,7 +241,7 @@ class FsTest extends TestCase
         $this->assertSame($permission->key, $json['id']);
         $this->assertSame($jack->email, $json['user']);
         $this->assertSame('read-only', $json['permissions']);
-        $this->assertSame(\App\Utils::serviceUrl('file/' . $permission->key), $json['link']);
+        $this->assertSame(Utils::serviceUrl('file/' . $permission->key), $json['link']);
 
         // Error handling on use of the same user
         $post = ['user' => 'jack@kolab.org', 'permissions' => 'read-only'];
@@ -276,7 +272,7 @@ class FsTest extends TestCase
         $this->assertSame($permission->key, $json['id']);
         $this->assertSame($jack->email, $json['user']);
         $this->assertSame('read-write', $json['permissions']);
-        $this->assertSame(\App\Utils::serviceUrl('file/' . $permission->key), $json['link']);
+        $this->assertSame(Utils::serviceUrl('file/' . $permission->key), $json['link']);
 
         // Input validation on update
         $post = ['user' => 'jack@kolab.org', 'permissions' => 'read'];
@@ -301,7 +297,7 @@ class FsTest extends TestCase
         $this->assertSame($permission->key, $json['list'][0]['id']);
         $this->assertSame($jack->email, $json['list'][0]['user']);
         $this->assertSame('read-write', $json['list'][0]['permissions']);
-        $this->assertSame(\App\Utils::serviceUrl('file/' . $permission->key), $json['list'][0]['link']);
+        $this->assertSame(Utils::serviceUrl('file/' . $permission->key), $json['list'][0]['link']);
 
         // Delete permission
         $response = $this->actingAs($john)->delete("api/v4/fs/{$file->id}/permissions/1234");
@@ -338,7 +334,7 @@ class FsTest extends TestCase
         $this->assertCount(3, $json);
         $this->assertSame([], $json['list']);
         $this->assertSame(0, $json['count']);
-        $this->assertSame(false, $json['hasMore']);
+        $this->assertFalse($json['hasMore']);
 
         // Create some files and test again
         $file1 = $this->getTestFile($user, 'test1.txt', [], ['mimetype' => 'text/plain', 'size' => 12345]);
@@ -351,7 +347,7 @@ class FsTest extends TestCase
 
         $this->assertCount(3, $json);
         $this->assertSame(2, $json['count']);
-        $this->assertSame(false, $json['hasMore']);
+        $this->assertFalse($json['hasMore']);
         $this->assertCount(2, $json['list']);
         $this->assertSame('test1.txt', $json['list'][0]['name']);
         $this->assertSame($file1->id, $json['list'][0]['id']);
@@ -366,7 +362,7 @@ class FsTest extends TestCase
 
         $this->assertCount(3, $json);
         $this->assertSame(1, $json['count']);
-        $this->assertSame(false, $json['hasMore']);
+        $this->assertFalse($json['hasMore']);
         $this->assertCount(1, $json['list']);
         $this->assertSame('test2.gif', $json['list'][0]['name']);
         $this->assertSame($file2->id, $json['list'][0]['id']);
@@ -457,9 +453,9 @@ class FsTest extends TestCase
         $this->assertSame($file->getProperty('mimetype'), $json['mimetype']);
         $this->assertSame((int) $file->getProperty('size'), $json['size']);
         $this->assertSame($file->getProperty('name'), $json['name']);
-        $this->assertSame(true, $json['isOwner']);
-        $this->assertSame(true, $json['canUpdate']);
-        $this->assertSame(true, $json['canDelete']);
+        $this->assertTrue($json['isOwner']);
+        $this->assertTrue($json['canUpdate']);
+        $this->assertTrue($json['canDelete']);
 
         // Get file content
         $response = $this->actingAs($john)->get("api/v4/fs/{$file->id}?download=1");
@@ -477,9 +473,9 @@ class FsTest extends TestCase
         $json = $response->json();
 
         $this->assertSame($file->id, $json['id']);
-        $this->assertSame(false, $json['isOwner']);
-        $this->assertSame(false, $json['canUpdate']);
-        $this->assertSame(false, $json['canDelete']);
+        $this->assertFalse($json['isOwner']);
+        $this->assertFalse($json['canUpdate']);
+        $this->assertFalse($json['canDelete']);
     }
 
     /**
@@ -635,7 +631,6 @@ class FsTest extends TestCase
         $this->assertSame($collection->id, $json['id']);
         $this->assertSame($params['name'], $collection->getProperty('name'));
 
-
         // Deduplicate again, but without changes
         $parent = $this->getTestCollection($john, 'Parent');
         $response = $this->actingAs($john)->post("api/v4/fs?type=collection", $params);
@@ -664,7 +659,6 @@ class FsTest extends TestCase
         $this->assertNotNull($newItem);
         $this->assertSame(1, $newItem->parents()->count());
         $this->assertSame($collection->id, $newItem->parents()->first()->id);
-
 
         $collection2 = $this->getTestCollection($john, 'My Test Collection2');
         $headers = ["X-Kolab-Parents" => implode(',', [$collection->id, $collection2->id])];
@@ -723,7 +717,7 @@ class FsTest extends TestCase
         $fileContent = '';
 
         for ($x = 0; $x <= 2; $x++) {
-            $body = str_repeat("$x", 100);
+            $body = str_repeat("{$x}", 100);
             $response = $this->sendRawBody(null, 'POST', "api/v4/fs/uploads/{$uploadId}?from={$size}", [], $body);
             $response->assertStatus(200);
 
@@ -735,7 +729,7 @@ class FsTest extends TestCase
             $this->assertSame($uploadId, $json['uploadId']);
         }
 
-        $body = str_repeat("$x", 100);
+        $body = str_repeat("{$x}", 100);
         $response = $this->sendRawBody(null, 'POST', "api/v4/fs/uploads/{$uploadId}?from={$size}", [], $body);
         $response->assertStatus(200);
 
@@ -876,12 +870,10 @@ class FsTest extends TestCase
     /**
      * Create a test file.
      *
-     * @param \App\User    $user    File owner
+     * @param User         $user    File owner
      * @param string       $name    File name
      * @param string|array $content File content
      * @param array        $props   Extra file properties
-     *
-     * @return \App\Fs\Item
      */
     protected function getTestFile(User $user, string $name, $content = [], $props = []): Item
     {
@@ -894,7 +886,7 @@ class FsTest extends TestCase
             // do nothing, we don't need the body here
         } else {
             foreach ((array) $content as $idx => $chunk) {
-                $chunkId = \App\Utils::uuidStr();
+                $chunkId = Utils::uuidStr();
                 $path = Storage::chunkLocation($chunkId, $file);
 
                 $disk->write($path, $chunk);
@@ -902,9 +894,9 @@ class FsTest extends TestCase
                 $size += strlen($chunk);
 
                 $file->chunks()->create([
-                        'chunk_id' => $chunkId,
-                        'sequence' => $idx,
-                        'size' => strlen($chunk),
+                    'chunk_id' => $chunkId,
+                    'sequence' => $idx,
+                    'size' => strlen($chunk),
                 ]);
             }
         }
@@ -923,11 +915,9 @@ class FsTest extends TestCase
     /**
      * Create a test collection.
      *
-     * @param \App\User    $user    File owner
-     * @param string       $name    File name
-     * @param array        $props   Extra collection properties
-     *
-     * @return \App\Fs\Item
+     * @param User   $user  File owner
+     * @param string $name  File name
+     * @param array  $props Extra collection properties
      */
     protected function getTestCollection(User $user, string $name, $props = []): Item
     {
@@ -945,15 +935,13 @@ class FsTest extends TestCase
     /**
      * Get contents of a test file.
      *
-     * @param \App\Fs\Item $file File record
-     *
-     * @return string
+     * @param Item $file File record
      */
     protected function getTestFileContent(Item $file): string
     {
         $content = '';
 
-        $file->chunks()->orderBy('sequence')->get()->each(function ($chunk) use ($file, &$content) {
+        $file->chunks()->orderBy('sequence')->get()->each(static function ($chunk) use ($file, &$content) {
             $disk = LaravelStorage::disk(\config('filesystems.default'));
             $path = Storage::chunkLocation($chunk->chunk_id, $file);
 
@@ -966,32 +954,32 @@ class FsTest extends TestCase
     /**
      * Create a test file permission.
      *
-     * @param \App\Fs\Item $file       The file
-     * @param \App\User    $user       File owner
-     * @param string       $permission File permission
+     * @param Item   $file       The file
+     * @param User   $user       File owner
+     * @param string $permission File permission
      *
-     * @return \App\Fs\Property File permission property
+     * @return Property File permission property
      */
     protected function getTestFilePermission(Item $file, User $user, string $permission): Property
     {
-        $shareId = 'share-' . \App\Utils::uuidStr();
+        $shareId = 'share-' . Utils::uuidStr();
 
         return $file->properties()->create([
-                'key' => $shareId,
-                'value' => "{$user->email}:{$permission}",
+            'key' => $shareId,
+            'value' => "{$user->email}:{$permission}",
         ]);
     }
 
     /**
      * Invoke a HTTP request with a custom raw body
      *
-     * @param ?\App\User $user    Authenticated user
-     * @param string     $method  Request method (POST,  PUT)
-     * @param string     $uri     Request URL
-     * @param array      $headers Request headers
-     * @param string     $content Raw body content
+     * @param ?User  $user    Authenticated user
+     * @param string $method  Request method (POST,  PUT)
+     * @param string $uri     Request URL
+     * @param array  $headers Request headers
+     * @param string $content Raw body content
      *
-     * @return \Illuminate\Testing\TestResponse HTTP Response object
+     * @return TestResponse HTTP Response object
      */
     protected function sendRawBody(?User $user, string $method, string $uri, array $headers, string $content)
     {
@@ -1002,9 +990,8 @@ class FsTest extends TestCase
 
         if ($user) {
             return $this->actingAs($user)->call($method, $uri, [], $cookies, [], $server, $content);
-        } else {
-            // TODO: Make sure this does not use "acting user" set earlier
-            return $this->call($method, $uri, [], $cookies, [], $server, $content);
         }
+        // TODO: Make sure this does not use "acting user" set earlier
+        return $this->call($method, $uri, [], $cookies, [], $server, $content);
     }
 }

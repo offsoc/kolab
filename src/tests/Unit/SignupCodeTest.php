@@ -3,20 +3,19 @@
 namespace Tests\Unit;
 
 use App\SignupCode;
+use App\Utils;
 use Tests\TestCase;
 
 class SignupCodeTest extends TestCase
 {
     /**
      * Test SignupCode::generateShortCode()
-     *
-     * @return void
      */
     public function testGenerateShortCode()
     {
         $code = SignupCode::generateShortCode();
 
         $this->assertTrue(strlen($code) === env('SIGNUP_CODE_LENGTH', SignupCode::SHORTCODE_LENGTH));
-        $this->assertTrue(strspn($code, env('SIGNUP_CODE_CHARS', \App\Utils::CHARS)) === strlen($code));
+        $this->assertTrue(strspn($code, env('SIGNUP_CODE_CHARS', Utils::CHARS)) === strlen($code));
     }
 }

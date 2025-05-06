@@ -2,12 +2,14 @@
 
 namespace App\PowerDNS;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Domain extends Model
 {
     protected $fillable = [
-        'name'
+        'name',
     ];
 
     protected $table = 'powerdns_domains';
@@ -19,17 +21,17 @@ class Domain extends Model
     {
         $soa = $this->records()->where('type', 'SOA')->first();
 
-        list($ns, $hm, $serial, $a, $b, $c, $d) = explode(" ", $soa->content);
+        [$ns, $hm, $serial, $a, $b, $c, $d] = explode(" ", $soa->content);
 
-        $today = \Carbon\Carbon::now()->format('Ymd');
+        $today = Carbon::now()->format('Ymd');
         $date = substr($serial, 0, 8);
 
         if ($date != $today) {
             $serial = $today . '01';
         } else {
-            $change = (int)(substr($serial, 8, 2));
+            $change = (int) substr($serial, 8, 2);
 
-            $serial = sprintf("%s%02s", $date, ($change + 1));
+            $serial = sprintf("%s%02s", $date, $change + 1);
         }
 
         $soa->content = "{$ns} {$hm} {$serial} {$a} {$b} {$c} {$d}";
@@ -38,14 +40,12 @@ class Domain extends Model
 
     /**
      * Returns the SOA record serial
-     *
-     * @return string
      */
     public function getSerial(): string
     {
         $soa = $this->records()->where('type', 'SOA')->first();
 
-        list($ns, $hm, $serial, $a, $b, $c, $d) = explode(" ", $soa->content);
+        [$ns, $hm, $serial, $a, $b, $c, $d] = explode(" ", $soa->content);
 
         return $serial;
     }
@@ -53,7 +53,7 @@ class Domain extends Model
     /**
      * Any DNS records assigned to this domain.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Record, $this>
+     * @return HasMany<Record, $this>
      */
     public function records()
     {
@@ -63,7 +63,7 @@ class Domain extends Model
     /**
      * Any (additional) properties of this domain.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<DomainSetting, $this>
+     * @return HasMany<DomainSetting, $this>
      */
     public function settings()
     {

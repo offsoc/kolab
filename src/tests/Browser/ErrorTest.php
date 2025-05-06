@@ -9,12 +9,10 @@ class ErrorTest extends TestCaseDusk
 {
     /**
      * Test error 404 page on unknown route
-     *
-     * @return void
      */
     public function testError404Page()
     {
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit('/unknown')
                 ->waitFor('#app > #error-page')
                 ->assertVisible('#app > #header-menu')
@@ -22,7 +20,7 @@ class ErrorTest extends TestCaseDusk
                 ->assertErrorPage(404);
         });
 
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit('/login/unknown')
                 ->waitFor('#app > #error-page')
                 ->assertVisible('#app > #header-menu')

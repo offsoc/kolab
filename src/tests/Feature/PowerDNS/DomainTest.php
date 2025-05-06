@@ -8,23 +8,17 @@ use Tests\TestCase;
 
 class DomainTest extends TestCase
 {
-    /** @var \App\PowerDNS\Domain $domain */
-    private $domain = null;
+    /** @var Domain */
+    private $domain;
 
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->domain = Domain::firstOrCreate(['name' => 'test-domain.com']);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->domain->delete();
 

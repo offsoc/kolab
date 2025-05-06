@@ -4,13 +4,14 @@ namespace App\Http\Controllers\API\V4\Reseller;
 
 use App\Resource;
 use App\User;
+use Illuminate\Http\JsonResponse;
 
 class ResourcesController extends \App\Http\Controllers\API\V4\Admin\ResourcesController
 {
     /**
      * Search for resources
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function index()
     {

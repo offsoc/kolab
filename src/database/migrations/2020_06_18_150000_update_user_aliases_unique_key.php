@@ -1,22 +1,19 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-// phpcs:ignore
 class UpdateUserAliasesUniqueKey extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up()
     {
         Schema::table(
             'user_aliases',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->dropUnique(['alias']);
                 $table->unique(['alias', 'user_id']);
             }
@@ -25,10 +22,6 @@ class UpdateUserAliasesUniqueKey extends Migration
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
-    public function down()
-    {
-    }
+    public function down() {}
 }

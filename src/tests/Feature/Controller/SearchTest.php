@@ -7,10 +7,7 @@ use Tests\TestCase;
 
 class SearchTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -18,10 +15,7 @@ class SearchTest extends TestCase
         Contact::truncate();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('jane@kolabnow.com');
         Contact::truncate();
@@ -209,7 +203,6 @@ class SearchTest extends TestCase
                 'name' => 'John Doe',
             ],
         ];
-
 
         $this->assertSame(count($users), $json['count']);
         $this->assertSame($users, $json['list']);

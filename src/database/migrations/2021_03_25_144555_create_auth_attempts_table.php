@@ -4,19 +4,16 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-// phpcs:ignore
 class CreateAuthAttemptsTable extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up()
     {
         Schema::create(
             'auth_attempts',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->string('id', 36);
                 $table->bigInteger('user_id');
                 $table->string('ip', 36);
@@ -40,8 +37,6 @@ class CreateAuthAttemptsTable extends Migration
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
     public function down()
     {

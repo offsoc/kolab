@@ -2,10 +2,12 @@
 
 namespace App\Policy;
 
+use App\Traits\BelongsToUserTrait;
 use App\Transaction;
 use App\User;
+use App\UserAlias;
+use App\Utils;
 use Carbon\Carbon;
-use App\Traits\BelongsToUserTrait;
 use Illuminate\Database\Eloquent\Model;
 
 class RateLimit extends Model
@@ -17,7 +19,7 @@ class RateLimit extends Model
         'user_id',
         'owner_id',
         'recipient_hash',
-        'recipient_count'
+        'recipient_count',
     ];
 
     /** @var string Database table name */
@@ -32,7 +34,7 @@ class RateLimit extends Model
      */
     public static function handle($data): Response
     {
-        list($local, $domain) = \App\Utils::normalizeAddress($data['sender'], true);
+        [$local, $domain] = Utils::normalizeAddress($data['sender'], true);
 
         if (empty($local) || empty($domain)) {
             return new Response(Response::ACTION_HOLD, 'Invalid sender email', 403);
@@ -45,10 +47,10 @@ class RateLimit extends Model
         }
 
         // Find the Kolab user
-        $user = \App\User::withTrashed()->where('email', $sender)->first();
+        $user = User::withTrashed()->where('email', $sender)->first();
 
         if (!$user) {
-            $alias = \App\UserAlias::where('alias', $sender)->first();
+            $alias = UserAlias::where('alias', $sender)->first();
 
             if (!$alias) {
                 // TODO: How about sender is a distlist address?
@@ -113,17 +115,17 @@ class RateLimit extends Model
         $owner = $wallet->owner;
 
         // find or create the request
-        $request = RateLimit::where('recipient_hash', $recipientHash)
+        $request = self::where('recipient_hash', $recipientHash)
             ->where('user_id', $user->id)
             ->where('updated_at', '>=', Carbon::now()->subHour())
             ->first();
 
         if (!$request) {
-            $request = RateLimit::create([
-                    'user_id' => $user->id,
-                    'owner_id' => $owner->id,
-                    'recipient_hash' => $recipientHash,
-                    'recipient_count' => $recipientCount
+            $request = self::create([
+                'user_id' => $user->id,
+                'owner_id' => $owner->id,
+                'recipient_hash' => $recipientHash,
+                'recipient_count' => $recipientCount,
             ]);
         } else {
             // ensure the request has an up to date timestamp
@@ -152,7 +154,7 @@ class RateLimit extends Model
         }
 
         // Examine the rates at which the owner (or its users) is sending
-        $ownerRates = RateLimit::where('owner_id', $owner->id)
+        $ownerRates = self::where('owner_id', $owner->id)
             ->where('updated_at', '>=', Carbon::now()->subHour());
 
         if (($count = $ownerRates->count()) >= 10) {
@@ -187,7 +189,7 @@ class RateLimit extends Model
 
         // Examine the rates at which the user is sending (if not also the owner)
         if ($user->id != $owner->id) {
-            $userRates = RateLimit::where('user_id', $user->id)
+            $userRates = self::where('user_id', $user->id)
                 ->where('updated_at', '>=', Carbon::now()->subHour());
 
             if (($count = $userRates->count()) >= 10) {

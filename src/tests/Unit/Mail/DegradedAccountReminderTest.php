@@ -3,8 +3,7 @@
 namespace Tests\Unit\Mail;
 
 use App\Mail\DegradedAccountReminder;
-use App\User;
-use App\Wallet;
+use App\Utils;
 use Tests\TestCase;
 
 class DegradedAccountReminderTest extends TestCase
@@ -23,22 +22,22 @@ class DegradedAccountReminderTest extends TestCase
         $html = $mail['html'];
         $plain = $mail['plain'];
 
-        $dashboardUrl = \App\Utils::serviceUrl('/dashboard');
+        $dashboardUrl = Utils::serviceUrl('/dashboard');
         $dashboardLink = sprintf('<a href="%s">%s</a>', $dashboardUrl, $dashboardUrl);
         $appName = $user->tenant->title;
 
-        $this->assertSame("$appName Reminder: Your account is free", $mail['subject']);
+        $this->assertSame("{$appName} Reminder: Your account is free", $mail['subject']);
 
         $this->assertStringStartsWith('<!DOCTYPE html>', $html);
         $this->assertTrue(strpos($html, $user->name(true)) > 0);
         $this->assertTrue(strpos($html, $dashboardLink) > 0);
         $this->assertTrue(strpos($html, "your {$john->email} account is a free account") > 0);
-        $this->assertTrue(strpos($html, "$appName Team") > 0);
+        $this->assertTrue(strpos($html, "{$appName} Team") > 0);
 
         $this->assertStringStartsWith('Dear ' . $user->name(true), $plain);
         $this->assertTrue(strpos($plain, $dashboardUrl) > 0);
         $this->assertTrue(strpos($plain, "your {$john->email} account is a free account") > 0);
-        $this->assertTrue(strpos($plain, "$appName Team") > 0);
+        $this->assertTrue(strpos($plain, "{$appName} Team") > 0);
     }
 
     /**
@@ -52,7 +51,7 @@ class DegradedAccountReminderTest extends TestCase
 
         $mail = new DegradedAccountReminder($wallet, $user);
 
-        $this->assertSame("$appName Reminder: Your account is free", $mail->getSubject());
+        $this->assertSame("{$appName} Reminder: Your account is free", $mail->getSubject());
         $this->assertSame($user, $mail->getUser());
     }
 }

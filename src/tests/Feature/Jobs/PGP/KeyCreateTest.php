@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Jobs\PGP;
 
+use App\Jobs\PGP\KeyCreateJob;
 use App\Support\Facades\PGP;
 use App\UserAlias;
 use Illuminate\Support\Facades\Queue;
@@ -9,20 +10,14 @@ use Tests\TestCase;
 
 class KeyCreateTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         UserAlias::where('alias', 'test-alias@kolab.org')->delete();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         UserAlias::where('alias', 'test-alias@kolab.org')->delete();
 
@@ -41,7 +36,7 @@ class KeyCreateTest extends TestCase
         // Test without an alias
         PGP::shouldReceive('keypairCreate')->once()->with($user, $user->email);
 
-        $job = (new \App\Jobs\PGP\KeyCreateJob($user->id, $user->email))->withFakeQueueInteractions();
+        $job = (new KeyCreateJob($user->id, $user->email))->withFakeQueueInteractions();
         $job->handle();
         $job->assertNotFailed();
 
@@ -49,7 +44,7 @@ class KeyCreateTest extends TestCase
         $alias = UserAlias::create(['user_id' => $user->id, 'alias' => 'test-alias@kolab.org']);
         PGP::shouldReceive('keypairCreate')->once()->with($user, $alias->alias);
 
-        $job = (new \App\Jobs\PGP\KeyCreateJob($user->id, 'test-alias@kolab.org'))->withFakeQueueInteractions();
+        $job = (new KeyCreateJob($user->id, 'test-alias@kolab.org'))->withFakeQueueInteractions();
         $job->handle();
         $job->assertNotFailed();
     }

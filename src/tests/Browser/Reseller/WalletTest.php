@@ -3,7 +3,9 @@
 namespace Tests\Browser\Reseller;
 
 use App\Payment;
+use App\Plan;
 use App\Transaction;
+use App\Utils;
 use App\Wallet;
 use Carbon\Carbon;
 use Tests\Browser;
@@ -14,19 +16,13 @@ use Tests\TestCaseDusk;
 
 class WalletTest extends TestCaseDusk
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         self::useResellerUrl();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $reseller = $this->getTestUser('reseller@' . \config('app.domain'));
         $wallet = $reseller->wallets()->first();
@@ -44,7 +40,7 @@ class WalletTest extends TestCaseDusk
     public function testWalletUnauth(): void
     {
         // Test that the page requires authentication
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit('/wallet')->on(new Home());
         });
     }
@@ -58,9 +54,9 @@ class WalletTest extends TestCaseDusk
         Wallet::where('user_id', $reseller->id)->update(['balance' => 125]);
 
         // Positive balance
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit(new Home())
-                ->submitLogon('reseller@' . \config('app.domain'), \App\Utils::generatePassphrase(), true)
+                ->submitLogon('reseller@' . \config('app.domain'), Utils::generatePassphrase(), true)
                 ->on(new Dashboard())
                 ->assertSeeIn('@links .link-wallet svg + span', 'Wallet')
                 ->assertSeeIn('@links .link-wallet .badge.bg-success', '1,25 CHF');
@@ -69,7 +65,7 @@ class WalletTest extends TestCaseDusk
         Wallet::where('user_id', $reseller->id)->update(['balance' => -1234]);
 
         // Negative balance
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit(new Dashboard())
                 ->assertSeeIn('@links .link-wallet svg + span', 'Wallet')
                 ->assertSeeIn('@links .link-wallet .badge.bg-danger', '-12,34 CHF');
@@ -86,7 +82,7 @@ class WalletTest extends TestCaseDusk
         $reseller = $this->getTestUser('reseller@' . \config('app.domain'));
         Wallet::where('user_id', $reseller->id)->update(['balance' => -1234]);
 
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->click('@links .link-wallet')
                 ->on(new WalletPage())
                 ->assertSeeIn('#wallet .card-title', 'Account balance -12,34 CHF')
@@ -103,7 +99,7 @@ class WalletTest extends TestCaseDusk
     public function testReceipts(): void
     {
         $user = $this->getTestUser('reseller@' . \config('app.domain'));
-        $plan = \App\Plan::withObjectTenantContext($user)->where('title', 'individual')->first();
+        $plan = Plan::withObjectTenantContext($user)->where('title', 'individual')->first();
         $wallet = $user->wallets()->first();
         $wallet->payments()->delete();
         $user->assignPlan($plan);
@@ -111,13 +107,13 @@ class WalletTest extends TestCaseDusk
         $user->save();
 
         // Assert Receipts tab content when there's no receipts available
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit(new WalletPage())
                 ->assertSeeIn('#wallet .card-title', 'Account balance 0,00 CHF')
                 ->assertSeeIn('#wallet .card-title .text-success', '0,00 CHF')
                 ->assertSeeIn('#wallet .card-text', 'You are in your free trial period.') // TODO
                 ->assertSeeIn('@nav #tab-receipts', 'Receipts')
-                ->with('@receipts-tab', function (Browser $browser) {
+                ->with('@receipts-tab', static function (Browser $browser) {
                     $browser->waitUntilMissing('.app-loader')
                         ->assertSeeIn('tfoot td', 'There are no receipts for payments');
                 });
@@ -125,35 +121,35 @@ class WalletTest extends TestCaseDusk
 
         // Create some sample payments
         $receipts = [];
-        $date = Carbon::create(intval(date('Y')) - 1, 3, 30);
+        $date = Carbon::create((int) date('Y') - 1, 3, 30);
         $payment = Payment::create([
-                'id' => 'AAA1',
-                'status' => Payment::STATUS_PAID,
-                'type' => Payment::TYPE_ONEOFF,
-                'description' => 'Paid in March',
-                'wallet_id' => $wallet->id,
-                'provider' => 'stripe',
-                'amount' => 1111,
-                'credit_amount' => 1111,
-                'currency_amount' => 1111,
-                'currency' => 'CHF',
+            'id' => 'AAA1',
+            'status' => Payment::STATUS_PAID,
+            'type' => Payment::TYPE_ONEOFF,
+            'description' => 'Paid in March',
+            'wallet_id' => $wallet->id,
+            'provider' => 'stripe',
+            'amount' => 1111,
+            'credit_amount' => 1111,
+            'currency_amount' => 1111,
+            'currency' => 'CHF',
         ]);
         $payment->updated_at = $date;
         $payment->save();
         $receipts[] = $date->format('Y-m');
 
-        $date = Carbon::create(intval(date('Y')) - 1, 4, 30);
+        $date = Carbon::create((int) date('Y') - 1, 4, 30);
         $payment = Payment::create([
-                'id' => 'AAA2',
-                'status' => Payment::STATUS_PAID,
-                'type' => Payment::TYPE_ONEOFF,
-                'description' => 'Paid in April',
-                'wallet_id' => $wallet->id,
-                'provider' => 'stripe',
-                'amount' => 1111,
-                'credit_amount' => 1111,
-                'currency_amount' => 1111,
-                'currency' => 'CHF',
+            'id' => 'AAA2',
+            'status' => Payment::STATUS_PAID,
+            'type' => Payment::TYPE_ONEOFF,
+            'description' => 'Paid in April',
+            'wallet_id' => $wallet->id,
+            'provider' => 'stripe',
+            'amount' => 1111,
+            'credit_amount' => 1111,
+            'currency_amount' => 1111,
+            'currency' => 'CHF',
         ]);
         $payment->updated_at = $date;
         $payment->save();
@@ -197,13 +193,13 @@ class WalletTest extends TestCaseDusk
         // Create some sample transactions
         $transactions = $this->createTestTransactions($wallet);
         $transactions = array_reverse($transactions);
-        $pages = array_chunk($transactions, 10 /* page size*/);
+        $pages = array_chunk($transactions, 10 /* page size */);
 
-        $this->browse(function (Browser $browser) use ($pages) {
+        $this->browse(static function (Browser $browser) use ($pages) {
             $browser->on(new WalletPage())
                 ->assertSeeIn('@nav #tab-history', 'History')
                 ->click('@nav #tab-history')
-                ->with('@history-tab', function (Browser $browser) use ($pages) {
+                ->with('@history-tab', static function (Browser $browser) use ($pages) {
                     $browser->waitUntilMissing('.app-loader')
                         ->assertElementsCount('table tbody tr', 10)
                         ->assertMissing('table td.email')
@@ -212,9 +208,9 @@ class WalletTest extends TestCaseDusk
                     foreach ($pages[0] as $idx => $transaction) {
                         $selector = 'table tbody tr:nth-child(' . ($idx + 1) . ')';
                         $priceStyle = $transaction->type == Transaction::WALLET_AWARD ? 'text-success' : 'text-danger';
-                        $browser->assertSeeIn("$selector td.description", $transaction->shortDescription())
-                            ->assertMissing("$selector td.selection button")
-                            ->assertVisible("$selector td.price.{$priceStyle}");
+                        $browser->assertSeeIn("{$selector} td.description", $transaction->shortDescription())
+                            ->assertMissing("{$selector} td.selection button")
+                            ->assertVisible("{$selector} td.price.{$priceStyle}");
                         // TODO: Test more transaction details
                     }
 
@@ -228,12 +224,12 @@ class WalletTest extends TestCaseDusk
                     foreach ($pages[1] as $idx => $transaction) {
                         $selector = 'table tbody tr:nth-child(' . ($idx + 1 + 10) . ')';
                         $priceStyle = $transaction->type == Transaction::WALLET_CREDIT ? 'text-success' : 'text-danger';
-                        $browser->assertSeeIn("$selector td.description", $transaction->shortDescription());
+                        $browser->assertSeeIn("{$selector} td.description", $transaction->shortDescription());
 
                         if ($transaction->type == Transaction::WALLET_DEBIT) {
                             $debitEntry = $selector;
                         } else {
-                            $browser->assertMissing("$selector td.selection button");
+                            $browser->assertMissing("{$selector} td.selection button");
                         }
                     }
                 });

@@ -4,8 +4,8 @@ namespace App\DataMigrator\Driver;
 
 use App\DataMigrator\Account;
 use App\DataMigrator\Engine;
-use App\DataMigrator\Interface\Folder;
 use App\DataMigrator\Interface\ExporterInterface;
+use App\DataMigrator\Interface\Folder;
 use App\DataMigrator\Interface\ImporterInterface;
 use App\DataMigrator\Interface\Item;
 use App\DataMigrator\Interface\ItemSet;
@@ -30,7 +30,6 @@ class IMAP implements ExporterInterface, ImporterInterface
 
     /** @var Engine Data migrator engine */
     protected $engine;
-
 
     /**
      * Object constructor
@@ -390,7 +389,7 @@ class IMAP implements ExporterInterface, ImporterInterface
     {
         $this->initIMAP();
 
-        $mailbox = self::toUTF7($folder->targetname ? $folder->targetname : $folder->fullname);
+        $mailbox = self::toUTF7($folder->targetname ?: $folder->fullname);
 
         // TODO: We should probably first use SEARCH/SORT to skip messages marked as \Deleted
         // TODO: fetchHeaders() fetches too many headers, we should slim-down, here we need
@@ -489,7 +488,7 @@ class IMAP implements ExporterInterface, ImporterInterface
                         // cert validation, or make it optional via Account URI parameters
                         'verify_peer' => \config('services.imap.verify_peer'),
                         'verify_peer_name' => \config('services.imap.verify_peer'),
-                        'verify_host' => \config('services.imap.verify_host')
+                        'verify_host' => \config('services.imap.verify_host'),
                     ],
                 ],
             ],

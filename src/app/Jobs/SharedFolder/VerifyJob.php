@@ -3,13 +3,13 @@
 namespace App\Jobs\SharedFolder;
 
 use App\Jobs\SharedFolderJob;
+use App\SharedFolder;
+use App\Support\Facades\IMAP;
 
 class VerifyJob extends SharedFolderJob
 {
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle()
     {
@@ -26,9 +26,9 @@ class VerifyJob extends SharedFolderJob
 
         $folderName = $folder->getSetting('folder');
 
-        if (\App\Support\Facades\IMAP::verifySharedFolder($folderName)) {
-            $folder->status |= \App\SharedFolder::STATUS_IMAP_READY;
-            $folder->status |= \App\SharedFolder::STATUS_ACTIVE;
+        if (IMAP::verifySharedFolder($folderName)) {
+            $folder->status |= SharedFolder::STATUS_IMAP_READY;
+            $folder->status |= SharedFolder::STATUS_ACTIVE;
             $folder->save();
         }
     }

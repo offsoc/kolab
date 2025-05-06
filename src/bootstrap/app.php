@@ -6,7 +6,6 @@ if (!defined('RCUBE_CHARSET')) {
 }
 
 if (!function_exists('array_first')) {
-
     /**
      * Get first element from an array
      *

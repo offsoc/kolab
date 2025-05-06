@@ -1,7 +1,6 @@
 <?php
 
 return [
-
     // Enables PGP keypair generation on user creation
     'enable' => env('PGP_ENABLE', false),
 
@@ -16,5 +15,4 @@ return [
 
     // Default size of the new RSA key
     'length' => (int) env('PGP_LENGTH', 3072),
-
 ];

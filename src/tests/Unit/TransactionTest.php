@@ -23,63 +23,63 @@ class TransactionTest extends TestCase
         // Create transactions
 
         $transaction = Transaction::create([
-                'object_id' => $wallet->id,
-                'object_type' => Wallet::class,
-                'type' => Transaction::WALLET_PENALTY,
-                'amount' => -10,
-                'description' => "A test penalty"
+            'object_id' => $wallet->id,
+            'object_type' => Wallet::class,
+            'type' => Transaction::WALLET_PENALTY,
+            'amount' => -10,
+            'description' => "A test penalty",
         ]);
 
         $transaction = Transaction::create([
-                'object_id' => $wallet->id,
-                'object_type' => Wallet::class,
-                'type' => Transaction::WALLET_DEBIT,
-                'amount' => -9
+            'object_id' => $wallet->id,
+            'object_type' => Wallet::class,
+            'type' => Transaction::WALLET_DEBIT,
+            'amount' => -9,
         ]);
 
         $transaction = Transaction::create([
-                'object_id' => $wallet->id,
-                'object_type' => Wallet::class,
-                'type' => Transaction::WALLET_CREDIT,
-                'amount' => 11
+            'object_id' => $wallet->id,
+            'object_type' => Wallet::class,
+            'type' => Transaction::WALLET_CREDIT,
+            'amount' => 11,
         ]);
 
         $transaction = Transaction::create([
-                'object_id' => $wallet->id,
-                'object_type' => Wallet::class,
-                'type' => Transaction::WALLET_AWARD,
-                'amount' => 12,
-                'description' => "A test award"
+            'object_id' => $wallet->id,
+            'object_type' => Wallet::class,
+            'type' => Transaction::WALLET_AWARD,
+            'amount' => 12,
+            'description' => "A test award",
         ]);
 
         $sku = Sku::withEnvTenantContext()->where('title', 'mailbox')->first();
         $entitlement = Entitlement::where('sku_id', $sku->id)->first();
         $transaction = Transaction::create([
-                'user_email' => 'test@test.com',
-                'object_id' => $entitlement->id,
-                'object_type' => Entitlement::class,
-                'type' => Transaction::ENTITLEMENT_CREATED,
-                'amount' => 13
+            'user_email' => 'test@test.com',
+            'object_id' => $entitlement->id,
+            'object_type' => Entitlement::class,
+            'type' => Transaction::ENTITLEMENT_CREATED,
+            'amount' => 13,
         ]);
 
         $sku = Sku::withEnvTenantContext()->where('title', 'domain-hosting')->first();
         $entitlement = Entitlement::where('sku_id', $sku->id)->first();
         $transaction = Transaction::create([
-                'user_email' => 'test@test.com',
-                'object_id' => $entitlement->id,
-                'object_type' => Entitlement::class,
-                'type' => Transaction::ENTITLEMENT_BILLED,
-                'amount' => 14
+            'user_email' => 'test@test.com',
+            'object_id' => $entitlement->id,
+            'object_type' => Entitlement::class,
+            'type' => Transaction::ENTITLEMENT_BILLED,
+            'amount' => 14,
         ]);
 
         $sku = Sku::withEnvTenantContext()->where('title', 'storage')->first();
         $entitlement = Entitlement::where('sku_id', $sku->id)->first();
         $transaction = Transaction::create([
-                'user_email' => 'test@test.com',
-                'object_id' => $entitlement->id,
-                'object_type' => Entitlement::class,
-                'type' => Transaction::ENTITLEMENT_DELETED,
-                'amount' => 15
+            'user_email' => 'test@test.com',
+            'object_id' => $entitlement->id,
+            'object_type' => Entitlement::class,
+            'type' => Transaction::ENTITLEMENT_DELETED,
+            'amount' => 15,
         ]);
 
         $transactions = Transaction::where('amount', '<', 20)->orderBy('amount')->get();
@@ -177,15 +177,15 @@ class TransactionTest extends TestCase
                 'object_id' => 'fake-id',
                 'object_type' => Wallet::class,
                 'type' => 'invalid',
-                'amount' => 9
+                'amount' => 9,
             ]
         );
     }
 
     public function testEntitlementForWallet(): void
     {
-        $transaction = \App\Transaction::where('object_type', \App\Wallet::class)
-            ->whereIn('object_id', \App\Wallet::pluck('id'))->first();
+        $transaction = Transaction::where('object_type', Wallet::class)
+            ->whereIn('object_id', Wallet::pluck('id'))->first();
 
         $entitlement = $transaction->entitlement();
         $this->assertNull($entitlement);
@@ -194,8 +194,8 @@ class TransactionTest extends TestCase
 
     public function testWalletForEntitlement(): void
     {
-        $transaction = \App\Transaction::where('object_type', \App\Entitlement::class)
-            ->whereIn('object_id', \App\Entitlement::pluck('id'))->first();
+        $transaction = Transaction::where('object_type', Entitlement::class)
+            ->whereIn('object_id', Entitlement::pluck('id'))->first();
 
         $wallet = $transaction->wallet();
         $this->assertNull($wallet);

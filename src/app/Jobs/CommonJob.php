@@ -22,8 +22,6 @@ abstract class CommonJob implements ShouldQueue
 
     /**
      * Execute the job.
-     *
-     * @return void
      */
     abstract public function handle();
 

@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Jobs\SharedFolder\UpdateJob;
 use App\SharedFolderSetting;
 
 class SharedFolderSettingObserver
@@ -9,9 +10,7 @@ class SharedFolderSettingObserver
     /**
      * Handle the shared folder setting "created" event.
      *
-     * @param \App\SharedFolderSetting $folderSetting Settings object
-     *
-     * @return void
+     * @param SharedFolderSetting $folderSetting Settings object
      */
     public function created(SharedFolderSetting $folderSetting)
     {
@@ -21,9 +20,7 @@ class SharedFolderSettingObserver
     /**
      * Handle the shared folder setting "updated" event.
      *
-     * @param \App\SharedFolderSetting $folderSetting Settings object
-     *
-     * @return void
+     * @param SharedFolderSetting $folderSetting Settings object
      */
     public function updated(SharedFolderSetting $folderSetting)
     {
@@ -33,9 +30,7 @@ class SharedFolderSettingObserver
     /**
      * Handle the shared folder setting "deleted" event.
      *
-     * @param \App\SharedFolderSetting $folderSetting Settings object
-     *
-     * @return void
+     * @param SharedFolderSetting $folderSetting Settings object
      */
     public function deleted(SharedFolderSetting $folderSetting)
     {
@@ -45,13 +40,13 @@ class SharedFolderSettingObserver
     /**
      * Dispatch shared folder update job (if needed).
      *
-     * @param \App\SharedFolderSetting $folderSetting Settings object
+     * @param SharedFolderSetting $folderSetting Settings object
      */
     private function dispatchUpdateJob(SharedFolderSetting $folderSetting): void
     {
         if ($folderSetting->isBackendSetting()) {
             $props = [$folderSetting->key => $folderSetting->getOriginal('value')];
-            \App\Jobs\SharedFolder\UpdateJob::dispatch($folderSetting->shared_folder_id, $props);
+            UpdateJob::dispatch($folderSetting->shared_folder_id, $props);
         }
     }
 }

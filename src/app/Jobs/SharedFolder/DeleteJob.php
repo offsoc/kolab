@@ -3,13 +3,14 @@
 namespace App\Jobs\SharedFolder;
 
 use App\Jobs\SharedFolderJob;
+use App\SharedFolder;
+use App\Support\Facades\IMAP;
+use App\Support\Facades\LDAP;
 
 class DeleteJob extends SharedFolderJob
 {
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle()
     {
@@ -31,24 +32,24 @@ class DeleteJob extends SharedFolderJob
         }
 
         if (\config('app.with_ldap') && $folder->isLdapReady()) {
-            \App\Support\Facades\LDAP::deleteSharedFolder($folder);
+            LDAP::deleteSharedFolder($folder);
 
-            $folder->status ^= \App\SharedFolder::STATUS_LDAP_READY;
+            $folder->status ^= SharedFolder::STATUS_LDAP_READY;
             // Already save in case of exception below
             $folder->save();
         }
 
         if ($folder->isImapReady()) {
             if (\config('app.with_imap')) {
-                if (!\App\Support\Facades\IMAP::deleteSharedFolder($folder)) {
+                if (!IMAP::deleteSharedFolder($folder)) {
                     throw new \Exception("Failed to delete mailbox for shared folder {$this->folderId}.");
                 }
             }
 
-            $folder->status ^= \App\SharedFolder::STATUS_IMAP_READY;
+            $folder->status ^= SharedFolder::STATUS_IMAP_READY;
         }
 
-        $folder->status |= \App\SharedFolder::STATUS_DELETED;
+        $folder->status |= SharedFolder::STATUS_DELETED;
         $folder->save();
     }
 }

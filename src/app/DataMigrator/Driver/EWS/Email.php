@@ -11,8 +11,7 @@ class Email extends Item
 {
     public const FOLDER_TYPE = 'IPF.Note';
     // public const TYPE        = 'IPM.Email';
-    public const FILE_EXT    = 'mime';
-
+    public const FILE_EXT = 'mime';
 
     /**
      * Get GetItem request parameters

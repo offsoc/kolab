@@ -3,7 +3,10 @@
 namespace Tests\Browser\Reseller;
 
 use App\Domain;
+use App\Entitlement;
 use App\EventLog;
+use App\Sku;
+use App\Utils;
 use Tests\Browser;
 use Tests\Browser\Components\Dialog;
 use Tests\Browser\Components\Toast;
@@ -12,34 +15,27 @@ use Tests\Browser\Pages\Admin\User as UserPage;
 use Tests\Browser\Pages\Dashboard;
 use Tests\Browser\Pages\Home;
 use Tests\TestCaseDusk;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
 
 class DomainTest extends TestCaseDusk
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestUser('test1@domainscontroller.com');
         $this->deleteTestDomain('domainscontroller.com');
 
-        Eventlog::query()->delete();
+        EventLog::query()->delete();
 
         self::useResellerUrl();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('test1@domainscontroller.com');
         $this->deleteTestDomain('domainscontroller.com');
 
-        Eventlog::query()->delete();
+        EventLog::query()->delete();
 
         parent::tearDown();
     }
@@ -70,7 +66,7 @@ class DomainTest extends TestCaseDusk
 
             // Goto the domain page
             $browser->visit(new Home())
-                ->submitLogon('reseller@' . \config('app.domain'), \App\Utils::generatePassphrase(), true)
+                ->submitLogon('reseller@' . \config('app.domain'), Utils::generatePassphrase(), true)
                 ->on(new Dashboard())
                 ->visit($user_page)
                 ->on($user_page)
@@ -80,7 +76,7 @@ class DomainTest extends TestCaseDusk
 
             $browser->on($domain_page)
                 ->assertSeeIn('@domain-info .card-title', 'kolab.org')
-                ->with('@domain-info form', function (Browser $browser) use ($domain) {
+                ->with('@domain-info form', static function (Browser $browser) use ($domain) {
                     $browser->assertElementsCount('.row', 2)
                         ->assertSeeIn('.row:nth-child(1) label', 'ID (Created)')
                         ->assertSeeIn('.row:nth-child(1) #domainid', "{$domain->id} ({$domain->created_at})")
@@ -96,7 +92,7 @@ class DomainTest extends TestCaseDusk
 
             // Assert Configuration tab
             $browser->assertSeeIn('@nav #tab-config', 'Configuration')
-                ->with('@domain-config', function (Browser $browser) {
+                ->with('@domain-config', static function (Browser $browser) {
                     $browser->assertSeeIn('pre#dns-confirm', 'kolab-verify.kolab.org.')
                         ->assertSeeIn('pre#dns-config', 'kolab.org.');
                 });
@@ -113,27 +109,27 @@ class DomainTest extends TestCaseDusk
         EventLog::query()->delete();
 
         $this->browse(function (Browser $browser) {
-            $sku_domain = \App\Sku::withEnvTenantContext()->where('title', 'domain-hosting')->first();
+            $sku_domain = Sku::withEnvTenantContext()->where('title', 'domain-hosting')->first();
             $user = $this->getTestUser('test1@domainscontroller.com');
             $domain = $this->getTestDomain('domainscontroller.com', [
-                    'status' => Domain::STATUS_NEW | Domain::STATUS_ACTIVE
-                        | Domain::STATUS_LDAP_READY | Domain::STATUS_CONFIRMED
-                        | Domain::STATUS_VERIFIED,
-                    'type' => Domain::TYPE_EXTERNAL,
+                'status' => Domain::STATUS_NEW | Domain::STATUS_ACTIVE
+                    | Domain::STATUS_LDAP_READY | Domain::STATUS_CONFIRMED
+                    | Domain::STATUS_VERIFIED,
+                'type' => Domain::TYPE_EXTERNAL,
             ]);
 
-            \App\Entitlement::create([
+            Entitlement::create([
                 'wallet_id' => $user->wallets()->first()->id,
                 'sku_id' => $sku_domain->id,
                 'entitleable_id' => $domain->id,
-                'entitleable_type' => Domain::class
+                'entitleable_type' => Domain::class,
             ]);
 
             $browser->visit(new DomainPage($domain->id))
                 ->assertVisible('@domain-info #button-suspend')
                 ->assertMissing('@domain-info #button-unsuspend')
                 ->click('@domain-info #button-suspend')
-                ->with(new Dialog('#suspend-dialog'), function (Browser $browser) {
+                ->with(new Dialog('#suspend-dialog'), static function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Suspend')
                         ->assertSeeIn('@button-cancel', 'Cancel')
                         ->assertSeeIn('@button-action', 'Submit')
@@ -146,10 +142,10 @@ class DomainTest extends TestCaseDusk
 
             $event = EventLog::where('type', EventLog::TYPE_SUSPENDED)->first();
             $this->assertSame('test suspend', $event->comment);
-            $this->assertEquals($domain->id, $event->object_id);
+            $this->assertSame((string) $domain->id, (string) $event->object_id);
 
             $browser->click('@domain-info #button-unsuspend')
-                ->with(new Dialog('#suspend-dialog'), function (Browser $browser) {
+                ->with(new Dialog('#suspend-dialog'), static function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Unsuspend')
                         ->assertSeeIn('@button-cancel', 'Cancel')
                         ->assertSeeIn('@button-action', 'Submit')
@@ -161,8 +157,8 @@ class DomainTest extends TestCaseDusk
                 ->assertMissing('@domain-info #button-unsuspend');
 
             $event = EventLog::where('type', EventLog::TYPE_UNSUSPENDED)->first();
-            $this->assertSame(null, $event->comment);
-            $this->assertEquals($domain->id, $event->object_id);
+            $this->assertNull($event->comment);
+            $this->assertSame((string) $domain->id, (string) $event->object_id);
         });
     }
 }

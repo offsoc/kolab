@@ -3,7 +3,6 @@
 namespace Tests\Feature\Console\Sku;
 
 use App\Tenant;
-use Illuminate\Contracts\Console\Kernel;
 use Tests\TestCase;
 
 class ListUsersTest extends TestCase

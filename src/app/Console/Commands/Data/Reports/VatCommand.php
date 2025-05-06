@@ -2,10 +2,13 @@
 
 namespace App\Console\Commands\Data\Reports;
 
+use App\Mail\Helper;
+use App\Mail\Mailable;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\HtmlString;
 
 class VatCommand extends Command
 {
@@ -58,29 +61,29 @@ class VatCommand extends Command
         $this->period = $period;
 
         $result = DB::select(
-            <<<SQL
-            SELECT
-                DATE_FORMAT(p.created_at, '%Y-%m-%d %H:%I') AS timestamp,
-                v.country AS country,
-                p.id AS payment_id,
-                ROUND((amount / 100), 2) AS income_gross,
-                ROUND(((amount - (amount / (100 + v.rate) * v.rate)) / 100), 2) AS income_net,
-                ROUND(((amount / (100 + v.rate) * v.rate) / 100), 2) AS income_vat
-            FROM
-                payments p
-            INNER JOIN vat_rates v
-                ON p.vat_rate_id = v.id
-            INNER JOIN wallets w
-                ON p.wallet_id = w.id
-            INNER JOIN user_settings us
-                ON w.user_id = us.user_id
-            WHERE
-                p.status = 'paid'
-                AND us.`key` = 'country'
-                AND p.created_at >= ?
-                AND p.created_at <= ?
-            ORDER BY timestamp, country
-            SQL,
+            <<<'SQL'
+                SELECT
+                    DATE_FORMAT(p.created_at, '%Y-%m-%d %H:%I') AS timestamp,
+                    v.country AS country,
+                    p.id AS payment_id,
+                    ROUND((amount / 100), 2) AS income_gross,
+                    ROUND(((amount - (amount / (100 + v.rate) * v.rate)) / 100), 2) AS income_net,
+                    ROUND(((amount / (100 + v.rate) * v.rate) / 100), 2) AS income_vat
+                FROM
+                    payments p
+                INNER JOIN vat_rates v
+                    ON p.vat_rate_id = v.id
+                INNER JOIN wallets w
+                    ON p.wallet_id = w.id
+                INNER JOIN user_settings us
+                    ON w.user_id = us.user_id
+                WHERE
+                    p.status = 'paid'
+                    AND us.`key` = 'country'
+                    AND p.created_at >= ?
+                    AND p.created_at <= ?
+                ORDER BY timestamp, country
+                SQL,
             [$start->toDateTimeString(), $end->toDateTimeString()]
         );
 
@@ -105,16 +108,16 @@ class VatCommand extends Command
         $plainBody = 'See the attached report!';
         $filename = "Report-{$this->period}.csv";
 
-        $attachment = Attachment::fromData(fn () => $csv, $filename)->withMime('text/csv');
+        $attachment = Attachment::fromData(static fn () => $csv, $filename)->withMime('text/csv');
 
-        $mail = new \App\Mail\Mailable();
+        $mail = new Mailable();
 
         $mail->subject('VAT Report')
             // This hack allows as to use plain text body instead of a Laravel view
-            ->text(new \Illuminate\Support\HtmlString($plainBody))
+            ->text(new HtmlString($plainBody))
             ->to($recipient)
             ->attach($attachment);
 
-        \App\Mail\Helper::sendMail($mail);
+        Helper::sendMail($mail);
     }
 }

@@ -2,36 +2,31 @@
 
 namespace Tests\Feature\Console;
 
-use App\Jobs\MailJob;
 use App\Jobs\Mail\PasswordRetentionJob;
+use App\Package;
 use App\User;
+use App\UserSetting;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class PasswordRetentionTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestUser('user1@retention.com');
         $this->deleteTestUser('user2@retention.com');
         $keys = ['password_update', 'max_password_age', 'password_expiration_warning'];
-        \App\UserSetting::whereIn('key', $keys)->delete();
+        UserSetting::whereIn('key', $keys)->delete();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('user1@retention.com');
         $this->deleteTestUser('user2@retention.com');
         $keys = ['password_update', 'max_password_age', 'password_expiration_warning'];
-        \App\UserSetting::whereIn('key', $keys)->delete();
+        UserSetting::whereIn('key', $keys)->delete();
 
         parent::tearDown();
     }
@@ -49,7 +44,7 @@ class PasswordRetentionTest extends TestCase
         $status = User::STATUS_IMAP_READY | User::STATUS_LDAP_READY;
         $owner = $this->getTestUser('user1@retention.com', ['status' => $status]);
         $user = $this->getTestUser('user2@retention.com', ['status' => $status]);
-        $package_kolab = \App\Package::withEnvTenantContext()->where('title', 'kolab')->first();
+        $package_kolab = Package::withEnvTenantContext()->where('title', 'kolab')->first();
         $owner->assignPackage($package_kolab);
         $owner->assignPackage($package_kolab, $user);
 
@@ -91,11 +86,11 @@ class PasswordRetentionTest extends TestCase
         $this->assertSame("", $output);
 
         Queue::assertPushed(PasswordRetentionJob::class, 2);
-        Queue::assertPushed(PasswordRetentionJob::class, function ($job) use ($user) {
+        Queue::assertPushed(PasswordRetentionJob::class, static function ($job) use ($user) {
             $job_user = TestCase::getObjectProperty($job, 'user');
             return $job_user->id === $user->id;
         });
-        Queue::assertPushed(PasswordRetentionJob::class, function ($job) use ($owner) {
+        Queue::assertPushed(PasswordRetentionJob::class, static function ($job) use ($owner) {
             $job_user = TestCase::getObjectProperty($job, 'user');
             return $job_user->id === $owner->id;
         });
@@ -110,7 +105,7 @@ class PasswordRetentionTest extends TestCase
         $this->assertSame(0, $code);
 
         Queue::assertPushed(PasswordRetentionJob::class, 1);
-        Queue::assertPushed(PasswordRetentionJob::class, function ($job) use ($user) {
+        Queue::assertPushed(PasswordRetentionJob::class, static function ($job) use ($user) {
             $job_user = TestCase::getObjectProperty($job, 'user');
             return $job_user->id === $user->id;
         });

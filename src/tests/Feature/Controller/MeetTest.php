@@ -2,16 +2,12 @@
 
 namespace Tests\Feature\Controller;
 
-use App\Http\Controllers\API\V4\MeetController;
 use App\Meet\Room;
 use Tests\TestCase;
 
 class MeetTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -19,10 +15,7 @@ class MeetTest extends TestCase
         $room->setSettings(['password' => null, 'locked' => null, 'nomedia' => null]);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $room = Room::where('name', 'john')->first();
         $room->setSettings(['password' => null, 'locked' => null, 'nomedia' => null]);
@@ -267,6 +260,7 @@ class MeetTest extends TestCase
      * Test joining the room
      *
      * @group meet
+     *
      * @depends testJoinRoom
      */
     public function testJoinRoomGuest(): void

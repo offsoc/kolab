@@ -2,8 +2,6 @@
 
 namespace Tests;
 
-use Illuminate\Support\Str;
-
 /**
  * Small utility functions for tests
  */
@@ -12,7 +10,7 @@ class Utils
     /**
      * Provide all unique combinations of elements in $input, with order and duplicates irrelevant.
      *
-     * @param array $input The input array of elements.
+     * @param array $input the input array of elements
      *
      * @return array[]
      */

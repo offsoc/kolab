@@ -46,7 +46,7 @@ class BalancesCommand extends Command
                 ->groupBy('wallet_id');
 
             $wallets->addSelect('balances.summary')
-                ->leftJoinSub($balances, 'balances', function ($join) {
+                ->leftJoinSub($balances, 'balances', static function ($join) {
                     $join->on('wallets.id', '=', 'balances.wallet_id');
                 })
                 ->whereRaw(

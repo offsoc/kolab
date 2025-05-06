@@ -2,21 +2,20 @@
 
 namespace App\Jobs\Mail;
 
+use App\Jobs\MailJob;
+use App\Mail\Helper;
 use App\Mail\TrialEnd;
 use App\User;
 
-class TrialEndJob extends \App\Jobs\MailJob
+class TrialEndJob extends MailJob
 {
-    /** @var \App\User The account owner */
+    /** @var User The account owner */
     protected $account;
-
 
     /**
      * Create a new job instance.
      *
-     * @param \App\User $account The account owner
-     *
-     * @return void
+     * @param User $account The account owner
      */
     public function __construct(User $account)
     {
@@ -25,14 +24,12 @@ class TrialEndJob extends \App\Jobs\MailJob
 
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle()
     {
         //  Skip accounts that aren't ready for mail delivery
         if ($this->account->isLdapReady() && $this->account->isImapReady()) {
-            \App\Mail\Helper::sendMail(
+            Helper::sendMail(
                 new TrialEnd($this->account),
                 $this->account->tenant_id,
                 ['to' => $this->account->email]

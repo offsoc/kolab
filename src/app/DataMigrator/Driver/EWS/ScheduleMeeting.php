@@ -12,7 +12,7 @@ class ScheduleMeeting extends Item
     public const FOLDER_TYPE = 'IPF.Note';
     // public const TYPE        = 'IPM.Schedule.Meeting.Request';
     // public const TYPE        = 'IPM.Schedule.Meeting.Canceled';
-    public const FILE_EXT    = 'eml';
+    public const FILE_EXT = 'eml';
 
     /**
      * Get GetItem request parameters

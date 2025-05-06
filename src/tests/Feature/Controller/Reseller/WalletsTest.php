@@ -8,19 +8,13 @@ use Tests\TestCase;
 
 class WalletsTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         self::useResellerUrl();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         parent::tearDown();
     }
@@ -217,7 +211,7 @@ class WalletsTest extends TestCase
         // Create some sample transactions
         $transactions = $this->createTestTransactions($wallet);
         $transactions = array_reverse($transactions);
-        $pages = array_chunk($transactions, 10 /* page size*/);
+        $pages = array_chunk($transactions, 10 /* page size */);
 
         // Get the 2nd page
         $response = $this->actingAs($reseller1)->get("api/v4/wallets/{$wallet->id}/transactions?page=2");
@@ -229,7 +223,7 @@ class WalletsTest extends TestCase
         $this->assertSame('success', $json['status']);
         $this->assertSame(2, $json['page']);
         $this->assertSame(2, $json['count']);
-        $this->assertSame(false, $json['hasMore']);
+        $this->assertFalse($json['hasMore']);
         $this->assertCount(2, $json['list']);
         foreach ($pages[1] as $idx => $transaction) {
             $this->assertSame($transaction->id, $json['list'][$idx]['id']);
@@ -299,8 +293,8 @@ class WalletsTest extends TestCase
         $this->assertSame('success', $json['status']);
         $this->assertSame('User wallet updated successfully.', $json['message']);
         $this->assertSame($wallet->id, $json['id']);
-        $this->assertSame(null, $json['discount_id']);
+        $this->assertNull($json['discount_id']);
         $this->assertTrue(empty($json['discount_description']));
-        $this->assertSame(null, $wallet->fresh()->discount);
+        $this->assertNull($wallet->fresh()->discount);
     }
 }

@@ -3,22 +3,20 @@
 namespace Tests\Feature\Jobs\Domain;
 
 use App\Domain;
+use App\Jobs\Domain\UpdateJob;
 use App\Support\Facades\LDAP;
 use Tests\TestCase;
 
 class UpdateTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestDomain('domain-create-test.com');
     }
 
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestDomain('domain-create-test.com');
 
@@ -44,7 +42,7 @@ class UpdateTest extends TestCase
 
         LDAP::shouldReceive('updateDomain')->once()->with($domain)->andReturn(true);
 
-        $job = new \App\Jobs\Domain\UpdateJob($domain->id);
+        $job = new UpdateJob($domain->id);
         $job->handle();
 
         // TODO: More cases

@@ -3,13 +3,13 @@
 namespace App\Jobs\SharedFolder;
 
 use App\Jobs\SharedFolderJob;
+use App\Support\Facades\IMAP;
+use App\Support\Facades\LDAP;
 
 class UpdateJob extends SharedFolderJob
 {
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle()
     {
@@ -26,11 +26,11 @@ class UpdateJob extends SharedFolderJob
         }
 
         if (\config('app.with_ldap') && $folder->isLdapReady()) {
-            \App\Support\Facades\LDAP::updateSharedFolder($folder);
+            LDAP::updateSharedFolder($folder);
         }
 
         if (\config('app.with_imap') && $folder->isImapReady()) {
-            if (!\App\Support\Facades\IMAP::updateSharedFolder($folder, $this->properties)) {
+            if (!IMAP::updateSharedFolder($folder, $this->properties)) {
                 throw new \Exception("Failed to update mailbox for shared folder {$this->folderId}.");
             }
         }

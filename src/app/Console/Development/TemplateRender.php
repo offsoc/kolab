@@ -38,12 +38,12 @@ class TemplateRender extends Command
 
             foreach (glob(app_path() . '/Documents/*.php') as $file) {
                 $file = basename($file, '.php');
-                $this->info("Documents/$file");
+                $this->info("Documents/{$file}");
             }
 
             foreach (glob(app_path() . '/Mail/*.php') as $file) {
                 $file = basename($file, '.php');
-                $this->info("Mail/$file");
+                $this->info("Mail/{$file}");
             }
 
             return 1;

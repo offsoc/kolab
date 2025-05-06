@@ -31,9 +31,7 @@ abstract class DomainJob extends CommonJob
     /**
      * Create a new job instance.
      *
-     * @param int $domainId The ID for the domain to create.
-     *
-     * @return void
+     * @param int $domainId the ID for the domain to create
      */
     public function __construct(int $domainId)
     {

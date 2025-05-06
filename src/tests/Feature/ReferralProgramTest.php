@@ -11,10 +11,7 @@ use Tests\TestCase;
 
 class ReferralProgramTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -23,10 +20,7 @@ class ReferralProgramTest extends TestCase
         ReferralProgram::query()->delete();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('referrer@kolabnow.com');
         $this->deleteTestUser('referree@kolabnow.com');
@@ -66,7 +60,7 @@ class ReferralProgramTest extends TestCase
         $referrer_wallet->refresh();
         $this->assertSame(0, $referrer_wallet->balance);
 
-        Carbon::setTestNow(Carbon::createFromDate(2024, 02, 02));
+        Carbon::setTestNow(Carbon::createFromDate(2024, 2, 2));
 
         // A single payment below the threshold
         Payment::createFromArray([
@@ -107,7 +101,7 @@ class ReferralProgramTest extends TestCase
         $this->assertSame(Transaction::WALLET_AWARD, $transaction->type);
 
         // Award redeemed already
-        Carbon::setTestNow(Carbon::createFromDate(2024, 02, 04));
+        Carbon::setTestNow(Carbon::createFromDate(2024, 2, 4));
         ReferralProgram::accounting($referree);
 
         $referrer_wallet->refresh();

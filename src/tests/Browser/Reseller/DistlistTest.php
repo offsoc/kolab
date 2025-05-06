@@ -4,6 +4,7 @@ namespace Tests\Browser\Reseller;
 
 use App\EventLog;
 use App\Group;
+use App\Utils;
 use Illuminate\Support\Facades\Queue;
 use Tests\Browser;
 use Tests\Browser\Components\Dialog;
@@ -16,25 +17,19 @@ use Tests\TestCaseDusk;
 
 class DistlistTest extends TestCaseDusk
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         self::useResellerUrl();
 
         $this->deleteTestGroup('group-test@kolab.org');
-        Eventlog::query()->delete();
+        EventLog::query()->delete();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestGroup('group-test@kolab.org');
-        Eventlog::query()->delete();
+        EventLog::query()->delete();
 
         parent::tearDown();
     }
@@ -74,7 +69,7 @@ class DistlistTest extends TestCaseDusk
 
             // Goto the distlist page
             $browser->visit(new Home())
-                ->submitLogon('reseller@' . \config('app.domain'), \App\Utils::generatePassphrase(), true)
+                ->submitLogon('reseller@' . \config('app.domain'), Utils::generatePassphrase(), true)
                 ->on(new Dashboard())
                 ->visit($user_page)
                 ->on($user_page)
@@ -83,7 +78,7 @@ class DistlistTest extends TestCaseDusk
                 ->click('@user-distlists table tbody tr:first-child td a')
                 ->on($distlist_page)
                 ->assertSeeIn('@distlist-info .card-title', $group->email)
-                ->with('@distlist-info form', function (Browser $browser) use ($group) {
+                ->with('@distlist-info form', static function (Browser $browser) use ($group) {
                     $browser->assertElementsCount('.row', 4)
                         ->assertSeeIn('.row:nth-child(1) label', 'ID (Created)')
                         ->assertSeeIn('.row:nth-child(1) #distlistid', "{$group->id} ({$group->created_at})")
@@ -97,7 +92,7 @@ class DistlistTest extends TestCaseDusk
                 })
                 ->assertElementsCount('ul.nav-tabs li', 2)
                 ->assertSeeIn('ul.nav-tabs #tab-settings', 'Settings')
-                ->with('@distlist-settings form', function (Browser $browser) {
+                ->with('@distlist-settings form', static function (Browser $browser) {
                     $browser->assertElementsCount('.row', 1)
                         ->assertSeeIn('.row:nth-child(1) label', 'Sender Access List')
                         ->assertSeeIn('.row:nth-child(1) #sender_policy', 'test1.com, test2.com');
@@ -117,7 +112,7 @@ class DistlistTest extends TestCaseDusk
     public function testSuspendAndUnsuspend(): void
     {
         Queue::fake();
-        Eventlog::query()->delete();
+        EventLog::query()->delete();
 
         $this->browse(function (Browser $browser) {
             $user = $this->getTestUser('john@kolab.org');
@@ -131,7 +126,7 @@ class DistlistTest extends TestCaseDusk
                 ->assertMissing('@distlist-info #button-unsuspend')
                 ->assertSeeIn('@distlist-info #status.text-success', 'Active')
                 ->click('@distlist-info #button-suspend')
-                ->with(new Dialog('#suspend-dialog'), function (Browser $browser) {
+                ->with(new Dialog('#suspend-dialog'), static function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Suspend')
                         ->assertSeeIn('@button-cancel', 'Cancel')
                         ->assertSeeIn('@button-action', 'Submit')
@@ -144,10 +139,10 @@ class DistlistTest extends TestCaseDusk
 
             $event = EventLog::where('type', EventLog::TYPE_SUSPENDED)->first();
             $this->assertSame('test suspend', $event->comment);
-            $this->assertEquals($group->id, $event->object_id);
+            $this->assertSame((string) $group->id, (string) $event->object_id);
 
             $browser->click('@distlist-info #button-unsuspend')
-                ->with(new Dialog('#suspend-dialog'), function (Browser $browser) {
+                ->with(new Dialog('#suspend-dialog'), static function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Unsuspend')
                         ->assertSeeIn('@button-cancel', 'Cancel')
                         ->assertSeeIn('@button-action', 'Submit')
@@ -159,8 +154,8 @@ class DistlistTest extends TestCaseDusk
                 ->assertMissing('@distlist-info #button-unsuspend');
 
             $event = EventLog::where('type', EventLog::TYPE_UNSUSPENDED)->first();
-            $this->assertSame(null, $event->comment);
-            $this->assertEquals($group->id, $event->object_id);
+            $this->assertNull($event->comment);
+            $this->assertSame((string) $group->id, (string) $event->object_id);
         });
     }
 }

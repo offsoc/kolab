@@ -10,10 +10,7 @@ use Tests\TestCase;
 
 class InvitationsTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -22,10 +19,7 @@ class InvitationsTest extends TestCase
         self::useResellerUrl();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         SignupInvitation::truncate();
 
@@ -72,7 +66,7 @@ class InvitationsTest extends TestCase
 
         $this->assertSame('success', $json['status']);
         $this->assertSame("Invitation deleted successfully.", $json['message']);
-        $this->assertSame(null, SignupInvitation::find($inv->id));
+        $this->assertNull(SignupInvitation::find($inv->id));
     }
 
     /**
@@ -144,10 +138,10 @@ class InvitationsTest extends TestCase
         $this->assertTrue($json['hasMore']);
         $this->assertSame($i1->id, $json['list'][0]['id']);
         $this->assertSame($i1->email, $json['list'][0]['email']);
-        $this->assertSame(true, $json['list'][0]['isFailed']);
-        $this->assertSame(false, $json['list'][0]['isNew']);
-        $this->assertSame(false, $json['list'][0]['isSent']);
-        $this->assertSame(false, $json['list'][0]['isCompleted']);
+        $this->assertTrue($json['list'][0]['isFailed']);
+        $this->assertFalse($json['list'][0]['isNew']);
+        $this->assertFalse($json['list'][0]['isSent']);
+        $this->assertFalse($json['list'][0]['isCompleted']);
         $this->assertSame($i2->id, $json['list'][1]['id']);
         $this->assertSame($i2->email, $json['list'][1]['email']);
         $this->assertFalse(in_array($i12->email, array_column($json['list'], 'email')));

@@ -3,11 +3,10 @@
 namespace Tests\Feature\DataMigrator;
 
 use App\DataMigrator\Account;
+use App\DataMigrator\Driver\Test;
 use App\DataMigrator\Engine;
 use App\DataMigrator\Jobs\FolderJob;
-use App\DataMigrator\Jobs\ItemJob;
 use App\DataMigrator\Queue as MigratorQueue;
-use App\DataMigrator\Driver\Test;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -51,20 +50,14 @@ class EngineTest extends TestCase
         ],
     ];
 
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         MigratorQueue::truncate();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         MigratorQueue::truncate();
 
@@ -91,21 +84,21 @@ class EngineTest extends TestCase
         Queue::assertPushed(FolderJob::class, 3);
         Queue::assertPushed(
             FolderJob::class,
-            function ($job) use ($queue) {
+            static function ($job) use ($queue) {
                 $folder = TestCase::getObjectProperty($job, 'folder');
                 return $folder->id === 'Inbox' && $folder->queueId = $queue->id;
             }
         );
         Queue::assertPushed(
             FolderJob::class,
-            function ($job) use ($queue) {
+            static function ($job) use ($queue) {
                 $folder = TestCase::getObjectProperty($job, 'folder');
                 return $folder->id === 'Contacts' && $folder->queueId = $queue->id;
             }
         );
         Queue::assertPushed(
             FolderJob::class,
-            function ($job) use ($queue) {
+            static function ($job) use ($queue) {
                 $folder = TestCase::getObjectProperty($job, 'folder');
                 return $folder->id === 'Calendar' && $folder->queueId = $queue->id;
             }

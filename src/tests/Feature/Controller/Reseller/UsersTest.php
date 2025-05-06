@@ -2,18 +2,19 @@
 
 namespace Tests\Feature\Controller\Reseller;
 
-use App\Tenant;
+use App\Auth\SecondFactor;
+use App\Domain;
+use App\Plan;
+use App\SharedFolderAlias;
 use App\Sku;
+use App\Tenant;
 use App\User;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class UsersTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         self::useResellerUrl();
@@ -23,16 +24,13 @@ class UsersTest extends TestCase
         $this->deleteTestDomain('testsearch.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('UsersControllerTest1@userscontroller.com');
         $this->deleteTestUser('test@testsearch.com');
         $this->deleteTestDomain('testsearch.com');
 
-        \App\SharedFolderAlias::truncate();
+        SharedFolderAlias::truncate();
 
         parent::tearDown();
     }
@@ -157,13 +155,13 @@ class UsersTest extends TestCase
         $this->assertSame($user->email, $json['list'][0]['email']);
 
         // Create a domain with some users in the Sample Tenant so we have anything to search for
-        $domain = $this->getTestDomain('testsearch.com', ['type' => \App\Domain::TYPE_EXTERNAL]);
+        $domain = $this->getTestDomain('testsearch.com', ['type' => Domain::TYPE_EXTERNAL]);
         $domain->tenant_id = $reseller2->tenant_id;
         $domain->save();
         $user = $this->getTestUser('test@testsearch.com');
         $user->tenant_id = $reseller2->tenant_id;
         $user->save();
-        $plan = \App\Plan::where('title', 'group')->first();
+        $plan = Plan::where('title', 'group')->first();
         $user->assignPlan($plan, $domain);
         $user->setAliases(['alias@testsearch.com']);
         $user->setSetting('external_email', 'john.doe.external@gmail.com');
@@ -284,9 +282,9 @@ class UsersTest extends TestCase
         $reseller1 = $this->getTestUser('reseller@' . \config('app.domain'));
         $reseller2 = $this->getTestUser('reseller@sample-tenant.dev-local');
 
-        $sku2fa = \App\Sku::withEnvTenantContext()->where('title', '2fa')->first();
+        $sku2fa = Sku::withEnvTenantContext()->where('title', '2fa')->first();
         $user->assignSku($sku2fa);
-        \App\Auth\SecondFactor::seed('userscontrollertest1@userscontroller.com');
+        SecondFactor::seed('userscontrollertest1@userscontroller.com');
 
         // Test unauthorized access
         $response = $this->actingAs($user)->post("/api/v4/users/{$user->id}/reset2FA", []);
@@ -305,7 +303,7 @@ class UsersTest extends TestCase
         $entitlements = $user->fresh()->entitlements()->where('sku_id', $sku2fa->id)->get();
         $this->assertCount(1, $entitlements);
 
-        $sf = new \App\Auth\SecondFactor($user);
+        $sf = new SecondFactor($user);
         $this->assertCount(1, $sf->factors());
 
         // Test reseting 2FA
@@ -321,7 +319,7 @@ class UsersTest extends TestCase
         $entitlements = $user->fresh()->entitlements()->where('sku_id', $sku2fa->id)->get();
         $this->assertCount(0, $entitlements);
 
-        $sf = new \App\Auth\SecondFactor($user);
+        $sf = new SecondFactor($user);
         $this->assertCount(0, $sf->factors());
     }
 

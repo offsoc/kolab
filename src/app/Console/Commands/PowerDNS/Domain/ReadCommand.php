@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands\PowerDNS\Domain;
 
+use App\PowerDNS\Domain;
 use Illuminate\Console\Command;
 
 class ReadCommand extends Command
@@ -29,7 +30,7 @@ class ReadCommand extends Command
     {
         $name = $this->argument('domain');
 
-        $domain = \App\PowerDNS\Domain::where('name', $name)->first();
+        $domain = Domain::where('name', $name)->first();
 
         if (!$domain) {
             return 1;

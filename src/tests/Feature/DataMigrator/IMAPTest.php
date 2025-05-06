@@ -12,20 +12,14 @@ class IMAPTest extends TestCase
 {
     use BackendsTrait;
 
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         MigratorQueue::truncate();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         MigratorQueue::truncate();
 
@@ -41,7 +35,7 @@ class IMAPTest extends TestCase
     {
         $uri = \config('services.imap.uri');
 
-        if (strpos($uri, '://') === false) {
+        if (!str_contains($uri, '://')) {
             $uri = 'imap://' . $uri;
         }
 
@@ -106,21 +100,22 @@ class IMAPTest extends TestCase
      * Test IMAP to IMAP incremental migration run
      *
      * @group imap
+     *
      * @depends testInitialMigration
      */
     public function testIncrementalMigration(): void
     {
         $uri = \config('services.imap.uri');
 
-        if (strpos($uri, '://') === false) {
+        if (!str_contains($uri, '://')) {
             $uri = 'imap://' . $uri;
         }
 
         // Let's test with impersonation now
         $adminUser = \config('services.imap.admin_login');
         $adminPass = \config('services.imap.admin_password');
-        $src = new Account(str_replace('://', "://$adminUser:$adminPass@", $uri) . '?user=john%40kolab.org');
-        $dst = new Account(str_replace('://', "://$adminUser:$adminPass@", $uri) . '?user=jack%40kolab.org');
+        $src = new Account(str_replace('://', "://{$adminUser}:{$adminPass}@", $uri) . '?user=john%40kolab.org');
+        $dst = new Account(str_replace('://', "://{$adminUser}:{$adminPass}@", $uri) . '?user=jack%40kolab.org');
 
         // Add some mails to the source account
         $srcMessages = $this->imapList($src, 'INBOX');
@@ -145,8 +140,8 @@ class IMAPTest extends TestCase
         $msg = array_shift($dstMessages);
         $this->assertSame('<sync2@kolab.org>', $msg->messageID);
         $this->assertSame(['FLAGGED'], array_keys($msg->flags));
-        $ids = array_map(fn ($msg) => $msg->messageID, $dstMessages);
-        $this->assertSame(['<sync3@kolab.org>','<sync4@kolab.org>'], $ids);
+        $ids = array_map(static fn ($msg) => $msg->messageID, $dstMessages);
+        $this->assertSame(['<sync3@kolab.org>', '<sync4@kolab.org>'], $ids);
 
         // Nothing changed in the other folder
         $utf7_folder = \mb_convert_encoding('ImapDataMigrator/&kość', 'UTF7-IMAP', 'UTF8');

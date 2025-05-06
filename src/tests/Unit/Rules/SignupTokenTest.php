@@ -10,10 +10,7 @@ use Tests\TestCase;
 
 class SignupTokenTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -21,10 +18,7 @@ class SignupTokenTest extends TestCase
         SignupToken::truncate();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         Plan::where('title', 'test-plan')->delete();
         SignupToken::truncate();
@@ -41,10 +35,10 @@ class SignupTokenTest extends TestCase
 
         $plan = Plan::where('title', 'individual')->first();
         $tokenPlan = Plan::create([
-                'title' => 'test-plan',
-                'description' => 'test',
-                'name' => 'Test',
-                'mode' => Plan::MODE_TOKEN,
+            'title' => 'test-plan',
+            'description' => 'test',
+            'name' => 'Test',
+            'mode' => Plan::MODE_TOKEN,
         ]);
 
         $plan->signupTokens()->create(['id' => $tokens[0]]);

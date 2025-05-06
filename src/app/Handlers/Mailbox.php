@@ -2,19 +2,17 @@
 
 namespace App\Handlers;
 
-use App\Entitlement;
 use App\Sku;
+use App\User;
 
-class Mailbox extends \App\Handlers\Base
+class Mailbox extends Base
 {
     /**
      * The entitleable class for this handler.
-     *
-     * @return string
      */
     public static function entitleableClass(): string
     {
-        return \App\User::class;
+        return User::class;
     }
 
     /**

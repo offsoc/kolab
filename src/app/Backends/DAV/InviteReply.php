@@ -16,7 +16,6 @@ class InviteReply
     /** @var ?string Invite reply comment */
     public $comment;
 
-
     /**
      * Create Notification object from a DOMElement element
      *
@@ -39,7 +38,7 @@ class InviteReply
         // Note: <create-in> and <slug> are ignored by Cyrus
 
         if (!empty($this->comment)) {
-            $reply .= '<d:comment>' . htmlspecialchars($this->comment, ENT_XML1, 'UTF-8') . '</d:comment>';
+            $reply .= '<d:comment>' . htmlspecialchars($this->comment, \ENT_XML1, 'UTF-8') . '</d:comment>';
         }
 
         return '<?xml version="1.0" encoding="utf-8"?>'

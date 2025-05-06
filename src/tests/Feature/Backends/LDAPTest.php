@@ -4,10 +4,13 @@ namespace Tests\Feature\Backends;
 
 use App\Backends\LDAP;
 use App\Domain;
-use App\Group;
 use App\Entitlement;
+use App\Group;
+use App\Jobs\Group\UpdateJob;
+use App\Package;
 use App\Resource;
 use App\SharedFolder;
+use App\Sku;
 use App\User;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
@@ -16,10 +19,7 @@ class LDAPTest extends TestCase
 {
     private $ldap_config = [];
 
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -39,10 +39,7 @@ class LDAPTest extends TestCase
         // TODO: Remove group members
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         \config($this->ldap_config);
 
@@ -80,8 +77,8 @@ class LDAPTest extends TestCase
         Queue::fake();
 
         $domain = $this->getTestDomain('testldap.com', [
-                'type' => Domain::TYPE_EXTERNAL,
-                'status' => Domain::STATUS_NEW | Domain::STATUS_ACTIVE,
+            'type' => Domain::TYPE_EXTERNAL,
+            'status' => Domain::STATUS_NEW | Domain::STATUS_ACTIVE,
         ]);
 
         // Create the domain
@@ -95,12 +92,12 @@ class LDAPTest extends TestCase
             'objectclass' => [
                 'top',
                 'domainrelatedobject',
-                'inetdomain'
+                'inetdomain',
             ],
         ];
 
         foreach ($expected as $attr => $value) {
-            $this->assertEquals($value, isset($ldap_domain[$attr]) ? $ldap_domain[$attr] : null);
+            $this->assertSame($value, $ldap_domain[$attr] ?? null);
         }
 
         // TODO: Test other attributes, aci, roles/ous
@@ -115,13 +112,13 @@ class LDAPTest extends TestCase
         $ldap_domain = LDAP::getDomain($domain->namespace);
 
         foreach ($expected as $attr => $value) {
-            $this->assertEquals($value, isset($ldap_domain[$attr]) ? $ldap_domain[$attr] : null);
+            $this->assertSame($value, $ldap_domain[$attr] ?? null);
         }
 
         // Delete the domain
         LDAP::deleteDomain($domain);
 
-        $this->assertSame(null, LDAP::getDomain($domain->namespace));
+        $this->assertNull(LDAP::getDomain($domain->namespace));
     }
 
     /**
@@ -135,7 +132,7 @@ class LDAPTest extends TestCase
 
         $root_dn = \config('services.ldap.hosted.root_dn');
         $group = $this->getTestGroup('group@kolab.org', [
-                'members' => ['member1@testldap.com', 'member2@testldap.com']
+            'members' => ['member1@testldap.com', 'member2@testldap.com'],
         ]);
         $group->setSetting('sender_policy', '["test.com"]');
 
@@ -151,7 +148,7 @@ class LDAPTest extends TestCase
             'objectclass' => [
                 'top',
                 'groupofuniquenames',
-                'kolabgroupofuniquenames'
+                'kolabgroupofuniquenames',
             ],
             'kolaballowsmtpsender' => 'test.com',
             'uniquemember' => [
@@ -161,7 +158,7 @@ class LDAPTest extends TestCase
         ];
 
         foreach ($expected as $attr => $value) {
-            $this->assertEquals($value, isset($ldap_group[$attr]) ? $ldap_group[$attr] : null, "Group $attr attribute");
+            $this->assertSame($value, $ldap_group[$attr] ?? null, "Group {$attr} attribute");
         }
 
         // Update members
@@ -178,7 +175,7 @@ class LDAPTest extends TestCase
         $ldap_group = LDAP::getGroup($group->email);
 
         foreach ($expected as $attr => $value) {
-            $this->assertEquals($value, isset($ldap_group[$attr]) ? $ldap_group[$attr] : null, "Group $attr attribute");
+            $this->assertSame($value, $ldap_group[$attr] ?? null, "Group {$attr} attribute");
         }
 
         $this->assertSame(['member3@testldap.com'], $group->fresh()->members);
@@ -195,25 +192,25 @@ class LDAPTest extends TestCase
         // TODO: Should we force this to be always an array?
         $expected['uniquemember'] = 'uid=member3@testldap.com,ou=People,ou=kolab.org,' . $root_dn;
         $expected['kolaballowsmtpsender'] = null;
-        $expected['dn'] = 'cn=Te(\\3dść)1,ou=Groups,ou=kolab.org,' . $root_dn;
+        $expected['dn'] = 'cn=Te(\3dść)1,ou=Groups,ou=kolab.org,' . $root_dn;
         $expected['cn'] = 'Te(=ść)1';
 
         $ldap_group = LDAP::getGroup($group->email);
 
         foreach ($expected as $attr => $value) {
-            $this->assertEquals($value, isset($ldap_group[$attr]) ? $ldap_group[$attr] : null, "Group $attr attribute");
+            $this->assertSame($value, $ldap_group[$attr] ?? null, "Group {$attr} attribute");
         }
 
         $this->assertSame(['member3@testldap.com'], $group->fresh()->members);
 
         // We called save() twice, and setSettings() three times,
         // this is making sure that there's no job executed by the LDAP backend
-        Queue::assertPushed(\App\Jobs\Group\UpdateJob::class, 5);
+        Queue::assertPushed(UpdateJob::class, 5);
 
         // Delete the group
         LDAP::deleteGroup($group);
 
-        $this->assertSame(null, LDAP::getGroup($group->email));
+        $this->assertNull(LDAP::getGroup($group->email));
     }
 
     /**
@@ -255,8 +252,8 @@ class LDAPTest extends TestCase
         ];
 
         foreach ($expected as $attr => $value) {
-            $ldap_value = isset($ldap_resource[$attr]) ? $ldap_resource[$attr] : null;
-            $this->assertEquals($value, $ldap_value, "Resource $attr attribute");
+            $ldap_value = $ldap_resource[$attr] ?? null;
+            $this->assertSame($value, $ldap_value, "Resource {$attr} attribute");
         }
 
         // Update resource name and invitation_policy
@@ -269,15 +266,15 @@ class LDAPTest extends TestCase
         $expected['kolabtargetfolder'] = 'shared/Resources/Te(=ść)1@kolab.org';
         $expected['kolabinvitationpolicy'] = 'ACT_MANUAL';
         $expected['owner'] = 'uid=john@kolab.org,ou=People,ou=kolab.org,' . $root_dn;
-        $expected['dn'] = 'cn=Te(\\3dść)1,ou=Resources,ou=kolab.org,' . $root_dn;
+        $expected['dn'] = 'cn=Te(\3dść)1,ou=Resources,ou=kolab.org,' . $root_dn;
         $expected['cn'] = 'Te(=ść)1';
         $expected['acl'] = ['john@kolab.org, full', 'anyone, p'];
 
         $ldap_resource = LDAP::getResource($resource->email);
 
         foreach ($expected as $attr => $value) {
-            $ldap_value = isset($ldap_resource[$attr]) ? $ldap_resource[$attr] : null;
-            $this->assertEquals($value, $ldap_value, "Resource $attr attribute");
+            $ldap_value = $ldap_resource[$attr] ?? null;
+            $this->assertSame($value, $ldap_value, "Resource {$attr} attribute");
         }
 
         // Remove the invitation policy
@@ -292,14 +289,14 @@ class LDAPTest extends TestCase
         $ldap_resource = LDAP::getResource($resource->email);
 
         foreach ($expected as $attr => $value) {
-            $ldap_value = isset($ldap_resource[$attr]) ? $ldap_resource[$attr] : null;
-            $this->assertEquals($value, $ldap_value, "Resource $attr attribute");
+            $ldap_value = $ldap_resource[$attr] ?? null;
+            $this->assertSame($value, $ldap_value, "Resource {$attr} attribute");
         }
 
         // Delete the resource
         LDAP::deleteResource($resource);
 
-        $this->assertSame(null, LDAP::getResource($resource->email));
+        $this->assertNull(LDAP::getResource($resource->email));
     }
 
     /**
@@ -339,8 +336,8 @@ class LDAPTest extends TestCase
         ];
 
         foreach ($expected as $attr => $value) {
-            $ldap_value = isset($ldap_folder[$attr]) ? $ldap_folder[$attr] : null;
-            $this->assertEquals($value, $ldap_value, "Shared folder $attr attribute");
+            $ldap_value = $ldap_folder[$attr] ?? null;
+            $this->assertSame($value, $ldap_value, "Shared folder {$attr} attribute");
         }
 
         // Update folder name and acl
@@ -354,21 +351,21 @@ class LDAPTest extends TestCase
 
         $expected['kolabtargetfolder'] = 'shared/Te(=ść)1@kolab.org';
         $expected['acl'] = ['john@kolab.org, read-write', 'anyone, lrsp'];
-        $expected['dn'] = 'cn=Te(\\3dść)1,ou=Shared Folders,ou=kolab.org,' . $root_dn;
+        $expected['dn'] = 'cn=Te(\3dść)1,ou=Shared Folders,ou=kolab.org,' . $root_dn;
         $expected['cn'] = 'Te(=ść)1';
         $expected['alias'] = $aliases;
 
         $ldap_folder = LDAP::getSharedFolder($folder->email);
 
         foreach ($expected as $attr => $value) {
-            $ldap_value = isset($ldap_folder[$attr]) ? $ldap_folder[$attr] : null;
-            $this->assertEquals($value, $ldap_value, "Shared folder $attr attribute");
+            $ldap_value = $ldap_folder[$attr] ?? null;
+            $this->assertSame($value, $ldap_value, "Shared folder {$attr} attribute");
         }
 
         // Delete the resource
         LDAP::deleteSharedFolder($folder);
 
-        $this->assertSame(null, LDAP::getSharedFolder($folder->email));
+        $this->assertNull(LDAP::getSharedFolder($folder->email));
     }
 
     /**
@@ -399,7 +396,7 @@ class LDAPTest extends TestCase
             'mail' => $user->email,
             'uid' => $user->email,
             'nsroledn' => [
-                'cn=imap-user,' . \config('services.ldap.hosted.root_dn')
+                'cn=imap-user,' . \config('services.ldap.hosted.root_dn'),
             ],
             'cn' => 'unknown',
             'displayname' => '',
@@ -412,7 +409,7 @@ class LDAPTest extends TestCase
         ];
 
         foreach ($expected as $attr => $value) {
-            $this->assertEquals($value, isset($ldap_user[$attr]) ? $ldap_user[$attr] : null);
+            $this->assertSame($value, $ldap_user[$attr] ?? null);
         }
 
         // Add aliases, and change some user settings, and entitlements
@@ -426,7 +423,7 @@ class LDAPTest extends TestCase
         $user->save();
         $aliases = ['t1-' . $user->email, 't2-' . $user->email];
         $user->setAliases($aliases);
-        $package_kolab = \App\Package::withEnvTenantContext()->where('title', 'kolab')->first();
+        $package_kolab = Package::withEnvTenantContext()->where('title', 'kolab')->first();
         $user->assignPackage($package_kolab);
 
         LDAP::updateUser($user->fresh());
@@ -444,12 +441,12 @@ class LDAPTest extends TestCase
         $ldap_user = LDAP::getUser($user->email);
 
         foreach ($expected as $attr => $value) {
-            $this->assertEquals($value, isset($ldap_user[$attr]) ? $ldap_user[$attr] : null);
+            $this->assertSame($value, $ldap_user[$attr] ?? null);
         }
 
         // Update entitlements
-        $sku_activesync = \App\Sku::withEnvTenantContext()->where('title', 'activesync')->first();
-        $sku_groupware = \App\Sku::withEnvTenantContext()->where('title', 'groupware')->first();
+        $sku_activesync = Sku::withEnvTenantContext()->where('title', 'activesync')->first();
+        $sku_groupware = Sku::withEnvTenantContext()->where('title', 'groupware')->first();
         $user->assignSku($sku_activesync, 1);
         Entitlement::where(['sku_id' => $sku_groupware->id, 'entitleable_id' => $user->id])->delete();
 
@@ -457,7 +454,7 @@ class LDAPTest extends TestCase
 
         $expected_roles = [
             'activesync-user',
-            'imap-user'
+            'imap-user',
         ];
 
         $ldap_user = LDAP::getUser($user->email);
@@ -465,12 +462,11 @@ class LDAPTest extends TestCase
         $this->assertCount(2, $ldap_user['nsroledn']);
 
         $ldap_roles = array_map(
-            function ($role) {
+            static function ($role) {
                 if (preg_match('/^cn=([a-z0-9-]+)/', $role, $m)) {
                     return $m[1];
-                } else {
-                    return $role;
                 }
+                return $role;
             },
             $ldap_user['nsroledn']
         );
@@ -479,8 +475,8 @@ class LDAPTest extends TestCase
 
         // Test degraded user
 
-        $sku_storage = \App\Sku::withEnvTenantContext()->where('title', 'storage')->first();
-        $sku_2fa = \App\Sku::withEnvTenantContext()->where('title', '2fa')->first();
+        $sku_storage = Sku::withEnvTenantContext()->where('title', 'storage')->first();
+        $sku_2fa = Sku::withEnvTenantContext()->where('title', '2fa')->first();
         $user->status |= User::STATUS_DEGRADED;
         $user->update(['status' => $user->status]);
         $user->assignSku($sku_storage, 2);
@@ -492,13 +488,13 @@ class LDAPTest extends TestCase
         $expected['mailquota'] = \config('app.storage.min_qty') * 1048576;
         $expected['nsroledn'] = [
             'cn=2fa-user,' . \config('services.ldap.hosted.root_dn'),
-            'cn=degraded-user,' . \config('services.ldap.hosted.root_dn')
+            'cn=degraded-user,' . \config('services.ldap.hosted.root_dn'),
         ];
 
         $ldap_user = LDAP::getUser($user->email);
 
         foreach ($expected as $attr => $value) {
-            $this->assertEquals($value, isset($ldap_user[$attr]) ? $ldap_user[$attr] : null);
+            $this->assertSame($value, $ldap_user[$attr] ?? null);
         }
 
         // TODO: Test user who's owner is degraded
@@ -506,7 +502,7 @@ class LDAPTest extends TestCase
         // Delete the user
         LDAP::deleteUser($user);
 
-        $this->assertSame(null, LDAP::getUser($user->email));
+        $this->assertNull(LDAP::getUser($user->email));
     }
 
     /**
@@ -520,9 +516,9 @@ class LDAPTest extends TestCase
         $this->expectExceptionMessageMatches('/Failed to create resource/');
 
         $resource = new Resource([
-                'email' => 'test-non-existing-ldap@non-existing.org',
-                'name' => 'Test',
-                'status' => Resource::STATUS_ACTIVE,
+            'email' => 'test-non-existing-ldap@non-existing.org',
+            'name' => 'Test',
+            'status' => Resource::STATUS_ACTIVE,
         ]);
 
         LDAP::createResource($resource);
@@ -539,9 +535,9 @@ class LDAPTest extends TestCase
         $this->expectExceptionMessageMatches('/Failed to create group/');
 
         $group = new Group([
-                'name' => 'test',
-                'email' => 'test@testldap.com',
-                'status' => Group::STATUS_NEW | Group::STATUS_ACTIVE,
+            'name' => 'test',
+            'email' => 'test@testldap.com',
+            'status' => Group::STATUS_NEW | Group::STATUS_ACTIVE,
         ]);
 
         LDAP::createGroup($group);
@@ -558,9 +554,9 @@ class LDAPTest extends TestCase
         $this->expectExceptionMessageMatches('/Failed to create shared folder/');
 
         $folder = new SharedFolder([
-                'email' => 'test-non-existing-ldap@non-existing.org',
-                'name' => 'Test',
-                'status' => SharedFolder::STATUS_ACTIVE,
+            'email' => 'test-non-existing-ldap@non-existing.org',
+            'name' => 'Test',
+            'status' => SharedFolder::STATUS_ACTIVE,
         ]);
 
         LDAP::createSharedFolder($folder);
@@ -577,8 +573,8 @@ class LDAPTest extends TestCase
         $this->expectExceptionMessageMatches('/Failed to create user/');
 
         $user = new User([
-                'email' => 'test-non-existing-ldap@non-existing.org',
-                'status' => User::STATUS_ACTIVE,
+            'email' => 'test-non-existing-ldap@non-existing.org',
+            'status' => User::STATUS_ACTIVE,
         ]);
 
         LDAP::createUser($user);
@@ -595,9 +591,9 @@ class LDAPTest extends TestCase
         $this->expectExceptionMessageMatches('/domain not found/');
 
         $domain = new Domain([
-                'namespace' => 'testldap.com',
-                'type' => Domain::TYPE_EXTERNAL,
-                'status' => Domain::STATUS_NEW | Domain::STATUS_ACTIVE,
+            'namespace' => 'testldap.com',
+            'type' => Domain::TYPE_EXTERNAL,
+            'status' => Domain::STATUS_NEW | Domain::STATUS_ACTIVE,
         ]);
 
         LDAP::updateDomain($domain);
@@ -614,9 +610,9 @@ class LDAPTest extends TestCase
         $this->expectExceptionMessageMatches('/group not found/');
 
         $group = new Group([
-                'name' => 'test',
-                'email' => 'test@testldap.com',
-                'status' => Group::STATUS_NEW | Group::STATUS_ACTIVE,
+            'name' => 'test',
+            'email' => 'test@testldap.com',
+            'status' => Group::STATUS_NEW | Group::STATUS_ACTIVE,
         ]);
 
         LDAP::updateGroup($group);
@@ -633,7 +629,7 @@ class LDAPTest extends TestCase
         $this->expectExceptionMessageMatches('/resource not found/');
 
         $resource = new Resource([
-                'email' => 'test-resource@kolab.org',
+            'email' => 'test-resource@kolab.org',
         ]);
 
         LDAP::updateResource($resource);
@@ -650,7 +646,7 @@ class LDAPTest extends TestCase
         $this->expectExceptionMessageMatches('/folder not found/');
 
         $folder = new SharedFolder([
-                'email' => 'test-folder-unknown@kolab.org',
+            'email' => 'test-folder-unknown@kolab.org',
         ]);
 
         LDAP::updateSharedFolder($folder);
@@ -667,8 +663,8 @@ class LDAPTest extends TestCase
         $this->expectExceptionMessageMatches('/user not found/');
 
         $user = new User([
-                'email' => 'test-non-existing-ldap@kolab.org',
-                'status' => User::STATUS_ACTIVE,
+            'email' => 'test-non-existing-ldap@kolab.org',
+            'status' => User::STATUS_ACTIVE,
         ]);
 
         LDAP::updateUser($user);

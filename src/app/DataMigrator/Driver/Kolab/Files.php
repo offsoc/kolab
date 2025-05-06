@@ -170,7 +170,7 @@ class Files
         DB::beginTransaction();
 
         if ($item->existing) {
-             /** @var FsItem $file */
+            /** @var FsItem $file */
             $file = $item->existing;
             $file->updated_at = $item->data['mtime'];
             $file->timestamps = false;

@@ -12,5 +12,4 @@ return [
     'documentation' => "Documentation",
     'support' => "Support",
     'search-kb' => "Search Knowledgebase",
-
 ];

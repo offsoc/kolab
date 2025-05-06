@@ -25,8 +25,6 @@ class SignupToken implements Rule
      *
      * @param string $attribute Attribute name
      * @param mixed  $token     The value to validate
-     *
-     * @return bool
      */
     public function passes($attribute, $token): bool
     {
@@ -53,8 +51,6 @@ class SignupToken implements Rule
 
     /**
      * Get the validation error message.
-     *
-     * @return string
      */
     public function message(): ?string
     {

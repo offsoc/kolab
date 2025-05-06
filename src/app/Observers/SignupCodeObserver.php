@@ -13,14 +13,12 @@ class SignupCodeObserver
      *
      * Ensure that the code entry is created with a random code/short_code.
      *
-     * @param \App\SignupCode $code The code being created.
-     *
-     * @return void
+     * @param SignupCode $code the code being created
      */
     public function creating(SignupCode $code): void
     {
         $code_length = SignupCode::CODE_LENGTH;
-        $exp_hours   = env('SIGNUP_CODE_EXPIRY', SignupCode::CODE_EXP_HOURS);
+        $exp_hours = env('SIGNUP_CODE_EXPIRY', SignupCode::CODE_EXP_HOURS);
 
         if (empty($code->code)) {
             $code->short_code = SignupCode::generateShortCode();
@@ -35,11 +33,11 @@ class SignupCodeObserver
         }
 
         $code->headers = collect(request()->headers->all())
-            ->filter(function ($value, $key) {
+            ->filter(static function ($value, $key) {
                 // remove some headers we don't care about
                 return !in_array($key, ['cookie', 'referer', 'origin']);
             })
-            ->map(function ($value) {
+            ->map(static function ($value) {
                 return count($value) == 1 ? $value[0] : $value;
             })
             ->all();
@@ -58,9 +56,7 @@ class SignupCodeObserver
     /**
      * Handle the "updating" event.
      *
-     * @param SignupCode $code The code being updated.
-     *
-     * @return void
+     * @param SignupCode $code the code being updated
      */
     public function updating(SignupCode $code)
     {

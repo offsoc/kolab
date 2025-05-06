@@ -15,8 +15,8 @@ class SignupInvitationTest extends TestCase
     public function testBuild(): void
     {
         $invitation = new SI([
-                'id' => 'abc',
-                'email' => 'test@email',
+            'id' => 'abc',
+            'email' => 'test@email',
         ]);
 
         $mail = $this->renderMail(new SignupInvitation($invitation));
@@ -25,17 +25,17 @@ class SignupInvitationTest extends TestCase
         $plain = $mail['plain'];
 
         $url = Utils::serviceUrl('/signup/invite/' . $invitation->id);
-        $link = "<a href=\"$url\">$url</a>";
+        $link = "<a href=\"{$url}\">{$url}</a>";
         $appName = \config('app.name');
 
-        $this->assertSame("$appName Invitation", $mail['subject']);
+        $this->assertSame("{$appName} Invitation", $mail['subject']);
 
         $this->assertStringStartsWith('<!DOCTYPE html>', $html);
         $this->assertTrue(strpos($html, $link) > 0);
-        $this->assertTrue(strpos($html, "invited to join $appName") > 0);
+        $this->assertTrue(strpos($html, "invited to join {$appName}") > 0);
 
         $this->assertStringStartsWith("Hi,", $plain);
-        $this->assertTrue(strpos($plain, "invited to join $appName") > 0);
+        $this->assertTrue(strpos($plain, "invited to join {$appName}") > 0);
         $this->assertTrue(strpos($plain, $url) > 0);
     }
 
@@ -46,13 +46,13 @@ class SignupInvitationTest extends TestCase
     {
         $appName = \config('app.name');
         $invitation = new SI([
-                'id' => 'abc',
-                'email' => 'test@email',
+            'id' => 'abc',
+            'email' => 'test@email',
         ]);
 
         $mail = new SignupInvitation($invitation);
 
-        $this->assertSame("$appName Invitation", $mail->getSubject());
-        $this->assertSame(null, $mail->getUser());
+        $this->assertSame("{$appName} Invitation", $mail->getSubject());
+        $this->assertNull($mail->getUser());
     }
 }

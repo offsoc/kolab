@@ -3,6 +3,8 @@
 namespace App\Console\Commands\Data\Import;
 
 use App\Console\Command;
+use App\IP4Net;
+use App\Utils;
 use Carbon\Carbon;
 
 class IP4NetsCommand extends Command
@@ -33,7 +35,7 @@ class IP4NetsCommand extends Command
             'apnic' => 'http://ftp.apnic.net/apnic/stats/apnic/delegated-apnic-latest',
             'arin' => 'http://ftp.arin.net/pub/stats/arin/delegated-arin-extended-latest',
             'lacnic' => 'http://ftp.lacnic.net/pub/stats/lacnic/delegated-lacnic-latest',
-            'ripencc' => 'https://ftp.ripe.net/ripe/stats/delegated-ripencc-latest'
+            'ripencc' => 'https://ftp.ripe.net/ripe/stats/delegated-ripencc-latest',
         ];
 
         $today = Carbon::now()->toDateString();
@@ -41,7 +43,7 @@ class IP4NetsCommand extends Command
         foreach ($rirs as $rir => $url) {
             $file = storage_path("{$rir}-{$today}");
 
-            \App\Utils::downloadFile($url, $file);
+            Utils::downloadFile($url, $file);
 
             $serial = $this->serialFromStatsFile($file);
 
@@ -76,7 +78,7 @@ class IP4NetsCommand extends Command
 
                 $items = explode('|', $line);
 
-                if (sizeof($items) < 7) {
+                if (count($items) < 7) {
                     continue;
                 }
 
@@ -97,7 +99,7 @@ class IP4NetsCommand extends Command
                 $mask = 32 - log((float) $items[4], 2);
                 $broadcast = long2ip((ip2long($items[3]) + 2 ** (32 - $mask)) - 1);
 
-                $net = \App\IP4Net::where(
+                $net = IP4Net::where(
                     [
                         'net_number' => inet_pton($items[3]),
                         'net_mask' => $mask,
@@ -129,17 +131,17 @@ class IP4NetsCommand extends Command
                     'country' => $items[1],
                     'serial' => $serial,
                     'created_at' => Carbon::parse($items[5], 'UTC'),
-                    'updated_at' => Carbon::now()
+                    'updated_at' => Carbon::now(),
                 ];
 
-                if (sizeof($nets) >= 100) {
-                    \App\IP4Net::insert($nets);
+                if (count($nets) >= 100) {
+                    IP4Net::insert($nets);
                     $nets = [];
                 }
             }
 
-            if (sizeof($nets) > 0) {
-                \App\IP4Net::insert($nets);
+            if (count($nets) > 0) {
+                IP4Net::insert($nets);
                 $nets = [];
             }
 
@@ -162,7 +164,7 @@ class IP4NetsCommand extends Command
 
             $items = explode('|', $line);
 
-            if (sizeof($items) < 3) {
+            if (count($items) < 3) {
                 continue;
             }
 
@@ -187,12 +189,12 @@ class IP4NetsCommand extends Command
 
             $items = explode('|', $line);
 
-            if (sizeof($items) < 2) {
+            if (count($items) < 2) {
                 continue;
             }
 
-            if ((int)$items[2]) {
-                $serial = (int)$items[2];
+            if ((int) $items[2]) {
+                $serial = (int) $items[2];
                 break;
             }
         }

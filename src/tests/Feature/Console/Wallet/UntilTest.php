@@ -2,27 +2,22 @@
 
 namespace Tests\Feature\Console\Wallet;
 
+use App\Package;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
-use Carbon\Carbon;
 
 class UntilTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
-        Carbon::setTestNow(Carbon::createFromDate(2022, 02, 02));
+        Carbon::setTestNow(Carbon::createFromDate(2022, 2, 2));
 
         $this->deleteTestUser('wallets-controller@kolabnow.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('wallets-controller@kolabnow.com');
 
@@ -53,7 +48,7 @@ class UntilTest extends TestCase
         $this->assertSame(0, $code);
         $this->assertSame("Lasts until: unknown", $output);
 
-        $package = \App\Package::withObjectTenantContext($user)->where('title', 'kolab')->first();
+        $package = Package::withObjectTenantContext($user)->where('title', 'kolab')->first();
         $user->assignPackage($package);
         $wallet->balance = 1000;
         $wallet->save();

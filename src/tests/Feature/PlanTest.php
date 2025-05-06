@@ -2,27 +2,20 @@
 
 namespace Tests\Feature;
 
-use App\Entitlement;
 use App\Plan;
-use App\Sku;
+use App\Tenant;
 use Tests\TestCase;
 
 class PlanTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         Plan::where('title', 'test-plan')->delete();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         Plan::where('title', 'test-plan')->delete();
 
@@ -114,12 +107,12 @@ class PlanTest extends TestCase
 
         $tenant = $plan->tenant()->first();
 
-        $this->assertInstanceof(\App\Tenant::class, $tenant);
+        $this->assertInstanceof(Tenant::class, $tenant);
         $this->assertSame((int) \config('app.tenant_id'), $tenant->id);
 
         $tenant = $plan->tenant;
 
-        $this->assertInstanceof(\App\Tenant::class, $tenant);
+        $this->assertInstanceof(Tenant::class, $tenant);
         $this->assertSame((int) \config('app.tenant_id'), $tenant->id);
     }
 }

@@ -2,8 +2,11 @@
 
 namespace Tests\Feature\Controller;
 
+use App\Discount;
 use App\Http\Controllers\API\V4\WalletsController;
+use App\Package;
 use App\Payment;
+use App\Plan;
 use App\ReferralProgram;
 use App\Transaction;
 use Carbon\Carbon;
@@ -11,10 +14,7 @@ use Tests\TestCase;
 
 class WalletsTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -22,10 +22,7 @@ class WalletsTest extends TestCase
         ReferralProgram::query()->delete();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('wallets-controller@kolabnow.com');
         ReferralProgram::query()->delete();
@@ -39,7 +36,7 @@ class WalletsTest extends TestCase
     public function testGetWalletNotice(): void
     {
         $user = $this->getTestUser('wallets-controller@kolabnow.com');
-        $plan = \App\Plan::withObjectTenantContext($user)->where('title', 'individual')->first();
+        $plan = Plan::withObjectTenantContext($user)->where('title', 'individual')->first();
         $user->assignPlan($plan);
         $wallet = $user->wallets()->first();
 
@@ -92,12 +89,12 @@ class WalletsTest extends TestCase
 
         // Old entitlements, 100% discount
         $this->backdateEntitlements($wallet->entitlements, Carbon::now()->subDays(40));
-        $discount = \App\Discount::withObjectTenantContext($user)->where('discount', 100)->first();
+        $discount = Discount::withObjectTenantContext($user)->where('discount', 100)->first();
         $wallet->discount()->associate($discount);
 
         $notice = $method->invoke($controller, $wallet->refresh());
 
-        $this->assertSame(null, $notice);
+        $this->assertNull($notice);
     }
 
     /**
@@ -126,9 +123,9 @@ class WalletsTest extends TestCase
         $response->assertStatus(404);
 
         // Valid receipt id
-        $year = intval(date('Y')) - 1;
-        $receiptId = "$year-12";
-        $filename = \config('app.name') . " Receipt for $year-12.pdf";
+        $year = (int) date('Y') - 1;
+        $receiptId = "{$year}-12";
+        $filename = \config('app.name') . " Receipt for {$year}-12.pdf";
 
         $response = $this->actingAs($user)->get("api/v4/wallets/{$wallet->id}/receipts/{$receiptId}");
 
@@ -137,10 +134,10 @@ class WalletsTest extends TestCase
         $response->assertHeader('content-disposition', 'attachment; filename="' . $filename . '"');
         $response->assertHeader('content-length');
 
-        $length = $response->headers->get('content-length');
+        $length = (int) $response->headers->get('content-length');
         $content = $response->content();
         $this->assertStringStartsWith("%PDF-1.", $content);
-        $this->assertEquals(strlen($content), $length);
+        $this->assertSame(strlen($content), $length);
     }
 
     /**
@@ -170,21 +167,21 @@ class WalletsTest extends TestCase
         $this->assertSame([], $json['list']);
         $this->assertSame(1, $json['page']);
         $this->assertSame(0, $json['count']);
-        $this->assertSame(false, $json['hasMore']);
+        $this->assertFalse($json['hasMore']);
 
         // Insert a payment to the database
-        $date = Carbon::create(intval(date('Y')) - 1, 4, 30);
+        $date = Carbon::create((int) date('Y') - 1, 4, 30);
         $payment = Payment::create([
-                'id' => 'AAA1',
-                'status' => Payment::STATUS_PAID,
-                'type' => Payment::TYPE_ONEOFF,
-                'description' => 'Paid in April',
-                'wallet_id' => $wallet->id,
-                'provider' => 'stripe',
-                'amount' => 1111,
-                'credit_amount' => 1111,
-                'currency' => 'CHF',
-                'currency_amount' => 1111,
+            'id' => 'AAA1',
+            'status' => Payment::STATUS_PAID,
+            'type' => Payment::TYPE_ONEOFF,
+            'description' => 'Paid in April',
+            'wallet_id' => $wallet->id,
+            'provider' => 'stripe',
+            'amount' => 1111,
+            'credit_amount' => 1111,
+            'currency' => 'CHF',
+            'currency_amount' => 1111,
         ]);
         $payment->updated_at = $date;
         $payment->save();
@@ -200,7 +197,7 @@ class WalletsTest extends TestCase
         $this->assertSame($expected, $json['list'][0]);
         $this->assertSame(1, $json['page']);
         $this->assertSame(1, $json['count']);
-        $this->assertSame(false, $json['hasMore']);
+        $this->assertFalse($json['hasMore']);
     }
 
     /**
@@ -227,7 +224,7 @@ class WalletsTest extends TestCase
         $this->assertSame([], $json['list']);
         $this->assertSame(1, $json['page']);
         $this->assertSame(0, $json['count']);
-        $this->assertSame(false, $json['hasMore']);
+        $this->assertFalse($json['hasMore']);
 
         // Insert a test program
         $program = ReferralProgram::create([
@@ -254,7 +251,7 @@ class WalletsTest extends TestCase
         $this->assertSame('success', $json['status']);
         $this->assertSame(1, $json['page']);
         $this->assertSame(1, $json['count']);
-        $this->assertSame(false, $json['hasMore']);
+        $this->assertFalse($json['hasMore']);
         $this->assertCount(1, $json['list']);
         $this->assertSame($program->id, $json['list'][0]['id']);
         $this->assertSame($program->name, $json['list'][0]['name']);
@@ -281,7 +278,7 @@ class WalletsTest extends TestCase
         $this->assertSame('success', $json['status']);
         $this->assertSame(1, $json['page']);
         $this->assertSame(1, $json['count']);
-        $this->assertSame(false, $json['hasMore']);
+        $this->assertFalse($json['hasMore']);
         $this->assertCount(1, $json['list']);
         $this->assertSame($program->id, $json['list'][0]['id']);
         $this->assertCount(1, $program->codes->fresh());
@@ -326,7 +323,7 @@ class WalletsTest extends TestCase
      */
     public function testTransactions(): void
     {
-        $package_kolab = \App\Package::where('title', 'kolab')->first();
+        $package_kolab = Package::where('title', 'kolab')->first();
         $user = $this->getTestUser('wallets-controller@kolabnow.com');
         $user->assignPackage($package_kolab);
         $john = $this->getTestUser('john@kolab.org');
@@ -349,12 +346,12 @@ class WalletsTest extends TestCase
         $this->assertSame([], $json['list']);
         $this->assertSame(1, $json['page']);
         $this->assertSame(0, $json['count']);
-        $this->assertSame(false, $json['hasMore']);
+        $this->assertFalse($json['hasMore']);
 
         // Create some sample transactions
         $transactions = $this->createTestTransactions($wallet);
         $transactions = array_reverse($transactions);
-        $pages = array_chunk($transactions, 10 /* page size*/);
+        $pages = array_chunk($transactions, 10 /* page size */);
 
         // Get the first page
         $response = $this->actingAs($user)->get("api/v4/wallets/{$wallet->id}/transactions");
@@ -366,7 +363,7 @@ class WalletsTest extends TestCase
         $this->assertSame('success', $json['status']);
         $this->assertSame(1, $json['page']);
         $this->assertSame(10, $json['count']);
-        $this->assertSame(true, $json['hasMore']);
+        $this->assertTrue($json['hasMore']);
         $this->assertCount(10, $json['list']);
         foreach ($pages[0] as $idx => $transaction) {
             $this->assertSame($transaction->id, $json['list'][$idx]['id']);
@@ -389,7 +386,7 @@ class WalletsTest extends TestCase
         $this->assertSame('success', $json['status']);
         $this->assertSame(2, $json['page']);
         $this->assertSame(2, $json['count']);
-        $this->assertSame(false, $json['hasMore']);
+        $this->assertFalse($json['hasMore']);
         $this->assertCount(2, $json['list']);
         foreach ($pages[1] as $idx => $transaction) {
             $this->assertSame($transaction->id, $json['list'][$idx]['id']);
@@ -416,7 +413,7 @@ class WalletsTest extends TestCase
         $this->assertSame('success', $json['status']);
         $this->assertSame(3, $json['page']);
         $this->assertSame(0, $json['count']);
-        $this->assertSame(false, $json['hasMore']);
+        $this->assertFalse($json['hasMore']);
         $this->assertCount(0, $json['list']);
 
         // Sub-transaction searching
@@ -432,7 +429,7 @@ class WalletsTest extends TestCase
         $this->assertSame('success', $json['status']);
         $this->assertSame(1, $json['page']);
         $this->assertSame(2, $json['count']);
-        $this->assertSame(false, $json['hasMore']);
+        $this->assertFalse($json['hasMore']);
         $this->assertCount(2, $json['list']);
         $this->assertSame(Transaction::ENTITLEMENT_BILLED, $json['list'][0]['type']);
         $this->assertSame(Transaction::ENTITLEMENT_BILLED, $json['list'][1]['type']);

@@ -8,23 +8,17 @@ use Tests\TestCase;
 
 class RecordTest extends TestCase
 {
-    /** @var \App\PowerDNS\Domain $domain */
-    private $domain = null;
+    /** @var Domain */
+    private $domain;
 
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->domain = Domain::firstOrCreate(['name' => 'test-domain.com']);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->domain->delete();
 
@@ -39,10 +33,10 @@ class RecordTest extends TestCase
         $before = $this->domain->getSerial();
 
         Record::create([
-                'domain_id' => $this->domain->id,
-                'name' => $this->domain->{'name'},
-                'type' => "MX",
-                'content' => '10 mx01.' . $this->domain->{'name'} . '.'
+            'domain_id' => $this->domain->id,
+            'name' => $this->domain->{'name'},
+            'type' => "MX",
+            'content' => '10 mx01.' . $this->domain->{'name'} . '.',
         ]);
 
         $after = $this->domain->getSerial();
@@ -56,10 +50,10 @@ class RecordTest extends TestCase
     public function testUpdateRecord(): void
     {
         $record = Record::create([
-                'domain_id' => $this->domain->id,
-                'name' => $this->domain->{'name'},
-                'type' => "MX",
-                'content' => '10 mx01.' . $this->domain->{'name'} . '.'
+            'domain_id' => $this->domain->id,
+            'name' => $this->domain->{'name'},
+            'type' => "MX",
+            'content' => '10 mx01.' . $this->domain->{'name'} . '.',
         ]);
 
         $before = $this->domain->getSerial();
@@ -78,10 +72,10 @@ class RecordTest extends TestCase
     public function testDeleteRecord(): void
     {
         $record = Record::create([
-                'domain_id' => $this->domain->id,
-                'name' => $this->domain->{'name'},
-                'type' => "MX",
-                'content' => '10 mx01.' . $this->domain->{'name'} . '.'
+            'domain_id' => $this->domain->id,
+            'name' => $this->domain->{'name'},
+            'type' => "MX",
+            'content' => '10 mx01.' . $this->domain->{'name'} . '.',
         ]);
 
         $before = $this->domain->getSerial();

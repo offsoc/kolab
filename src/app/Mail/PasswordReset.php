@@ -10,16 +10,13 @@ use Illuminate\Support\Str;
 
 class PasswordReset extends Mailable
 {
-    /** @var \App\VerificationCode A verification code object */
+    /** @var VerificationCode A verification code object */
     protected $code;
-
 
     /**
      * Create a new message instance.
      *
-     * @param \App\VerificationCode $code A verification code object
-     *
-     * @return void
+     * @param VerificationCode $code A verification code object
      */
     public function __construct(VerificationCode $code)
     {
@@ -51,10 +48,10 @@ class PasswordReset extends Mailable
             ->text('emails.plain.password_reset')
             ->subject(\trans('mail.passwordreset-subject', $vars))
             ->with([
-                    'vars' => $vars,
-                    'link' => sprintf('<a href="%s">%s</a>', $href, $href),
-                    'code' => $this->code->code,
-                    'short_code' => $this->code->short_code,
+                'vars' => $vars,
+                'link' => sprintf('<a href="%s">%s</a>', $href, $href),
+                'code' => $this->code->code,
+                'short_code' => $this->code->short_code,
             ]);
 
         return $this;
@@ -70,13 +67,13 @@ class PasswordReset extends Mailable
     public static function fakeRender(string $type = 'html'): string
     {
         $code = new VerificationCode([
-                'code' => Str::random(VerificationCode::CODE_LENGTH),
-                'short_code' => VerificationCode::generateShortCode(),
+            'code' => Str::random(VerificationCode::CODE_LENGTH),
+            'short_code' => VerificationCode::generateShortCode(),
         ]);
 
         // @phpstan-ignore-next-line
         $code->user = new User([
-              'email' => 'test@' . \config('app.domain'),
+            'email' => 'test@' . \config('app.domain'),
         ]);
 
         $mail = new self($code);

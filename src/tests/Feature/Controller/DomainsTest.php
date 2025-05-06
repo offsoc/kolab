@@ -2,22 +2,20 @@
 
 namespace Tests\Feature\Controller;
 
+use App\Discount;
 use App\Domain;
 use App\Entitlement;
+use App\Package;
 use App\Sku;
 use App\Tenant;
 use App\User;
 use App\Wallet;
 use Illuminate\Support\Facades\Queue;
-use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class DomainsTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -28,7 +26,7 @@ class DomainsTest extends TestCase
         Sku::where('title', 'test')->delete();
     }
 
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('test1@' . \config('app.domain'));
         $this->deleteTestUser('test2@' . \config('app.domain'));
@@ -44,6 +42,7 @@ class DomainsTest extends TestCase
 
     /**
      * Test domain confirm request
+     *
      * @group skipci
      */
     public function testConfirm(): void
@@ -55,15 +54,15 @@ class DomainsTest extends TestCase
         $ned = $this->getTestUser('ned@kolab.org');
         $user = $this->getTestUser('test1@domainscontroller.com');
         $domain = $this->getTestDomain('domainscontroller.com', [
-                'status' => Domain::STATUS_NEW,
-                'type' => Domain::TYPE_EXTERNAL,
+            'status' => Domain::STATUS_NEW,
+            'type' => Domain::TYPE_EXTERNAL,
         ]);
 
         Entitlement::create([
-                'wallet_id' => $user->wallets()->first()->id,
-                'sku_id' => $sku_domain->id,
-                'entitleable_id' => $domain->id,
-                'entitleable_type' => Domain::class
+            'wallet_id' => $user->wallets()->first()->id,
+            'sku_id' => $sku_domain->id,
+            'entitleable_id' => $domain->id,
+            'entitleable_type' => Domain::class,
         ]);
 
         $response = $this->actingAs($user)->get("api/v4/domains/{$domain->id}/confirm");
@@ -72,8 +71,8 @@ class DomainsTest extends TestCase
         $json = $response->json();
 
         $this->assertCount(2, $json);
-        $this->assertEquals('error', $json['status']);
-        $this->assertEquals('Domain ownership confirmation failed.', $json['message']);
+        $this->assertSame('error', $json['status']);
+        $this->assertSame('Domain ownership confirmation failed.', $json['message']);
 
         $domain->status |= Domain::STATUS_CONFIRMED;
         $domain->save();
@@ -83,8 +82,8 @@ class DomainsTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertEquals('success', $json['status']);
-        $this->assertEquals('Domain ownership confirmed successfully.', $json['message']);
+        $this->assertSame('success', $json['status']);
+        $this->assertSame('Domain ownership confirmed successfully.', $json['message']);
         $this->assertTrue(is_array($json['statusInfo']));
 
         // Not authorized access
@@ -110,15 +109,15 @@ class DomainsTest extends TestCase
         $user1 = $this->getTestUser('test1@' . \config('app.domain'));
         $user2 = $this->getTestUser('test2@' . \config('app.domain'));
         $domain = $this->getTestDomain('domainscontroller.com', [
-                'status' => Domain::STATUS_NEW,
-                'type' => Domain::TYPE_EXTERNAL,
+            'status' => Domain::STATUS_NEW,
+            'type' => Domain::TYPE_EXTERNAL,
         ]);
 
         Entitlement::create([
-                'wallet_id' => $user1->wallets()->first()->id,
-                'sku_id' => $sku_domain->id,
-                'entitleable_id' => $domain->id,
-                'entitleable_type' => Domain::class
+            'wallet_id' => $user1->wallets()->first()->id,
+            'sku_id' => $sku_domain->id,
+            'entitleable_id' => $domain->id,
+            'entitleable_type' => Domain::class,
         ]);
 
         // Not authorized access
@@ -132,8 +131,8 @@ class DomainsTest extends TestCase
         $json = $response->json();
 
         $this->assertCount(2, $json);
-        $this->assertEquals('error', $json['status']);
-        $this->assertEquals('Unable to delete a domain with assigned users or other objects.', $json['message']);
+        $this->assertSame('error', $json['status']);
+        $this->assertSame('Unable to delete a domain with assigned users or other objects.', $json['message']);
 
         // Successful deletion
         $response = $this->actingAs($user1)->delete("api/v4/domains/{$domain->id}");
@@ -142,22 +141,22 @@ class DomainsTest extends TestCase
         $json = $response->json();
 
         $this->assertCount(2, $json);
-        $this->assertEquals('success', $json['status']);
-        $this->assertEquals('Domain deleted successfully.', $json['message']);
+        $this->assertSame('success', $json['status']);
+        $this->assertSame('Domain deleted successfully.', $json['message']);
         $this->assertTrue($domain->fresh()->trashed());
 
         // Authorized access by additional account controller
         $this->deleteTestDomain('domainscontroller.com');
         $domain = $this->getTestDomain('domainscontroller.com', [
-                'status' => Domain::STATUS_NEW,
-                'type' => Domain::TYPE_EXTERNAL,
+            'status' => Domain::STATUS_NEW,
+            'type' => Domain::TYPE_EXTERNAL,
         ]);
 
         Entitlement::create([
-                'wallet_id' => $user1->wallets()->first()->id,
-                'sku_id' => $sku_domain->id,
-                'entitleable_id' => $domain->id,
-                'entitleable_type' => Domain::class
+            'wallet_id' => $user1->wallets()->first()->id,
+            'sku_id' => $sku_domain->id,
+            'entitleable_id' => $domain->id,
+            'entitleable_type' => Domain::class,
         ]);
 
         $user1->wallets()->first()->addController($user2);
@@ -167,8 +166,8 @@ class DomainsTest extends TestCase
 
         $json = $response->json();
         $this->assertCount(2, $json);
-        $this->assertEquals('success', $json['status']);
-        $this->assertEquals('Domain deleted successfully.', $json['message']);
+        $this->assertSame('success', $json['status']);
+        $this->assertSame('Domain deleted successfully.', $json['message']);
         $this->assertTrue($domain->fresh()->trashed());
     }
 
@@ -186,7 +185,7 @@ class DomainsTest extends TestCase
 
         $this->assertCount(4, $json);
         $this->assertSame(0, $json['count']);
-        $this->assertSame(false, $json['hasMore']);
+        $this->assertFalse($json['hasMore']);
         $this->assertSame("0 domains have been found.", $json['message']);
         $this->assertSame([], $json['list']);
 
@@ -200,7 +199,7 @@ class DomainsTest extends TestCase
         $json = $response->json();
         $this->assertCount(4, $json);
         $this->assertSame(1, $json['count']);
-        $this->assertSame(false, $json['hasMore']);
+        $this->assertFalse($json['hasMore']);
         $this->assertSame("1 domains have been found.", $json['message']);
         $this->assertCount(1, $json['list']);
         $this->assertSame('kolab.org', $json['list'][0]['namespace']);
@@ -310,20 +309,20 @@ class DomainsTest extends TestCase
         $sku_domain = Sku::withEnvTenantContext()->where('title', 'domain-hosting')->first();
         $user = $this->getTestUser('test1@domainscontroller.com');
         $domain = $this->getTestDomain('domainscontroller.com', [
-                'status' => Domain::STATUS_NEW,
-                'type' => Domain::TYPE_EXTERNAL,
+            'status' => Domain::STATUS_NEW,
+            'type' => Domain::TYPE_EXTERNAL,
         ]);
 
-        $discount = \App\Discount::withEnvTenantContext()->where('code', 'TEST')->first();
+        $discount = Discount::withEnvTenantContext()->where('code', 'TEST')->first();
         $wallet = $user->wallet();
         $wallet->discount()->associate($discount);
         $wallet->save();
 
         Entitlement::create([
-                'wallet_id' => $user->wallets()->first()->id,
-                'sku_id' => $sku_domain->id,
-                'entitleable_id' => $domain->id,
-                'entitleable_type' => Domain::class
+            'wallet_id' => $user->wallets()->first()->id,
+            'sku_id' => $sku_domain->id,
+            'entitleable_id' => $domain->id,
+            'entitleable_type' => Domain::class,
         ]);
 
         $response = $this->actingAs($user)->get("api/v4/domains/{$domain->id}");
@@ -331,19 +330,19 @@ class DomainsTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertEquals($domain->id, $json['id']);
-        $this->assertEquals($domain->namespace, $json['namespace']);
-        $this->assertEquals($domain->status, $json['status']);
-        $this->assertEquals($domain->type, $json['type']);
+        $this->assertSame($domain->id, $json['id']);
+        $this->assertSame($domain->namespace, $json['namespace']);
+        $this->assertSame($domain->status, $json['status']);
+        $this->assertSame($domain->type, $json['type']);
         $this->assertSame($domain->hash(Domain::HASH_TEXT), $json['hash_text']);
         $this->assertSame($domain->hash(Domain::HASH_CNAME), $json['hash_cname']);
         $this->assertSame($domain->hash(Domain::HASH_CODE), $json['hash_code']);
         $this->assertSame([], $json['config']['spf_whitelist']);
         $this->assertCount(4, $json['mx']);
-        $this->assertTrue(strpos(implode("\n", $json['mx']), $domain->namespace) !== false);
+        $this->assertTrue(str_contains(implode("\n", $json['mx']), $domain->namespace));
         $this->assertCount(8, $json['dns']);
-        $this->assertTrue(strpos(implode("\n", $json['dns']), $domain->namespace) !== false);
-        $this->assertTrue(strpos(implode("\n", $json['dns']), $domain->hash()) !== false);
+        $this->assertTrue(str_contains(implode("\n", $json['dns']), $domain->namespace));
+        $this->assertTrue(str_contains(implode("\n", $json['dns']), $domain->hash()));
         $this->assertTrue(is_array($json['statusInfo']));
         // Values below are tested by Unit tests
         $this->assertArrayHasKey('isConfirmed', $json);
@@ -399,12 +398,12 @@ class DomainsTest extends TestCase
 
         // Create an sku for another tenant, to make sure it is not included in the result
         $nsku = Sku::create([
-                'title' => 'test',
-                'name' => 'Test',
-                'description' => '',
-                'active' => true,
-                'cost' => 100,
-                'handler_class' => 'App\Handlers\Domain',
+            'title' => 'test',
+            'name' => 'Test',
+            'description' => '',
+            'active' => true,
+            'cost' => 100,
+            'handler_class' => 'App\Handlers\Domain',
         ]);
         $tenant = Tenant::whereNotIn('id', [\config('app.tenant_id')])->first();
         $nsku->tenant_id = $tenant->id;
@@ -417,11 +416,11 @@ class DomainsTest extends TestCase
 
         $this->assertCount(1, $json);
         $this->assertSkuElement('domain-hosting', $json[0], [
-                'prio' => 0,
-                'type' => 'domain',
-                'handler' => 'DomainHosting',
-                'enabled' => true,
-                'readonly' => true,
+            'prio' => 0,
+            'type' => 'domain',
+            'handler' => 'DomainHosting',
+            'enabled' => true,
+            'readonly' => true,
         ]);
     }
 
@@ -460,7 +459,7 @@ class DomainsTest extends TestCase
         $this->assertFalse($json['isDone']);
         $this->assertCount($withLdap ? 4 : 3, $json['process']);
         $this->assertSame('domain-verified', $json['process'][$withLdap ? 2 : 1]['label']);
-        $this->assertSame(false, $json['process'][$withLdap ? 2 : 1]['state']);
+        $this->assertFalse($json['process'][$withLdap ? 2 : 1]['state']);
         $this->assertTrue(empty($json['status']));
         $this->assertTrue(empty($json['message']));
 
@@ -475,9 +474,9 @@ class DomainsTest extends TestCase
         $this->assertTrue($json['isDone']);
         $this->assertCount($withLdap ? 4 : 3, $json['process']);
         $this->assertSame('domain-verified', $json['process'][$withLdap ? 2 : 1]['label']);
-        $this->assertSame(true, $json['process'][$withLdap ? 2 : 1]['state']);
+        $this->assertTrue($json['process'][$withLdap ? 2 : 1]['state']);
         $this->assertSame('domain-confirmed', $json['process'][$withLdap ? 3 : 2]['label']);
-        $this->assertSame(true, $json['process'][$withLdap ? 3 : 2]['state']);
+        $this->assertTrue($json['process'][$withLdap ? 3 : 2]['state']);
         $this->assertSame('success', $json['status']);
         $this->assertSame('Setup process finished successfully.', $json['message']);
 
@@ -541,8 +540,8 @@ class DomainsTest extends TestCase
         $this->assertCount(2, $json);
         $this->assertSame('The specified domain is not available.', $json['errors']['namespace']);
 
-        $package_kolab = \App\Package::withEnvTenantContext()->where('title', 'kolab')->first();
-        $package_domain = \App\Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
+        $package_kolab = Package::withEnvTenantContext()->where('title', 'kolab')->first();
+        $package_domain = Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
 
         // Missing package
         $post = ['namespace' => 'domainscontroller.com'];

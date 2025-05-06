@@ -2,7 +2,6 @@
 
 namespace App\Backends\DAV;
 
-use Illuminate\Support\Str;
 use Sabre\VObject\Component;
 use Sabre\VObject\Property;
 
@@ -23,7 +22,7 @@ class Vtodo extends Vevent
 
         // map other properties
         foreach ($vobject->children() as $prop) {
-            if (!($prop instanceof Property)) {
+            if (!$prop instanceof Property) {
                 continue;
             }
 
@@ -32,7 +31,6 @@ class Vtodo extends Vevent
                     // This is of type Sabre\VObject\Property\ICalendar\DateTime
                     $this->due = $prop;
                     break;
-
                 case 'PERCENT-COMPLETE':
                     $this->percentComplete = $prop->getValue();
                     break;

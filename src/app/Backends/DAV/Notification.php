@@ -36,7 +36,6 @@ class Notification
     /** @var ?string Notification (invitation) principal (organizer) */
     public $principal;
 
-
     /**
      * Create Notification object from a DOMElement element
      *
@@ -72,8 +71,8 @@ class Notification
             if ($href = $organizer->getElementsByTagName('href')->item(0)) {
                 $notification->principal = $href->nodeValue;
             }
-            // There should be also 'displayname', but Cyrus uses 'common-name',
-            // we'll ignore it for now anyway.
+        // There should be also 'displayname', but Cyrus uses 'common-name',
+        // we'll ignore it for now anyway.
         } elseif ($principal = $element->getElementsByTagName('principal')->item(0)) {
             if ($href = $principal->getElementsByTagName('href')->item(0)) {
                 $notification->principal = $href->nodeValue;

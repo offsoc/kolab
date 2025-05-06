@@ -56,7 +56,6 @@ class EventLog extends Model
     /** @var bool Indicates if the model should be timestamped. */
     public $timestamps = false;
 
-
     /**
      * Create an eventlog object for a specified object.
      *
@@ -64,17 +63,15 @@ class EventLog extends Model
      * @param int     $type    Event type (use one of EventLog::TYPE_* consts)
      * @param ?string $comment Event description
      * @param ?array  $data    Extra information
-     *
-     * @return EventLog
      */
-    public static function createFor($object, int $type, string $comment = null, array $data = null): EventLog
+    public static function createFor($object, int $type, ?string $comment = null, ?array $data = null): self
     {
         $event = self::create([
-                'object_id' => $object->id,
-                'object_type' => get_class($object),
-                'type' => $type,
-                'comment' => $comment,
-                'data' => $data,
+            'object_id' => $object->id,
+            'object_type' => $object::class,
+            'type' => $type,
+            'comment' => $comment,
+            'data' => $data,
         ]);
 
         return $event;

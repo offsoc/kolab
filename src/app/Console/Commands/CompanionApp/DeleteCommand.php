@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands\CompanionApp;
 
+use App\CompanionApp;
 use App\Console\ObjectDeleteCommand;
 
 class DeleteCommand extends ObjectDeleteCommand
@@ -9,7 +10,7 @@ class DeleteCommand extends ObjectDeleteCommand
     protected $dangerous = false;
     protected $hidden = false;
 
-    protected $objectClass = \App\CompanionApp::class;
+    protected $objectClass = CompanionApp::class;
     protected $objectName = 'companion-app';
-    protected $objectTitle = null;
+    protected $objectTitle;
 }

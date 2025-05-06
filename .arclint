@@ -3,11 +3,14 @@
     "php": {
       "type": "php"
     },
-    "phpcs": {
-      "type": "phpcs",
-      "bin": "src/vendor/bin/phpcs",
-      "include": "(\\.php$)",
-      "exclude": "(^.arc/)"
+    "php-cs-fixer": {
+      "type": "php-cs-fixer",
+      "bin": "src/vendor/bin/php-cs-fixer",
+      "flags": [
+        "--path-mode=intersection"
+      ],
+      "config": "src/.php-cs-fixer.php",
+      "include": "(\\.php$)"
     },
     "phpstan": {
       "type": "phpstan",
@@ -15,7 +18,10 @@
       "exclude": "(^.arc/)",
       "config": "src/phpstan.neon",
       "bin": "src/vendor/bin/phpstan",
-      "level": "4"
+      "flags": [
+        "--memory-limit=1G"
+      ],
+      "level": "5"
     }
   }
 }

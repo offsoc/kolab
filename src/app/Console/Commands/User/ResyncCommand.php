@@ -3,7 +3,11 @@
 namespace App\Console\Commands\User;
 
 use App\Console\Command;
+use App\Jobs\User\CreateJob;
+use App\Jobs\User\DeleteJob;
+use App\Jobs\User\ResyncJob;
 use App\User;
+use Carbon\Carbon;
 
 class ResyncCommand extends Command
 {
@@ -59,11 +63,11 @@ class ResyncCommand extends Command
 
         if ($deletedUsers) {
             $deletedUsers = $deletedUsers
-                ->where(function ($query) {
+                ->where(static function ($query) {
                     $query->whereNull('role')
-                    ->orWhere('role', '!=', User::ROLE_SERVICE);
+                        ->orWhere('role', '!=', User::ROLE_SERVICE);
                 })
-                ->where(function ($query) use ($with_ldap) {
+                ->where(static function ($query) use ($with_ldap) {
                     $query = $query->where('status', '&', User::STATUS_IMAP_READY);
                     if ($with_ldap) {
                         $query->orWhere('status', '&', User::STATUS_LDAP_READY);
@@ -73,11 +77,11 @@ class ResyncCommand extends Command
 
         if ($createdUsers) {
             $createdUsers = $createdUsers
-                ->where(function ($query) {
+                ->where(static function ($query) {
                     $query->whereNull('role')
-                    ->orWhere('role', '!=', User::ROLE_SERVICE);
+                        ->orWhere('role', '!=', User::ROLE_SERVICE);
                 })
-                ->where(function ($query) use ($with_ldap) {
+                ->where(static function ($query) use ($with_ldap) {
                     $query = $query->whereNot('status', '&', User::STATUS_IMAP_READY)
                         ->orWhereNot('status', '&', User::STATUS_ACTIVE);
                     if ($with_ldap) {
@@ -90,7 +94,7 @@ class ResyncCommand extends Command
             if (preg_match('/^([0-9]+)([mdy])$/i', $min_age, $matches)) {
                 $count = (int) $matches[1];
                 $period = strtolower($matches[2]);
-                $date = \Carbon\Carbon::now();
+                $date = Carbon::now();
 
                 if ($period == 'y') {
                     $date->subYearsWithoutOverflow($count);
@@ -120,7 +124,7 @@ class ResyncCommand extends Command
             $createdUsers = $createdUsers->orderBy('id')->cursor();
             foreach ($createdUsers as $user) {
                 if ($limit > 0 && $count > $limit) {
-                    $this->info("Reached limit of $limit");
+                    $this->info("Reached limit of {$limit}");
                     break;
                 }
 
@@ -130,7 +134,7 @@ class ResyncCommand extends Command
                     continue;
                 }
 
-                \App\Jobs\User\CreateJob::dispatch($user->id);
+                CreateJob::dispatch($user->id);
                 $this->info("{$user->email}: pushed (create)");
             }
         }
@@ -140,7 +144,7 @@ class ResyncCommand extends Command
             $deletedUsers = $deletedUsers->orderBy('id')->cursor();
             foreach ($deletedUsers as $user) {
                 if ($limit > 0 && $count > $limit) {
-                    $this->info("Reached limit of $limit");
+                    $this->info("Reached limit of {$limit}");
                     break;
                 }
 
@@ -156,7 +160,7 @@ class ResyncCommand extends Command
                     $user->update(['status' => $user->status ^ User::STATUS_DELETED]);
                 }
 
-                \App\Jobs\User\DeleteJob::dispatch($user->id);
+                DeleteJob::dispatch($user->id);
                 $this->info("{$user->email}: pushed (delete)");
             }
         }
@@ -171,7 +175,7 @@ class ResyncCommand extends Command
                 } else {
                     // We push the update only if a specific user is requested,
                     // We don't want to flood the database/backend with an update of all users
-                    \App\Jobs\User\ResyncJob::dispatch($req_user->id);
+                    ResyncJob::dispatch($req_user->id);
                     $this->info("{$req_user->email}: pushed (resync)");
                 }
             }

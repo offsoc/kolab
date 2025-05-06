@@ -31,9 +31,7 @@ abstract class GroupJob extends CommonJob
     /**
      * Create a new job instance.
      *
-     * @param int $groupId The ID for the group to create.
-     *
-     * @return void
+     * @param int $groupId the ID for the group to create
      */
     public function __construct(int $groupId)
     {

@@ -2,7 +2,6 @@
 
 namespace App\DataMigrator\Driver\EWS;
 
-use garethp\ews\API;
 use garethp\ews\API\Type;
 
 /**
@@ -12,8 +11,7 @@ class Appointment extends Item
 {
     public const FOLDER_TYPE = 'IPF.Appointment';
     // public const TYPE        = 'IPM.Appointment';
-    public const FILE_EXT    = 'ics';
-
+    public const FILE_EXT = 'ics';
 
     /**
      * Get GetItem request parameters

@@ -2,16 +2,15 @@
 
 namespace Tests\Feature\Console\User;
 
+use App\Jobs\User\DeleteJob;
+use App\Jobs\User\ResyncJob;
 use App\User;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class ResyncTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -19,10 +18,7 @@ class ResyncTest extends TestCase
         $this->deleteTestUser('user@incomplete.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('user@force-delete.com');
         $this->deleteTestUser('user@incomplete.com');
@@ -44,8 +40,8 @@ class ResyncTest extends TestCase
 
         $user = $this->getTestUser('user@force-delete.com');
         User::where('id', $user->id)->update([
-                'deleted_at' => now(),
-                'status' => User::STATUS_DELETED | User::STATUS_IMAP_READY,
+            'deleted_at' => now(),
+            'status' => User::STATUS_DELETED | User::STATUS_IMAP_READY,
         ]);
 
         Queue::fake();
@@ -70,8 +66,8 @@ class ResyncTest extends TestCase
         $this->assertFalse($user->isDeleted());
         $this->assertTrue($user->isImapReady());
 
-        Queue::assertPushed(\App\Jobs\User\DeleteJob::class, 1);
-        Queue::assertPushed(\App\Jobs\User\DeleteJob::class, function ($job) use ($user) {
+        Queue::assertPushed(DeleteJob::class, 1);
+        Queue::assertPushed(DeleteJob::class, static function ($job) use ($user) {
             $job_user_id = TestCase::getObjectProperty($job, 'userId');
             return $job_user_id === $user->id;
         });
@@ -90,7 +86,7 @@ class ResyncTest extends TestCase
 
         Queue::fake();
         User::withTrashed()->where('id', $user->id)->update([
-                'status' => User::STATUS_DELETED | User::STATUS_IMAP_READY
+            'status' => User::STATUS_DELETED | User::STATUS_IMAP_READY,
         ]);
 
         // Remove all deleted users except one, to not interfere
@@ -122,8 +118,8 @@ class ResyncTest extends TestCase
         $this->assertSame(0, $code);
         $this->assertSame("{$user->email}: pushed (resync)", $output);
 
-        Queue::assertPushed(\App\Jobs\User\ResyncJob::class, 1);
-        Queue::assertPushed(\App\Jobs\User\ResyncJob::class, function ($job) use ($user) {
+        Queue::assertPushed(ResyncJob::class, 1);
+        Queue::assertPushed(ResyncJob::class, static function ($job) use ($user) {
             $job_user_id = TestCase::getObjectProperty($job, 'userId');
             return $job_user_id === $user->id;
         });

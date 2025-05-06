@@ -2,6 +2,8 @@
 
 namespace App\Traits;
 
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
 trait SettingsTrait
 {
     /**
@@ -42,7 +44,7 @@ trait SettingsTrait
         }
 
         $this->settings()->whereIn('key', $keys)->get()
-            ->each(function ($setting) use (&$settings) {
+            ->each(static function ($setting) use (&$settings) {
                 $settings[$setting->key] = $setting->value;
             });
 
@@ -60,8 +62,6 @@ trait SettingsTrait
      * ```
      *
      * @param string $key Setting name
-     *
-     * @return void
      */
     public function removeSetting(string $key): void
     {
@@ -79,9 +79,7 @@ trait SettingsTrait
      * ```
      *
      * @param string      $key   Setting name
-     * @param string|null $value The new value for the setting.
-     *
-     * @return void
+     * @param string|null $value the new value for the setting
      */
     public function setSetting(string $key, $value): void
     {
@@ -98,9 +96,7 @@ trait SettingsTrait
      * $user->setSettings(['locale' => 'en', 'country' => 'GB']);
      * ```
      *
-     * @param array $data An associative array of key value pairs.
-     *
-     * @return void
+     * @param array $data an associative array of key value pairs
      */
     public function setSettings(array $data = []): void
     {
@@ -112,7 +108,7 @@ trait SettingsTrait
     /**
      * Any (additional) properties of this domain.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function settings()
     {
@@ -123,9 +119,7 @@ trait SettingsTrait
      * Create or update a setting.
      *
      * @param string      $key   Setting name
-     * @param string|null $value The new value for the setting.
-     *
-     * @return void
+     * @param string|null $value the new value for the setting
      */
     private function storeSetting(string $key, $value): void
     {

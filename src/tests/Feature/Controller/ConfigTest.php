@@ -46,9 +46,9 @@ class ConfigTest extends TestCase
         $json = $response->json();
 
         $this->assertSame([], $json['plugins']);
-        $this->assertSame(true, $json['calendar_disabled']);
-        $this->assertSame(true, $json['kolab_files_disabled']);
-        $this->assertSame(true, $json['kolab_tags_disabled']);
-        $this->assertSame(true, $json['tasklist_disabled']);
+        $this->assertTrue($json['calendar_disabled']);
+        $this->assertTrue($json['kolab_files_disabled']);
+        $this->assertTrue($json['kolab_tags_disabled']);
+        $this->assertTrue($json['tasklist_disabled']);
     }
 }

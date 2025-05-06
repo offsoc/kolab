@@ -4,13 +4,14 @@ namespace App\Http\Controllers\API\V4\Reseller;
 
 use App\SharedFolder;
 use App\User;
+use Illuminate\Http\JsonResponse;
 
 class SharedFoldersController extends \App\Http\Controllers\API\V4\Admin\SharedFoldersController
 {
     /**
      * Search for shared folders
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function index()
     {

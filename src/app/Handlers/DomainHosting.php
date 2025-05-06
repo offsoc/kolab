@@ -2,20 +2,23 @@
 
 namespace App\Handlers;
 
-class DomainHosting extends \App\Handlers\Base
+use App\Domain;
+use App\Sku;
+
+class DomainHosting extends Base
 {
     /**
      * The entitleable class for this handler.
      */
     public static function entitleableClass(): string
     {
-        return \App\Domain::class;
+        return Domain::class;
     }
 
     /**
      * SKU handler metadata.
      */
-    public static function metadata(\App\Sku $sku): array
+    public static function metadata(Sku $sku): array
     {
         $data = parent::metadata($sku);
 

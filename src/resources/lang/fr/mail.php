@@ -1,7 +1,6 @@
 <?php
 
 return [
-
     /*
     |--------------------------------------------------------------------------
     | Mail Language Lines
@@ -83,5 +82,4 @@ return [
     'signupinvitation-header' => "Salut,",
     'signupinvitation-body1' => "Vous êtes invité à joindre :site. Cliquez sur le lien ci-dessous pour vous inscrire.",
     'signupinvitation-body2' => "",
-
 ];

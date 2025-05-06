@@ -8,17 +8,17 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * The eloquent definition of a Permission.
  *
- * @property string  $id               Permission identifier
- * @property int     $rights           Access rights
- * @property int     $permissible_id   The shared object identifier
- * @property string  $permissible_type The shared object type (class name)
- * @property string  $user             Permitted user (email)
+ * @property string $id               Permission identifier
+ * @property int    $rights           Access rights
+ * @property int    $permissible_id   The shared object identifier
+ * @property string $permissible_type The shared object type (class name)
+ * @property string $user             Permitted user (email)
  */
 class Permission extends Model
 {
     use UuidStrKeyTrait;
 
-    public const READ  = 1;
+    public const READ = 1;
     public const WRITE = 2;
     public const ADMIN = 4;
 

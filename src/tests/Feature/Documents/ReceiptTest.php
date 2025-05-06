@@ -5,15 +5,15 @@ namespace Tests\Feature\Documents;
 use App\Documents\Receipt;
 use App\Payment;
 use App\User;
-use App\Wallet;
 use App\VatRate;
+use App\Wallet;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Bus;
 use Tests\TestCase;
 
 class ReceiptTest extends TestCase
 {
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -21,10 +21,7 @@ class ReceiptTest extends TestCase
         VatRate::query()->delete();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('receipt-test@kolabnow.com');
 
@@ -72,17 +69,17 @@ class ReceiptTest extends TestCase
         $cells = $records[1]->getElementsByTagName('td');
         $this->assertCount(3, $cells);
         $this->assertSame('2020-05-01', $this->getNodeContent($cells[0]));
-        $this->assertSame("$appName Services", $this->getNodeContent($cells[1]));
+        $this->assertSame("{$appName} Services", $this->getNodeContent($cells[1]));
         $this->assertSame('12,34 CHF', $this->getNodeContent($cells[2]));
         $cells = $records[2]->getElementsByTagName('td');
         $this->assertCount(3, $cells);
         $this->assertSame('2020-05-10', $this->getNodeContent($cells[0]));
-        $this->assertSame("$appName Services", $this->getNodeContent($cells[1]));
+        $this->assertSame("{$appName} Services", $this->getNodeContent($cells[1]));
         $this->assertSame('0,01 CHF', $this->getNodeContent($cells[2]));
         $cells = $records[3]->getElementsByTagName('td');
         $this->assertCount(3, $cells);
         $this->assertSame('2020-05-21', $this->getNodeContent($cells[0]));
-        $this->assertSame("$appName Services", $this->getNodeContent($cells[1]));
+        $this->assertSame("{$appName} Services", $this->getNodeContent($cells[1]));
         $this->assertSame('1,00 CHF', $this->getNodeContent($cells[2]));
         $cells = $records[4]->getElementsByTagName('td');
         $this->assertCount(3, $cells);
@@ -106,14 +103,14 @@ class ReceiptTest extends TestCase
         $customerExpected = "Firstname Lastname\nTest Unicode Straße 150\n10115 Berlin";
         $this->assertSame($customerExpected, $this->getNodeContent($customerCells[0]));
         $customerIdents = $this->getNodeContent($customerCells[1]);
-        //$this->assertTrue(strpos($customerIdents, "Account ID {$wallet->id}") !== false);
-        $this->assertTrue(strpos($customerIdents, "Customer No. {$wallet->owner->id}") !== false);
+        // $this->assertTrue(strpos($customerIdents, "Account ID {$wallet->id}") !== false);
+        $this->assertTrue(str_contains($customerIdents, "Customer No. {$wallet->owner->id}"));
 
         // Company details in the footer
         $footer = $dom->getElementById('footer');
         $footerOutput = $footer->textContent;
         $this->assertStringStartsWith(\config('app.company.details'), $footerOutput);
-        $this->assertTrue(strpos($footerOutput, \config('app.company.email')) !== false);
+        $this->assertTrue(str_contains($footerOutput, \config('app.company.email')));
     }
 
     /**
@@ -139,17 +136,17 @@ class ReceiptTest extends TestCase
         $cells = $records[1]->getElementsByTagName('td');
         $this->assertCount(3, $cells);
         $this->assertSame('2020-05-01', $this->getNodeContent($cells[0]));
-        $this->assertSame("$appName Services", $this->getNodeContent($cells[1]));
+        $this->assertSame("{$appName} Services", $this->getNodeContent($cells[1]));
         $this->assertSame('11,39 CHF', $this->getNodeContent($cells[2]));
         $cells = $records[2]->getElementsByTagName('td');
         $this->assertCount(3, $cells);
         $this->assertSame('2020-05-10', $this->getNodeContent($cells[0]));
-        $this->assertSame("$appName Services", $this->getNodeContent($cells[1]));
+        $this->assertSame("{$appName} Services", $this->getNodeContent($cells[1]));
         $this->assertSame('0,01 CHF', $this->getNodeContent($cells[2]));
         $cells = $records[3]->getElementsByTagName('td');
         $this->assertCount(3, $cells);
         $this->assertSame('2020-05-21', $this->getNodeContent($cells[0]));
-        $this->assertSame("$appName Services", $this->getNodeContent($cells[1]));
+        $this->assertSame("{$appName} Services", $this->getNodeContent($cells[1]));
         $this->assertSame('0,92 CHF', $this->getNodeContent($cells[2]));
         $cells = $records[4]->getElementsByTagName('td');
         $this->assertCount(3, $cells);
@@ -194,19 +191,17 @@ class ReceiptTest extends TestCase
      * Prepare data for a test
      *
      * @param string $country User country code
-     *
-     * @return \App\Wallet
      */
-    protected function getTestData(string $country = null): Wallet
+    protected function getTestData(?string $country = null): Wallet
     {
         Bus::fake();
 
         $user = $this->getTestUser('receipt-test@kolabnow.com');
         $user->setSettings([
-                'first_name' => 'Firstname',
-                'last_name' => 'Lastname',
-                'billing_address' => "Test Unicode Straße 150\n10115 Berlin",
-                'country' => $country
+            'first_name' => 'Firstname',
+            'last_name' => 'Lastname',
+            'billing_address' => "Test Unicode Straße 150\n10115 Berlin",
+            'country' => $country,
         ]);
 
         $wallet = $user->wallets()->first();
@@ -214,9 +209,9 @@ class ReceiptTest extends TestCase
         $vat = null;
         if ($country) {
             $vat = VatRate::create([
-                    'country' => $country,
-                    'rate' => 7.7,
-                    'start' => now(),
+                'country' => $country,
+                'rate' => 7.7,
+                'start' => now(),
             ])->id;
         }
 
@@ -225,146 +220,146 @@ class ReceiptTest extends TestCase
         // and one with amount 0, and an extra refund and chanrgeback
 
         $payment = Payment::create([
-                'id' => 'AAA1',
-                'status' => Payment::STATUS_PAID,
-                'type' => Payment::TYPE_ONEOFF,
-                'description' => 'Paid in April',
-                'wallet_id' => $wallet->id,
-                'provider' => 'stripe',
-                'amount' => 1111,
-                'credit_amount' => 1111,
-                'vat_rate_id' => $vat,
-                'currency' => 'CHF',
-                'currency_amount' => 1111,
+            'id' => 'AAA1',
+            'status' => Payment::STATUS_PAID,
+            'type' => Payment::TYPE_ONEOFF,
+            'description' => 'Paid in April',
+            'wallet_id' => $wallet->id,
+            'provider' => 'stripe',
+            'amount' => 1111,
+            'credit_amount' => 1111,
+            'vat_rate_id' => $vat,
+            'currency' => 'CHF',
+            'currency_amount' => 1111,
         ]);
         $payment->updated_at = Carbon::create(2020, 4, 30, 12, 0, 0);
         $payment->save();
 
         $payment = Payment::create([
-                'id' => 'AAA2',
-                'status' => Payment::STATUS_PAID,
-                'type' => Payment::TYPE_ONEOFF,
-                'description' => 'Paid in June',
-                'wallet_id' => $wallet->id,
-                'provider' => 'stripe',
-                'amount' => 2222,
-                'credit_amount' => 2222,
-                'vat_rate_id' => $vat,
-                'currency' => 'CHF',
-                'currency_amount' => 2222,
+            'id' => 'AAA2',
+            'status' => Payment::STATUS_PAID,
+            'type' => Payment::TYPE_ONEOFF,
+            'description' => 'Paid in June',
+            'wallet_id' => $wallet->id,
+            'provider' => 'stripe',
+            'amount' => 2222,
+            'credit_amount' => 2222,
+            'vat_rate_id' => $vat,
+            'currency' => 'CHF',
+            'currency_amount' => 2222,
         ]);
         $payment->updated_at = Carbon::create(2020, 6, 1, 0, 0, 0);
         $payment->save();
 
         $payment = Payment::create([
-                'id' => 'AAA3',
-                'status' => Payment::STATUS_PAID,
-                'type' => Payment::TYPE_ONEOFF,
-                'description' => 'Auto-Payment Setup',
-                'wallet_id' => $wallet->id,
-                'provider' => 'stripe',
-                'amount' => 0,
-                'credit_amount' => 0,
-                'vat_rate_id' => $vat,
-                'currency' => 'CHF',
-                'currency_amount' => 0,
+            'id' => 'AAA3',
+            'status' => Payment::STATUS_PAID,
+            'type' => Payment::TYPE_ONEOFF,
+            'description' => 'Auto-Payment Setup',
+            'wallet_id' => $wallet->id,
+            'provider' => 'stripe',
+            'amount' => 0,
+            'credit_amount' => 0,
+            'vat_rate_id' => $vat,
+            'currency' => 'CHF',
+            'currency_amount' => 0,
         ]);
         $payment->updated_at = Carbon::create(2020, 5, 1, 0, 0, 0);
         $payment->save();
 
         $payment = Payment::create([
-                'id' => 'AAA4',
-                'status' => Payment::STATUS_OPEN,
-                'type' => Payment::TYPE_ONEOFF,
-                'description' => 'Payment not yet paid',
-                'wallet_id' => $wallet->id,
-                'provider' => 'stripe',
-                'amount' => 990,
-                'credit_amount' => 990,
-                'vat_rate_id' => $vat,
-                'currency' => 'CHF',
-                'currency_amount' => 990,
+            'id' => 'AAA4',
+            'status' => Payment::STATUS_OPEN,
+            'type' => Payment::TYPE_ONEOFF,
+            'description' => 'Payment not yet paid',
+            'wallet_id' => $wallet->id,
+            'provider' => 'stripe',
+            'amount' => 990,
+            'credit_amount' => 990,
+            'vat_rate_id' => $vat,
+            'currency' => 'CHF',
+            'currency_amount' => 990,
         ]);
         $payment->updated_at = Carbon::create(2020, 5, 1, 0, 0, 0);
         $payment->save();
 
         // ... so we expect the five three on the receipt
         $payment = Payment::create([
-                'id' => 'AAA5',
-                'status' => Payment::STATUS_PAID,
-                'type' => Payment::TYPE_ONEOFF,
-                'description' => 'Payment OK',
-                'wallet_id' => $wallet->id,
-                'provider' => 'stripe',
-                'amount' => 1234,
-                'credit_amount' => 1234,
-                'vat_rate_id' => $vat,
-                'currency' => 'CHF',
-                'currency_amount' => 1234,
+            'id' => 'AAA5',
+            'status' => Payment::STATUS_PAID,
+            'type' => Payment::TYPE_ONEOFF,
+            'description' => 'Payment OK',
+            'wallet_id' => $wallet->id,
+            'provider' => 'stripe',
+            'amount' => 1234,
+            'credit_amount' => 1234,
+            'vat_rate_id' => $vat,
+            'currency' => 'CHF',
+            'currency_amount' => 1234,
         ]);
         $payment->updated_at = Carbon::create(2020, 5, 1, 0, 0, 0);
         $payment->save();
 
         $payment = Payment::create([
-                'id' => 'AAA6',
-                'status' => Payment::STATUS_PAID,
-                'type' => Payment::TYPE_ONEOFF,
-                'description' => 'Payment OK',
-                'wallet_id' => $wallet->id,
-                'provider' => 'stripe',
-                'amount' => 1,
-                'credit_amount' => 1,
-                'vat_rate_id' => $vat,
-                'currency' => 'CHF',
-                'currency_amount' => 1,
+            'id' => 'AAA6',
+            'status' => Payment::STATUS_PAID,
+            'type' => Payment::TYPE_ONEOFF,
+            'description' => 'Payment OK',
+            'wallet_id' => $wallet->id,
+            'provider' => 'stripe',
+            'amount' => 1,
+            'credit_amount' => 1,
+            'vat_rate_id' => $vat,
+            'currency' => 'CHF',
+            'currency_amount' => 1,
         ]);
         $payment->updated_at = Carbon::create(2020, 5, 10, 0, 0, 0);
         $payment->save();
 
         $payment = Payment::create([
-                'id' => 'AAA7',
-                'status' => Payment::STATUS_PAID,
-                'type' => Payment::TYPE_RECURRING,
-                'description' => 'Payment OK',
-                'wallet_id' => $wallet->id,
-                'provider' => 'stripe',
-                'amount' => 100,
-                'credit_amount' => 100,
-                'vat_rate_id' => $vat,
-                'currency' => 'CHF',
-                'currency_amount' => 100,
+            'id' => 'AAA7',
+            'status' => Payment::STATUS_PAID,
+            'type' => Payment::TYPE_RECURRING,
+            'description' => 'Payment OK',
+            'wallet_id' => $wallet->id,
+            'provider' => 'stripe',
+            'amount' => 100,
+            'credit_amount' => 100,
+            'vat_rate_id' => $vat,
+            'currency' => 'CHF',
+            'currency_amount' => 100,
         ]);
         $payment->updated_at = Carbon::create(2020, 5, 21, 23, 59, 0);
         $payment->save();
 
         $payment = Payment::create([
-                'id' => 'ref1',
-                'status' => Payment::STATUS_PAID,
-                'type' => Payment::TYPE_REFUND,
-                'description' => 'refund desc',
-                'wallet_id' => $wallet->id,
-                'provider' => 'stripe',
-                'amount' => -100,
-                'credit_amount' => -100,
-                'vat_rate_id' => $vat,
-                'currency' => 'CHF',
-                'currency_amount' => -100,
+            'id' => 'ref1',
+            'status' => Payment::STATUS_PAID,
+            'type' => Payment::TYPE_REFUND,
+            'description' => 'refund desc',
+            'wallet_id' => $wallet->id,
+            'provider' => 'stripe',
+            'amount' => -100,
+            'credit_amount' => -100,
+            'vat_rate_id' => $vat,
+            'currency' => 'CHF',
+            'currency_amount' => -100,
         ]);
         $payment->updated_at = Carbon::create(2020, 5, 30, 23, 59, 0);
         $payment->save();
 
         $payment = Payment::create([
-                'id' => 'chback1',
-                'status' => Payment::STATUS_PAID,
-                'type' => Payment::TYPE_CHARGEBACK,
-                'description' => '',
-                'wallet_id' => $wallet->id,
-                'provider' => 'stripe',
-                'amount' => -10,
-                'credit_amount' => -10,
-                'vat_rate_id' => $vat,
-                'currency' => 'CHF',
-                'currency_amount' => -10,
+            'id' => 'chback1',
+            'status' => Payment::STATUS_PAID,
+            'type' => Payment::TYPE_CHARGEBACK,
+            'description' => '',
+            'wallet_id' => $wallet->id,
+            'provider' => 'stripe',
+            'amount' => -10,
+            'credit_amount' => -10,
+            'vat_rate_id' => $vat,
+            'currency' => 'CHF',
+            'currency_amount' => -10,
         ]);
         $payment->updated_at = Carbon::create(2020, 5, 31, 23, 59, 0);
         $payment->save();
@@ -404,6 +399,6 @@ class ReceiptTest extends TestCase
             }
         }
 
-        return trim(implode($content));
+        return trim(implode('', $content));
     }
 }

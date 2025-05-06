@@ -2,13 +2,17 @@
 
 namespace Tests\Feature;
 
+use App\Entitlement;
+use App\Jobs\SharedFolder\CreateJob;
+use App\Jobs\SharedFolder\DeleteJob;
+use App\Jobs\SharedFolder\UpdateJob;
 use App\SharedFolder;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class SharedFolderTest extends TestCase
 {
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -18,7 +22,7 @@ class SharedFolderTest extends TestCase
         });
     }
 
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('user-test@kolabnow.com');
         SharedFolder::withTrashed()->where('email', 'like', '%@kolabnow.com')->each(function ($folder) {
@@ -43,7 +47,7 @@ class SharedFolderTest extends TestCase
         // Add an alias
         $folder->setAliases(['FolderAlias1@kolabnow.com']);
 
-        Queue::assertPushed(\App\Jobs\SharedFolder\UpdateJob::class, 1);
+        Queue::assertPushed(UpdateJob::class, 1);
 
         $aliases = $folder->aliases()->get();
 
@@ -54,7 +58,7 @@ class SharedFolderTest extends TestCase
         // Add another alias
         $folder->setAliases(['FolderAlias1@kolabnow.com', 'FolderAlias2@kolabnow.com']);
 
-        Queue::assertPushed(\App\Jobs\SharedFolder\UpdateJob::class, 2);
+        Queue::assertPushed(UpdateJob::class, 2);
 
         $aliases = $folder->aliases()->orderBy('alias')->get();
         $this->assertCount(2, $aliases);
@@ -64,7 +68,7 @@ class SharedFolderTest extends TestCase
         // Remove an alias
         $folder->setAliases(['FolderAlias1@kolabnow.com']);
 
-        Queue::assertPushed(\App\Jobs\SharedFolder\UpdateJob::class, 3);
+        Queue::assertPushed(UpdateJob::class, 3);
 
         $aliases = $folder->aliases()->get();
 
@@ -75,7 +79,7 @@ class SharedFolderTest extends TestCase
         // Remove all aliases
         $folder->setAliases([]);
 
-        Queue::assertPushed(\App\Jobs\SharedFolder\UpdateJob::class, 4);
+        Queue::assertPushed(UpdateJob::class, 4);
 
         $this->assertCount(0, $folder->aliases()->get());
         $this->assertFalse(SharedFolder::aliasExists('folderalias1@kolabnow.com'));
@@ -188,8 +192,8 @@ class SharedFolderTest extends TestCase
         $this->assertSame('shared/Reśo@kolabnow.com', $settings[0]->value);
 
         Queue::assertPushed(
-            \App\Jobs\SharedFolder\CreateJob::class,
-            function ($job) use ($folder) {
+            CreateJob::class,
+            static function ($job) use ($folder) {
                 $folderEmail = TestCase::getObjectProperty($job, 'folderEmail');
                 $folderId = TestCase::getObjectProperty($job, 'folderId');
 
@@ -210,7 +214,7 @@ class SharedFolderTest extends TestCase
         $folder = $this->getTestSharedFolder('folder-test@kolabnow.com');
         $folder->assignToWallet($user->wallets->first());
 
-        $entitlements = \App\Entitlement::where('entitleable_id', $folder->id);
+        $entitlements = Entitlement::where('entitleable_id', $folder->id);
 
         $this->assertSame(1, $entitlements->count());
 
@@ -220,11 +224,11 @@ class SharedFolderTest extends TestCase
         $this->assertSame(0, $entitlements->count());
         $this->assertSame(1, $entitlements->withTrashed()->count());
 
-        Queue::assertPushed(\App\Jobs\SharedFolder\UpdateJob::class, 0);
-        Queue::assertPushed(\App\Jobs\SharedFolder\DeleteJob::class, 1);
+        Queue::assertPushed(UpdateJob::class, 0);
+        Queue::assertPushed(DeleteJob::class, 1);
         Queue::assertPushed(
-            \App\Jobs\SharedFolder\DeleteJob::class,
-            function ($job) use ($folder) {
+            DeleteJob::class,
+            static function ($job) use ($folder) {
                 $folderEmail = TestCase::getObjectProperty($job, 'folderEmail');
                 $folderId = TestCase::getObjectProperty($job, 'folderId');
 
@@ -240,8 +244,8 @@ class SharedFolderTest extends TestCase
         $this->assertSame(0, $entitlements->withTrashed()->count());
         $this->assertCount(0, SharedFolder::withTrashed()->where('id', $folder->id)->get());
 
-        Queue::assertPushed(\App\Jobs\SharedFolder\UpdateJob::class, 0);
-        Queue::assertPushed(\App\Jobs\SharedFolder\DeleteJob::class, 0);
+        Queue::assertPushed(UpdateJob::class, 0);
+        Queue::assertPushed(DeleteJob::class, 0);
     }
 
     /**
@@ -277,20 +281,20 @@ class SharedFolderTest extends TestCase
 
         $folder = $this->getTestSharedFolder('folder-test@kolabnow.com');
 
-        Queue::assertPushed(\App\Jobs\SharedFolder\UpdateJob::class, 0);
+        Queue::assertPushed(UpdateJob::class, 0);
 
         // Add a setting
         $folder->setSetting('unknown', 'test');
 
-        Queue::assertPushed(\App\Jobs\SharedFolder\UpdateJob::class, 0);
+        Queue::assertPushed(UpdateJob::class, 0);
 
         // Add a setting that is synced to LDAP
         $folder->setSetting('acl', 'test');
 
-        Queue::assertPushed(\App\Jobs\SharedFolder\UpdateJob::class, 1);
+        Queue::assertPushed(UpdateJob::class, 1);
         Queue::assertPushed(
-            \App\Jobs\SharedFolder\UpdateJob::class,
-            function ($job) use ($folder) {
+            UpdateJob::class,
+            static function ($job) use ($folder) {
                 return $folder->id === TestCase::getObjectProperty($job, 'folderId')
                     && ['acl' => null] === TestCase::getObjectProperty($job, 'properties');
             }
@@ -306,15 +310,15 @@ class SharedFolderTest extends TestCase
         // Update a setting
         $folder->setSetting('unknown', 'test1');
 
-        Queue::assertPushed(\App\Jobs\SharedFolder\UpdateJob::class, 0);
+        Queue::assertPushed(UpdateJob::class, 0);
 
         // Update a setting that is synced to LDAP
         $folder->setSetting('acl', 'test1');
 
-        Queue::assertPushed(\App\Jobs\SharedFolder\UpdateJob::class, 1);
+        Queue::assertPushed(UpdateJob::class, 1);
         Queue::assertPushed(
-            \App\Jobs\SharedFolder\UpdateJob::class,
-            function ($job) use ($folder) {
+            UpdateJob::class,
+            static function ($job) use ($folder) {
                 return $folder->id === TestCase::getObjectProperty($job, 'folderId')
                     && ['acl' => 'test'] === TestCase::getObjectProperty($job, 'properties');
             }
@@ -328,22 +332,22 @@ class SharedFolderTest extends TestCase
         // Delete a setting (null)
         $folder->setSetting('unknown', null);
 
-        Queue::assertPushed(\App\Jobs\SharedFolder\UpdateJob::class, 0);
+        Queue::assertPushed(UpdateJob::class, 0);
 
         // Delete a setting that is synced to LDAP
         $folder->setSetting('acl', null);
 
-        Queue::assertPushed(\App\Jobs\SharedFolder\UpdateJob::class, 1);
+        Queue::assertPushed(UpdateJob::class, 1);
         Queue::assertPushed(
-            \App\Jobs\SharedFolder\UpdateJob::class,
-            function ($job) use ($folder) {
+            UpdateJob::class,
+            static function ($job) use ($folder) {
                 return $folder->id === TestCase::getObjectProperty($job, 'folderId')
                     && ['acl' => 'test1'] === TestCase::getObjectProperty($job, 'properties');
             }
         );
 
-        $this->assertSame(null, $folder->getSetting('unknown'));
-        $this->assertSame(null, $folder->fresh()->getSetting('acl'));
+        $this->assertNull($folder->getSetting('unknown'));
+        $this->assertNull($folder->fresh()->getSetting('acl'));
     }
 
     /**
@@ -363,10 +367,10 @@ class SharedFolderTest extends TestCase
         $this->assertCount(1, $settings);
         $this->assertSame('shared/New@kolabnow.com', $settings[0]->value);
 
-        Queue::assertPushed(\App\Jobs\SharedFolder\UpdateJob::class, 1);
+        Queue::assertPushed(UpdateJob::class, 1);
         Queue::assertPushed(
-            \App\Jobs\SharedFolder\UpdateJob::class,
-            function ($job) use ($folder) {
+            UpdateJob::class,
+            static function ($job) use ($folder) {
                 $folderEmail = TestCase::getObjectProperty($job, 'folderEmail');
                 $folderId = TestCase::getObjectProperty($job, 'folderId');
 

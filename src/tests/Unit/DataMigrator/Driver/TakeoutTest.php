@@ -11,10 +11,7 @@ use Tests\TestCase;
 
 class TakeoutTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         exec('rm -rf ' . storage_path('export/unit@gmail.com'));
 
@@ -30,7 +27,7 @@ class TakeoutTest extends TestCase
         [$takeout, $importer] = $this->init();
 
         $result = [];
-        $callback = function ($item) use (&$result) {
+        $callback = static function ($item) use (&$result) {
             // Note: Small items don't use temp files, so we can just read the content
             // Remove line-wrapping for easier testing
             $result[$item->id] = $item->content;
@@ -54,7 +51,7 @@ class TakeoutTest extends TestCase
         [$takeout, $importer] = $this->init();
 
         $result = [];
-        $callback = function ($item) use (&$result) {
+        $callback = static function ($item) use (&$result) {
             // Note: Small items don't use temp files, so we can just read the content
             // Remove line-wrapping for easier testing
             $content = str_replace(["\r\n ", "\r\n  "], '', $item->content);

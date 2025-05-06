@@ -15,10 +15,7 @@ use Tests\TestCaseDusk;
 
 class PaymentStripeTest extends TestCaseDusk
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -29,10 +26,7 @@ class PaymentStripeTest extends TestCaseDusk
         $this->deleteTestUser('payment-test@kolabnow.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         if (\config('services.stripe.key')) {
             $this->deleteTestUser('payment-test@kolabnow.com');
@@ -49,7 +43,7 @@ class PaymentStripeTest extends TestCaseDusk
     public function testPayment(): void
     {
         $user = $this->getTestUser('payment-test@kolabnow.com', [
-                'password' => 'simple123',
+            'password' => 'simple123',
         ]);
 
         $this->browse(function (Browser $browser) use ($user) {
@@ -61,14 +55,14 @@ class PaymentStripeTest extends TestCaseDusk
                 ->on(new WalletPage())
                 ->assertSeeIn('@main button', 'Add credit')
                 ->click('@main button')
-                ->with(new Dialog('@payment-dialog'), function (Browser $browser) {
+                ->with(new Dialog('@payment-dialog'), static function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Top up your wallet')
                         ->waitFor('#payment-method-selection .link-creditcard svg')
                         ->waitFor('#payment-method-selection .link-paypal svg')
                         ->assertMissing('#payment-method-selection .link-banktransfer svg')
                         ->click('#payment-method-selection .link-creditcard');
                 })
-                ->with(new Dialog('@payment-dialog'), function (Browser $browser) {
+                ->with(new Dialog('@payment-dialog'), static function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Top up your wallet')
                         ->assertFocused('#amount')
                         ->assertSeeIn('@button-cancel', 'Cancel')
@@ -85,8 +79,7 @@ class PaymentStripeTest extends TestCaseDusk
                         ->click('@button-action');
                 })
                 ->on(new PaymentStripe())
-                ->assertSeeIn('@title', $user->tenant->title . ' Payment')
-                ->assertSeeIn('@amount', 'CHF 12.34')
+                ->assertDetails($user->tenant->title . ' Payment', 'CHF 12.34')
                 ->assertSeeIn('@email', $user->email)
                 ->submitValidCreditCard();
 
@@ -112,7 +105,7 @@ class PaymentStripeTest extends TestCaseDusk
     public function testAutoPaymentSetup(): void
     {
         $user = $this->getTestUser('payment-test@kolabnow.com', [
-                'password' => 'simple123',
+            'password' => 'simple123',
         ]);
 
         // Test creating auto-payment
@@ -134,11 +127,11 @@ class PaymentStripeTest extends TestCaseDusk
                         ->click('#payment-method-selection .link-creditcard');
                 })
 */
-                ->with(new Dialog('@payment-dialog'), function (Browser $browser) {
+                ->with(new Dialog('@payment-dialog'), static function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Set up auto-payment')
                         ->waitFor('@body #mandate_amount')
                         ->assertSeeIn('@body label[for="mandate_amount"]', 'Fill up by')
-                        ->assertValue('@body #mandate_amount', strval(Payment::MIN_AMOUNT / 100))
+                        ->assertValue('@body #mandate_amount', (string) (Payment::MIN_AMOUNT / 100))
                         ->assertSeeIn('@body label[for="mandate_balance"]', 'when account balance is below') // phpcs:ignore
                         ->assertValue('@body #mandate_balance', '0')
                         ->assertSeeIn('@button-cancel', 'Cancel')
@@ -168,7 +161,7 @@ class PaymentStripeTest extends TestCaseDusk
                         ->click('@button-action');
                 })
                 ->on(new PaymentStripe())
-                ->assertMissing('@title')
+                ->assertMissing('@description')
                 ->assertMissing('@amount')
                 ->assertSeeIn('@email', $user->email)
                 ->submitValidCreditCard()
@@ -194,7 +187,7 @@ class PaymentStripeTest extends TestCaseDusk
         });
 
         // Test updating (disabled) auto-payment
-        $this->browse(function (Browser $browser) use ($user) {
+        $this->browse(static function (Browser $browser) use ($user) {
             $wallet = $user->wallets()->first();
             $wallet->setSetting('mandate_disabled', 1);
 
@@ -207,25 +200,25 @@ class PaymentStripeTest extends TestCaseDusk
                 )
                 ->assertSeeIn('#mandate-info button.btn-primary', 'Change auto-payment')
                 ->click('#mandate-info button.btn-primary')
-                ->with(new Dialog('@payment-dialog'), function (Browser $browser) {
+                ->with(new Dialog('@payment-dialog'), static function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Update auto-payment')
-                    ->assertSeeIn(
-                        '@body form .disabled-mandate',
-                        'The auto-payment is disabled.'
-                    )
-                    ->assertValue('@body #mandate_amount', '100')
-                    ->assertValue('@body #mandate_balance', '0')
-                    ->assertSeeIn('@button-cancel', 'Cancel')
-                    ->assertSeeIn('@button-action', 'Submit')
+                        ->assertSeeIn(
+                            '@body form .disabled-mandate',
+                            'The auto-payment is disabled.'
+                        )
+                        ->assertValue('@body #mandate_amount', '100')
+                        ->assertValue('@body #mandate_balance', '0')
+                        ->assertSeeIn('@button-cancel', 'Cancel')
+                        ->assertSeeIn('@button-action', 'Submit')
                     // Test error handling
-                    ->type('@body #mandate_amount', 'aaa')
-                    ->click('@button-action')
-                    ->assertToast(Toast::TYPE_ERROR, 'Form validation error')
-                    ->assertVisible('@body #mandate_amount.is-invalid')
-                    ->assertSeeIn('#mandate_amount + span + .invalid-feedback', 'The amount must be a number.')
+                        ->type('@body #mandate_amount', 'aaa')
+                        ->click('@button-action')
+                        ->assertToast(Toast::TYPE_ERROR, 'Form validation error')
+                        ->assertVisible('@body #mandate_amount.is-invalid')
+                        ->assertSeeIn('#mandate_amount + span + .invalid-feedback', 'The amount must be a number.')
                     // Submit valid data
-                    ->type('@body #mandate_amount', '50')
-                    ->click('@button-action');
+                        ->type('@body #mandate_amount', '50')
+                        ->click('@button-action');
                 })
                 ->waitUntilMissing('#payment-dialog')
                 ->assertToast(Toast::TYPE_SUCCESS, 'The auto-payment has been updated.')
@@ -237,15 +230,15 @@ class PaymentStripeTest extends TestCaseDusk
         });
 
         // Test deleting auto-payment
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->on(new WalletPage())
-            ->waitFor('#mandate-info')
-            ->assertSeeIn('#mandate-info * button.btn-danger', 'Cancel auto-payment')
-            ->assertVisible('#mandate-info * button.btn-danger')
-            ->click('#mandate-info * button.btn-danger')
-            ->assertToast(Toast::TYPE_SUCCESS, 'The auto-payment has been removed.')
-            ->assertVisible('#mandate-form')
-            ->assertMissing('#mandate-info');
+                ->waitFor('#mandate-info')
+                ->assertSeeIn('#mandate-info * button.btn-danger', 'Cancel auto-payment')
+                ->assertVisible('#mandate-info * button.btn-danger')
+                ->click('#mandate-info * button.btn-danger')
+                ->assertToast(Toast::TYPE_SUCCESS, 'The auto-payment has been removed.')
+                ->assertVisible('#mandate-form')
+                ->assertMissing('#mandate-info');
         });
     }
 }

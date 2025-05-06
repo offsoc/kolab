@@ -2,13 +2,12 @@
 
 namespace Tests\Browser\Components;
 
+use Laravel\Dusk\Browser;
 use Laravel\Dusk\Component as BaseComponent;
-use PHPUnit\Framework\Assert as PHPUnit;
 
 class QuotaInput extends BaseComponent
 {
     protected $selector;
-
 
     public function __construct($selector)
     {
@@ -28,9 +27,7 @@ class QuotaInput extends BaseComponent
     /**
      * Assert that the browser page contains the component.
      *
-     * @param \Laravel\Dusk\Browser $browser
-     *
-     * @return void
+     * @param Browser $browser
      */
     public function assert($browser)
     {
@@ -40,15 +37,13 @@ class QuotaInput extends BaseComponent
     /**
      * Assert input value
      *
-     * @param \Laravel\Dusk\Browser $browser The browser
-     * @param int                   $value   Value in GB
-     *
-     * @return void
+     * @param Browser $browser The browser
+     * @param int     $value   Value in GB
      */
     public function assertQuotaValue($browser, $value)
     {
         $browser->assertValue('@input', (string) $value)
-            ->assertSeeIn('@label', "$value GB");
+            ->assertSeeIn('@label', "{$value} GB");
     }
 
     /**
@@ -67,10 +62,8 @@ class QuotaInput extends BaseComponent
     /**
      * Set input value
      *
-     * @param \Laravel\Dusk\Browser $browser The browser
-     * @param int                   $value   Value in GB
-     *
-     * @return void
+     * @param Browser $browser The browser
+     * @param int     $value   Value in GB
      */
     public function setQuotaValue($browser, $value)
     {
@@ -83,6 +76,6 @@ class QuotaInput extends BaseComponent
             $num--;
         }
 
-        $browser->assertSeeIn('@label', "$value GB");
+        $browser->assertSeeIn('@label', "{$value} GB");
     }
 }

@@ -3,6 +3,16 @@
 namespace App\Console\Commands\Data\Import;
 
 use App\Console\Command;
+use App\Domain;
+use App\Group;
+use App\Package;
+use App\Resource;
+use App\SharedFolder;
+use App\Sku;
+use App\Tenant;
+use App\User;
+use App\Utils;
+use App\Wallet;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -35,12 +45,11 @@ class LdifCommand extends Command
     /** @var array Packages information */
     protected $packages = [];
 
-    /** @var ?\App\Wallet A wallet of the account owner */
+    /** @var ?Wallet A wallet of the account owner */
     protected $wallet;
 
     /** @var string Temp table name */
     protected static $table = 'tmp_ldif_import';
-
 
     /**
      * Execute the console command.
@@ -50,7 +59,7 @@ class LdifCommand extends Command
     public function handle()
     {
         if ($tenantId = $this->option('tenant')) {
-            $tenant = $this->getObject(\App\Tenant::class, $tenantId, 'title');
+            $tenant = $this->getObject(Tenant::class, $tenantId, 'title');
             if (!$tenant) {
                 $this->error("Tenant {$tenantId} not found");
                 return 1;
@@ -65,7 +74,7 @@ class LdifCommand extends Command
         Schema::dropIfExists(self::$table);
         Schema::create(
             self::$table,
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->text('dn')->index();
                 $table->string('type')->nullable()->index();
@@ -120,7 +129,7 @@ class LdifCommand extends Command
     {
         $file = $this->argument('file');
 
-        $numLines = \App\Utils::countLines($file);
+        $numLines = Utils::countLines($file);
 
         $bar = $this->createProgressBar($numLines, "Parsing input file");
 
@@ -166,7 +175,7 @@ class LdifCommand extends Command
                     $entry[$lastAttr] .= ltrim($line);
                 }
             } else {
-                list ($attr, $remainder) = explode(':', $line, 2);
+                [$attr, $remainder] = explode(':', $line, 2);
                 $attr = strtolower($attr);
 
                 if ($remainder[0] === ':') {
@@ -210,16 +219,16 @@ class LdifCommand extends Command
 
             $data = json_decode($_domain->data);
 
-            $domain = \App\Domain::withTrashed()->where('namespace', $data->namespace)->first();
+            $domain = Domain::withTrashed()->where('namespace', $data->namespace)->first();
 
             if ($domain) {
                 $this->setImportWarning($_domain->id, "Domain already exists");
                 continue;
             }
 
-            $domain = new \App\Domain();
+            $domain = new Domain();
             $domain->namespace = $data->namespace;
-            $domain->type = \App\Domain::TYPE_EXTERNAL;
+            $domain->type = Domain::TYPE_EXTERNAL;
             $domain->tenant_id = $this->tenantId;
             $domain->save();
 
@@ -231,16 +240,16 @@ class LdifCommand extends Command
             if (!empty($data->aliases)) {
                 foreach ($data->aliases as $alias) {
                     $alias = strtolower($alias);
-                    $domain = \App\Domain::withTrashed()->where('namespace', $alias)->first();
+                    $domain = Domain::withTrashed()->where('namespace', $alias)->first();
 
                     if ($domain) {
                         $this->setImportWarning($_domain->id, "Domain already exists");
                         continue;
                     }
 
-                    $domain = new \App\Domain();
+                    $domain = new Domain();
                     $domain->namespace = $alias;
-                    $domain->type = \App\Domain::TYPE_EXTERNAL;
+                    $domain->type = Domain::TYPE_EXTERNAL;
                     $domain->tenant_id = $this->tenantId;
                     $domain->save();
 
@@ -279,7 +288,7 @@ class LdifCommand extends Command
                 continue;
             }
 
-            $group = \App\Group::withTrashed()->where('email', $data->email)->first();
+            $group = Group::withTrashed()->where('email', $data->email)->first();
 
             if ($group) {
                 $this->setImportWarning($_group->id, "Group already exists");
@@ -292,7 +301,7 @@ class LdifCommand extends Command
                 continue;
             }
 
-            $group = new \App\Group();
+            $group = new Group();
             $group->name = $data->name;
             $group->email = $data->email;
             $group->members = $members;
@@ -326,7 +335,7 @@ class LdifCommand extends Command
 
             $data = json_decode($_resource->data);
 
-            $resource = \App\Resource::withTrashed()
+            $resource = Resource::withTrashed()
                 ->where('name', $data->name)
                 ->where('email', 'like', '%@' . $data->domain)
                 ->first();
@@ -354,7 +363,7 @@ class LdifCommand extends Command
                 continue;
             }
 
-            $resource = new \App\Resource();
+            $resource = new Resource();
             $resource->name = $data->name;
             $resource->domainName = $data->domain;
             $resource->tenant_id = $this->tenantId;
@@ -392,7 +401,7 @@ class LdifCommand extends Command
 
             $data = json_decode($_folder->data);
 
-            $folder = \App\SharedFolder::withTrashed()
+            $folder = SharedFolder::withTrashed()
                 ->where('name', $data->name)
                 ->where('email', 'like', '%@' . $data->domain)
                 ->first();
@@ -408,7 +417,7 @@ class LdifCommand extends Command
                 continue;
             }
 
-            $folder = new \App\SharedFolder();
+            $folder = new SharedFolder();
             $folder->name = $data->name;
             $folder->type = $data->type ?? 'mail';
             $folder->domainName = $data->domain;
@@ -507,7 +516,7 @@ class LdifCommand extends Command
     {
         $data = json_decode($ldap_user->data);
 
-        $user = \App\User::withTrashed()->where('email', $data->email)->first();
+        $user = User::withTrashed()->where('email', $data->email)->first();
 
         if ($user) {
             $this->setImportWarning($ldap_user->id, "User already exists");
@@ -520,7 +529,7 @@ class LdifCommand extends Command
             return;
         }
 
-        $user = \App\User::create(['email' => $data->email]);
+        $user = User::create(['email' => $data->email]);
 
         // Entitlements
         $user->assignPackageAndWallet($this->packages['user'], $this->wallet ?: $user->wallets()->first());
@@ -548,7 +557,7 @@ class LdifCommand extends Command
 
         // Update password
         if ($data->password != $user->password_ldap) {
-            \App\User::where('id', $user->id)->update(['password_ldap' => $data->password]);
+            User::where('id', $user->id)->update(['password_ldap' => $data->password]);
         }
 
         // Import aliases
@@ -599,7 +608,7 @@ class LdifCommand extends Command
 
         if (empty($error)) {
             $method = 'parseLDAP' . ucfirst($type);
-            list($data, $error) = $this->{$method}($entry);
+            [$data, $error] = $this->{$method}($entry);
 
             if (empty($data['domain']) && !empty($data['email'])) {
                 $data['domain'] = explode('@', $data['email'])[1];
@@ -846,7 +855,7 @@ class LdifCommand extends Command
             ->where('type', 'user')
             ->whereNull('error')
             ->get()
-            ->map(function ($user) {
+            ->map(static function ($user) {
                 $mdata = json_decode($user->data);
                 return $mdata->email;
             })
@@ -858,7 +867,7 @@ class LdifCommand extends Command
 
         // Get email addresses for existing Kolab4 users
         if (!empty($users)) {
-            $users = \App\User::whereIn('email', $users)->get()->pluck('email')->all();
+            $users = User::whereIn('email', $users)->get()->pluck('email')->all();
         }
 
         return $users;
@@ -970,15 +979,15 @@ class LdifCommand extends Command
         // TODO: We should probably make package titles configurable with command options
 
         $this->packages = [
-            'user' => \App\Package::where('title', 'kolab')->where('tenant_id', $this->tenantId)->first(),
-            'domain' => \App\Package::where('title', 'domain-hosting')->where('tenant_id', $this->tenantId)->first(),
+            'user' => Package::where('title', 'kolab')->where('tenant_id', $this->tenantId)->first(),
+            'domain' => Package::where('title', 'domain-hosting')->where('tenant_id', $this->tenantId)->first(),
         ];
 
         // Count storage skus
         $sku = $this->packages['user']->skus()->where('title', 'storage')->first();
 
         $this->packages['quota'] = $sku ? $sku->pivot->qty : 0;
-        $this->packages['storage'] = \App\Sku::where('title', 'storage')->where('tenant_id', $this->tenantId)->first();
+        $this->packages['storage'] = Sku::where('title', 'storage')->where('tenant_id', $this->tenantId)->first();
     }
 
     /**

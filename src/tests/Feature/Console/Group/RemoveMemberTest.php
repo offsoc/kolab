@@ -8,20 +8,14 @@ use Tests\TestCase;
 
 class RemoveMemberTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestGroup('group-test@kolabnow.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestGroup('group-test@kolabnow.com');
 
@@ -46,8 +40,8 @@ class RemoveMemberTest extends TestCase
         $this->assertSame("Group test@group.com does not exist.", $output);
 
         $group = Group::create([
-                'email' => 'group-test@kolabnow.com',
-                'members' => ['member1@gmail.com', 'member2@gmail.com'],
+            'email' => 'group-test@kolabnow.com',
+            'members' => ['member1@gmail.com', 'member2@gmail.com'],
         ]);
 
         // Existing group, non-existing member

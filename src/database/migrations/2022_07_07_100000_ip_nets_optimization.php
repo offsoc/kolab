@@ -5,8 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -17,7 +16,7 @@ return new class extends Migration
 
         Schema::create(
             'ip4nets',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->string('rir_name', 8);
                 $table->bigInteger('net_number');
@@ -33,7 +32,7 @@ return new class extends Migration
 
         Schema::create(
             'ip6nets',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->string('rir_name', 8);
                 $table->bigInteger('net_number');
@@ -64,7 +63,7 @@ return new class extends Migration
 
         Schema::create(
             'ip4nets',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->string('rir_name', 8);
                 $table->string('net_number', 15)->index();
@@ -80,7 +79,7 @@ return new class extends Migration
 
         Schema::create(
             'ip6nets',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->string('rir_name', 8);
                 $table->string('net_number', 39)->index();

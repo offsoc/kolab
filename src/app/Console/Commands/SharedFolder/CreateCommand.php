@@ -3,9 +3,9 @@
 namespace App\Console\Commands\SharedFolder;
 
 use App\Console\Command;
-use App\SharedFolder;
 use App\Rules\SharedFolderName;
 use App\Rules\SharedFolderType;
+use App\SharedFolder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
@@ -63,7 +63,7 @@ class CreateCommand extends Command
         // Validate folder name and type
         $rules = [
             'name' => ['required', 'string', new SharedFolderName($owner, $domain->namespace)],
-            'type' => ['required', 'string', new SharedFolderType()]
+            'type' => ['required', 'string', new SharedFolderType()],
         ];
 
         $v = Validator::make(['name' => $name, 'type' => $type], $rules);

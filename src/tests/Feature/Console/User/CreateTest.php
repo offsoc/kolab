@@ -8,10 +8,7 @@ use Tests\TestCase;
 
 class CreateTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -21,10 +18,7 @@ class CreateTest extends TestCase
         $this->deleteTestUser('reseller@unknown.domain.tld');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('user@kolab.org');
         $this->deleteTestUser('user@kolabnow.com');
@@ -73,7 +67,7 @@ class CreateTest extends TestCase
         $output = trim(\Artisan::output());
         $user = User::where('email', 'user@kolab.org')->first();
         $this->assertSame(0, $code);
-        $this->assertEquals($user->id, $output);
+        $this->assertSame((string) $user->id, $output);
         $this->assertSame(1, $user->countEntitlementsBySku('mailbox'));
         $this->assertSame(1, $user->countEntitlementsBySku('groupware'));
         $this->assertSame(5, $user->countEntitlementsBySku('storage'));
@@ -83,23 +77,23 @@ class CreateTest extends TestCase
         $output = trim(\Artisan::output());
         $user = User::where('email', 'admin@kolab.org')->first();
         $this->assertSame(0, $code);
-        $this->assertEquals($user->id, $output);
-        $this->assertEquals($user->role, User::ROLE_ADMIN);
+        $this->assertSame((string) $user->id, $output);
+        $this->assertSame($user->role, User::ROLE_ADMIN);
 
         // Valid (reseller)
         $code = \Artisan::call("user:create reseller@unknown.domain.tld --role=reseller --password=simple123");
         $output = trim(\Artisan::output());
         $user = User::where('email', 'reseller@unknown.domain.tld')->first();
         $this->assertSame(0, $code);
-        $this->assertEquals($user->id, $output);
-        $this->assertEquals($user->role, User::ROLE_RESELLER);
+        $this->assertSame((string) $user->id, $output);
+        $this->assertSame($user->role, User::ROLE_RESELLER);
 
         // Valid (public domain)
         $code = \Artisan::call("user:create user@kolabnow.com");
         $output = trim(\Artisan::output());
         $user = User::where('email', 'user@kolabnow.com')->first();
         $this->assertSame(0, $code);
-        $this->assertEquals($user->id, $output);
+        $this->assertSame((string) $user->id, $output);
 
         // Invalid role
         $code = \Artisan::call("user:create unknwon@kolab.org --role=unknown");
@@ -112,7 +106,7 @@ class CreateTest extends TestCase
         $output = trim(\Artisan::output());
         $user = User::where('email', 'reseller@unknown.domain.tld')->first();
         $this->assertSame(1, $code);
-        $this->assertEquals("Email address is already in use", $output);
+        $this->assertSame("Email address is already in use", $output);
 
         // TODO: Test a case where deleted user exists
     }

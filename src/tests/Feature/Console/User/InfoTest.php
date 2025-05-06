@@ -2,25 +2,20 @@
 
 namespace Tests\Feature\Console\User;
 
+use App\User;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class InfoTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestUser('user@force-delete.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('user@force-delete.com');
 
@@ -42,7 +37,7 @@ class InfoTest extends TestCase
         $this->assertSame("User not found.", $output);
 
         // Test existing but soft-deleted user
-        $user = $this->getTestUser('user@force-delete.com', ['status' => \App\User::STATUS_NEW]);
+        $user = $this->getTestUser('user@force-delete.com', ['status' => User::STATUS_NEW]);
         $user->delete();
 
         $code = \Artisan::call("user:info {$user->email}");

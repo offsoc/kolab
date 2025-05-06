@@ -3,6 +3,7 @@
 namespace App\Console\Commands\User;
 
 use App\Console\Command;
+use App\Sku;
 use Illuminate\Support\Facades\DB;
 
 class RemoveSkuCommand extends Command
@@ -35,7 +36,7 @@ class RemoveSkuCommand extends Command
             return 1;
         }
 
-        $sku = $this->getObject(\App\Sku::class, $this->argument('sku'), 'title');
+        $sku = $this->getObject(Sku::class, $this->argument('sku'), 'title');
 
         if (!$sku) {
             $this->error("Unable to find the SKU {$this->argument('sku')}.");

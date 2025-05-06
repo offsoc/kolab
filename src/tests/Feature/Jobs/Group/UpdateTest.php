@@ -3,23 +3,21 @@
 namespace Tests\Feature\Jobs\Group;
 
 use App\Group;
+use App\Jobs\Group\UpdateJob;
 use App\Support\Facades\LDAP;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class UpdateTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestGroup('group@kolab.org');
     }
 
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestGroup('group@kolab.org');
 
@@ -34,7 +32,7 @@ class UpdateTest extends TestCase
         Queue::fake();
 
         // Test non-existing group ID
-        $job = (new \App\Jobs\Group\UpdateJob(123))->withFakeQueueInteractions();
+        $job = (new UpdateJob(123))->withFakeQueueInteractions();
         $job->handle();
         $job->assertFailedWith("Group 123 could not be found in the database.");
 
@@ -44,7 +42,7 @@ class UpdateTest extends TestCase
         \config(['app.with_ldap' => true]);
 
         // Group not LDAP_READY
-        $job = (new \App\Jobs\Group\UpdateJob($group->id))->withFakeQueueInteractions();
+        $job = (new UpdateJob($group->id))->withFakeQueueInteractions();
         $job->handle();
         $job->assertDeleted();
 
@@ -57,7 +55,7 @@ class UpdateTest extends TestCase
         LDAP::shouldReceive('updateGroup')->once()->with($group)->andReturn(true);
         LDAP::shouldReceive('disconnect');
 
-        $job = (new \App\Jobs\Group\UpdateJob($group->id))->withFakeQueueInteractions();
+        $job = (new UpdateJob($group->id))->withFakeQueueInteractions();
         $job->handle();
         $job->assertNotFailed();
 
@@ -69,7 +67,7 @@ class UpdateTest extends TestCase
         LDAP::shouldReceive('deleteGroup')->once()->with($group)->andReturn(true);
         LDAP::shouldReceive('disconnect');
 
-        $job = (new \App\Jobs\Group\UpdateJob($group->id))->withFakeQueueInteractions();
+        $job = (new UpdateJob($group->id))->withFakeQueueInteractions();
         $job->handle();
         $job->assertNotFailed();
 
@@ -81,7 +79,7 @@ class UpdateTest extends TestCase
         LDAP::shouldReceive('createGroup')->once()->with($group)->andReturn(true);
         LDAP::shouldReceive('disconnect');
 
-        $job = (new \App\Jobs\Group\UpdateJob($group->id))->withFakeQueueInteractions();
+        $job = (new UpdateJob($group->id))->withFakeQueueInteractions();
         $job->handle();
         $job->assertNotFailed();
     }

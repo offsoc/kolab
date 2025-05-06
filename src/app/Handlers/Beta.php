@@ -3,15 +3,16 @@
 namespace App\Handlers;
 
 use App\Entitlement;
+use App\User;
 
-class Beta extends \App\Handlers\Base
+class Beta extends Base
 {
     /**
      * The entitleable class for this handler.
      */
     public static function entitleableClass(): string
     {
-        return \App\User::class;
+        return User::class;
     }
 
     /**

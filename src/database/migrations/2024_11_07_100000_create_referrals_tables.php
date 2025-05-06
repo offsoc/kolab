@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -13,7 +12,7 @@ return new class extends Migration
     {
         Schema::create(
             'referral_programs',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->bigInteger('tenant_id')->unsigned()->nullable();
                 $table->boolean('active')->default(false);
@@ -34,7 +33,7 @@ return new class extends Migration
 
         Schema::create(
             'referral_codes',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->string('code', 16)->primary();
                 $table->bigInteger('user_id');
                 $table->bigInteger('program_id')->unsigned();
@@ -52,7 +51,7 @@ return new class extends Migration
 
         Schema::create(
             'referrals',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->string('code', 16);
                 $table->bigInteger('user_id');
@@ -71,7 +70,7 @@ return new class extends Migration
 
         Schema::table(
             'signup_codes',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->string('referral', 16)->nullable();
             }
         );
@@ -84,7 +83,7 @@ return new class extends Migration
     {
         Schema::table(
             'signup_codes',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->dropColumn('referral');
             }
         );

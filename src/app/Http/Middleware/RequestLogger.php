@@ -2,13 +2,11 @@
 
 namespace App\Http\Middleware;
 
-use Closure;
-
 class RequestLogger
 {
     private static $start;
 
-    public function handle($request, Closure $next)
+    public function handle($request, \Closure $next)
     {
         // FIXME: This is not really a request start, but we can't
         //        use LARAVEL_START constant when working with swoole

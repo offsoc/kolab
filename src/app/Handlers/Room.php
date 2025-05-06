@@ -2,6 +2,8 @@
 
 namespace App\Handlers;
 
+use App\Sku;
+
 class Room extends Base
 {
     /**
@@ -15,7 +17,7 @@ class Room extends Base
     /**
      * SKU handler metadata.
      */
-    public static function metadata(\App\Sku $sku): array
+    public static function metadata(Sku $sku): array
     {
         $data = parent::metadata($sku);
 

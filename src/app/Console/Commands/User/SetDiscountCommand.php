@@ -3,6 +3,7 @@
 namespace App\Console\Commands\User;
 
 use App\Console\Command;
+use App\Discount;
 
 class SetDiscountCommand extends Command
 {
@@ -37,7 +38,7 @@ class SetDiscountCommand extends Command
         if ($this->argument('discount') === '0') {
             $discount = null;
         } else {
-            $discount = $this->getObject(\App\Discount::class, $this->argument('discount'));
+            $discount = $this->getObject(Discount::class, $this->argument('discount'));
 
             if (!$discount) {
                 $this->error("Discount not found.");

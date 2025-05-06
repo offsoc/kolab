@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Jobs\Resource;
 
+use App\Jobs\Resource\CreateJob;
 use App\Resource;
 use App\Support\Facades\IMAP;
 use App\Support\Facades\LDAP;
@@ -10,17 +11,14 @@ use Tests\TestCase;
 
 class CreateTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestResource('resource-test@' . \config('app.domain'));
     }
 
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestResource('resource-test@' . \config('app.domain'));
 
@@ -35,7 +33,7 @@ class CreateTest extends TestCase
         Queue::fake();
 
         // Test unknown resource
-        $job = (new \App\Jobs\Resource\CreateJob(123))->withFakeQueueInteractions();
+        $job = (new CreateJob(123))->withFakeQueueInteractions();
         $job->handle();
         $job->assertReleased();
 
@@ -56,7 +54,7 @@ class CreateTest extends TestCase
         IMAP::shouldReceive('createResource')->once()->with($resource)->andReturn(true);
         LDAP::shouldReceive('createResource')->once()->with($resource)->andReturn(true);
 
-        $job = (new \App\Jobs\Resource\CreateJob($resource->id))->withFakeQueueInteractions();
+        $job = (new CreateJob($resource->id))->withFakeQueueInteractions();
         $job->handle();
         $job->assertNotFailed();
 
@@ -72,7 +70,7 @@ class CreateTest extends TestCase
         $resource->status |= Resource::STATUS_DELETED;
         $resource->save();
 
-        $job = (new \App\Jobs\Resource\CreateJob($resource->id))->withFakeQueueInteractions();
+        $job = (new CreateJob($resource->id))->withFakeQueueInteractions();
         $job->handle();
         $job->assertFailedWith("Resource {$resource->id} is marked as deleted.");
 
@@ -80,7 +78,7 @@ class CreateTest extends TestCase
         $resource->save();
         $resource->delete();
 
-        $job = (new \App\Jobs\Resource\CreateJob($resource->id))->withFakeQueueInteractions();
+        $job = (new CreateJob($resource->id))->withFakeQueueInteractions();
         $job->handle();
         $job->assertFailedWith("Resource {$resource->id} is actually deleted.");
 

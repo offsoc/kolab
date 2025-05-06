@@ -28,10 +28,7 @@ class KolabTest extends TestCase
     private static $skipTearDown = false;
     private static $skipSetUp = false;
 
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -43,10 +40,7 @@ class KolabTest extends TestCase
         self::$skipSetUp = false;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         if (!self::$skipTearDown) {
             MigratorQueue::truncate();
@@ -178,9 +172,9 @@ class KolabTest extends TestCase
         $this->assertTrue($folders['Files']->children->contains($files['empty.txt']));
         $this->assertTrue($folders['Files']->children->contains($files['&kość.odt']));
         $this->assertTrue($folders['A€B']->children->contains($files['test2.odt']));
-        $this->assertEquals(10000, $files['&kość.odt']->getProperty('size'));
-        $this->assertEquals(0, $files['empty.txt']->getProperty('size'));
-        $this->assertEquals(10000, $files['test2.odt']->getProperty('size'));
+        $this->assertSame(10000, (int) $files['&kość.odt']->getProperty('size'));
+        $this->assertSame(0, (int) $files['empty.txt']->getProperty('size'));
+        $this->assertSame(10000, (int) $files['test2.odt']->getProperty('size'));
         $this->assertSame('application/vnd.oasis.opendocument.odt', $files['&kość.odt']->getProperty('mimetype'));
         $this->assertSame('text/plain', $files['empty.txt']->getProperty('mimetype'));
         $this->assertSame('application/vnd.oasis.opendocument.odt', $files['test2.odt']->getProperty('mimetype'));
@@ -213,7 +207,7 @@ class KolabTest extends TestCase
         $replace = [
             // '/john@kolab.org/' => 'ned@kolab.org',
             '/DTSTAMP:19970714T170000Z/' => 'DTSTAMP:20240714T170000Z',
-            '/SUMMARY:Party/' => 'SUMMARY:Test'
+            '/SUMMARY:Party/' => 'SUMMARY:Test',
         ];
         $this->davAppend($src_dav, 'Calendar', ['event/1.ics'], Engine::TYPE_EVENT, $replace);
         $this->imapEmptyFolder($src_imap, 'Files');
@@ -223,7 +217,7 @@ class KolabTest extends TestCase
 
         // Run the migration
         $migrator = new Engine();
-        $migrator->migrate($src, $dst, ['force' => true,'sync' => true]);
+        $migrator->migrate($src, $dst, ['force' => true, 'sync' => true]);
 
         // Assert the migrated mail
         $messages = $this->imapList($dst_imap, 'INBOX');
@@ -270,7 +264,7 @@ class KolabTest extends TestCase
             ->keyBy('name')
             ->all();
         $this->assertSame(3, count($files));
-        $this->assertEquals(3, $files['&kość.odt']->getProperty('size'));
+        $this->assertSame(3, (int) $files['&kość.odt']->getProperty('size'));
         $this->assertSame('application/vnd.oasis.opendocument.odt', $files['&kość.odt']->getProperty('mimetype'));
         $this->assertSame('2024-01-12 09:09:09', $files['&kość.odt']->updated_at->toDateTimeString());
         $this->assertSame('123', Storage::fileFetch($files['&kość.odt']));
@@ -319,7 +313,7 @@ class KolabTest extends TestCase
         $dav_uri = \config('services.dav.uri');
         $dav_uri = preg_replace('|^http|', 'dav', $dav_uri);
         $imap_uri = \config('services.imap.uri');
-        if (strpos($imap_uri, '://') === false) {
+        if (!str_contains($imap_uri, '://')) {
             $imap_uri = 'imap://' . $imap_uri;
         }
 

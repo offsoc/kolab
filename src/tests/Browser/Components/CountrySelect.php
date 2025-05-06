@@ -2,6 +2,7 @@
 
 namespace Tests\Browser\Components;
 
+use Laravel\Dusk\Browser;
 use Laravel\Dusk\Component as BaseComponent;
 use PHPUnit\Framework\Assert as PHPUnit;
 
@@ -9,7 +10,6 @@ class CountrySelect extends BaseComponent
 {
     protected $selector;
     protected $countries;
-
 
     public function __construct($selector)
     {
@@ -30,9 +30,7 @@ class CountrySelect extends BaseComponent
     /**
      * Assert that the browser page contains the component.
      *
-     * @param \Laravel\Dusk\Browser $browser
-     *
-     * @return void
+     * @param Browser $browser
      */
     public function assert($browser)
     {
@@ -61,7 +59,7 @@ class CountrySelect extends BaseComponent
         if (empty($list)) {
             $browser->assertSeeIn('@link', 'No restrictions')
                 ->click('@link')
-                ->with(new Dialog('@dialog'), function ($browser) {
+                ->with(new Dialog('@dialog'), static function ($browser) {
                     $browser->waitFor('.world-map > svg', 10);
                     $selected = $browser->elements('.world-map [aria-selected="true"]');
 
@@ -77,7 +75,7 @@ class CountrySelect extends BaseComponent
 
         $browser->assertSeeIn('@link', $this->countriesText($list))
             ->click('@link')
-            ->with(new Dialog('@dialog'), function ($browser) use ($list) {
+            ->with(new Dialog('@dialog'), static function ($browser) use ($list) {
                 $browser->waitFor('.world-map > svg', 10);
                 $selected = $browser->elements('.world-map [aria-selected="true"]');
 
@@ -99,7 +97,7 @@ class CountrySelect extends BaseComponent
     public function setCountries($browser, array $list)
     {
         $browser->click('@link')
-            ->with(new Dialog('@dialog'), function ($browser) use ($list) {
+            ->with(new Dialog('@dialog'), static function ($browser) use ($list) {
                 $browser->waitFor('.world-map > svg')
                     ->execScript("\$('.world-map [cc]').attr('aria-selected', '')");
 

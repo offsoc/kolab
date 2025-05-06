@@ -12,14 +12,11 @@ class NegativeBalanceDegraded extends Mailable
     /** @var Wallet A wallet with a negative balance */
     protected $wallet;
 
-
     /**
      * Create a new message instance.
      *
      * @param Wallet $wallet A wallet
      * @param User   $user   A wallet controller to whom the email is being sent
-     *
-     * @return void
      */
     public function __construct(Wallet $wallet, User $user)
     {
@@ -47,9 +44,9 @@ class NegativeBalanceDegraded extends Mailable
             ->text('emails.plain.negative_balance_degraded')
             ->subject(\trans('mail.negativebalancedegraded-subject', $vars))
             ->with([
-                    'vars' => $vars,
-                    'supportUrl' => Utils::serviceUrl($supportUrl, $this->user->tenant_id),
-                    'walletUrl' => Utils::serviceUrl('/wallet', $this->user->tenant_id),
+                'vars' => $vars,
+                'supportUrl' => Utils::serviceUrl($supportUrl, $this->user->tenant_id),
+                'walletUrl' => Utils::serviceUrl('/wallet', $this->user->tenant_id),
             ]);
 
         return $this;

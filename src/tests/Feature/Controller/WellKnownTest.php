@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Controller;
 
+use App\Utils;
 use Tests\TestCase;
 
 class WellKnownTest extends TestCase
@@ -11,7 +12,7 @@ class WellKnownTest extends TestCase
      */
     public function testOpenidConfiguration(): void
     {
-        $href = \App\Utils::serviceUrl('/');
+        $href = Utils::serviceUrl('/');
 
         // HTTP_HOST is not set in tests for some reason, but it's required down the line
         $host = parse_url($href, \PHP_URL_HOST);
@@ -31,10 +32,10 @@ class WellKnownTest extends TestCase
                     'password',
                 ],
                 'response_types_supported' => [
-                    'code'
+                    'code',
                 ],
                 'id_token_signing_alg_values_supported' => [
-                    'RS256'
+                    'RS256',
                 ],
                 'scopes_supported' => [
                     'openid',

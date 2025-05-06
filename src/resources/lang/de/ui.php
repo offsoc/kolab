@@ -1,7 +1,6 @@
 <?php
 
 return [
-
     'btn' => [
         'cancel' => "Stornieren",
         'save' => "Speichern",
@@ -26,5 +25,4 @@ return [
         'signup' => "Signup",
         'toggle' => "Navigation umschalten",
     ],
-
 ];

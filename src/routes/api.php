@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\API;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::post('oauth/approve', [API\AuthController::class, 'oauthApprove'])
@@ -10,14 +9,14 @@ Route::post('oauth/approve', [API\AuthController::class, 'oauthApprove'])
 Route::group(
     [
         'middleware' => 'api',
-        'prefix' => 'auth'
+        'prefix' => 'auth',
     ],
-    function () {
+    static function () {
         Route::post('login', [API\AuthController::class, 'login']);
 
         Route::group(
             ['middleware' => ['auth:api', 'scope:api']],
-            function () {
+            static function () {
                 Route::get('info', [API\AuthController::class, 'info']);
                 Route::post('info', [API\AuthController::class, 'info']);
                 Route::get('location', [API\AuthController::class, 'location']);
@@ -32,9 +31,9 @@ Route::group(
     [
         'domain' => \config('app.website_domain'),
         'middleware' => 'api',
-        'prefix' => 'auth'
+        'prefix' => 'auth',
     ],
-    function () {
+    static function () {
         Route::post('password-policy/check', [API\PasswordPolicyController::class, 'check']);
 
         Route::post('password-reset/init', [API\PasswordResetController::class, 'init']);
@@ -48,9 +47,9 @@ if (\config('app.with_signup')) {
         [
             'domain' => \config('app.website_domain'),
             'middleware' => 'api',
-            'prefix' => 'auth'
+            'prefix' => 'auth',
         ],
-        function () {
+        static function () {
             Route::get('signup/domains', [API\SignupController::class, 'domains']);
             Route::post('signup/init', [API\SignupController::class, 'init']);
             Route::get('signup/invitations/{id}', [API\SignupController::class, 'invitation']);
@@ -66,9 +65,9 @@ Route::group(
     [
         'domain' => \config('app.website_domain'),
         'middleware' => ['auth:api', 'scope:mfa,api'],
-        'prefix' => 'v4'
+        'prefix' => 'v4',
     ],
-    function () {
+    static function () {
         Route::post('auth-attempts/{id}/confirm', [API\V4\AuthAttemptsController::class, 'confirm']);
         Route::post('auth-attempts/{id}/deny', [API\V4\AuthAttemptsController::class, 'deny']);
         Route::get('auth-attempts/{id}/details', [API\V4\AuthAttemptsController::class, 'details']);
@@ -82,25 +81,25 @@ if (\config('app.with_files')) {
     Route::group(
         [
             'middleware' => ['auth:api', 'scope:fs,api'],
-            'prefix' => 'v4'
+            'prefix' => 'v4',
         ],
-        function () {
-                Route::apiResource('fs', API\V4\FsController::class);
-                Route::get('fs/{itemId}/permissions', [API\V4\FsController::class, 'getPermissions']);
-                Route::post('fs/{itemId}/permissions', [API\V4\FsController::class, 'createPermission']);
-                Route::put('fs/{itemId}/permissions/{id}', [API\V4\FsController::class, 'updatePermission']);
-                Route::delete('fs/{itemId}/permissions/{id}', [API\V4\FsController::class, 'deletePermission']);
+        static function () {
+            Route::apiResource('fs', API\V4\FsController::class);
+            Route::get('fs/{itemId}/permissions', [API\V4\FsController::class, 'getPermissions']);
+            Route::post('fs/{itemId}/permissions', [API\V4\FsController::class, 'createPermission']);
+            Route::put('fs/{itemId}/permissions/{id}', [API\V4\FsController::class, 'updatePermission']);
+            Route::delete('fs/{itemId}/permissions/{id}', [API\V4\FsController::class, 'deletePermission']);
         }
     );
     Route::group(
         [
             'middleware' => [],
-            'prefix' => 'v4'
+            'prefix' => 'v4',
         ],
-        function () {
-                Route::post('fs/uploads/{id}', [API\V4\FsController::class, 'upload'])
-                    ->middleware(['api']);
-                Route::get('fs/downloads/{id}', [API\V4\FsController::class, 'download']);
+        static function () {
+            Route::post('fs/uploads/{id}', [API\V4\FsController::class, 'upload'])
+                ->middleware(['api']);
+            Route::get('fs/downloads/{id}', [API\V4\FsController::class, 'download']);
         }
     );
 }
@@ -109,9 +108,9 @@ Route::group(
     [
         'domain' => \config('app.website_domain'),
         'middleware' => ['auth:api', 'scope:api'],
-        'prefix' => 'v4'
+        'prefix' => 'v4',
     ],
-    function () {
+    static function () {
         Route::apiResource('companions', API\V4\CompanionAppsController::class);
         // This must not be accessible with the 2fa token,
         // to prevent an attacker from pairing a new device with a stolen token.
@@ -174,7 +173,7 @@ Route::group(
         Route::delete('password-reset/code/{id}', [API\PasswordResetController::class, 'codeDelete']);
 
         Route::post('payments', [API\V4\PaymentsController::class, 'store']);
-        //Route::delete('payments', [API\V4\PaymentsController::class, 'cancel']);
+        // Route::delete('payments', [API\V4\PaymentsController::class, 'cancel']);
         Route::get('payments/mandate', [API\V4\PaymentsController::class, 'mandate']);
         Route::post('payments/mandate', [API\V4\PaymentsController::class, 'mandateCreate']);
         Route::put('payments/mandate', [API\V4\PaymentsController::class, 'mandateUpdate']);
@@ -203,9 +202,9 @@ Route::group(
 Route::group(
     [
         'domain' => \config('app.website_domain'),
-        'prefix' => 'webhooks'
+        'prefix' => 'webhooks',
     ],
-    function () {
+    static function () {
         Route::post('payment/{provider}', [API\V4\PaymentsController::class, 'webhook']);
         Route::post('meet', [API\V4\MeetController::class, 'webhook']);
     }
@@ -215,9 +214,9 @@ if (\config('app.with_services')) {
     Route::group(
         [
             'middleware' => ['allowedHosts'],
-            'prefix' => 'webhooks'
+            'prefix' => 'webhooks',
         ],
-        function () {
+        static function () {
             Route::get('nginx', [API\V4\NGINXController::class, 'authenticate']);
             Route::get('nginx-roundcube', [API\V4\NGINXController::class, 'authenticateRoundcube']);
             Route::get('nginx-httpauth', [API\V4\NGINXController::class, 'httpauth']);
@@ -244,7 +243,7 @@ if (\config('app.with_admin')) {
             'middleware' => ['auth:api', 'admin'],
             'prefix' => 'v4',
         ],
-        function () {
+        static function () {
             Route::apiResource('domains', API\V4\Admin\DomainsController::class);
             Route::get('domains/{id}/skus', [API\V4\Admin\DomainsController::class, 'skus']);
             Route::post('domains/{id}/suspend', [API\V4\Admin\DomainsController::class, 'suspend']);
@@ -285,7 +284,7 @@ if (\config('app.with_admin')) {
             'domain' => 'admin.' . \config('app.website_domain'),
             'prefix' => 'v4',
         ],
-        function () {
+        static function () {
             Route::get('inspect-request', [API\V4\Admin\UsersController::class, 'inspectRequest']);
         }
     );
@@ -298,7 +297,7 @@ if (\config('app.with_reseller')) {
             'middleware' => ['auth:api', 'reseller'],
             'prefix' => 'v4',
         ],
-        function () {
+        static function () {
             Route::apiResource('domains', API\V4\Reseller\DomainsController::class);
             Route::get('domains/{id}/skus', [API\V4\Reseller\DomainsController::class, 'skus']);
             Route::post('domains/{id}/suspend', [API\V4\Reseller\DomainsController::class, 'suspend']);

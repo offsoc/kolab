@@ -4,17 +4,14 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-// phpcs:ignore
 class CreateCompanionAppsTable extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up()
     {
-        Schema::create('companion_apps', function (Blueprint $table) {
+        Schema::create('companion_apps', static function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->bigInteger('user_id');
             // Seems to grow over time, no clear specification.
@@ -35,8 +32,6 @@ class CreateCompanionAppsTable extends Migration
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
     public function down()
     {

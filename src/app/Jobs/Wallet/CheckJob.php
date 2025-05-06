@@ -2,7 +2,13 @@
 
 namespace App\Jobs\Wallet;
 
+use App\Enums\Queue;
 use App\Jobs\CommonJob;
+use App\Mail\DegradedAccountReminder;
+use App\Mail\Helper;
+use App\Mail\NegativeBalance;
+use App\Mail\NegativeBalanceDegraded;
+use App\Mail\NegativeBalanceReminderDegrade;
 use App\Wallet;
 use Carbon\Carbon;
 
@@ -17,7 +23,7 @@ class CheckJob extends CommonJob
     public $tries = 5;
 
     /** @var string|null The name of the queue the job should be sent to. */
-    public $queue = \App\Enums\Queue::Background->value;
+    public $queue = Queue::Background->value;
 
     /** @var ?Wallet A wallet object */
     protected $wallet;
@@ -25,13 +31,10 @@ class CheckJob extends CommonJob
     /** @var string A wallet identifier */
     protected $walletId;
 
-
     /**
      * Create a new job instance.
      *
-     * @param string $walletId The wallet that has been charged.
-     *
-     * @return void
+     * @param string $walletId the wallet that has been charged
      */
     public function __construct(string $walletId)
     {
@@ -109,10 +112,10 @@ class CheckJob extends CommonJob
         }
 
         if (!$this->wallet->owner->isSuspended()) {
-            $this->sendMail(\App\Mail\NegativeBalance::class, false);
+            $this->sendMail(NegativeBalance::class, false);
         }
 
-        $now = \Carbon\Carbon::now()->toDateTimeString();
+        $now = Carbon::now()->toDateTimeString();
         $this->wallet->setSetting('balance_warning_initial', $now);
     }
 
@@ -130,10 +133,10 @@ class CheckJob extends CommonJob
         }
 
         if (!$this->wallet->owner->isSuspended()) {
-            $this->sendMail(\App\Mail\NegativeBalanceReminderDegrade::class, true);
+            $this->sendMail(NegativeBalanceReminderDegrade::class, true);
         }
 
-        $now = \Carbon\Carbon::now()->toDateTimeString();
+        $now = Carbon::now()->toDateTimeString();
         $this->wallet->setSetting('balance_warning_reminder', $now);
     }
 
@@ -161,7 +164,7 @@ class CheckJob extends CommonJob
         );
 
         if (!$this->wallet->owner->isSuspended()) {
-            $this->sendMail(\App\Mail\NegativeBalanceDegraded::class, true);
+            $this->sendMail(NegativeBalanceDegraded::class, true);
         }
     }
 
@@ -179,7 +182,7 @@ class CheckJob extends CommonJob
             return;
         }
 
-        $now = \Carbon\Carbon::now();
+        $now = Carbon::now();
         $last = $this->wallet->getSetting('degraded_last_reminder');
 
         if ($last) {
@@ -190,7 +193,7 @@ class CheckJob extends CommonJob
                 return;
             }
 
-            $this->sendMail(\App\Mail\DegradedAccountReminder::class, false);
+            $this->sendMail(DegradedAccountReminder::class, false);
         }
 
         $this->wallet->setSetting('degraded_last_reminder', $now->toDateTimeString());
@@ -199,8 +202,8 @@ class CheckJob extends CommonJob
     /**
      * Send the email
      *
-     * @param string  $class         Mailable class name
-     * @param bool    $with_external Use users's external email
+     * @param string $class         Mailable class name
+     * @param bool   $with_external Use users's external email
      */
     protected function sendMail($class, $with_external = false): void
     {
@@ -208,7 +211,7 @@ class CheckJob extends CommonJob
 
         $mail = new $class($this->wallet, $this->wallet->owner);
 
-        list($to, $cc) = \App\Mail\Helper::userEmails($this->wallet->owner, $with_external);
+        [$to, $cc] = Helper::userEmails($this->wallet->owner, $with_external);
 
         if (!empty($to) || !empty($cc)) {
             $params = [
@@ -217,7 +220,7 @@ class CheckJob extends CommonJob
                 'add' => " for {$this->wallet->id}",
             ];
 
-            \App\Mail\Helper::sendMail($mail, $this->wallet->owner->tenant_id, $params);
+            Helper::sendMail($mail, $this->wallet->owner->tenant_id, $params);
         }
     }
 

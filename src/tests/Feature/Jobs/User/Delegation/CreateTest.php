@@ -3,6 +3,7 @@
 namespace Tests\Feature\Jobs\User\Delegation;
 
 use App\Delegation;
+use App\Jobs\User\Delegation\CreateJob;
 use App\Support\Facades\DAV;
 use App\Support\Facades\IMAP;
 use App\Support\Facades\Roundcube;
@@ -12,10 +13,7 @@ use Tests\TestCase;
 
 class CreateTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -23,10 +21,7 @@ class CreateTest extends TestCase
         $this->deleteTestUser('delegation-user2@' . \config('app.domain'));
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('delegation-user1@' . \config('app.domain'));
         $this->deleteTestUser('delegation-user2@' . \config('app.domain'));
@@ -60,7 +55,7 @@ class CreateTest extends TestCase
         DAV::shouldReceive('shareDefaultFolders')->once()->with($user, $delegatee, $delegation->options);
         Roundcube::shouldReceive('createDelegatedIdentities')->once()->with($delegatee, $user);
 
-        $job = (new \App\Jobs\User\Delegation\CreateJob($delegation->id))->withFakeQueueInteractions();
+        $job = (new CreateJob($delegation->id))->withFakeQueueInteractions();
         $job->handle();
         $job->assertNotFailed();
 

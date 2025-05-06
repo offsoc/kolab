@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\V4;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ConfigController extends Controller
@@ -10,7 +11,7 @@ class ConfigController extends Controller
     /**
      * Get the per-user webmail configuration.
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function webmail(Request $request)
     {

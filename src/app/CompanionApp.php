@@ -2,9 +2,11 @@
 
 namespace App;
 
+use App\Auth\PassportClient;
 use App\Traits\UuidStrKeyTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Http;
+use Laravel\Passport\Client;
 
 /**
  * The eloquent definition of a CompanionApp.
@@ -28,10 +30,11 @@ class CompanionApp extends Model
      * Send a notification via firebase.
      *
      * @param array $deviceIds A list of device id's to send the notification to
-     * @param array $data      The data to include in the notification.
+     * @param array $data      the data to include in the notification
+     *
+     * @return bool true if a notification has been sent
      *
      * @throws \Exception on notification failure
-     * @return bool true if a notification has been sent
      */
     private static function pushFirebaseNotification($deviceIds, $data): bool
     {
@@ -58,12 +61,13 @@ class CompanionApp extends Model
     /**
      * Send a notification to a user.
      *
-     * @throws \Exception on notification failure
      * @return bool true if a notification has been sent
+     *
+     * @throws \Exception on notification failure
      */
     public static function notifyUser($userId, $data): bool
     {
-        $notificationTokens = CompanionApp::where('user_id', $userId)
+        $notificationTokens = self::where('user_id', $userId)
             ->where('mfa_enabled', true)
             ->pluck('notification_token')
             ->all();
@@ -78,8 +82,6 @@ class CompanionApp extends Model
 
     /**
      * Returns whether this companion app is paired with a device.
-     *
-     * @return bool
      */
     public function isPaired(): bool
     {
@@ -89,19 +91,19 @@ class CompanionApp extends Model
     /**
      * The PassportClient of this CompanionApp
      *
-     * @return \App\Auth\PassportClient|null
+     * @return PassportClient|null
      */
     public function passportClient()
     {
-        return \App\Auth\PassportClient::find($this->oauth_client_id);
+        return PassportClient::find($this->oauth_client_id);
     }
 
     /**
      * Set the PassportClient of this CompanionApp
      *
-     * @param \Laravel\Passport\Client $client The client object
+     * @param Client $client The client object
      */
-    public function setPassportClient(\Laravel\Passport\Client $client)
+    public function setPassportClient(Client $client)
     {
         return $this->oauth_client_id = $client->id;
     }

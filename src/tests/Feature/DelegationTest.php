@@ -3,16 +3,14 @@
 namespace Tests\Feature;
 
 use App\Delegation;
+use App\Jobs\User\Delegation\DeleteJob;
 use App\User;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class DelegationTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -20,10 +18,7 @@ class DelegationTest extends TestCase
         $this->deleteTestUser('UserAccountB@UserAccount.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('UserAccountA@UserAccount.com');
         $this->deleteTestUser('UserAccountB@UserAccount.com');
@@ -51,10 +46,10 @@ class DelegationTest extends TestCase
 
         $this->assertNull(Delegation::find($delegation->id));
 
-        Queue::assertPushed(\App\Jobs\User\Delegation\DeleteJob::class, 1);
+        Queue::assertPushed(DeleteJob::class, 1);
         Queue::assertPushed(
-            \App\Jobs\User\Delegation\DeleteJob::class,
-            function ($job) use ($userA, $userB) {
+            DeleteJob::class,
+            static function ($job) use ($userA, $userB) {
                 $delegator = TestCase::getObjectProperty($job, 'delegatorEmail');
                 $delegatee = TestCase::getObjectProperty($job, 'delegateeEmail');
                 return $delegator === $userA->email && $delegatee === $userB->email;

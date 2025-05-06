@@ -3,6 +3,7 @@
 namespace App\Console\Commands\Resource;
 
 use App\Console\Command;
+use App\Jobs\Resource\VerifyJob;
 
 class VerifyCommand extends Command
 {
@@ -34,7 +35,7 @@ class VerifyCommand extends Command
             return 1;
         }
 
-        \App\Jobs\Resource\VerifyJob::dispatchSync($resource->id);
+        VerifyJob::dispatchSync($resource->id);
 
         // TODO: We should check the job result and print an error on failure
     }

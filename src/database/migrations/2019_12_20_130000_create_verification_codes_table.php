@@ -3,17 +3,14 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 
-// phpcs:ignore
 class CreateVerificationCodesTable extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up()
     {
-        Schema::create('verification_codes', function (Blueprint $table) {
+        Schema::create('verification_codes', static function (Blueprint $table) {
             $table->bigInteger('user_id');
             $table->string('code', 32);
             $table->string('short_code', 16);
@@ -28,8 +25,6 @@ class CreateVerificationCodesTable extends Migration
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
     public function down()
     {

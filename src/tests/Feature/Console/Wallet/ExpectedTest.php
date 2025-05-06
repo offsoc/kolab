@@ -7,20 +7,14 @@ use Tests\TestCase;
 
 class ExpectedTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestUser('wallets-controller@kolabnow.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('wallets-controller@kolabnow.com');
 
@@ -59,7 +53,7 @@ class ExpectedTest extends TestCase
         $output = trim(\Artisan::output());
 
         $this->assertSame(0, $code);
-        $this->assertTrue(strpos($output, $wallet->id) === false);
+        $this->assertTrue(!str_contains($output, $wallet->id));
 
         // Expected charges for all wallets
         $code = \Artisan::call("wallet:expected");

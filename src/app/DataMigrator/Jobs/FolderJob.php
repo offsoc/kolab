@@ -8,8 +8,8 @@ use App\DataMigrator\Queue;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
 
 class FolderJob implements ShouldQueue
 {
@@ -27,13 +27,10 @@ class FolderJob implements ShouldQueue
     /** @var Folder Job data */
     protected $folder;
 
-
     /**
      * Create a new job instance.
      *
      * @param Folder $folder Folder to process
-     *
-     * @return void
      */
     public function __construct(Folder $folder)
     {
@@ -42,8 +39,6 @@ class FolderJob implements ShouldQueue
 
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle()
     {
@@ -53,10 +48,6 @@ class FolderJob implements ShouldQueue
 
     /**
      * The job failed to process.
-     *
-     * @param \Exception $exception
-     *
-     * @return void
      */
     public function failed(\Exception $exception)
     {

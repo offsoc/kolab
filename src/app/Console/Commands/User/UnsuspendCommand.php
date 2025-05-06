@@ -3,6 +3,7 @@
 namespace App\Console\Commands\User;
 
 use App\Console\Command;
+use App\EventLog;
 
 class UnsuspendCommand extends Command
 {
@@ -36,6 +37,6 @@ class UnsuspendCommand extends Command
 
         $user->unsuspend();
 
-        \App\EventLog::createFor($user, \App\EventLog::TYPE_UNSUSPENDED, $this->option('comment'));
+        EventLog::createFor($user, EventLog::TYPE_UNSUSPENDED, $this->option('comment'));
     }
 }

@@ -3,6 +3,10 @@
 namespace App\Policy;
 
 use App\Policy\SPF\Cache;
+use App\Utils;
+use SPFLib\Check\Environment;
+use SPFLib\Check\Result;
+use SPFLib\Checker;
 
 class SPF
 {
@@ -22,7 +26,7 @@ class SPF
             return $response;
         }
 
-        list($netID, $netType) = \App\Utils::getNetFromAddress($data['client_address']);
+        [$netID, $netType] = Utils::getNetFromAddress($data['client_address']);
 
         // This network can not be recognized.
         if (!$netID) {
@@ -41,8 +45,8 @@ class SPF
             $data['sender'] = '';
         }
 
-        if (strpos($data['sender'], '@') !== false) {
-            list($senderLocal, $senderDomain) = explode('@', $data['sender']);
+        if (str_contains($data['sender'], '@')) {
+            [$senderLocal, $senderDomain] = explode('@', $data['sender']);
 
             if (strlen($senderLocal) >= 255) {
                 $senderLocal = substr($senderLocal, 0, 255);
@@ -55,13 +59,13 @@ class SPF
         $result = Cache::get($cacheKey);
 
         if (!$result) {
-            $environment = new \SPFLib\Check\Environment(
+            $environment = new Environment(
                 $data['client_address'],
                 $data['client_name'],
                 $data['sender']
             );
 
-            $result = (new \SPFLib\Checker())->check($environment);
+            $result = (new Checker())->check($environment);
 
             Cache::set($cacheKey, serialize($result));
         } else {
@@ -72,33 +76,27 @@ class SPF
         $prependSPF = '';
 
         switch ($result->getCode()) {
-            case \SPFLib\Check\Result::CODE_ERROR_PERMANENT:
+            case Result::CODE_ERROR_PERMANENT:
                 $fail = true;
                 $prependSPF = 'Received-SPF: Permerror';
                 break;
-
-            case \SPFLib\Check\Result::CODE_ERROR_TEMPORARY:
+            case Result::CODE_ERROR_TEMPORARY:
                 $prependSPF = 'Received-SPF: Temperror';
                 break;
-
-            case \SPFLib\Check\Result::CODE_FAIL:
+            case Result::CODE_FAIL:
                 $fail = true;
                 $prependSPF = 'Received-SPF: Fail';
                 break;
-
-            case \SPFLib\Check\Result::CODE_SOFTFAIL:
+            case Result::CODE_SOFTFAIL:
                 $prependSPF = 'Received-SPF: Softfail';
                 break;
-
-            case \SPFLib\Check\Result::CODE_NEUTRAL:
+            case Result::CODE_NEUTRAL:
                 $prependSPF = 'Received-SPF: Neutral';
                 break;
-
-            case \SPFLib\Check\Result::CODE_PASS:
+            case Result::CODE_PASS:
                 $prependSPF = 'Received-SPF: Pass';
                 break;
-
-            case \SPFLib\Check\Result::CODE_NONE:
+            case Result::CODE_NONE:
                 $prependSPF = 'Received-SPF: None';
                 break;
         }
@@ -113,7 +111,7 @@ class SPF
             // inbound mail to a local recipient address.
             $objects = null;
             if (array_key_exists('recipient', $data)) {
-                $objects = \App\Utils::findObjectsByRecipientAddress($data['recipient']);
+                $objects = Utils::findObjectsByRecipientAddress($data['recipient']);
             }
 
             if (!empty($objects)) {

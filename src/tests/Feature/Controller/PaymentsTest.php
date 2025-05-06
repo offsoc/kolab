@@ -7,20 +7,14 @@ use Tests\TestCase;
 
 class PaymentsTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         Payment::query()->delete();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         Payment::query()->delete();
 
@@ -44,16 +38,16 @@ class PaymentsTest extends TestCase
         $response->assertStatus(404);
 
         $payment = Payment::create([
-                'id' => 'tr_123456',
-                'status' => Payment::STATUS_PAID,
-                'amount' => 123,
-                'credit_amount' => 123,
-                'currency_amount' => 123,
-                'currency' => 'CHF',
-                'type' => Payment::TYPE_ONEOFF,
-                'wallet_id' => $wallet->id,
-                'provider' => 'mollie',
-                'description' => 'test',
+            'id' => 'tr_123456',
+            'status' => Payment::STATUS_PAID,
+            'amount' => 123,
+            'credit_amount' => 123,
+            'currency_amount' => 123,
+            'currency' => 'CHF',
+            'type' => Payment::TYPE_ONEOFF,
+            'wallet_id' => $wallet->id,
+            'provider' => 'mollie',
+            'description' => 'test',
         ]);
 
         // Test a paid payment

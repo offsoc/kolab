@@ -100,7 +100,7 @@ class MailParserTest extends TestCase
 
         $this->assertSame('aa=aa', $parser->getBody(0));
         $this->assertSame('multipart/alternative', $parser->getContentType());
-        $this->assertSame(null, $parser->getHeader('content-transfer-encoding'));
+        $this->assertNull($parser->getHeader('content-transfer-encoding'));
         $this->assertSame('aa=aa', $part->getBody());
         $this->assertSame('text/plain', $part->getContentType());
         $this->assertSame('quoted-printable', $part->getHeader('content-transfer-encoding'));
@@ -135,7 +135,7 @@ class MailParserTest extends TestCase
 
         $parser = new MailParser($parser->getStream());
 
-        $this->assertSame(null, $parser->getHeader('subject'));
+        $this->assertNull($parser->getHeader('subject'));
         $this->assertSame('eeea', $parser->getBody());
         $this->assertSame('"Sync 1" <test@kolab.org>', $parser->getHeader('from'));
     }

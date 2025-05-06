@@ -3,13 +3,15 @@
 namespace App\Jobs\User;
 
 use App\Jobs\UserJob;
+use App\Support\Facades\IMAP;
+use App\Support\Facades\LDAP;
+use App\Support\Facades\Roundcube;
+use App\User;
 
 class DeleteJob extends UserJob
 {
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle()
     {
@@ -38,27 +40,27 @@ class DeleteJob extends UserJob
         }
 
         if (\config('app.with_ldap') && $user->isLdapReady()) {
-            \App\Support\Facades\LDAP::deleteUser($user);
+            LDAP::deleteUser($user);
 
-            $user->status ^= \App\User::STATUS_LDAP_READY;
+            $user->status ^= User::STATUS_LDAP_READY;
             $user->save();
         }
 
         if ($user->isImapReady()) {
             if (\config('app.with_imap')) {
-                if (!\App\Support\Facades\IMAP::deleteUser($user)) {
+                if (!IMAP::deleteUser($user)) {
                     throw new \Exception("Failed to delete mailbox for user {$this->userId}.");
                 }
             }
 
-            $user->status ^= \App\User::STATUS_IMAP_READY;
+            $user->status ^= User::STATUS_IMAP_READY;
         }
 
         if (\config('database.connections.roundcube')) {
-            \App\Support\Facades\Roundcube::deleteUser($user->email);
+            Roundcube::deleteUser($user->email);
         }
 
-        $user->status |= \App\User::STATUS_DELETED;
+        $user->status |= User::STATUS_DELETED;
         $user->save();
     }
 }

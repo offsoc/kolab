@@ -11,7 +11,7 @@ class Contact extends Item
 {
     public const FOLDER_TYPE = 'IPF.Contact';
     // public const TYPE        = 'IPM.Contact';
-    public const FILE_EXT    = 'vcf';
+    public const FILE_EXT = 'vcf';
 
     /**
      * Get GetItem request parameters
@@ -73,7 +73,7 @@ class Contact extends Item
             }
 
             foreach ($emailEntries->Entry as $email) {
-                $emails[] = 'EMAIL;TYPE=internet:' . strval($email);
+                $emails[] = 'EMAIL;TYPE=internet:' . (string) $email;
             }
 
             if ($emails) {

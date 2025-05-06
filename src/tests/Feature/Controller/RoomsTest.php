@@ -3,24 +3,19 @@
 namespace Tests\Feature\Controller;
 
 use App\Meet\Room;
+use App\Sku;
 use Tests\TestCase;
 
 class RoomsTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         Room::withTrashed()->whereNotIn('name', ['shared', 'john'])->forceDelete();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         Room::withTrashed()->whereNotIn('name', ['shared', 'john'])->forceDelete();
 
@@ -166,8 +161,8 @@ class RoomsTest extends TestCase
         $this->assertCount(2, $json);
         $this->assertSame('success', $json['status']);
         $this->assertSame("Room configuration updated successfully.", $json['message']);
-        $this->assertSame(null, $room->getSetting('password'));
-        $this->assertSame(null, $room->getSetting('locked'));
+        $this->assertNull($room->getSetting('password'));
+        $this->assertNull($room->getSetting('locked'));
 
         // Test invalid option error
         $post = ['password' => 'eee', 'unknown' => 0];
@@ -257,7 +252,7 @@ class RoomsTest extends TestCase
         $this->assertSame($room->id, $json['id']);
         $this->assertSame('test', $json['name']);
         $this->assertSame('desc', $json['description']);
-        $this->assertSame(false, $json['isDeleted']);
+        $this->assertFalse($json['isDeleted']);
         $this->assertTrue($json['isOwner']);
         $this->assertTrue($json['canUpdate']);
         $this->assertTrue($json['canDelete']);
@@ -265,7 +260,7 @@ class RoomsTest extends TestCase
         $this->assertCount(1, $json['skus']);
         $this->assertSame([], $json['config']['acl']);
         $this->assertSame('pass', $json['config']['password']);
-        $this->assertSame(true, $json['config']['locked']);
+        $this->assertTrue($json['config']['locked']);
         $this->assertSame($wallet->id, $json['wallet']['id']);
         $this->assertSame($wallet->currency, $json['wallet']['currency']);
         $this->assertSame($wallet->balance, $json['wallet']['balance']);
@@ -328,9 +323,9 @@ class RoomsTest extends TestCase
 
         $this->assertCount(2, $json);
         $this->assertSame('room', $json[0]['title']);
-        $this->assertSame(true, $json[0]['enabled']);
+        $this->assertTrue($json[0]['enabled']);
         $this->assertSame('group-room', $json[1]['title']);
-        $this->assertSame(false, $json[1]['enabled']);
+        $this->assertFalse($json[1]['enabled']);
 
         // Room's wallet controller, not owner
         $response = $this->actingAs($ned)->get("api/v4/rooms/{$room->id}/skus");
@@ -340,9 +335,9 @@ class RoomsTest extends TestCase
 
         $this->assertCount(2, $json);
         $this->assertSame('room', $json[0]['title']);
-        $this->assertSame(true, $json[0]['enabled']);
+        $this->assertTrue($json[0]['enabled']);
         $this->assertSame('group-room', $json[1]['title']);
-        $this->assertSame(false, $json[1]['enabled']);
+        $this->assertFalse($json[1]['enabled']);
 
         // Test non-controller user, expect no group-room SKU on the list
         $room = $this->getTestRoom('test', $jack->wallets()->first());
@@ -354,7 +349,7 @@ class RoomsTest extends TestCase
 
         $this->assertCount(1, $json);
         $this->assertSame('room', $json[0]['title']);
-        $this->assertSame(true, $json[0]['enabled']);
+        $this->assertTrue($json[0]['enabled']);
     }
 
     /**
@@ -402,7 +397,7 @@ class RoomsTest extends TestCase
         $this->assertSame('room', $room->entitlements()->first()->sku->title);
 
         // Successful room creation (acting as a room controller), non-default SKU
-        $sku = \App\Sku::withObjectTenantContext($ned)->where('title', 'group-room')->first();
+        $sku = Sku::withObjectTenantContext($ned)->where('title', 'group-room')->first();
         $post = ['description' => 'test456', 'skus' => [$sku->id => 1]];
         $response = $this->actingAs($ned)->post("api/v4/rooms", $post);
         $response->assertStatus(200);
@@ -493,7 +488,7 @@ class RoomsTest extends TestCase
         $this->assertSame($post['description'], $room->description);
 
         // Test changing the room SKU (from 'group-room' to 'room')
-        $sku = \App\Sku::withObjectTenantContext($ned)->where('title', 'room')->first();
+        $sku = Sku::withObjectTenantContext($ned)->where('title', 'room')->first();
         $post = ['skus' => [$sku->id => 1]];
         $response = $this->actingAs($ned)->put("api/v4/rooms/{$room->id}", $post);
         $response->assertStatus(200);

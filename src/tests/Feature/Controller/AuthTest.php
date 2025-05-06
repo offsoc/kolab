@@ -2,8 +2,11 @@
 
 namespace Tests\Feature\Controller;
 
+use App\Auth\PassportClient;
 use App\Domain;
+use App\IP4Net;
 use App\User;
+use App\Utils;
 use Tests\TestCase;
 
 class AuthTest extends TestCase
@@ -18,10 +21,7 @@ class AuthTest extends TestCase
         $this->app['auth']->forgetGuards();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -30,21 +30,18 @@ class AuthTest extends TestCase
 
         $this->expectedExpiry = \config('auth.token_expiry_minutes') * 60;
 
-        \App\IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
+        IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
 
         $user = $this->getTestUser('john@kolab.org');
         $user->setSetting('limit_geo', null);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('UsersControllerTest1@userscontroller.com');
         $this->deleteTestDomain('userscontroller.com');
 
-        \App\IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
+        IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
 
         $user = $this->getTestUser('john@kolab.org');
         $user->setSetting('limit_geo', null);
@@ -59,8 +56,8 @@ class AuthTest extends TestCase
     {
         $user = $this->getTestUser('UsersControllerTest1@userscontroller.com', ['status' => User::STATUS_NEW]);
         $domain = $this->getTestDomain('userscontroller.com', [
-                'status' => Domain::STATUS_NEW,
-                'type' => Domain::TYPE_PUBLIC,
+            'status' => Domain::STATUS_NEW,
+            'type' => Domain::TYPE_PUBLIC,
         ]);
 
         $response = $this->get("api/auth/info");
@@ -71,9 +68,9 @@ class AuthTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertEquals($user->id, $json['id']);
-        $this->assertEquals($user->email, $json['email']);
-        $this->assertEquals(User::STATUS_NEW, $json['status']);
+        $this->assertSame($user->id, $json['id']);
+        $this->assertSame($user->email, $json['email']);
+        $this->assertSame(User::STATUS_NEW, $json['status']);
         $this->assertTrue(is_array($json['statusInfo']));
         $this->assertTrue(is_array($json['settings']));
         $this->assertTrue(!isset($json['access_token']));
@@ -92,7 +89,7 @@ class AuthTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertEquals('john@kolab.org', $json['email']);
+        $this->assertSame('john@kolab.org', $json['email']);
         $this->assertTrue(is_array($json['statusInfo']));
         $this->assertTrue(is_array($json['settings']));
         $this->assertTrue(!empty($json['access_token']));
@@ -120,13 +117,13 @@ class AuthTest extends TestCase
         $this->assertSame('127.0.0.2', $json['ipAddress']);
         $this->assertSame('', $json['countryCode']);
 
-        \App\IP4Net::create([
-                'net_number' => '127.0.0.0',
-                'net_broadcast' => '127.255.255.255',
-                'net_mask' => 8,
-                'country' => 'US',
-                'rir_name' => 'test',
-                'serial' => 1,
+        IP4Net::create([
+            'net_number' => '127.0.0.0',
+            'net_broadcast' => '127.255.255.255',
+            'net_mask' => 8,
+            'country' => 'US',
+            'rir_name' => 'test',
+            'serial' => 1,
         ]);
 
         $response = $this->actingAs($user)->withHeaders($headers)->get("api/auth/location");
@@ -173,12 +170,12 @@ class AuthTest extends TestCase
         $response->assertStatus(200);
         $this->assertTrue(!empty($json['access_token']));
         $this->assertTrue(
-            ($this->expectedExpiry - 5) < $json['expires_in'] &&
-            $json['expires_in'] < ($this->expectedExpiry + 5)
+            ($this->expectedExpiry - 5) < $json['expires_in']
+            && $json['expires_in'] < ($this->expectedExpiry + 5)
         );
-        $this->assertEquals('bearer', $json['token_type']);
-        $this->assertEquals($user->id, $json['id']);
-        $this->assertEquals($user->email, $json['email']);
+        $this->assertSame('bearer', $json['token_type']);
+        $this->assertSame($user->id, $json['id']);
+        $this->assertSame($user->email, $json['email']);
         $this->assertTrue(is_array($json['statusInfo']));
         $this->assertTrue(is_array($json['settings']));
 
@@ -197,10 +194,10 @@ class AuthTest extends TestCase
         $response->assertStatus(200);
         $this->assertTrue(!empty($json['access_token']));
         $this->assertTrue(
-            ($this->expectedExpiry - 5) < $json['expires_in'] &&
-            $json['expires_in'] < ($this->expectedExpiry + 5)
+            ($this->expectedExpiry - 5) < $json['expires_in']
+            && $json['expires_in'] < ($this->expectedExpiry + 5)
         );
-        $this->assertEquals('bearer', $json['token_type']);
+        $this->assertSame('bearer', $json['token_type']);
 
         // TODO: We have browser tests for 2FA but we should probably also test it here
 
@@ -213,7 +210,7 @@ class AuthTest extends TestCase
     public function testLoginServiceAccount(): void
     {
         $user = $this->getTestUser('cyrus-admin');
-        $user->role = \App\User::ROLE_SERVICE;
+        $user->role = User::ROLE_SERVICE;
         $user->password = 'simple123';
         $user->save();
 
@@ -247,13 +244,13 @@ class AuthTest extends TestCase
         $this->assertSame("Invalid username or password.", $json['message']);
         $this->assertSame('error', $json['status']);
 
-        \App\IP4Net::create([
-                'net_number' => '127.0.0.0',
-                'net_broadcast' => '127.255.255.255',
-                'net_mask' => 8,
-                'country' => 'US',
-                'rir_name' => 'test',
-                'serial' => 1,
+        IP4Net::create([
+            'net_number' => '127.0.0.0',
+            'net_broadcast' => '127.255.255.255',
+            'net_mask' => 8,
+            'country' => 'US',
+            'rir_name' => 'test',
+            'serial' => 1,
         ]);
 
         $response = $this->withHeaders($headers)->post("api/auth/login", $post);
@@ -262,7 +259,7 @@ class AuthTest extends TestCase
         $json = $response->json();
 
         $this->assertTrue(!empty($json['access_token']));
-        $this->assertEquals($user->id, $json['id']);
+        $this->assertSame($user->id, $json['id']);
     }
 
     /**
@@ -290,8 +287,8 @@ class AuthTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertEquals('success', $json['status']);
-        $this->assertEquals('Successfully logged out.', $json['message']);
+        $this->assertSame('success', $json['status']);
+        $this->assertSame('Successfully logged out.', $json['message']);
         $this->resetAuth();
 
         // Check if it really destroyed the token?
@@ -330,10 +327,10 @@ class AuthTest extends TestCase
         $this->assertTrue(!empty($json['access_token']));
         $this->assertTrue($json['access_token'] != $token);
         $this->assertTrue(
-            ($this->expectedExpiry - 5) < $json['expires_in'] &&
-            $json['expires_in'] < ($this->expectedExpiry + 5)
+            ($this->expectedExpiry - 5) < $json['expires_in']
+            && $json['expires_in'] < ($this->expectedExpiry + 5)
         );
-        $this->assertEquals('bearer', $json['token_type']);
+        $this->assertSame('bearer', $json['token_type']);
         $new_token = $json['access_token'];
 
         // TODO: Shall we invalidate the old token?
@@ -382,7 +379,7 @@ class AuthTest extends TestCase
         $this->assertSame('invalid_client', $json['error']);
         $this->assertSame('Client authentication failed', $json['message']);
 
-        $client = \App\Auth\PassportClient::find(\config('auth.synapse.client_id'));
+        $client = PassportClient::find(\config('auth.synapse.client_id'));
 
         $post['client_id'] = $client->id;
 
@@ -474,8 +471,8 @@ class AuthTest extends TestCase
         $this->assertTrue(!empty($json['refresh_token']));
         $this->assertTrue(!empty($json['expires_in']));
         $this->assertTrue(empty($json['id_token']));
-        $this->assertNotEquals($json['access_token'], $params['access_token']);
-        $this->assertNotEquals($json['refresh_token'], $params['refresh_token']);
+        $this->assertNotSame($json['access_token'], $params['access_token']);
+        $this->assertNotSame($json['refresh_token'], $params['refresh_token']);
 
         $token = $json['access_token'];
 
@@ -487,8 +484,8 @@ class AuthTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertEquals($user->id, $json['sub']);
-        $this->assertEquals($user->email, $json['email']);
+        $this->assertSame($user->id, $json['sub']);
+        $this->assertSame($user->email, $json['email']);
 
         // Validate that the access token does not give access to API other than /oauth/userinfo
         $this->resetAuth(); // reset guards
@@ -502,11 +499,11 @@ class AuthTest extends TestCase
     public function testOAuthApprovePrompt(): void
     {
         // HTTP_HOST is not set in tests for some reason, but it's required down the line
-        $host = parse_url(\App\Utils::serviceUrl('/'), \PHP_URL_HOST);
+        $host = parse_url(Utils::serviceUrl('/'), \PHP_URL_HOST);
         $_SERVER['HTTP_HOST'] = $host;
 
         $user = $this->getTestUser('UsersControllerTest1@userscontroller.com');
-        $client = \App\Auth\PassportClient::find(\config('auth.sso.client_id'));
+        $client = PassportClient::find(\config('auth.sso.client_id'));
 
         $post = [
             'client_id' => $client->id,
@@ -559,11 +556,11 @@ class AuthTest extends TestCase
     public function testOIDCAuthorizationCodeFlow(): void
     {
         // HTTP_HOST is not set in tests for some reason, but it's required down the line
-        $host = parse_url(\App\Utils::serviceUrl('/'), \PHP_URL_HOST);
+        $host = parse_url(Utils::serviceUrl('/'), \PHP_URL_HOST);
         $_SERVER['HTTP_HOST'] = $host;
 
         $user = $this->getTestUser('john@kolab.org');
-        $client = \App\Auth\PassportClient::find(\config('auth.sso.client_id'));
+        $client = PassportClient::find(\config('auth.sso.client_id'));
 
         // Note: Invalid input cases were tested above, we omit them here
 
@@ -645,8 +642,8 @@ class AuthTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertEquals($user->id, $json['sub']);
-        $this->assertEquals($user->email, $json['email']);
+        $this->assertSame($user->id, $json['sub']);
+        $this->assertSame($user->email, $json['email']);
 
         // Validate that the access token does not give access to API other than /oauth/userinfo
         $this->resetAuth(); // reset guards state

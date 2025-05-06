@@ -3,21 +3,20 @@
 namespace App\Observers;
 
 use App\Domain;
-use App\SharedFolder;
+use App\Jobs\SharedFolder\UpdateJob;
 use App\SharedFolderAlias;
+use App\Utils;
 
 class SharedFolderAliasObserver
 {
     /**
      * Handle the "creating" event on an alias
      *
-     * @param \App\SharedFolderAlias $alias The shared folder email alias
-     *
-     * @return bool
+     * @param SharedFolderAlias $alias The shared folder email alias
      */
     public function creating(SharedFolderAlias $alias): bool
     {
-        $alias->alias = \App\Utils::emailToLower($alias->alias);
+        $alias->alias = Utils::emailToLower($alias->alias);
 
         $domainName = explode('@', $alias->alias)[1];
 
@@ -41,42 +40,36 @@ class SharedFolderAliasObserver
     /**
      * Handle the shared folder alias "created" event.
      *
-     * @param \App\SharedFolderAlias $alias Shared folder email alias
-     *
-     * @return void
+     * @param SharedFolderAlias $alias Shared folder email alias
      */
     public function created(SharedFolderAlias $alias)
     {
         if ($alias->sharedFolder) {
-            \App\Jobs\SharedFolder\UpdateJob::dispatch($alias->shared_folder_id);
+            UpdateJob::dispatch($alias->shared_folder_id);
         }
     }
 
     /**
      * Handle the shared folder alias "updated" event.
      *
-     * @param \App\SharedFolderAlias $alias Shared folder email alias
-     *
-     * @return void
+     * @param SharedFolderAlias $alias Shared folder email alias
      */
     public function updated(SharedFolderAlias $alias)
     {
         if ($alias->sharedFolder) {
-            \App\Jobs\SharedFolder\UpdateJob::dispatch($alias->shared_folder_id);
+            UpdateJob::dispatch($alias->shared_folder_id);
         }
     }
 
     /**
      * Handle the shared folder alias "deleted" event.
      *
-     * @param \App\SharedFolderAlias $alias Shared folder email alias
-     *
-     * @return void
+     * @param SharedFolderAlias $alias Shared folder email alias
      */
     public function deleted(SharedFolderAlias $alias)
     {
         if ($alias->sharedFolder) {
-            \App\Jobs\SharedFolder\UpdateJob::dispatch($alias->shared_folder_id);
+            UpdateJob::dispatch($alias->shared_folder_id);
         }
     }
 }

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Jobs\PGP;
 
+use App\Jobs\PGP\KeyDeleteJob;
 use App\Support\Facades\PGP;
 use Tests\TestCase;
 
@@ -16,7 +17,7 @@ class KeyDeleteTest extends TestCase
 
         PGP::shouldReceive('keyDelete')->once()->with($user, $user->email);
 
-        $job = (new \App\Jobs\PGP\KeyDeleteJob($user->id, $user->email))->withFakeQueueInteractions();
+        $job = (new KeyDeleteJob($user->id, $user->email))->withFakeQueueInteractions();
         $job->handle();
         $job->assertNotFailed();
     }

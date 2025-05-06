@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Controller;
 
+use App\Domain;
 use App\Group;
 use App\Http\Controllers\API\V4\GroupsController;
 use Carbon\Carbon;
@@ -10,10 +11,7 @@ use Tests\TestCase;
 
 class GroupsTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -21,10 +19,7 @@ class GroupsTest extends TestCase
         $this->deleteTestGroup('group-test2@kolab.org');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestGroup('group-test@kolab.org');
         $this->deleteTestGroup('group-test2@kolab.org');
@@ -67,8 +62,8 @@ class GroupsTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertEquals('success', $json['status']);
-        $this->assertEquals("Distribution list deleted successfully.", $json['message']);
+        $this->assertSame('success', $json['status']);
+        $this->assertSame("Distribution list deleted successfully.", $json['message']);
     }
 
     /**
@@ -95,7 +90,7 @@ class GroupsTest extends TestCase
 
         $this->assertCount(4, $json);
         $this->assertSame(0, $json['count']);
-        $this->assertSame(false, $json['hasMore']);
+        $this->assertFalse($json['hasMore']);
         $this->assertSame("0 distribution lists have been found.", $json['message']);
         $this->assertSame([], $json['list']);
 
@@ -107,7 +102,7 @@ class GroupsTest extends TestCase
 
         $this->assertCount(4, $json);
         $this->assertSame(1, $json['count']);
-        $this->assertSame(false, $json['hasMore']);
+        $this->assertFalse($json['hasMore']);
         $this->assertSame("1 distribution lists have been found.", $json['message']);
         $this->assertCount(1, $json['list']);
         $this->assertSame($group->id, $json['list'][0]['id']);
@@ -128,7 +123,7 @@ class GroupsTest extends TestCase
 
         $this->assertCount(4, $json);
         $this->assertSame(1, $json['count']);
-        $this->assertSame(false, $json['hasMore']);
+        $this->assertFalse($json['hasMore']);
         $this->assertSame("1 distribution lists have been found.", $json['message']);
         $this->assertCount(1, $json['list']);
         $this->assertSame($group->email, $json['list'][0]['email']);
@@ -285,11 +280,11 @@ class GroupsTest extends TestCase
 
         $this->assertCount(1, $json);
         $this->assertSkuElement('group', $json[0], [
-                'prio' => 0,
-                'type' => 'group',
-                'handler' => 'Group',
-                'enabled' => true,
-                'readonly' => true,
+            'prio' => 0,
+            'type' => 'group',
+            'handler' => 'Group',
+            'enabled' => true,
+            'readonly' => true,
         ]);
     }
 
@@ -329,7 +324,7 @@ class GroupsTest extends TestCase
             $this->assertFalse($json['isReady']);
             $this->assertCount(6, $json['process']);
             $this->assertSame('distlist-ldap-ready', $json['process'][1]['label']);
-            $this->assertSame(false, $json['process'][1]['state']);
+            $this->assertFalse($json['process'][1]['state']);
         } else {
             $this->assertCount(4, $json['process']);
             $this->assertTrue($json['isReady']);
@@ -338,13 +333,13 @@ class GroupsTest extends TestCase
         $this->assertTrue($json['isActive']);
         $this->assertFalse($json['isDeleted']);
         $this->assertSame('distlist-new', $json['process'][0]['label']);
-        $this->assertSame(true, $json['process'][0]['state']);
+        $this->assertTrue($json['process'][0]['state']);
         $this->assertTrue(empty($json['status']));
         $this->assertTrue(empty($json['message']));
 
         // Make sure the domain is confirmed (other test might unset that status)
         $domain = $this->getTestDomain('kolab.org');
-        $domain->status |= \App\Domain::STATUS_CONFIRMED;
+        $domain->status |= Domain::STATUS_CONFIRMED;
         $domain->save();
 
         // Now "reboot" the process and  the group
@@ -357,14 +352,14 @@ class GroupsTest extends TestCase
             $this->assertTrue($json['isLdapReady']);
             $this->assertCount(6, $json['process']);
             $this->assertSame('distlist-ldap-ready', $json['process'][1]['label']);
-            $this->assertSame(true, $json['process'][1]['state']);
+            $this->assertTrue($json['process'][1]['state']);
         }
         $this->assertTrue($json['isReady']);
         $this->assertSame('success', $json['status']);
         $this->assertSame('Setup process finished successfully.', $json['message']);
 
         // Test a case when a domain is not ready
-        $domain->status ^= \App\Domain::STATUS_CONFIRMED;
+        $domain->status ^= Domain::STATUS_CONFIRMED;
         $domain->save();
 
         $response = $this->actingAs($john)->get("/api/v4/groups/{$group->id}/status?refresh=1");
@@ -376,7 +371,7 @@ class GroupsTest extends TestCase
             $this->assertTrue($json['isLdapReady']);
             $this->assertCount(6, $json['process']);
             $this->assertSame('distlist-ldap-ready', $json['process'][1]['label']);
-            $this->assertSame(true, $json['process'][1]['state']);
+            $this->assertTrue($json['process'][1]['state']);
         }
         $this->assertTrue($json['isReady']);
         $this->assertSame('success', $json['status']);
@@ -400,9 +395,9 @@ class GroupsTest extends TestCase
             $this->assertFalse($result['isDone']);
             $this->assertCount(6, $result['process']);
             $this->assertSame('distlist-new', $result['process'][0]['label']);
-            $this->assertSame(true, $result['process'][0]['state']);
+            $this->assertTrue($result['process'][0]['state']);
             $this->assertSame('distlist-ldap-ready', $result['process'][1]['label']);
-            $this->assertSame(false, $result['process'][1]['state']);
+            $this->assertFalse($result['process'][1]['state']);
             $this->assertSame('running', $result['processState']);
         } else {
             $this->assertTrue($result['isDone']);
@@ -425,9 +420,9 @@ class GroupsTest extends TestCase
         $this->assertTrue($result['isDone']);
         $this->assertCount(6, $result['process']);
         $this->assertSame('distlist-new', $result['process'][0]['label']);
-        $this->assertSame(true, $result['process'][0]['state']);
+        $this->assertTrue($result['process'][0]['state']);
         $this->assertSame('distlist-ldap-ready', $result['process'][1]['label']);
-        $this->assertSame(true, $result['process'][2]['state']);
+        $this->assertTrue($result['process'][2]['state']);
         $this->assertSame('done', $result['processState']);
     }
 
@@ -492,7 +487,7 @@ class GroupsTest extends TestCase
         $post = [
             'name' => 'Test Group',
             'email' => 'group-test@kolab.org',
-            'members' => ['test1@domain.tld', 'test2@domain.tld']
+            'members' => ['test1@domain.tld', 'test2@domain.tld'],
         ];
 
         $response = $this->actingAs($john)->post("/api/v4/groups", $post);
@@ -570,7 +565,7 @@ class GroupsTest extends TestCase
         // Valid data - members and name changed
         $post = [
             'name' => 'Test Gr',
-            'members' => ['member1@test.domain', 'member2@test.domain']
+            'members' => ['member1@test.domain', 'member2@test.domain'],
         ];
 
         $response = $this->actingAs($john)->put("/api/v4/groups/{$group->id}", $post);
@@ -630,7 +625,7 @@ class GroupsTest extends TestCase
 
         // valid
         $result = GroupsController::validateGroupEmail('admin@kolab.org', $john);
-        $this->assertSame(null, $result);
+        $this->assertNull($result);
     }
 
     /**
@@ -656,14 +651,14 @@ class GroupsTest extends TestCase
 
         // Test local existing user
         $result = GroupsController::validateMemberEmail('ned@kolab.org', $john);
-        $this->assertSame(null, $result);
+        $this->assertNull($result);
 
         // Test existing user, but not in the same account
         $result = GroupsController::validateMemberEmail('jeroen@jeroen.jeroen', $john);
-        $this->assertSame(null, $result);
+        $this->assertNull($result);
 
         // Valid address
         $result = GroupsController::validateMemberEmail('test@google.com', $john);
-        $this->assertSame(null, $result);
+        $this->assertNull($result);
     }
 }

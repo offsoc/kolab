@@ -4,7 +4,9 @@ namespace App\Http\Controllers\API\V4;
 
 use App\Http\Controllers\Controller;
 use App\Meet\Room;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 
 class MeetController extends Controller
@@ -15,7 +17,7 @@ class MeetController extends Controller
      *
      * @param string $id Room identifier (name)
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function joinRoom($id)
     {
@@ -144,9 +146,9 @@ class MeetController extends Controller
     /**
      * Webhook as triggered from the Meet server
      *
-     * @param \Illuminate\Http\Request $request The API request.
+     * @param Request $request the API request
      *
-     * @return \Illuminate\Http\Response The response
+     * @return Response The response
      */
     public function webhook(Request $request)
     {
@@ -172,7 +174,6 @@ class MeetController extends Controller
                 }
 
                 break;
-
             case 'joinRequestAccepted':
             case 'joinRequestDenied':
                 $room = Room::where('session_id', $sessionId)->first();

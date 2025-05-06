@@ -35,8 +35,8 @@ class MigrateCommand extends Command
                                 {--folder-filter=* : Exact folder name match before mapping}
                                 {--skip-folder=* : Exact folder name match before mapping}
                                 {--folder-mapping=* : Folder mapping in the form "source:target"}';
-//                                {--export-only : Only export data}
-//                                {--import-only : Only import previously exported data}';
+    //                                {--export-only : Only export data}
+    //                                {--import-only : Only import previously exported data}';
 
     /**
      * The console command description.

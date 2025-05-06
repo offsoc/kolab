@@ -2,12 +2,12 @@
 
 namespace App\Auth;
 
-use Illuminate\Database\Eloquent\Collection;
+use Laravel\Passport\Client;
 
 /**
  * Passport Client extended with allowed scopes
  */
-class PassportClient extends \Laravel\Passport\Client
+class PassportClient extends Client
 {
     /** @var array<string, string> The attributes that should be cast */
     protected $casts = [

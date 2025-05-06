@@ -40,7 +40,7 @@ class Service
      *
      * @param ?string $roomName Room name
      *
-     * @return HTTP client instance
+     * @return Http client instance
      */
     public static function clientForRoom($roomName = null)
     {
@@ -64,7 +64,7 @@ class Service
      *
      * @param ?string $baseUrl Server location
      *
-     * @return HTTP client instance
+     * @return Http client instance
      */
     public static function client($baseUrl = null)
     {

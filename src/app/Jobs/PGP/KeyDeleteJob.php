@@ -3,6 +3,7 @@
 namespace App\Jobs\PGP;
 
 use App\Jobs\UserJob;
+use App\Support\Facades\PGP;
 
 /**
  * Delete a GPG keypair for a user (or alias) from the DNS and Enigma storage.
@@ -12,10 +13,8 @@ class KeyDeleteJob extends UserJob
     /**
      * Create a new job instance.
      *
-     * @param int    $userId    User identifier.
+     * @param int    $userId    user identifier
      * @param string $userEmail User email address of the key
-     *
-     * @return void
      */
     public function __construct(int $userId, string $userEmail)
     {
@@ -25,8 +24,6 @@ class KeyDeleteJob extends UserJob
 
     /**
      * Execute the job.
-     *
-     * @return void
      *
      * @throws \Exception
      */
@@ -38,6 +35,6 @@ class KeyDeleteJob extends UserJob
             return;
         }
 
-        \App\Support\Facades\PGP::keyDelete($user, $this->userEmail);
+        PGP::keyDelete($user, $this->userEmail);
     }
 }

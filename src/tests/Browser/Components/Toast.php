@@ -3,8 +3,8 @@
 namespace Tests\Browser\Components;
 
 use Facebook\WebDriver\WebDriverBy;
+use Laravel\Dusk\Browser;
 use Laravel\Dusk\Component as BaseComponent;
-use PHPUnit\Framework\Assert as PHPUnit;
 
 class Toast extends BaseComponent
 {
@@ -16,7 +16,6 @@ class Toast extends BaseComponent
 
     protected $type;
     protected $element;
-
 
     public function __construct($type)
     {
@@ -36,9 +35,7 @@ class Toast extends BaseComponent
     /**
      * Assert that the browser page contains the component.
      *
-     * @param \Laravel\Dusk\Browser $browser The browser object
-     *
-     * @return void
+     * @param Browser $browser The browser object
      */
     public function assert($browser)
     {
@@ -55,14 +52,14 @@ class Toast extends BaseComponent
     {
         return [
             '@title' => ".toast-header > strong",
-            '@message' =>  ".toast-body",
+            '@message' => ".toast-body",
         ];
     }
 
     /**
      * Assert title of the toast element
      */
-    public function assertToastTitle($browser, string $title = null)
+    public function assertToastTitle($browser, ?string $title = null)
     {
         if (empty($title)) {
             switch ($this->type) {

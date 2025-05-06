@@ -4,14 +4,16 @@ namespace Tests\Feature;
 
 use App\Discount;
 use App\Entitlement;
-use App\Payment;
+use App\Jobs\User\UpdateJob;
 use App\Package;
+use App\Payment;
 use App\Plan;
-use App\User;
 use App\Sku;
 use App\Transaction;
-use App\Wallet;
+use App\User;
+use App\Utils;
 use App\VatRate;
+use App\Wallet;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
@@ -23,17 +25,14 @@ class WalletTest extends TestCase
         'UserWallet1@UserWallet.com',
         'UserWallet2@UserWallet.com',
         'UserWallet3@UserWallet.com',
-        'jane@kolabnow.com'
+        'jane@kolabnow.com',
     ];
 
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
-        Carbon::setTestNow(Carbon::createFromDate(2022, 02, 02));
+        Carbon::setTestNow(Carbon::createFromDate(2022, 2, 2));
         foreach ($this->users as $user) {
             $this->deleteTestUser($user);
         }
@@ -43,10 +42,7 @@ class WalletTest extends TestCase
         VatRate::query()->delete();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         foreach ($this->users as $user) {
             $this->deleteTestUser($user);
@@ -115,7 +111,7 @@ class WalletTest extends TestCase
         $this->assertFalse($user1->fresh()->isRestricted());
         $this->assertFalse($user2->fresh()->isRestricted());
 
-        Queue::assertPushed(\App\Jobs\User\UpdateJob::class, 3);
+        Queue::assertPushed(UpdateJob::class, 3);
 
         // TODO: Test group account and unsuspending domain/members/groups
     }
@@ -146,13 +142,13 @@ class WalletTest extends TestCase
         $wallet->balance = -1000;
         $until = $wallet->balanceLastsUntil();
 
-        $this->assertSame(null, $until);
+        $this->assertNull($until);
 
         // User/entitlements created today, balance=-9,99 CHF (monthly cost)
         $wallet->balance = 990;
         $until = $wallet->balanceLastsUntil();
 
-        $daysInLastMonth = \App\Utils::daysInLastMonth();
+        $daysInLastMonth = Utils::daysInLastMonth();
 
         $delta = (int) Carbon::now()->addMonthsWithoutOverflow(1)->addDays($daysInLastMonth)->diffInDays($until, true);
         $this->assertTrue($delta <= 1);
@@ -160,12 +156,12 @@ class WalletTest extends TestCase
 
         // Old entitlements, 100% discount
         $this->backdateEntitlements($wallet->entitlements, Carbon::now()->subDays(40));
-        $discount = \App\Discount::withEnvTenantContext()->where('discount', 100)->first();
+        $discount = Discount::withEnvTenantContext()->where('discount', 100)->first();
         $wallet->discount()->associate($discount);
 
         $until = $wallet->refresh()->balanceLastsUntil();
 
-        $this->assertSame(null, $until);
+        $this->assertNull($until);
 
         // User with no entitlements
         $wallet->discount()->dissociate($discount);
@@ -173,7 +169,7 @@ class WalletTest extends TestCase
 
         $until = $wallet->refresh()->balanceLastsUntil();
 
-        $this->assertSame(null, $until);
+        $this->assertNull($until);
     }
 
     /**
@@ -196,7 +192,7 @@ class WalletTest extends TestCase
 
         $user->wallets()->each(
             function ($wallet) {
-                $this->assertEquals(0, $wallet->balance);
+                $this->assertSame(0, $wallet->balance);
             }
         );
 
@@ -205,7 +201,7 @@ class WalletTest extends TestCase
 
         // Verify we can not delete a user wallet that holds balance.
         $user->wallets()->each(
-            function ($wallet) {
+            static function ($wallet) {
                 $wallet->credit(100)->save();
             }
         );
@@ -238,7 +234,7 @@ class WalletTest extends TestCase
         $userB = $this->getTestUser('UserWallet2@UserWallet.com');
 
         $userA->wallets()->each(
-            function ($wallet) use ($userB) {
+            static function ($wallet) use ($userB) {
                 $wallet->addController($userB);
             }
         );
@@ -268,7 +264,7 @@ class WalletTest extends TestCase
             Carbon::now()->subMonthsWithoutOverflow(1)->addDays(1)
         );
 
-        $this->assertEquals(0, $wallet->expectedCharges());
+        $this->assertSame(0, $wallet->expectedCharges());
 
         // Verify the exact end of the month's trial.
         $this->backdateEntitlements(
@@ -276,7 +272,7 @@ class WalletTest extends TestCase
             Carbon::now()->subMonthsWithoutOverflow(1)
         );
 
-        $this->assertEquals(990, $wallet->expectedCharges());
+        $this->assertSame(990, $wallet->expectedCharges());
 
         // Verify that over-running the trial by a single day causes charges to be incurred.
         $this->backdateEntitlements(
@@ -284,7 +280,7 @@ class WalletTest extends TestCase
             Carbon::now()->subMonthsWithoutOverflow(1)->subDays(1)
         );
 
-        $this->assertEquals(990, $wallet->expectedCharges());
+        $this->assertSame(990, $wallet->expectedCharges());
 
         // Verify additional storage configuration entitlement created 'early' does incur additional
         // charges to the wallet.
@@ -293,16 +289,16 @@ class WalletTest extends TestCase
             Carbon::now()->subMonthsWithoutOverflow(1)->subDays(1)
         );
 
-        $this->assertEquals(990, $wallet->expectedCharges());
+        $this->assertSame(990, $wallet->expectedCharges());
 
         $sku = Sku::withEnvTenantContext()->where('title', 'storage')->first();
 
         $entitlement = Entitlement::create([
-                'wallet_id' => $wallet->id,
-                'sku_id' => $sku->id,
-                'cost' => $sku->cost,
-                'entitleable_id' => $user->id,
-                'entitleable_type' => \App\User::class
+            'wallet_id' => $wallet->id,
+            'sku_id' => $sku->id,
+            'cost' => $sku->cost,
+            'entitleable_id' => $user->id,
+            'entitleable_type' => User::class,
         ]);
 
         $this->backdateEntitlements(
@@ -310,7 +306,7 @@ class WalletTest extends TestCase
             Carbon::now()->subMonthsWithoutOverflow(1)->subDays(1)
         );
 
-        $this->assertEquals(1015, $wallet->expectedCharges());
+        $this->assertSame(1015, $wallet->expectedCharges());
 
         $entitlement->forceDelete();
         $wallet->refresh();
@@ -319,19 +315,19 @@ class WalletTest extends TestCase
         // charges to the wallet.
         $this->backdateEntitlements($wallet->entitlements, Carbon::now()->subMonthsWithoutOverflow(1));
 
-        $this->assertEquals(990, $wallet->expectedCharges());
+        $this->assertSame(990, $wallet->expectedCharges());
 
-        $entitlement = \App\Entitlement::create([
-                'wallet_id' => $wallet->id,
-                'sku_id' => $sku->id,
-                'cost' => $sku->cost,
-                'entitleable_id' => $user->id,
-                'entitleable_type' => \App\User::class
+        $entitlement = Entitlement::create([
+            'wallet_id' => $wallet->id,
+            'sku_id' => $sku->id,
+            'cost' => $sku->cost,
+            'entitleable_id' => $user->id,
+            'entitleable_type' => User::class,
         ]);
 
         $this->backdateEntitlements([$entitlement], Carbon::now()->subDays(14));
 
-        $this->assertEquals(990, $wallet->expectedCharges());
+        $this->assertSame(990, $wallet->expectedCharges());
 
         $entitlement->forceDelete();
         $wallet->refresh();
@@ -342,7 +338,7 @@ class WalletTest extends TestCase
 
         $this->backdateEntitlements($wallet->entitlements, $targetDateA);
 
-        $this->assertEquals(990, $wallet->expectedCharges());
+        $this->assertSame(990, $wallet->expectedCharges());
 
         $entitlement->forceDelete();
         $wallet->refresh();
@@ -352,19 +348,19 @@ class WalletTest extends TestCase
 
         $this->assertCount(7, $wallet->entitlements);
 
-        $this->assertEquals(1980, $wallet->expectedCharges());
+        $this->assertSame(1980, $wallet->expectedCharges());
 
-        $entitlement = \App\Entitlement::create([
-                'entitleable_id' => $user->id,
-                'entitleable_type' => \App\User::class,
-                'cost' => $sku->cost,
-                'sku_id' => $sku->id,
-                'wallet_id' => $wallet->id
+        $entitlement = Entitlement::create([
+            'entitleable_id' => $user->id,
+            'entitleable_type' => User::class,
+            'cost' => $sku->cost,
+            'sku_id' => $sku->id,
+            'wallet_id' => $wallet->id,
         ]);
 
         $this->backdateEntitlements([$entitlement], Carbon::now()->subMonthsWithoutOverflow(1));
 
-        $this->assertEquals(2005, $wallet->expectedCharges());
+        $this->assertSame(2005, $wallet->expectedCharges());
 
         $entitlement->forceDelete();
         $wallet->refresh();
@@ -376,7 +372,7 @@ class WalletTest extends TestCase
 
         $this->backdateEntitlements($wallet->entitlements, Carbon::now()->subMonthsWithoutOverflow(1));
 
-        $this->assertEquals(891, $wallet->expectedCharges());
+        $this->assertSame(891, $wallet->expectedCharges());
     }
 
     /**
@@ -433,7 +429,7 @@ class WalletTest extends TestCase
         $userB = $this->getTestUser('UserWallet2@UserWallet.com');
 
         $userA->wallets()->each(
-            function ($wallet) use ($userB) {
+            static function ($wallet) use ($userB) {
                 $wallet->addController($userB);
             }
         );
@@ -441,7 +437,7 @@ class WalletTest extends TestCase
         $userB->refresh();
 
         $userB->accounts()->each(
-            function ($wallet) use ($userB) {
+            static function ($wallet) use ($userB) {
                 $wallet->removeController($userB);
             }
         );
@@ -455,7 +451,7 @@ class WalletTest extends TestCase
     public function testChargeEntitlements(): void
     {
         $user = $this->getTestUser('jane@kolabnow.com');
-        $discount = \App\Discount::withEnvTenantContext()->where('discount', 30)->first();
+        $discount = Discount::withEnvTenantContext()->where('discount', 30)->first();
         $wallet = $user->wallets()->first();
         $wallet->discount()->associate($discount);
         $wallet->save();
@@ -633,9 +629,9 @@ class WalletTest extends TestCase
 
         $ent = $user->entitlements->where('sku_id', $groupware->id)->first();
         Entitlement::where('id', $ent->id)->update([
-                'created_at' => $backdate,
-                'updated_at' => $backdate,
-                'deleted_at' => Carbon::now(),
+            'created_at' => $backdate,
+            'updated_at' => $backdate,
+            'deleted_at' => Carbon::now(),
         ]);
 
         // we expect no charges
@@ -736,7 +732,7 @@ class WalletTest extends TestCase
         $etransactions = Transaction::where('transaction_id', $trans->id)->get();
         $this->assertCount(5, $etransactions);
         $trans = $etransactions[0];
-        $this->assertSame(null, $trans->description);
+        $this->assertNull($trans->description);
         $this->assertSame(25, $trans->amount);
         $this->assertSame(Transaction::ENTITLEMENT_BILLED, $trans->type);
 
@@ -791,7 +787,7 @@ class WalletTest extends TestCase
         $etransactions = Transaction::where('transaction_id', $trans->id)->get();
         $this->assertCount(2, $etransactions);
         $trans = $etransactions[0];
-        $this->assertSame(null, $trans->description);
+        $this->assertNull($trans->description);
         $this->assertSame(15, $trans->amount);
         $this->assertSame(Transaction::ENTITLEMENT_BILLED, $trans->type);
 
@@ -898,7 +894,7 @@ class WalletTest extends TestCase
     public function testUpdateEntitlements(): void
     {
         $user = $this->getTestUser('jane@kolabnow.com');
-        $discount = \App\Discount::withEnvTenantContext()->where('discount', 30)->first();
+        $discount = Discount::withEnvTenantContext()->where('discount', 30)->first();
         $wallet = $user->wallets()->first();
         $wallet->discount()->associate($discount);
         $wallet->save();
@@ -1012,24 +1008,24 @@ class WalletTest extends TestCase
     public function testVatRate(): void
     {
         $rate1 = VatRate::create([
-                'start' => now()->subDay(),
-                'country' => 'US',
-                'rate' => 7.5,
+            'start' => now()->subDay(),
+            'country' => 'US',
+            'rate' => 7.5,
         ]);
         $rate2 = VatRate::create([
-                'start' => now()->subDay(),
-                'country' => 'DE',
-                'rate' => 10.0,
+            'start' => now()->subDay(),
+            'country' => 'DE',
+            'rate' => 10.0,
         ]);
 
         $user = $this->getTestUser('UserWallet1@UserWallet.com');
         $wallet = $user->wallets()->first();
 
         $user->setSetting('country', null);
-        $this->assertSame(null, $wallet->vatRate());
+        $this->assertNull($wallet->vatRate());
 
         $user->setSetting('country', 'PL');
-        $this->assertSame(null, $wallet->vatRate());
+        $this->assertNull($wallet->vatRate());
 
         $user->setSetting('country', 'US');
         $this->assertSame($rate1->id, $wallet->vatRate()->id); // @phpstan-ignore-line
@@ -1039,13 +1035,13 @@ class WalletTest extends TestCase
 
         // Test $start argument
         $rate3 = VatRate::create([
-                'start' => now()->subYear(),
-                'country' => 'DE',
-                'rate' => 5.0,
+            'start' => now()->subYear(),
+            'country' => 'DE',
+            'rate' => 5.0,
         ]);
 
         $this->assertSame($rate2->id, $wallet->vatRate()->id); // @phpstan-ignore-line
         $this->assertSame($rate3->id, $wallet->vatRate(now()->subMonth())->id);
-        $this->assertSame(null, $wallet->vatRate(now()->subYears(2)));
+        $this->assertNull($wallet->vatRate(now()->subYears(2)));
     }
 }

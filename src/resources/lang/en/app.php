@@ -1,7 +1,6 @@
 <?php
 
 return [
-
     /*
     |--------------------------------------------------------------------------
     | Application Language Lines
@@ -177,5 +176,4 @@ return [
     'wallet-notice-trial-end' => 'Your free trial is about to end, top up to continue.',
 
     'vat-incl' => 'Incl. VAT :vat (:rate of :cost)',
-
 ];

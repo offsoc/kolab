@@ -3,10 +3,11 @@
 namespace App\Console\Commands;
 
 use App\Console\ObjectListCommand;
+use App\UserSetting;
 
 class UserSettingsCommand extends ObjectListCommand
 {
-    protected $objectClass = \App\UserSetting::class;
+    protected $objectClass = UserSetting::class;
     protected $objectName = 'user-setting';
-    protected $objectTitle = null;
+    protected $objectTitle;
 }

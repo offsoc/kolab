@@ -2,24 +2,19 @@
 
 namespace Tests\Feature\Console\User;
 
+use App\Discount;
 use Tests\TestCase;
 
 class SetDiscountTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestUser('wallets-controller@kolabnow.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('wallets-controller@kolabnow.com');
 
@@ -33,7 +28,7 @@ class SetDiscountTest extends TestCase
     {
         $user = $this->getTestUser('wallets-controller@kolabnow.com');
         $wallet = $user->wallets()->first();
-        $discount = \App\Discount::withObjectTenantContext($user)->where('discount', 100)->first();
+        $discount = Discount::withObjectTenantContext($user)->where('discount', 100)->first();
 
         // Invalid user id
         $code = \Artisan::call("user:set-discount 123 123");

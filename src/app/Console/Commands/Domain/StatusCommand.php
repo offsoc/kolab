@@ -3,7 +3,6 @@
 namespace App\Console\Commands\Domain;
 
 use App\Console\Command;
-use App\Domain;
 
 class StatusCommand extends Command
 {

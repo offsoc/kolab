@@ -2,6 +2,7 @@
 
 namespace Tests\Browser\Admin;
 
+use App\Utils;
 use Tests\Browser;
 use Tests\Browser\Pages\Admin\Stats;
 use Tests\Browser\Pages\Dashboard;
@@ -10,10 +11,7 @@ use Tests\TestCaseDusk;
 
 class StatsTest extends TestCaseDusk
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         self::useAdminUrl();
@@ -24,9 +22,9 @@ class StatsTest extends TestCaseDusk
      */
     public function testStats(): void
     {
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit(new Home())
-                ->submitLogon('jeroen@jeroen.jeroen', \App\Utils::generatePassphrase(), true)
+                ->submitLogon('jeroen@jeroen.jeroen', Utils::generatePassphrase(), true)
                 ->on(new Dashboard())
                 ->assertSeeIn('@links .link-stats', 'Stats')
                 ->click('@links .link-stats')

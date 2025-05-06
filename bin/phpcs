@@ -2,10 +2,15 @@
 
 cwd=$(dirname $0)
 
-pushd ${cwd}/../src/
+pushd ${cwd}/../src
 
-php -dmemory_limit=500M \
-    vendor/bin/phpcs \
-    -s
+if [ -z $1 ]
+then
+    cmd="fix --dry-run"
+else
+    cmd=$1
+fi
+
+php vendor/bin/php-cs-fixer $cmd --using-cache=no --diff --verbose
 
 popd

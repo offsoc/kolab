@@ -3,9 +3,22 @@
 namespace App\Observers;
 
 use App\Delegation;
+use App\Entitlement;
+use App\EventLog;
 use App\Group;
+use App\Jobs\PGP\KeyCreateJob;
+use App\Jobs\PGP\KeyDeleteJob;
+use App\Jobs\User\CreateJob;
+use App\Jobs\User\DeleteJob;
+use App\Jobs\User\UpdateJob;
+use App\Policy\RateLimit\Whitelist;
+use App\Rules\Password;
+use App\Tenant;
+use App\Transaction;
 use App\User;
+use App\Utils;
 use App\Wallet;
+use Carbon\Carbon;
 
 class UserObserver
 {
@@ -14,9 +27,7 @@ class UserObserver
      *
      * Ensure that the user is created with a random, large integer.
      *
-     * @param \App\User $user The user being created.
-     *
-     * @return void
+     * @param User $user the user being created
      */
     public function creating(User $user)
     {
@@ -32,18 +43,16 @@ class UserObserver
      *
      * Should ensure some basic settings are available as well.
      *
-     * @param \App\User $user The user created.
-     *
-     * @return void
+     * @param User $user the user created
      */
     public function created(User $user)
     {
-        if ($user->role == \App\User::ROLE_SERVICE) {
+        if ($user->role == User::ROLE_SERVICE) {
             return;
         }
 
         $settings = [
-            'country' => \App\Utils::countryForRequest(),
+            'country' => Utils::countryForRequest(),
             'currency' => \config('app.currency'),
             /*
             'first_name' => '',
@@ -70,38 +79,36 @@ class UserObserver
         $user->wallets()->create();
 
         // Create user record in the backend (LDAP and IMAP)
-        \App\Jobs\User\CreateJob::dispatch($user->id);
+        CreateJob::dispatch($user->id);
 
-        if (\App\Tenant::getConfig($user->tenant_id, 'pgp.enable')) {
-            \App\Jobs\PGP\KeyCreateJob::dispatch($user->id, $user->email);
+        if (Tenant::getConfig($user->tenant_id, 'pgp.enable')) {
+            KeyCreateJob::dispatch($user->id, $user->email);
         }
     }
 
     /**
      * Handle the "deleted" event.
      *
-     * @param \App\User $user The user deleted.
-     *
-     * @return void
+     * @param User $user the user deleted
      */
     public function deleted(User $user)
     {
-        if ($user->role == \App\User::ROLE_SERVICE) {
+        if ($user->role == User::ROLE_SERVICE) {
             return;
         }
 
         if (!$user->isForceDeleting()) {
-            \App\Jobs\User\DeleteJob::dispatch($user->id);
+            DeleteJob::dispatch($user->id);
 
-            if (\App\Tenant::getConfig($user->tenant_id, 'pgp.enable')) {
-                \App\Jobs\PGP\KeyDeleteJob::dispatch($user->id, $user->email);
+            if (Tenant::getConfig($user->tenant_id, 'pgp.enable')) {
+                KeyDeleteJob::dispatch($user->id, $user->email);
             }
         }
 
         // Remove the user from existing groups
         $wallet = $user->wallet();
         if ($wallet && $wallet->owner) {
-            $wallet->owner->groups()->each(function ($group) use ($user) {
+            $wallet->owner->groups()->each(static function ($group) use ($user) {
                 /** @var Group $group */
                 if (in_array($user->email, $group->members)) {
                     $group->members = array_diff($group->members, [$user->email]);
@@ -112,7 +119,7 @@ class UserObserver
 
         // Remove delegation relations
         $ids = Delegation::where('user_id', $user->id)->orWhere('delegatee_id', $user->id)->get()
-            ->map(function ($delegation) use ($user) {
+            ->map(static function ($delegation) use ($user) {
                 $delegator = $delegation->user_id == $user->id
                     ? $user : $delegation->user()->withTrashed()->first();
                 $delegatee = $delegation->delegatee_id == $user->id
@@ -135,13 +142,11 @@ class UserObserver
     /**
      * Handle the "deleting" event.
      *
-     * @param User $user The user that is being deleted.
-     *
-     * @return void
+     * @param User $user the user that is being deleted
      */
     public function deleting(User $user)
     {
-        if ($user->role == \App\User::ROLE_SERVICE) {
+        if ($user->role == User::ROLE_SERVICE) {
             return;
         }
 
@@ -152,9 +157,7 @@ class UserObserver
     /**
      * Handle the user "restoring" event.
      *
-     * @param \App\User $user The user
-     *
-     * @return void
+     * @param User $user The user
      */
     public function restoring(User $user)
     {
@@ -167,13 +170,11 @@ class UserObserver
     /**
      * Handle the user "restored" event.
      *
-     * @param \App\User $user The user
-     *
-     * @return void
+     * @param User $user The user
      */
     public function restored(User $user)
     {
-        if ($user->role == \App\User::ROLE_SERVICE) {
+        if ($user->role == User::ROLE_SERVICE) {
             return;
         }
 
@@ -188,24 +189,22 @@ class UserObserver
         // FIXME: Should we reset user aliases? or re-validate them in any way?
 
         // Create user record in the backend (LDAP and IMAP)
-        \App\Jobs\User\CreateJob::dispatch($user->id);
+        CreateJob::dispatch($user->id);
     }
 
     /**
      * Handle the "updated" event.
      *
-     * @param \App\User $user The user that is being updated.
-     *
-     * @return void
+     * @param User $user the user that is being updated
      */
     public function updated(User $user)
     {
-        if ($user->role == \App\User::ROLE_SERVICE) {
+        if ($user->role == User::ROLE_SERVICE) {
             return;
         }
 
         if (!$user->trashed()) {
-            \App\Jobs\User\UpdateJob::dispatch($user->id);
+            UpdateJob::dispatch($user->id);
         }
 
         $oldStatus = $user->getOriginal('status');
@@ -224,7 +223,7 @@ class UserObserver
 
                 // Remember time of the degradation for sending periodic reminders
                 // and reset it on un-degradation
-                $val = $isDegraded ? \Carbon\Carbon::now()->toDateTimeString() : null;
+                $val = $isDegraded ? Carbon::now()->toDateTimeString() : null;
                 $wallet->setSetting('degraded_last_reminder', $val);
 
                 $wallets[] = $wallet->id;
@@ -234,13 +233,13 @@ class UserObserver
             // LDAP backend will read the wallet owner's degraded status and
             // set LDAP attributes accordingly.
             // We do not change their status as their wallets have its own state
-            \App\Entitlement::whereIn('wallet_id', $wallets)
+            Entitlement::whereIn('wallet_id', $wallets)
                 ->where('entitleable_id', '!=', $user->id)
                 ->where('entitleable_type', User::class)
                 ->pluck('entitleable_id')
                 ->unique()
-                ->each(function ($user_id) {
-                    \App\Jobs\User\UpdateJob::dispatch($user_id);
+                ->each(static function ($user_id) {
+                    UpdateJob::dispatch($user_id);
                 });
         }
 
@@ -254,19 +253,19 @@ class UserObserver
     /**
      * Remove entities related to the user (in user's wallets), entitlements, transactions, etc.
      *
-     * @param \App\User $user  The user
-     * @param bool      $force Force-delete mode
+     * @param User $user  The user
+     * @param bool $force Force-delete mode
      */
     private static function removeRelatedObjects(User $user, $force = false): void
     {
         $wallets = $user->wallets->pluck('id')->all();
 
-        \App\Entitlement::withTrashed()
+        Entitlement::withTrashed()
             ->select('entitleable_id', 'entitleable_type')
             ->distinct()
             ->whereIn('wallet_id', $wallets)
             ->get()
-            ->each(function ($entitlement) use ($user, $force) {
+            ->each(static function ($entitlement) use ($user, $force) {
                 // Skip the current user (infinite recursion loop)
                 if ($entitlement->entitleable_type == User::class && $entitlement->entitleable_id == $user->id) {
                     return;
@@ -286,19 +285,19 @@ class UserObserver
 
         if ($force) {
             // Remove "wallet" transactions, they have no foreign key constraint
-            \App\Transaction::where('object_type', Wallet::class)
+            Transaction::where('object_type', Wallet::class)
                 ->whereIn('object_id', $wallets)
                 ->delete();
 
             // Remove EventLog records
-            \App\EventLog::where('object_id', $user->id)->where('object_type', User::class)->delete();
+            EventLog::where('object_id', $user->id)->where('object_type', User::class)->delete();
         }
 
         // regardless of force delete, we're always purging whitelists... just in case
-        \App\Policy\RateLimit\Whitelist::where(
+        Whitelist::where(
             [
                 'whitelistable_id' => $user->id,
-                'whitelistable_type' => User::class
+                'whitelistable_type' => User::class,
             ]
         )->delete();
     }
@@ -307,17 +306,17 @@ class UserObserver
      * Store the old password in user password history. Make sure
      * we do not store more passwords than we need in the history.
      *
-     * @param \App\User $user     The user
-     * @param string    $password The old password
+     * @param User   $user     The user
+     * @param string $password The old password
      */
     private static function saveOldPassword(User $user, string $password): void
     {
         // Remember the timestamp of the last password change and unset the last warning date
         $user->setSettings([
-                'password_expiration_warning' => null,
-                // Note: We could get this from user_passwords table, but only if the policy
-                // enables storing of old passwords there.
-                'password_update' => now()->format('Y-m-d H:i:s'),
+            'password_expiration_warning' => null,
+            // Note: We could get this from user_passwords table, but only if the policy
+            // enables storing of old passwords there.
+            'password_update' => now()->format('Y-m-d H:i:s'),
         ]);
 
         // Note: All this is kinda heavy and complicated because we don't want to store
@@ -326,7 +325,7 @@ class UserObserver
         // removed the old passwords that were excessive before, but not now.
 
         // Get the account password policy
-        $policy = new \App\Rules\Password($user->walletOwner());
+        $policy = new Password($user->walletOwner());
         $rules = $policy->rules();
 
         // Password history disabled?

@@ -11,14 +11,11 @@ class PasswordExpirationReminder extends Mailable
     /** @var string Password expiration date */
     protected $expiresOn;
 
-
     /**
      * Create a new message instance.
      *
-     * @param \App\User $user      A user object
-     * @param string    $expiresOn Password expiration date (Y-m-d)
-     *
-     * @return void
+     * @param User   $user      A user object
+     * @param string $expiresOn Password expiration date (Y-m-d)
      */
     public function __construct(User $user, string $expiresOn)
     {
@@ -47,8 +44,8 @@ class PasswordExpirationReminder extends Mailable
             ->text('emails.plain.password_expiration_reminder')
             ->subject(\trans('mail.passwordexpiration-subject', $vars))
             ->with([
-                    'vars' => $vars,
-                    'link' => sprintf('<a href="%s">%s</a>', $href, $href)
+                'vars' => $vars,
+                'link' => sprintf('<a href="%s">%s</a>', $href, $href),
             ]);
 
         return $this;
@@ -64,7 +61,7 @@ class PasswordExpirationReminder extends Mailable
     public static function fakeRender(string $type = 'html'): string
     {
         $user = new User([
-              'email' => 'test@' . \config('app.domain'),
+            'email' => 'test@' . \config('app.domain'),
         ]);
 
         $mail = new self($user, now()->copy()->addDays(14)->toDateString());

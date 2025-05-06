@@ -1,29 +1,26 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-// phpcs:ignore
 class ExtendSettingsValueColumn extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up()
     {
         Schema::table(
             'user_settings',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->text('value')->change();
             }
         );
 
         Schema::table(
             'wallet_settings',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->text('value')->change();
             }
         );
@@ -31,8 +28,6 @@ class ExtendSettingsValueColumn extends Migration
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
     public function down()
     {

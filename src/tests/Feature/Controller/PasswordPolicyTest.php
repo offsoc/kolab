@@ -92,21 +92,21 @@ class PasswordPolicyTest extends TestCase
         $this->assertSame('Minimum password length: 8 characters', $json['list'][0]['name']);
         $this->assertSame('min', $json['list'][0]['label']);
         $this->assertSame('8', $json['list'][0]['param']);
-        $this->assertSame(true, $json['list'][0]['enabled']);
+        $this->assertTrue($json['list'][0]['enabled']);
         $this->assertSame('Maximum password length: 255 characters', $json['list'][1]['name']);
         $this->assertSame('max', $json['list'][1]['label']);
         $this->assertSame('255', $json['list'][1]['param']);
-        $this->assertSame(true, $json['list'][1]['enabled']);
+        $this->assertTrue($json['list'][1]['enabled']);
         $this->assertSame('lower', $json['list'][2]['label']);
-        $this->assertSame(false, $json['list'][2]['enabled']);
+        $this->assertFalse($json['list'][2]['enabled']);
         $this->assertSame('upper', $json['list'][3]['label']);
-        $this->assertSame(false, $json['list'][3]['enabled']);
+        $this->assertFalse($json['list'][3]['enabled']);
         $this->assertSame('digit', $json['list'][4]['label']);
-        $this->assertSame(false, $json['list'][4]['enabled']);
+        $this->assertFalse($json['list'][4]['enabled']);
         $this->assertSame('special', $json['list'][5]['label']);
-        $this->assertSame(true, $json['list'][5]['enabled']);
+        $this->assertTrue($json['list'][5]['enabled']);
         $this->assertSame('last', $json['list'][6]['label']);
-        $this->assertSame(false, $json['list'][6]['enabled']);
+        $this->assertFalse($json['list'][6]['enabled']);
 
         // Test acting as Jack
         $response = $this->actingAs($jack)->get('/api/v4/password-policy');
@@ -121,20 +121,20 @@ class PasswordPolicyTest extends TestCase
         $this->assertSame('Minimum password length: 8 characters', $json['list'][0]['name']);
         $this->assertSame('min', $json['list'][0]['label']);
         $this->assertSame('8', $json['list'][0]['param']);
-        $this->assertSame(true, $json['list'][0]['enabled']);
+        $this->assertTrue($json['list'][0]['enabled']);
         $this->assertSame('Maximum password length: 255 characters', $json['list'][1]['name']);
         $this->assertSame('max', $json['list'][1]['label']);
         $this->assertSame('255', $json['list'][1]['param']);
-        $this->assertSame(true, $json['list'][1]['enabled']);
+        $this->assertTrue($json['list'][1]['enabled']);
         $this->assertSame('lower', $json['list'][2]['label']);
-        $this->assertSame(false, $json['list'][2]['enabled']);
+        $this->assertFalse($json['list'][2]['enabled']);
         $this->assertSame('upper', $json['list'][3]['label']);
-        $this->assertSame(false, $json['list'][3]['enabled']);
+        $this->assertFalse($json['list'][3]['enabled']);
         $this->assertSame('digit', $json['list'][4]['label']);
-        $this->assertSame(false, $json['list'][4]['enabled']);
+        $this->assertFalse($json['list'][4]['enabled']);
         $this->assertSame('special', $json['list'][5]['label']);
-        $this->assertSame(true, $json['list'][5]['enabled']);
+        $this->assertTrue($json['list'][5]['enabled']);
         $this->assertSame('last', $json['list'][6]['label']);
-        $this->assertSame(false, $json['list'][6]['enabled']);
+        $this->assertFalse($json['list'][6]['enabled']);
     }
 }

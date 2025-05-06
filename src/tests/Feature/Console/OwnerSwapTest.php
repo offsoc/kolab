@@ -2,16 +2,15 @@
 
 namespace Tests\Feature\Console;
 
+use App\Domain;
+use App\Package;
 use Illuminate\Support\Facades\Queue;
 use Mollie\Laravel\Facades\Mollie;
 use Tests\TestCase;
 
 class OwnerSwapTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -20,10 +19,7 @@ class OwnerSwapTest extends TestCase
         $this->deleteTestDomain('owner-swap.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('user1@owner-swap.com');
         $this->deleteTestUser('user2@owner-swap.com');
@@ -45,11 +41,11 @@ class OwnerSwapTest extends TestCase
         $owner = $this->getTestUser('user1@owner-swap.com');
         $user = $this->getTestUser('user2@owner-swap.com');
         $domain = $this->getTestDomain('owner-swap.com', [
-                'status' => \App\Domain::STATUS_NEW,
-                'type' => \App\Domain::TYPE_HOSTED,
+            'status' => Domain::STATUS_NEW,
+            'type' => Domain::TYPE_HOSTED,
         ]);
-        $package_kolab = \App\Package::withEnvTenantContext()->where('title', 'kolab')->first();
-        $package_domain = \App\Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
+        $package_kolab = Package::withEnvTenantContext()->where('title', 'kolab')->first();
+        $package_domain = Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
         $owner->assignPackage($package_kolab);
         $owner->assignPackage($package_kolab, $user);
         $domain->assignPackage($package_domain, $owner);
@@ -100,7 +96,7 @@ class OwnerSwapTest extends TestCase
         $this->assertSame('test', $user->getSetting('plan_id'));
 
         $wallet->refresh();
-        $this->assertSame(null, $wallet->getSetting('test'));
+        $this->assertNull($wallet->getSetting('test'));
         $this->assertSame(0, $wallet->balance);
 
         $target_customer = $this->getMollieCustomer($target_wallet->getSetting('mollie_id'));
@@ -124,8 +120,8 @@ class OwnerSwapTest extends TestCase
     private function createMollieCustomer($wallet)
     {
         $customer = Mollie::api()->customers->create([
-                'name'  => $wallet->owner->name(),
-                'email' => $wallet->id . '@private.' . \config('app.domain'),
+            'name' => $wallet->owner->name(),
+            'email' => $wallet->id . '@private.' . \config('app.domain'),
         ]);
 
         $customer_id = $customer->id;

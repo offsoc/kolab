@@ -2,6 +2,9 @@
 
 namespace App\Console\Commands\Policy\Greylist;
 
+use App\Policy\Greylist\Connect;
+use App\Policy\Greylist\Whitelist;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 
 class ExpungeCommand extends Command
@@ -27,10 +30,10 @@ class ExpungeCommand extends Command
      */
     public function handle()
     {
-        \App\Policy\Greylist\Connect::where('updated_at', '<', \Carbon\Carbon::now()->subMonthsWithoutOverflow(2))
+        Connect::where('updated_at', '<', Carbon::now()->subMonthsWithoutOverflow(2))
             ->delete();
 
-        \App\Policy\Greylist\Whitelist::where('updated_at', '<', \Carbon\Carbon::now()->subMonthsWithoutOverflow(2))
+        Whitelist::where('updated_at', '<', Carbon::now()->subMonthsWithoutOverflow(2))
             ->delete();
     }
 }

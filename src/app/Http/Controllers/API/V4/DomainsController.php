@@ -4,7 +4,10 @@ namespace App\Http\Controllers\API\V4;
 
 use App\Domain;
 use App\Http\Controllers\RelationController;
+use App\Jobs\Domain\CreateJob;
+use App\Package;
 use App\Rules\UserEmailDomain;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -26,13 +29,12 @@ class DomainsController extends RelationController
     /** @var array Resource relation method arguments */
     protected $relationArgs = [true, false];
 
-
     /**
      * Confirm ownership of the specified domain (via DNS check).
      *
      * @param int $id Domain identifier
      *
-     * @return \Illuminate\Http\JsonResponse|void
+     * @return JsonResponse|void
      */
     public function confirm($id)
     {
@@ -48,15 +50,15 @@ class DomainsController extends RelationController
 
         if (!$domain->confirm()) {
             return response()->json([
-                    'status' => 'error',
-                    'message' => self::trans('app.domain-confirm-error'),
+                'status' => 'error',
+                'message' => self::trans('app.domain-confirm-error'),
             ]);
         }
 
         return response()->json([
-                'status' => 'success',
-                'statusInfo' => self::statusInfo($domain),
-                'message' => self::trans('app.domain-confirm-success'),
+            'status' => 'success',
+            'statusInfo' => self::statusInfo($domain),
+            'message' => self::trans('app.domain-confirm-success'),
         ]);
     }
 
@@ -65,7 +67,7 @@ class DomainsController extends RelationController
      *
      * @param string $id Domain identifier
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function destroy($id)
     {
@@ -88,17 +90,15 @@ class DomainsController extends RelationController
         $domain->delete();
 
         return response()->json([
-                'status' => 'success',
-                'message' => self::trans('app.domain-delete-success'),
+            'status' => 'success',
+            'message' => self::trans('app.domain-delete-success'),
         ]);
     }
 
     /**
      * Create a domain.
      *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function store(Request $request)
     {
@@ -113,7 +113,7 @@ class DomainsController extends RelationController
         $v = Validator::make(
             $request->all(),
             [
-                'namespace' => ['required', 'string', new UserEmailDomain()]
+                'namespace' => ['required', 'string', new UserEmailDomain()],
             ]
         );
 
@@ -137,7 +137,7 @@ class DomainsController extends RelationController
 
         if (
             empty($request->package)
-            || !($package = \App\Package::withObjectTenantContext($owner)->find($request->package))
+            || !($package = Package::withObjectTenantContext($owner)->find($request->package))
         ) {
             $errors = ['package' => self::trans('validation.packagerequired')];
             return response()->json(['status' => 'error', 'errors' => $errors], 422);
@@ -157,8 +157,8 @@ class DomainsController extends RelationController
 
         // Create the domain
         $domain = Domain::create([
-                'namespace' => $namespace,
-                'type' => \App\Domain::TYPE_EXTERNAL,
+            'namespace' => $namespace,
+            'type' => Domain::TYPE_EXTERNAL,
         ]);
 
         $domain->assignPackage($package, $owner);
@@ -166,8 +166,8 @@ class DomainsController extends RelationController
         DB::commit();
 
         return response()->json([
-                'status' => 'success',
-                'message' => self::trans('app.domain-create-success'),
+            'status' => 'success',
+            'message' => self::trans('app.domain-create-success'),
         ]);
     }
 
@@ -176,7 +176,7 @@ class DomainsController extends RelationController
      *
      * @param string $id Domain identifier
      *
-     * @return \Illuminate\Http\JsonResponse|void
+     * @return JsonResponse|void
      */
     public function show($id)
     {
@@ -223,7 +223,7 @@ class DomainsController extends RelationController
         // copy MX entries from an existing domain
         if ($master = \config('dns.copyfrom')) {
             // TODO: cache this lookup
-            foreach ((array) dns_get_record($master, DNS_MX) as $entry) {
+            foreach ((array) dns_get_record($master, \DNS_MX) as $entry) {
                 $entries[] = sprintf(
                     "@\t%s\t%s\tMX\t%d %s.",
                     \config('dns.ttl', $entry['ttl']),
@@ -233,7 +233,7 @@ class DomainsController extends RelationController
                 );
             }
         } elseif ($static = \config('dns.static')) {
-            $entries[] = strtr($static, array('\n' => "\n", '%s' => $namespace));
+            $entries[] = strtr($static, ['\n' => "\n", '%s' => $namespace]);
         }
 
         // display SPF settings
@@ -277,7 +277,7 @@ class DomainsController extends RelationController
     /**
      * Domain status (extended) information.
      *
-     * @param \App\Domain $domain Domain object
+     * @param Domain $domain Domain object
      *
      * @return array Status information
      */
@@ -298,8 +298,8 @@ class DomainsController extends RelationController
     /**
      * Execute (synchronously) specified step in a domain setup process.
      *
-     * @param \App\Domain $domain Domain object
-     * @param string      $step   Step identifier (as in self::statusInfo())
+     * @param Domain $domain Domain object
+     * @param string $step   Step identifier (as in self::statusInfo())
      *
      * @return bool|null True if the execution succeeded, False if not, Null when
      *                   the job has been sent to the worker (result unknown)
@@ -310,14 +310,12 @@ class DomainsController extends RelationController
             switch ($step) {
                 case 'domain-ldap-ready':
                     // Use worker to do the job
-                    \App\Jobs\Domain\CreateJob::dispatch($domain->id);
+                    CreateJob::dispatch($domain->id);
                     return null;
-
                 case 'domain-verified':
                     // Domain existence not verified
                     $domain->verify();
                     return $domain->isVerified();
-
                 case 'domain-confirmed':
                     // Domain ownership confirmation
                     $domain->confirm();

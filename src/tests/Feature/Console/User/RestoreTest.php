@@ -2,15 +2,14 @@
 
 namespace Tests\Feature\Console\User;
 
+use App\Domain;
+use App\Package;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class RestoreTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -18,10 +17,7 @@ class RestoreTest extends TestCase
         $this->deleteTestDomain('force-delete.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('user@force-delete.com');
         $this->deleteTestDomain('force-delete.com');
@@ -45,11 +41,11 @@ class RestoreTest extends TestCase
         // Create a user account for delete
         $user = $this->getTestUser('user@force-delete.com');
         $domain = $this->getTestDomain('force-delete.com', [
-                'status' => \App\Domain::STATUS_NEW,
-                'type' => \App\Domain::TYPE_HOSTED,
+            'status' => Domain::STATUS_NEW,
+            'type' => Domain::TYPE_HOSTED,
         ]);
-        $package_kolab = \App\Package::withEnvTenantContext()->where('title', 'kolab')->first();
-        $package_domain = \App\Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
+        $package_kolab = Package::withEnvTenantContext()->where('title', 'kolab')->first();
+        $package_domain = Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
         $user->assignPackage($package_kolab);
         $domain->assignPackage($package_domain, $user);
         $wallet = $user->wallets()->first();

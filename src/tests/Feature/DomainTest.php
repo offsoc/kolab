@@ -5,8 +5,11 @@ namespace Tests\Feature;
 use App\Domain;
 use App\Entitlement;
 use App\EventLog;
+use App\Jobs\Domain\CreateJob;
+use App\Jobs\Domain\DeleteJob;
+use App\Jobs\Domain\UpdateJob;
+use App\Package;
 use App\Sku;
-use App\User;
 use App\Tenant;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Queue;
@@ -24,14 +27,11 @@ class DomainTest extends TestCase
         'ci-failure-none.kolab.org',
     ];
 
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
-        Carbon::setTestNow(Carbon::createFromDate(2022, 02, 02));
+        Carbon::setTestNow(Carbon::createFromDate(2022, 2, 2));
         foreach ($this->domains as $domain) {
             $this->deleteTestDomain($domain);
         }
@@ -39,10 +39,7 @@ class DomainTest extends TestCase
         $this->deleteTestUser('user@gmail.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         foreach ($this->domains as $domain) {
             $this->deleteTestDomain($domain);
@@ -60,11 +57,11 @@ class DomainTest extends TestCase
     {
         $user = $this->getTestUser('user@gmail.com');
         $domain = $this->getTestDomain('gmail.com', [
-                'status' => Domain::STATUS_NEW,
-                'type' => Domain::TYPE_EXTERNAL,
+            'status' => Domain::STATUS_NEW,
+            'type' => Domain::TYPE_EXTERNAL,
         ]);
 
-        $package = \App\Package::withObjectTenantContext($user)->where('title', 'domain-hosting')->first();
+        $package = Package::withObjectTenantContext($user)->where('title', 'domain-hosting')->first();
         $wallet = $user->wallets()->first();
 
         $domain->assignPackage($package, $user);
@@ -75,8 +72,8 @@ class DomainTest extends TestCase
         // Assert that units_free might not work as we intended to
         // The second domain is still free, but it should cost 100.
         $domain = $this->getTestDomain('public-active.com', [
-                'status' => Domain::STATUS_NEW,
-                'type' => Domain::TYPE_EXTERNAL,
+            'status' => Domain::STATUS_NEW,
+            'type' => Domain::TYPE_EXTERNAL,
         ]);
 
         $domain->assignPackage($package, $user);
@@ -98,9 +95,9 @@ class DomainTest extends TestCase
         Queue::fake();
 
         $domain = Domain::create([
-                'namespace' => 'GMAIL.COM',
-                'status' => Domain::STATUS_NEW,
-                'type' => Domain::TYPE_EXTERNAL,
+            'namespace' => 'GMAIL.COM',
+            'status' => Domain::STATUS_NEW,
+            'type' => Domain::TYPE_EXTERNAL,
         ]);
 
         $result = Domain::where('namespace', 'gmail.com')->first();
@@ -121,21 +118,21 @@ class DomainTest extends TestCase
         Queue::assertNothingPushed();
 
         $domain = Domain::create([
-                'namespace' => 'gmail.com',
-                'status' => Domain::STATUS_NEW,
-                'type' => Domain::TYPE_EXTERNAL,
+            'namespace' => 'gmail.com',
+            'status' => Domain::STATUS_NEW,
+            'type' => Domain::TYPE_EXTERNAL,
         ]);
 
-        Queue::assertPushed(\App\Jobs\Domain\CreateJob::class, 1);
+        Queue::assertPushed(CreateJob::class, 1);
 
         Queue::assertPushed(
-            \App\Jobs\Domain\CreateJob::class,
-            function ($job) use ($domain) {
+            CreateJob::class,
+            static function ($job) use ($domain) {
                 $domainId = TestCase::getObjectProperty($job, 'domainId');
                 $domainNamespace = TestCase::getObjectProperty($job, 'domainNamespace');
 
-                return $domainId === $domain->id &&
-                    $domainNamespace === $domain->namespace;
+                return $domainId === $domain->id
+                    && $domainNamespace === $domain->namespace;
             }
         );
     }
@@ -152,9 +149,9 @@ class DomainTest extends TestCase
         $queue = Queue::fake();
 
         $domain = Domain::create([
-                'namespace' => 'public-active.com',
-                'status' => Domain::STATUS_NEW,
-                'type' => Domain::TYPE_EXTERNAL,
+            'namespace' => 'public-active.com',
+            'status' => Domain::STATUS_NEW,
+            'type' => Domain::TYPE_EXTERNAL,
         ]);
 
         // External domains should not be returned
@@ -246,8 +243,8 @@ class DomainTest extends TestCase
         Queue::fake();
 
         $domain = $this->getTestDomain('gmail.com', [
-                'status' => Domain::STATUS_NEW,
-                'type' => Domain::TYPE_PUBLIC,
+            'status' => Domain::STATUS_NEW,
+            'type' => Domain::TYPE_PUBLIC,
         ]);
 
         $domain->delete();
@@ -255,8 +252,8 @@ class DomainTest extends TestCase
         $this->assertTrue($domain->fresh()->trashed());
         $this->assertFalse($domain->fresh()->isDeleted());
 
-        Queue::assertPushed(\App\Jobs\Domain\DeleteJob::class, 1);
-        Queue::assertPushed(\App\Jobs\Domain\UpdateJob::class, 0);
+        Queue::assertPushed(DeleteJob::class, 1);
+        Queue::assertPushed(UpdateJob::class, 0);
 
         // Delete the domain for real
         $domain->status |= Domain::STATUS_DELETED;
@@ -268,8 +265,8 @@ class DomainTest extends TestCase
 
         $this->assertCount(0, Domain::withTrashed()->where('id', $domain->id)->get());
 
-        Queue::assertPushed(\App\Jobs\Domain\DeleteJob::class, 0);
-        Queue::assertPushed(\App\Jobs\Domain\UpdateJob::class, 0);
+        Queue::assertPushed(DeleteJob::class, 0);
+        Queue::assertPushed(UpdateJob::class, 0);
     }
 
     /**
@@ -280,8 +277,8 @@ class DomainTest extends TestCase
         Queue::fake();
 
         $domain = $this->getTestDomain('gmail.com', [
-                'status' => Domain::STATUS_NEW,
-                'type' => Domain::TYPE_PUBLIC,
+            'status' => Domain::STATUS_NEW,
+            'type' => Domain::TYPE_PUBLIC,
         ]);
 
         EventLog::createFor($domain, EventLog::TYPE_SUSPENDED, 'test');
@@ -309,8 +306,8 @@ class DomainTest extends TestCase
 
         // Empty domain
         $domain = $this->getTestDomain('gmail.com', [
-                'status' => Domain::STATUS_NEW,
-                'type' => Domain::TYPE_EXTERNAL,
+            'status' => Domain::STATUS_NEW,
+            'type' => Domain::TYPE_EXTERNAL,
         ]);
 
         $this->assertTrue($domain->isEmpty());
@@ -346,30 +343,30 @@ class DomainTest extends TestCase
         Queue::fake();
 
         $domain = $this->getTestDomain('gmail.com', [
-                'status' => Domain::STATUS_NEW | Domain::STATUS_SUSPENDED
-                    | Domain::STATUS_LDAP_READY | Domain::STATUS_CONFIRMED,
-                'type' => Domain::TYPE_PUBLIC,
+            'status' => Domain::STATUS_NEW | Domain::STATUS_SUSPENDED
+                | Domain::STATUS_LDAP_READY | Domain::STATUS_CONFIRMED,
+            'type' => Domain::TYPE_PUBLIC,
         ]);
 
         $user = $this->getTestUser('user@gmail.com');
-        $sku = \App\Sku::where('title', 'domain-hosting')->first();
-        $now = \Carbon\Carbon::now();
+        $sku = Sku::where('title', 'domain-hosting')->first();
+        $now = Carbon::now();
 
         // Assign two entitlements to the domain, so we can assert that only the
         // ones deleted last will be restored
-        $ent1 = \App\Entitlement::create([
-                'wallet_id' => $user->wallets->first()->id,
-                'sku_id' => $sku->id,
-                'cost' => 0,
-                'entitleable_id' => $domain->id,
-                'entitleable_type' => Domain::class,
+        $ent1 = Entitlement::create([
+            'wallet_id' => $user->wallets->first()->id,
+            'sku_id' => $sku->id,
+            'cost' => 0,
+            'entitleable_id' => $domain->id,
+            'entitleable_type' => Domain::class,
         ]);
-        $ent2 = \App\Entitlement::create([
-                'wallet_id' => $user->wallets->first()->id,
-                'sku_id' => $sku->id,
-                'cost' => 0,
-                'entitleable_id' => $domain->id,
-                'entitleable_type' => Domain::class,
+        $ent2 = Entitlement::create([
+            'wallet_id' => $user->wallets->first()->id,
+            'sku_id' => $sku->id,
+            'cost' => 0,
+            'entitleable_id' => $domain->id,
+            'entitleable_type' => Domain::class,
         ]);
 
         $domain->delete();
@@ -380,8 +377,8 @@ class DomainTest extends TestCase
         $this->assertTrue($ent2->fresh()->trashed());
 
         // Backdate some properties
-        \App\Entitlement::withTrashed()->where('id', $ent2->id)->update(['deleted_at' => $now->subMinutes(2)]);
-        \App\Entitlement::withTrashed()->where('id', $ent1->id)->update(['updated_at' => $now->subMinutes(10)]);
+        Entitlement::withTrashed()->where('id', $ent2->id)->update(['deleted_at' => $now->subMinutes(2)]);
+        Entitlement::withTrashed()->where('id', $ent1->id)->update(['updated_at' => $now->subMinutes(10)]);
 
         Queue::fake();
 
@@ -399,18 +396,18 @@ class DomainTest extends TestCase
         // Assert entitlements
         $this->assertTrue($ent2->fresh()->trashed());
         $this->assertFalse($ent1->fresh()->trashed());
-        $this->assertTrue($ent1->updated_at->greaterThan(\Carbon\Carbon::now()->subSeconds(5)));
+        $this->assertTrue($ent1->updated_at->greaterThan(Carbon::now()->subSeconds(5)));
 
         // We expect only one CreateJob and one UpdateJob
         // Because how Illuminate/Database/Eloquent/SoftDeletes::restore() method
         // is implemented we cannot skip the UpdateJob in any way.
         // I don't want to overwrite this method, the extra job shouldn't do any harm.
         $this->assertCount(2, Queue::pushedJobs()); // @phpstan-ignore-line
-        Queue::assertPushed(\App\Jobs\Domain\UpdateJob::class, 1);
-        Queue::assertPushed(\App\Jobs\Domain\CreateJob::class, 1);
+        Queue::assertPushed(UpdateJob::class, 1);
+        Queue::assertPushed(CreateJob::class, 1);
         Queue::assertPushed(
-            \App\Jobs\Domain\CreateJob::class,
-            function ($job) use ($domain) {
+            CreateJob::class,
+            static function ($job) use ($domain) {
                 return $domain->id === TestCase::getObjectProperty($job, 'domainId');
             }
         );
@@ -494,12 +491,12 @@ class DomainTest extends TestCase
 
         // A domain without an owner
         $domain = $this->getTestDomain('gmail.com', [
-                'status' => Domain::STATUS_NEW | Domain::STATUS_SUSPENDED
-                    | Domain::STATUS_LDAP_READY | Domain::STATUS_CONFIRMED,
-                'type' => Domain::TYPE_PUBLIC,
+            'status' => Domain::STATUS_NEW | Domain::STATUS_SUSPENDED
+                | Domain::STATUS_LDAP_READY | Domain::STATUS_CONFIRMED,
+            'type' => Domain::TYPE_PUBLIC,
         ]);
 
-        $this->assertSame(null, $domain->walletOwner());
+        $this->assertNull($domain->walletOwner());
     }
 
     /**
@@ -511,8 +508,8 @@ class DomainTest extends TestCase
 
         // A domain with DNS records
         $domain = $this->getTestDomain('gmail.com', [
-                'status' => Domain::STATUS_NEW,
-                'type' => Domain::TYPE_PUBLIC,
+            'status' => Domain::STATUS_NEW,
+            'type' => Domain::TYPE_PUBLIC,
         ]);
 
         $this->assertTrue($domain->verify());
@@ -520,8 +517,8 @@ class DomainTest extends TestCase
 
         // A domain without DNS records
         $domain = $this->getTestDomain('public-active.com', [
-                'status' => Domain::STATUS_NEW,
-                'type' => Domain::TYPE_PUBLIC,
+            'status' => Domain::STATUS_NEW,
+            'type' => Domain::TYPE_PUBLIC,
         ]);
 
         $this->assertFalse($domain->verify());

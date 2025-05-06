@@ -2,13 +2,15 @@
 
 namespace App\Http\Controllers\API\V4\Admin;
 
+use App\Http\Controllers\Controller;
 use App\Payment;
-use App\User;
+use App\Utils;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
+use Illuminate\Database\Query\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 
-class StatsController extends \App\Http\Controllers\Controller
+class StatsController extends Controller
 {
     public const COLOR_GREEN = '#48d368';       // '#28a745'
     public const COLOR_GREEN_DARK = '#19692c';
@@ -35,7 +37,7 @@ class StatsController extends \App\Http\Controllers\Controller
      *
      * @param string $chart Name of the chart
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function chart($chart)
     {
@@ -67,7 +69,7 @@ class StatsController extends \App\Http\Controllers\Controller
             ->whereNull('users.deleted_at')
             ->groupBy('discounts.discount');
 
-        $addTenantScope = function ($builder, $tenantId) {
+        $addTenantScope = static function ($builder, $tenantId) {
             return $builder->where('users.tenant_id', $tenantId);
         };
 
@@ -80,7 +82,7 @@ class StatsController extends \App\Http\Controllers\Controller
         // $labels = [10, 25, 30, 100];
         // $discounts = [100, 120, 30, 50];
 
-        $labels = array_map(function ($item) {
+        $labels = array_map(static function ($item) {
             return $item . '%';
         }, $labels);
 
@@ -118,7 +120,7 @@ class StatsController extends \App\Http\Controllers\Controller
             ->whereIn('type', [Payment::TYPE_ONEOFF, Payment::TYPE_RECURRING])
             ->groupByRaw('period, wallets.currency');
 
-        $addTenantScope = function ($builder, $tenantId) {
+        $addTenantScope = static function ($builder, $tenantId) {
             $where = sprintf(
                 '`wallets`.`user_id` IN (select `id` from `users` where `tenant_id` = %d)',
                 $tenantId
@@ -132,10 +134,10 @@ class StatsController extends \App\Http\Controllers\Controller
 
         $this->applyTenantScope($query, $addTenantScope)
             ->get()
-            ->each(function ($record) use (&$payments, $currency) {
+            ->each(static function ($record) use (&$payments, $currency) {
                 $amount = $record->amount;
                 if ($record->currency != $currency) {
-                    $amount = intval(round($amount * \App\Utils::exchangeRate($record->currency, $currency)));
+                    $amount = (int) round($amount * Utils::exchangeRate($record->currency, $currency));
                 }
 
                 if (isset($payments[$record->period])) {
@@ -168,17 +170,17 @@ class StatsController extends \App\Http\Controllers\Controller
                 'datasets' => [
                     [
                         // 'name' => 'Payments',
-                        'values' => $payments
-                    ]
+                        'values' => $payments,
+                    ],
                 ],
                 'yMarkers' => [
                     [
                         'label' => sprintf('average = %.2F', $avg),
                         'value' => $avg,
-                        'options' => [ 'labelPos' => 'left' ] // default: 'right'
-                    ]
-                ]
-            ]
+                        'options' => ['labelPos' => 'left'], // default: 'right'
+                    ],
+                ],
+            ],
         ];
     }
 
@@ -187,7 +189,7 @@ class StatsController extends \App\Http\Controllers\Controller
      */
     protected function chartPayers(): array
     {
-        list($labels, $stats) = $this->getCollectedStats(self::TYPE_PAYERS, 54, fn($v) => intval($v));
+        [$labels, $stats] = $this->getCollectedStats(self::TYPE_PAYERS, 54, static fn ($v) => (int) $v);
 
         // See https://frappe.io/charts/docs for format/options description
 
@@ -208,10 +210,10 @@ class StatsController extends \App\Http\Controllers\Controller
                 'datasets' => [
                     [
                         // 'name' => 'Existing',
-                        'values' => $stats
-                    ]
-                ]
-            ]
+                        'values' => $stats,
+                    ],
+                ],
+            ],
         ];
     }
 
@@ -272,22 +274,22 @@ class StatsController extends \App\Http\Controllers\Controller
                     [
                         'name' => self::trans('app.chart-created'),
                         'chartType' => 'bar',
-                        'values' => $created
+                        'values' => $created,
                     ],
                     [
                         'name' => self::trans('app.chart-deleted'),
                         'chartType' => 'line',
-                        'values' => $deleted
-                    ]
+                        'values' => $deleted,
+                    ],
                 ],
                 'yMarkers' => [
                     [
                         'label' => sprintf('%s = %.1f', self::trans('app.chart-average'), $avg),
                         'value' => collect($created)->avg(),
-                        'options' => [ 'labelPos' => 'left' ] // default: 'right'
-                    ]
-                ]
-            ]
+                        'options' => ['labelPos' => 'left'], // default: 'right'
+                    ],
+                ],
+            ],
         ];
     }
 
@@ -361,10 +363,10 @@ class StatsController extends \App\Http\Controllers\Controller
                 'datasets' => [
                     [
                         // 'name' => 'Existing',
-                        'values' => $all
-                    ]
-                ]
-            ]
+                        'values' => $all,
+                    ],
+                ],
+            ],
         ];
     }
 
@@ -384,7 +386,7 @@ class StatsController extends \App\Http\Controllers\Controller
             ->havingRaw("count(discount_id) > 0")
             ->orderByRaw('1');
 
-        $addTenantScope = function ($builder, $tenantId) {
+        $addTenantScope = static function ($builder, $tenantId) {
             return $builder->where('users.tenant_id', $tenantId);
         };
 
@@ -414,7 +416,7 @@ class StatsController extends \App\Http\Controllers\Controller
                 self::COLOR_GREEN_DARK,
                 self::COLOR_ORANGE,
                 self::COLOR_RED,
-                self::COLOR_RED_DARK
+                self::COLOR_RED_DARK,
             ],
             'maxSlices' => 8,
             'tooltipOptions' => [], // does not work without it (https://github.com/frappe/charts/issues/314)
@@ -422,20 +424,20 @@ class StatsController extends \App\Http\Controllers\Controller
                 'labels' => $labels,
                 'datasets' => [
                     [
-                        'values' => $data
-                    ]
-                ]
-            ]
+                        'values' => $data,
+                    ],
+                ],
+            ],
         ];
     }
 
     /**
      * Add tenant scope to the queries when needed
      *
-     * @param \Illuminate\Database\Query\Builder $query    The query
-     * @param callable                           $addQuery Additional tenant-scope query-modifier
+     * @param Builder  $query    The query
+     * @param callable $addQuery Additional tenant-scope query-modifier
      *
-     * @return \Illuminate\Database\Query\Builder
+     * @return Builder
      */
     protected function applyTenantScope($query, $addQuery = null)
     {
@@ -497,7 +499,7 @@ class StatsController extends \App\Http\Controllers\Controller
         // Get the query result and sum up per-tenant stats
         $result = [];
         $this->applyTenantScope($stats)->get()
-            ->each(function ($item) use (&$result) {
+            ->each(static function ($item) use (&$result) {
                 $result[$item->period] = ($result[$item->period] ?? 0) + $item->cnt;
             });
 

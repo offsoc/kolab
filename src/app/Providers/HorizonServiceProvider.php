@@ -10,8 +10,6 @@ class HorizonServiceProvider extends HorizonApplicationServiceProvider
 {
     /**
      * Bootstrap any application services.
-     *
-     * @return void
      */
     public function boot()
     {
@@ -28,7 +26,7 @@ class HorizonServiceProvider extends HorizonApplicationServiceProvider
     {
         Gate::define(
             'viewHorizon',
-            function ($user = null) {
+            static function ($user = null) {
                 return true;
             }
         );

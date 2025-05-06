@@ -3,28 +3,22 @@
 namespace Tests\Feature\Jobs\User;
 
 use App\Jobs\User\UpdateJob;
-use App\User;
 use App\Support\Facades\IMAP;
 use App\Support\Facades\LDAP;
+use App\User;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class UpdateTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestUser('new-job-user@' . \config('app.domain'));
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('new-job-user@' . \config('app.domain'));
 

@@ -4,16 +4,20 @@ namespace App\Http\Controllers\API\V4\Reseller;
 
 use App\Domain;
 use App\Group;
+use App\Resource;
+use App\SharedFolder;
+use App\SharedFolderAlias;
 use App\User;
 use App\UserAlias;
 use App\UserSetting;
+use Illuminate\Http\JsonResponse;
 
 class UsersController extends \App\Http\Controllers\API\V4\Admin\UsersController
 {
     /**
      * Searching of user accounts.
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function index()
     {
@@ -53,11 +57,11 @@ class UsersController extends \App\Http\Controllers\API\V4\Admin\UsersController
                 // Search by an email of a group, resource, shared folder, etc.
                 if ($group = Group::withTrashed()->where('email', $search)->first()) {
                     $user_ids = $user_ids->merge([$group->wallet()->user_id])->unique();
-                } elseif ($resource = \App\Resource::withTrashed()->where('email', $search)->first()) {
+                } elseif ($resource = Resource::withTrashed()->where('email', $search)->first()) {
                     $user_ids = $user_ids->merge([$resource->wallet()->user_id])->unique();
-                } elseif ($folder = \App\SharedFolder::withTrashed()->where('email', $search)->first()) {
+                } elseif ($folder = SharedFolder::withTrashed()->where('email', $search)->first()) {
                     $user_ids = $user_ids->merge([$folder->wallet()->user_id])->unique();
-                } elseif ($alias = \App\SharedFolderAlias::where('alias', $search)->first()) {
+                } elseif ($alias = SharedFolderAlias::where('alias', $search)->first()) {
                     $user_ids = $user_ids->merge([$alias->sharedFolder->wallet()->user_id])->unique();
                 }
 

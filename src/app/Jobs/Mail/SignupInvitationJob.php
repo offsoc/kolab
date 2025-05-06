@@ -2,21 +2,20 @@
 
 namespace App\Jobs\Mail;
 
+use App\Jobs\MailJob;
+use App\Mail\Helper;
 use App\Mail\SignupInvitation as SignupInvitationMail;
 use App\SignupInvitation;
 
-class SignupInvitationJob extends \App\Jobs\MailJob
+class SignupInvitationJob extends MailJob
 {
     /** @var SignupInvitation Signup invitation object */
     protected $invitation;
-
 
     /**
      * Create a new job instance.
      *
      * @param SignupInvitation $invitation Invitation object
-     *
-     * @return void
      */
     public function __construct(SignupInvitation $invitation)
     {
@@ -25,12 +24,10 @@ class SignupInvitationJob extends \App\Jobs\MailJob
 
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle()
     {
-        \App\Mail\Helper::sendMail(
+        Helper::sendMail(
             new SignupInvitationMail($this->invitation),
             $this->invitation->tenant_id,
             ['to' => $this->invitation->email]
@@ -43,10 +40,6 @@ class SignupInvitationJob extends \App\Jobs\MailJob
 
     /**
      * The job failed to process.
-     *
-     * @param \Exception $exception
-     *
-     * @return void
      */
     public function failed(\Exception $exception)
     {

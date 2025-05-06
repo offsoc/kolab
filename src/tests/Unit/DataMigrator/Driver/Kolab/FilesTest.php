@@ -43,7 +43,7 @@ class FilesTest extends TestCase
         $this->assertSame('text/plain', $result[0]);
         $this->assertSame('a very long name for the attachment to test ććć will see how '
             . 'it goes with some non-ascii kość characters.txt', $result[1]);
-        $this->assertSame(null, $result[2]);
+        $this->assertNull($result[2]);
         $this->assertSame('quoted-printable', $result[3]);
 
         $headers = "Content-Type: text/plain; name=test.txt\r\n"
@@ -52,7 +52,7 @@ class FilesTest extends TestCase
         $result = $this->invokeMethod($files, 'parseHeaders', [$headers]);
         $this->assertSame('text/plain', $result[0]);
         $this->assertSame('test.txt', $result[1]);
-        $this->assertSame(null, $result[2]);
-        $this->assertSame(null, $result[3]);
+        $this->assertNull($result[2]);
+        $this->assertNull($result[3]);
     }
 }

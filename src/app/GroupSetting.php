@@ -3,6 +3,7 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * A collection of settings for a Group.
@@ -20,7 +21,7 @@ class GroupSetting extends Model
     /**
      * The group to which this setting belongs.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Group, $this>
+     * @return BelongsTo<Group, $this>
      */
     public function group()
     {
@@ -32,6 +33,6 @@ class GroupSetting extends Model
      */
     public function isBackendSetting(): bool
     {
-        return (\config('app.with_ldap') && $this->key == 'sender_policy');
+        return \config('app.with_ldap') && $this->key == 'sender_policy';
     }
 }

@@ -5,6 +5,8 @@ namespace App;
 use App\Traits\BelongsToTenantTrait;
 use App\Traits\UuidStrKeyTrait;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Translatable\HasTranslations;
 
 /**
@@ -15,18 +17,18 @@ use Spatie\Translatable\HasTranslations;
  * A "Family Plan" as such may exist of "2 or more Kolab packages",
  * and apply a discount for the third and further Kolab packages.
  *
- * @property string         $description
- * @property int            $discount_qty
- * @property int            $discount_rate
- * @property int            $free_months
- * @property bool           $hidden
- * @property string         $id
- * @property string         $mode           Plan signup mode (Plan::MODE_*)
- * @property string         $name
- * @property \DateTime      $promo_from
- * @property \DateTime      $promo_to
- * @property ?int           $tenant_id
- * @property string         $title
+ * @property string    $description
+ * @property int       $discount_qty
+ * @property int       $discount_rate
+ * @property int       $free_months
+ * @property bool      $hidden
+ * @property string    $id
+ * @property string    $mode          Plan signup mode (Plan::MODE_*)
+ * @property string    $name
+ * @property \DateTime $promo_from
+ * @property \DateTime $promo_to
+ * @property ?int      $tenant_id
+ * @property string    $title
  */
 class Plan extends Model
 {
@@ -69,7 +71,7 @@ class Plan extends Model
         'discount_rate' => 'integer',
         'hidden' => 'boolean',
         'months' => 'integer',
-        'free_months' => 'integer'
+        'free_months' => 'integer',
     ];
 
     /** @var array<int, string> Translatable properties */
@@ -81,7 +83,7 @@ class Plan extends Model
     /**
      * The list price for this plan at the minimum configuration.
      *
-     * @return int The costs in cents.
+     * @return int the costs in cents
      */
     public function cost(): int
     {
@@ -105,25 +107,23 @@ class Plan extends Model
      * billing) or its maximum (to allow topping out "enterprise" customers on a "small business"
      * plan).
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<Package, $this, PlanPackage>
+     * @return BelongsToMany<Package, $this, PlanPackage>
      */
     public function packages()
     {
         return $this->belongsToMany(Package::class, 'plan_packages')
             ->using(PlanPackage::class)
             ->withPivot([
-                    'qty',
-                    'qty_min',
-                    'qty_max',
-                    'discount_qty',
-                    'discount_rate'
+                'qty',
+                'qty_min',
+                'qty_max',
+                'discount_qty',
+                'discount_rate',
             ]);
     }
 
     /**
      * Checks if the plan has any type of domain SKU assigned.
-     *
-     * @return bool
      */
     public function hasDomain(): bool
     {
@@ -139,7 +139,7 @@ class Plan extends Model
     /**
      * The relationship to signup tokens.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<SignupToken, $this>
+     * @return HasMany<SignupToken, $this>
      */
     public function signupTokens()
     {

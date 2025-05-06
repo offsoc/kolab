@@ -2,7 +2,9 @@
 
 namespace App\Console\Commands\User;
 
-class InfoCommand extends \App\Console\Command
+use App\Console\Command;
+
+class InfoCommand extends Command
 {
     /**
      * The name and signature of the console command.

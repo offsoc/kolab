@@ -18,7 +18,7 @@ class PoliciesTest extends TestCaseDusk
     public function testPoliciesUnauth(): void
     {
         // Test that the page requires authentication
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit('/policies')->on(new Home());
         });
     }
@@ -28,7 +28,7 @@ class PoliciesTest extends TestCaseDusk
      */
     public function testDashboard(): void
     {
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             // Test a user that is not an account owner
             $browser->visit(new Home())
                 ->submitLogon('jack@kolab.org', 'simple123', true)
@@ -36,7 +36,7 @@ class PoliciesTest extends TestCaseDusk
                 ->assertMissing('@links .link-policies')
                 ->visit('/policies')
                 ->assertErrorPage(403)
-                ->within(new Menu(), function (Browser $browser) {
+                ->within(new Menu(), static function (Browser $browser) {
                     $browser->clickMenuItem('logout');
                 });
 
@@ -60,13 +60,13 @@ class PoliciesTest extends TestCaseDusk
         $john->setSetting('password_policy', 'min:5,max:100,lower');
         $john->setSetting('max_password_age', null);
 
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->click('@links .link-policies')
                 ->on(new Policies())
                 ->assertSeeIn('#policies .card-title', 'Policies')
                 // Password policy
                 ->assertSeeIn('@form .row:nth-child(1) > label', 'Password Policy')
-                ->with('@form #password_policy', function (Browser $browser) {
+                ->with('@form #password_policy', static function (Browser $browser) {
                     $browser->assertElementsCount('li', 7)
                         ->assertSeeIn('li:nth-child(1) label', 'Minimum password length')
                         ->assertChecked('li:nth-child(1) input[type=checkbox]')
@@ -92,7 +92,7 @@ class PoliciesTest extends TestCaseDusk
                         ->assertNotChecked('li:nth-child(7) input[type=checkbox]')
                         ->assertMissing('li:nth-child(7) input[type=text]')
                         ->assertSelected('li:nth-child(7) select', 3)
-                        ->assertSelectHasOptions('li:nth-child(7) select', [1,2,3,4,5,6])
+                        ->assertSelectHasOptions('li:nth-child(7) select', [1, 2, 3, 4, 5, 6])
                         // Change the policy
                         ->type('li:nth-child(1) input[type=text]', '11')
                         ->type('li:nth-child(2) input[type=text]', '120')
@@ -100,7 +100,7 @@ class PoliciesTest extends TestCaseDusk
                         ->click('li:nth-child(4) input[type=checkbox]');
                 })
                 ->assertSeeIn('@form .row:nth-child(2) > label', 'Password Retention')
-                ->with('@form #password_retention', function (Browser $browser) {
+                ->with('@form #password_retention', static function (Browser $browser) {
                     $browser->assertElementsCount('li', 1)
                         ->assertSeeIn('li:nth-child(1) label', 'Require a password change every')
                         ->assertNotChecked('li:nth-child(1) input[type=checkbox]')

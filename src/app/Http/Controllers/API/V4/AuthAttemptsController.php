@@ -4,7 +4,8 @@ namespace App\Http\Controllers\API\V4;
 
 use App\AuthAttempt;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Cache;
+use App\Utils;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class AuthAttemptsController extends Controller
@@ -14,7 +15,7 @@ class AuthAttemptsController extends Controller
      *
      * @param string $id Id of AuthAttempt attempt
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function confirm($id)
     {
@@ -38,7 +39,7 @@ class AuthAttemptsController extends Controller
      *
      * @param string $id Id of AuthAttempt attempt
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function deny($id)
     {
@@ -62,7 +63,7 @@ class AuthAttemptsController extends Controller
      *
      * @param string $id Id of AuthAttempt attempt
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function details($id)
     {
@@ -79,8 +80,8 @@ class AuthAttemptsController extends Controller
         return response()->json([
             'status' => 'success',
             'username' => $user->email,
-            'country' => \App\Utils::countryForIP($authAttempt->ip),
-            'entry' => $authAttempt->toArray()
+            'country' => Utils::countryForIP($authAttempt->ip),
+            'entry' => $authAttempt->toArray(),
         ]);
     }
 
@@ -89,17 +90,17 @@ class AuthAttemptsController extends Controller
      *
      * All authAttempt attempts from the current user
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function index(Request $request)
     {
         $user = $this->guard()->user();
 
         $pageSize = 10;
-        $page = intval($request->input('page')) ?: 1;
+        $page = (int) ($request->input('page')) ?: 1;
         $hasMore = false;
 
-        $result = \App\AuthAttempt::where('user_id', $user->id)
+        $result = AuthAttempt::where('user_id', $user->id)
             ->orderBy('updated_at', 'desc')
             ->limit($pageSize + 1)
             ->offset($pageSize * ($page - 1))
@@ -110,7 +111,7 @@ class AuthAttemptsController extends Controller
             $hasMore = true;
         }
 
-        $result = $result->map(function ($authAttempt) {
+        $result = $result->map(static function ($authAttempt) {
             return $authAttempt->toArray();
         });
 

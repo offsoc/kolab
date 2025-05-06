@@ -2,29 +2,23 @@
 
 namespace Tests\Feature;
 
-use App\Entitlement;
 use App\Handlers;
 use App\Package;
 use App\Sku;
+use App\Tenant;
 use Carbon\Carbon;
 use Tests\TestCase;
 
 class SkuTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestUser('jane@kolabnow.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('jane@kolabnow.com');
 
@@ -100,10 +94,10 @@ class SkuTest extends TestCase
 
         $tenant = $sku->tenant()->first();
 
-        $this->assertInstanceof(\App\Tenant::class, $tenant);
+        $this->assertInstanceof(Tenant::class, $tenant);
 
         $tenant = $sku->tenant;
 
-        $this->assertInstanceof(\App\Tenant::class, $tenant);
+        $this->assertInstanceof(Tenant::class, $tenant);
     }
 }

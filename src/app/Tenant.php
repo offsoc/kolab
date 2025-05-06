@@ -4,6 +4,7 @@ namespace App;
 
 use App\Traits\SettingsTrait;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * The eloquent definition of a Tenant.
@@ -17,7 +18,6 @@ class Tenant extends Model
 
     /** @var list<string> The attributes that are mass assignable */
     protected $fillable = ['id', 'title'];
-
 
     /**
      * Utility method to get tenant-specific system setting.
@@ -61,7 +61,7 @@ class Tenant extends Model
     /**
      * Discounts assigned to this tenant.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Discount, $this>
+     * @return HasMany<Discount, $this>
      */
     public function discounts()
     {
@@ -71,7 +71,7 @@ class Tenant extends Model
     /**
      * SignupInvitations assigned to this tenant.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<SignupInvitation, $this>
+     * @return HasMany<SignupInvitation, $this>
      */
     public function signupInvitations()
     {

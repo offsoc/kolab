@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\V4\Admin;
 
 use App\SharedFolder;
 use App\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class SharedFoldersController extends \App\Http\Controllers\API\V4\SharedFoldersController
@@ -11,7 +12,7 @@ class SharedFoldersController extends \App\Http\Controllers\API\V4\SharedFolders
     /**
      * Search for shared folders
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function index()
     {
@@ -48,9 +49,9 @@ class SharedFoldersController extends \App\Http\Controllers\API\V4\SharedFolders
     /**
      * Create a new shared folder.
      *
-     * @param \Illuminate\Http\Request $request The API request.
+     * @param Request $request the API request
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function store(Request $request)
     {

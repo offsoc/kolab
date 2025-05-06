@@ -2,30 +2,26 @@
 
 namespace Tests\Feature\Console\User;
 
+use App\Sku;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class UsersTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestUser('user@force-delete.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('user@force-delete.com');
 
         parent::tearDown();
     }
+
     /**
      * Test command runs
      */
@@ -53,7 +49,7 @@ class UsersTest extends TestCase
         // Note: User:users() uses entitlements to get the owned users,
         // so we add a single entitlement, then we can soft-delete the user
         $user = $this->getTestUser('user@force-delete.com');
-        $storage = \App\Sku::withEnvTenantContext()->where('title', 'storage')->first();
+        $storage = Sku::withEnvTenantContext()->where('title', 'storage')->first();
         $user->assignSku($storage, 1);
         $user->delete();
 

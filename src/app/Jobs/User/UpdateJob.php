@@ -3,6 +3,8 @@
 namespace App\Jobs\User;
 
 use App\Jobs\UserJob;
+use App\Support\Facades\IMAP;
+use App\Support\Facades\LDAP;
 use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
 
 class UpdateJob extends UserJob implements ShouldBeUniqueUntilProcessing
@@ -15,8 +17,6 @@ class UpdateJob extends UserJob implements ShouldBeUniqueUntilProcessing
 
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle()
     {
@@ -39,11 +39,11 @@ class UpdateJob extends UserJob implements ShouldBeUniqueUntilProcessing
         }
 
         if (\config('app.with_ldap') && $user->isLdapReady()) {
-            \App\Support\Facades\LDAP::updateUser($user);
+            LDAP::updateUser($user);
         }
 
         if (\config('app.with_imap') && $user->isImapReady()) {
-            if (!\App\Support\Facades\IMAP::updateUser($user)) {
+            if (!IMAP::updateUser($user)) {
                 throw new \Exception("Failed to update mailbox for user {$this->userId}.");
             }
         }

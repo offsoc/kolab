@@ -4,6 +4,8 @@ namespace App\Mail;
 
 use App\EventLog;
 use App\Tenant;
+use App\User;
+use Illuminate\Container\Container;
 use Illuminate\Support\Facades\Mail;
 
 class Helper
@@ -22,7 +24,7 @@ class Helper
         if ($type == 'text') {
             $mail->build(); // @phpstan-ignore-line
 
-            $mailer = \Illuminate\Container\Container::getInstance()->make('mailer');
+            $mailer = Container::getInstance()->make('mailer');
 
             return $mailer->render(['text' => $mail->textView], $mail->buildViewData());
         }
@@ -46,7 +48,7 @@ class Helper
      */
     public static function sendMail(Mailable $mail, $tenantId = null, array $params = []): void
     {
-        $class = class_basename(get_class($mail));
+        $class = class_basename($mail::class);
         $recipients = [];
 
         // For now we do not support addresses + names, only addresses
@@ -102,12 +104,12 @@ class Helper
     /**
      * Return user's email addresses, separately for use in To and Cc.
      *
-     * @param \App\User $user     The user
-     * @param bool      $external Include users's external email
+     * @param User $user     The user
+     * @param bool $external Include users's external email
      *
-     * @return array To address as the first element, Cc address(es) as the second.
+     * @return array to address as the first element, Cc address(es) as the second
      */
-    public static function userEmails(\App\User $user, bool $external = false): array
+    public static function userEmails(User $user, bool $external = false): array
     {
         $active = $user->isLdapReady() && $user->isImapReady();
 

@@ -45,7 +45,7 @@ class AddMemberCommand extends Command
         $owner = $group->wallet()->owner;
 
         if ($error = GroupsController::validateMemberEmail($member, $owner)) {
-            $this->error("{$member}: $error");
+            $this->error("{$member}: {$error}");
             return 1;
         }
 

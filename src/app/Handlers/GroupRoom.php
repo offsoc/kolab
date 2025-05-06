@@ -2,6 +2,9 @@
 
 namespace App\Handlers;
 
+use App\Meet\Room;
+use App\Sku;
+
 class GroupRoom extends Base
 {
     /**
@@ -9,13 +12,13 @@ class GroupRoom extends Base
      */
     public static function entitleableClass(): string
     {
-        return \App\Meet\Room::class;
+        return Room::class;
     }
 
     /**
      * SKU handler metadata.
      */
-    public static function metadata(\App\Sku $sku): array
+    public static function metadata(Sku $sku): array
     {
         $data = parent::metadata($sku);
 

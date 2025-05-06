@@ -3,13 +3,14 @@
 namespace App\Traits;
 
 use App\User;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 trait BelongsToUserTrait
 {
     /**
      * The user to which this object belongs.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<User, $this>
+     * @return BelongsTo<User, $this>
      */
     public function user()
     {

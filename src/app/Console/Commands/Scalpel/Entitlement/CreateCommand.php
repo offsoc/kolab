@@ -3,15 +3,18 @@
 namespace App\Console\Commands\Scalpel\Entitlement;
 
 use App\Console\ObjectCreateCommand;
+use App\Entitlement;
+use App\Sku;
+use App\Wallet;
 
 class CreateCommand extends ObjectCreateCommand
 {
     protected $hidden = true;
 
     protected $commandPrefix = 'scalpel';
-    protected $objectClass = \App\Entitlement::class;
+    protected $objectClass = Entitlement::class;
     protected $objectName = 'entitlement';
-    protected $objectTitle = null;
+    protected $objectTitle;
 
     public function handle()
     {
@@ -33,7 +36,7 @@ class CreateCommand extends ObjectCreateCommand
         }
 
         if (array_key_exists('sku_id', $this->properties)) {
-            $sku = \App\Sku::find($this->properties['sku_id']);
+            $sku = Sku::find($this->properties['sku_id']);
 
             if (!$sku) {
                 $this->error("No such SKU {$this->properties['sku_id']}");
@@ -46,7 +49,7 @@ class CreateCommand extends ObjectCreateCommand
         }
 
         if (array_key_exists('wallet_id', $this->properties)) {
-            $wallet = \App\Wallet::find($this->properties['wallet_id']);
+            $wallet = Wallet::find($this->properties['wallet_id']);
 
             if (!$wallet) {
                 $this->error("No such wallet {$this->properties['wallet_id']}");

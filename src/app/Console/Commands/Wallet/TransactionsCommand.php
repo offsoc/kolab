@@ -3,6 +3,7 @@
 namespace App\Console\Commands\Wallet;
 
 use App\Console\Command;
+use App\Transaction;
 
 class TransactionsCommand extends Command
 {
@@ -54,7 +55,7 @@ class TransactionsCommand extends Command
             );
 
             if ($withDetail) {
-                $elements = \App\Transaction::where('transaction_id', $transaction->id)
+                $elements = Transaction::where('transaction_id', $transaction->id)
                     ->orderBy('created_at')->get();
 
                 foreach ($elements as $element) {

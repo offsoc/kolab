@@ -3,14 +3,14 @@
 namespace App\DataMigrator\Driver;
 
 use App\Backends\DAV as DAVClient;
-use App\Backends\DAV\Opaque as DAVOpaque;
 use App\Backends\DAV\Folder as DAVFolder;
+use App\Backends\DAV\Opaque as DAVOpaque;
 use App\Backends\DAV\Search as DAVSearch;
 use App\Backends\DAV\ShareResource as DAVShareResource;
 use App\DataMigrator\Account;
 use App\DataMigrator\Engine;
-use App\DataMigrator\Interface\Folder;
 use App\DataMigrator\Interface\ExporterInterface;
+use App\DataMigrator\Interface\Folder;
 use App\DataMigrator\Interface\ImporterInterface;
 use App\DataMigrator\Interface\Item;
 use App\DataMigrator\Interface\ItemSet;
@@ -95,7 +95,6 @@ class DAV implements ExporterInterface, ImporterInterface
             case Engine::TYPE_TASK:
                 $object->contentType = 'text/calendar; charset=utf-8';
                 break;
-
             case Engine::TYPE_CONTACT:
                 $object->contentType = 'text/vcard; charset=utf-8';
                 break;
@@ -258,7 +257,7 @@ class DAV implements ExporterInterface, ImporterInterface
             $result = $this->client->search(
                 $location,
                 $search,
-                function ($item) use (&$set, $dav_type, $folder, $existing, $callback) {
+                static function ($item) use (&$set, $dav_type, $folder, $existing, $callback) {
                     // Skip an item that exists and did not change
                     $exists = null;
                     if (!empty($existing[$item->uid])) {
@@ -342,7 +341,7 @@ class DAV implements ExporterInterface, ImporterInterface
             $items = $this->client->search(
                 $location,
                 $search,
-                function ($item) use ($dav_type) {
+                static function ($item) use ($dav_type) {
                     // Slim down the result to properties we might need
                     $object = [
                         'href' => $item->href,

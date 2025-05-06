@@ -2,8 +2,8 @@
 
 namespace Tests;
 
-use App\Backends\IMAP;
 use App\Backends\DAV;
+use App\Backends\IMAP;
 use App\DataMigrator\Account;
 use App\DataMigrator\Engine;
 use App\Utils;
@@ -17,7 +17,6 @@ trait BackendsTrait
         Engine::TYPE_CONTACT => DAV::TYPE_VCARD,
         Engine::TYPE_GROUP => DAV::TYPE_VCARD,
     ];
-
 
     /**
      * Append an DAV object to a DAV folder
@@ -385,7 +384,7 @@ trait BackendsTrait
 
         $folders = array_filter(
             $folders,
-            function ($folder) {
+            static function ($folder) {
                 return !preg_match('~(Shared Folders|Other Users)/.*~', $folder);
             }
         );
@@ -401,7 +400,7 @@ trait BackendsTrait
         $imap = $this->getImapClient($account);
 
         foreach ($flags as $flag) {
-            if (strpos($flag, 'UN') === 0) {
+            if (str_starts_with($flag, 'UN')) {
                 $flagged = $imap->unflag($folder, $uids, substr($flag, 2));
             } else {
                 $flagged = $imap->flag($folder, $uids, $flag);

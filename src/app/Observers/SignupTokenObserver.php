@@ -9,7 +9,7 @@ class SignupTokenObserver
     /**
      * Ensure the token is uppercased.
      *
-     * @param \App\SignupToken $token The SignupToken object
+     * @param SignupToken $token The SignupToken object
      */
     public function creating(SignupToken $token): void
     {

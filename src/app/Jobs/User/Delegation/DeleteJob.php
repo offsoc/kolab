@@ -17,12 +17,11 @@ class DeleteJob extends CommonJob
     /** @var string Delegatee's email address */
     protected $delegateeEmail;
 
-
     /**
      * Create a new job instance.
      *
-     * @param string $delegatorEmail Delegator's email address.
-     * @param string $delegateeEmail Delegatee's email address.
+     * @param string $delegatorEmail delegator's email address
+     * @param string $delegateeEmail delegatee's email address
      */
     public function __construct(string $delegatorEmail, string $delegateeEmail)
     {
@@ -33,8 +32,6 @@ class DeleteJob extends CommonJob
 
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle()
     {

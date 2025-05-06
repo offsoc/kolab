@@ -15,7 +15,7 @@ trait GroupConfigTrait
 
         $config['sender_policy'] = array_filter(
             $sp ? json_decode($sp, true) : [],
-            function ($item) {
+            static function ($item) {
                 // remove the special "-" entry, it's an implementation detail
                 return $item !== '-';
             }
@@ -50,8 +50,8 @@ trait GroupConfigTrait
 
                 if (empty($errors[$key])) {
                     // remove empty entries, and '-' entry
-                    $value = array_filter($value, function ($item) {
-                        return strlen($item) > 0 && $item !== '-';
+                    $value = array_filter($value, static function ($item) {
+                        return $item !== '' && $item !== '-';
                     });
 
                     if (!empty($value)) {

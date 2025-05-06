@@ -8,6 +8,7 @@ use App\Entitlement;
 use App\EventLog;
 use App\Sku;
 use App\User;
+use App\Utils;
 use Tests\Browser;
 use Tests\Browser\Components\Dialog;
 use Tests\Browser\Components\Toast;
@@ -15,22 +16,18 @@ use Tests\Browser\Pages\Admin\User as UserPage;
 use Tests\Browser\Pages\Dashboard;
 use Tests\Browser\Pages\Home;
 use Tests\TestCaseDusk;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
 
 class UserTest extends TestCaseDusk
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         self::useAdminUrl();
 
         $john = $this->getTestUser('john@kolab.org');
         $john->setSettings([
-                'phone' => '+48123123123',
-                'external_email' => 'john.doe.external@gmail.com',
+            'phone' => '+48123123123',
+            'external_email' => 'john.doe.external@gmail.com',
         ]);
         if ($john->isSuspended()) {
             User::where('email', $john->email)->update(['status' => $john->status - User::STATUS_SUSPENDED]);
@@ -40,21 +37,18 @@ class UserTest extends TestCaseDusk
         $wallet->save();
 
         Entitlement::where('cost', '>=', 5000)->delete();
-        Eventlog::query()->delete();
+        EventLog::query()->delete();
 
         $this->deleteTestGroup('group-test@kolab.org');
         $this->deleteTestUser('userstest1@kolabnow.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $john = $this->getTestUser('john@kolab.org');
         $john->setSettings([
-                'phone' => null,
-                'external_email' => 'john.doe.external@gmail.com',
+            'phone' => null,
+            'external_email' => 'john.doe.external@gmail.com',
         ]);
         if ($john->isSuspended()) {
             User::where('email', $john->email)->update(['status' => $john->status - User::STATUS_SUSPENDED]);
@@ -64,7 +58,7 @@ class UserTest extends TestCaseDusk
         $wallet->save();
 
         Entitlement::where('cost', '>=', 5000)->delete();
-        Eventlog::query()->delete();
+        EventLog::query()->delete();
 
         $this->deleteTestGroup('group-test@kolab.org');
         $this->deleteTestUser('userstest1@kolabnow.com');
@@ -92,9 +86,9 @@ class UserTest extends TestCaseDusk
         $this->browse(function (Browser $browser) {
             $jack = $this->getTestUser('jack@kolab.org');
             $jack->setSettings([
-                    'limit_geo' => null,
-                    'organization' => null,
-                    'guam_enabled' => null,
+                'limit_geo' => null,
+                'organization' => null,
+                'guam_enabled' => null,
             ]);
 
             $event1 = EventLog::createFor($jack, EventLog::TYPE_SUSPENDED, 'Event 1');
@@ -109,14 +103,14 @@ class UserTest extends TestCaseDusk
             $page = new UserPage($jack->id);
 
             $browser->visit(new Home())
-                ->submitLogon('jeroen@jeroen.jeroen', \App\Utils::generatePassphrase(), true)
+                ->submitLogon('jeroen@jeroen.jeroen', Utils::generatePassphrase(), true)
                 ->on(new Dashboard())
                 ->visit($page)
                 ->on($page);
 
             // Assert main info box content
             $browser->assertSeeIn('@user-info .card-title', $jack->email)
-                ->with('@user-info form', function (Browser $browser) use ($jack) {
+                ->with('@user-info form', static function (Browser $browser) use ($jack) {
                     $browser->assertElementsCount('.row', 7)
                         ->assertSeeIn('.row:nth-child(1) label', 'Managed by')
                         ->assertSeeIn('.row:nth-child(1) #manager a', 'john@kolab.org')
@@ -145,7 +139,7 @@ class UserTest extends TestCaseDusk
             // Assert Aliases tab
             $browser->assertSeeIn('@nav #tab-aliases', 'Aliases (1)')
                 ->click('@nav #tab-aliases')
-                ->whenAvailable('@user-aliases', function (Browser $browser) {
+                ->whenAvailable('@user-aliases', static function (Browser $browser) {
                     $browser->assertElementsCount('table tbody tr', 1)
                         ->assertSeeIn('table tbody tr:first-child td:first-child', 'jack.daniels@kolab.org')
                         ->assertMissing('table tfoot');
@@ -154,7 +148,7 @@ class UserTest extends TestCaseDusk
             // Assert Subscriptions tab
             $browser->assertSeeIn('@nav #tab-subscriptions', 'Subscriptions (3)')
                 ->click('@nav #tab-subscriptions')
-                ->with('@user-subscriptions', function (Browser $browser) {
+                ->with('@user-subscriptions', static function (Browser $browser) {
                     $browser->assertElementsCount('table tbody tr', 3)
                         ->assertSeeIn('table tbody tr:nth-child(1) td:first-child', 'User Mailbox')
                         ->assertSeeIn('table tbody tr:nth-child(1) td:last-child', '5,00 CHF')
@@ -169,7 +163,7 @@ class UserTest extends TestCaseDusk
             // Assert Domains tab
             $browser->assertSeeIn('@nav #tab-domains', 'Domains (0)')
                 ->click('@nav #tab-domains')
-                ->with('@user-domains', function (Browser $browser) {
+                ->with('@user-domains', static function (Browser $browser) {
                     $browser->assertElementsCount('table tbody tr', 0)
                         ->assertSeeIn('table tfoot tr td', 'There are no domains in this account.');
                 });
@@ -177,7 +171,7 @@ class UserTest extends TestCaseDusk
             // Assert Users tab
             $browser->assertSeeIn('@nav #tab-users', 'Users (0)')
                 ->click('@nav #tab-users')
-                ->with('@user-users', function (Browser $browser) {
+                ->with('@user-users', static function (Browser $browser) {
                     $browser->assertElementsCount('table tbody tr', 0)
                         ->assertSeeIn('table tfoot tr td', 'There are no users in this account.');
                 });
@@ -185,7 +179,7 @@ class UserTest extends TestCaseDusk
             // Assert Distribution lists tab
             $browser->assertSeeIn('@nav #tab-distlists', 'Distribution lists (0)')
                 ->click('@nav #tab-distlists')
-                ->with('@user-distlists', function (Browser $browser) {
+                ->with('@user-distlists', static function (Browser $browser) {
                     $browser->assertElementsCount('table tbody tr', 0)
                         ->assertSeeIn('table tfoot tr td', 'There are no distribution lists in this account.');
                 });
@@ -193,7 +187,7 @@ class UserTest extends TestCaseDusk
             // Assert Resources tab
             $browser->assertSeeIn('@nav #tab-resources', 'Resources (0)')
                 ->click('@nav #tab-resources')
-                ->with('@user-resources', function (Browser $browser) {
+                ->with('@user-resources', static function (Browser $browser) {
                     $browser->assertElementsCount('table tbody tr', 0)
                         ->assertSeeIn('table tfoot tr td', 'There are no resources in this account.');
                 });
@@ -201,7 +195,7 @@ class UserTest extends TestCaseDusk
             // Assert Shared folders tab
             $browser->assertSeeIn('@nav #tab-folders', 'Shared folders (0)')
                 ->click('@nav #tab-folders')
-                ->with('@user-folders', function (Browser $browser) {
+                ->with('@user-folders', static function (Browser $browser) {
                     $browser->assertElementsCount('table tbody tr', 0)
                         ->assertSeeIn('table tfoot tr td', 'There are no shared folders in this account.');
                 });
@@ -209,7 +203,7 @@ class UserTest extends TestCaseDusk
             // Assert Settings tab
             $browser->assertSeeIn('@nav #tab-settings', 'Settings')
                 ->click('@nav #tab-settings')
-                ->whenAvailable('@user-settings form', function (Browser $browser) {
+                ->whenAvailable('@user-settings form', static function (Browser $browser) {
                     $browser->assertElementsCount('.row', 3)
                         ->assertSeeIn('.row:first-child label', 'Greylisting')
                         ->assertSeeIn('.row:first-child .text-success', 'enabled')
@@ -223,7 +217,7 @@ class UserTest extends TestCaseDusk
             // Assert History tab
             $browser->assertSeeIn('@nav #tab-history', 'History')
                 ->click('@nav #tab-history')
-                ->whenAvailable('@user-history table', function (Browser $browser) use ($event1, $event2) {
+                ->whenAvailable('@user-history table', static function (Browser $browser) use ($event1, $event2) {
                     $browser->waitFor('tbody tr')->assertElementsCount('tbody tr', 2)
                         // row 1
                         ->assertSeeIn('tr:nth-child(1) td:nth-child(1)', $event2->created_at->toDateTimeString())
@@ -276,7 +270,7 @@ class UserTest extends TestCaseDusk
 
             // Assert main info box content
             $browser->assertSeeIn('@user-info .card-title', $john->email)
-                ->with('@user-info form', function (Browser $browser) use ($john) {
+                ->with('@user-info form', static function (Browser $browser) use ($john) {
                     $ext_email = $john->getSetting('external_email');
 
                     $browser->assertElementsCount('.row', 9)
@@ -294,7 +288,7 @@ class UserTest extends TestCaseDusk
                         ->assertSeeIn('.row:nth-child(6) #phone', $john->getSetting('phone'))
                         ->assertSeeIn('.row:nth-child(7) label', 'External Email')
                         ->assertSeeIn('.row:nth-child(7) #external_email a', $ext_email)
-                        ->assertAttribute('.row:nth-child(7) #external_email a', 'href', "mailto:$ext_email")
+                        ->assertAttribute('.row:nth-child(7) #external_email a', 'href', "mailto:{$ext_email}")
                         ->assertSeeIn('.row:nth-child(8) label', 'Address')
                         ->assertSeeIn('.row:nth-child(8) #billing_address', $john->getSetting('billing_address'))
                         ->assertSeeIn('.row:nth-child(9) label', 'Country')
@@ -311,7 +305,7 @@ class UserTest extends TestCaseDusk
             // Assert Aliases tab
             $browser->assertSeeIn('@nav #tab-aliases', 'Aliases (1)')
                 ->click('@nav #tab-aliases')
-                ->whenAvailable('@user-aliases', function (Browser $browser) {
+                ->whenAvailable('@user-aliases', static function (Browser $browser) {
                     $browser->assertElementsCount('table tbody tr', 1)
                         ->assertSeeIn('table tbody tr:first-child td:first-child', 'john.doe@kolab.org')
                         ->assertMissing('table tfoot');
@@ -320,7 +314,7 @@ class UserTest extends TestCaseDusk
             // Assert Subscriptions tab
             $browser->assertSeeIn('@nav #tab-subscriptions', 'Subscriptions (3)')
                 ->click('@nav #tab-subscriptions')
-                ->with('@user-subscriptions', function (Browser $browser) {
+                ->with('@user-subscriptions', static function (Browser $browser) {
                     $browser->assertElementsCount('table tbody tr', 3)
                         ->assertSeeIn('table tbody tr:nth-child(1) td:first-child', 'User Mailbox')
                         ->assertSeeIn('table tbody tr:nth-child(1) td:last-child', '4,50 CHF/month¹')
@@ -335,7 +329,7 @@ class UserTest extends TestCaseDusk
             // Assert Domains tab
             $browser->assertSeeIn('@nav #tab-domains', 'Domains (1)')
                 ->click('@nav #tab-domains')
-                ->with('@user-domains table', function (Browser $browser) {
+                ->with('@user-domains table', static function (Browser $browser) {
                     $browser->assertElementsCount('tbody tr', 1)
                         ->assertSeeIn('tbody tr:nth-child(1) td:first-child a', 'kolab.org')
                         ->assertVisible('tbody tr:nth-child(1) td:first-child svg.text-success')
@@ -345,7 +339,7 @@ class UserTest extends TestCaseDusk
             // Assert Users tab
             $browser->assertSeeIn('@nav #tab-users', 'Users (4)')
                 ->click('@nav #tab-users')
-                ->with('@user-users table', function (Browser $browser) {
+                ->with('@user-users table', static function (Browser $browser) {
                     $browser->assertElementsCount('tbody tr', 4)
                         ->assertSeeIn('tbody tr:nth-child(1) td:first-child a', 'jack@kolab.org')
                         ->assertVisible('tbody tr:nth-child(1) td:first-child svg.text-success')
@@ -361,7 +355,7 @@ class UserTest extends TestCaseDusk
             // Assert Distribution lists tab
             $browser->assertSeeIn('@nav #tab-distlists', 'Distribution lists (1)')
                 ->click('@nav #tab-distlists')
-                ->with('@user-distlists table', function (Browser $browser) {
+                ->with('@user-distlists table', static function (Browser $browser) {
                     $browser->assertElementsCount('tbody tr', 1)
                         ->assertSeeIn('tbody tr:nth-child(1) td:first-child a', 'Test Group')
                         ->assertVisible('tbody tr:nth-child(1) td:first-child svg.text-danger')
@@ -372,7 +366,7 @@ class UserTest extends TestCaseDusk
             // Assert Resources tab
             $browser->assertSeeIn('@nav #tab-resources', 'Resources (2)')
                 ->click('@nav #tab-resources')
-                ->with('@user-resources', function (Browser $browser) {
+                ->with('@user-resources', static function (Browser $browser) {
                     $browser->assertElementsCount('table tbody tr', 2)
                         ->assertSeeIn('table tbody tr:nth-child(1) td:first-child', 'Conference Room #1')
                         ->assertSeeIn('table tbody tr:nth-child(1) td:last-child', 'resource-test1@kolab.org')
@@ -384,7 +378,7 @@ class UserTest extends TestCaseDusk
             // Assert Shared folders tab
             $browser->assertSeeIn('@nav #tab-folders', 'Shared folders (2)')
                 ->click('@nav #tab-folders')
-                ->with('@user-folders', function (Browser $browser) {
+                ->with('@user-folders', static function (Browser $browser) {
                     $browser->assertElementsCount('table tbody tr', 2)
                         ->assertSeeIn('table tbody tr:nth-child(1) td:first-child', 'Calendar')
                         ->assertSeeIn('table tbody tr:nth-child(1) td:nth-child(2)', 'Calendar')
@@ -398,7 +392,7 @@ class UserTest extends TestCaseDusk
             // Assert History tab
             $browser->assertSeeIn('@nav #tab-history', 'History')
                 ->click('@nav #tab-history')
-                ->whenAvailable('@user-history table', function (Browser $browser) {
+                ->whenAvailable('@user-history table', static function (Browser $browser) {
                     $browser->assertElementsCount('tbody tr', 0)
                         ->assertSeeIn('tfoot tr td', "There's no events in the log");
                 });
@@ -413,18 +407,18 @@ class UserTest extends TestCaseDusk
 
             // Add an extra storage and beta entitlement with different prices
             Entitlement::create([
-                    'wallet_id' => $wallet->id,
-                    'sku_id' => $beta_sku->id,
-                    'cost' => 5010,
-                    'entitleable_id' => $ned->id,
-                    'entitleable_type' => User::class
+                'wallet_id' => $wallet->id,
+                'sku_id' => $beta_sku->id,
+                'cost' => 5010,
+                'entitleable_id' => $ned->id,
+                'entitleable_type' => User::class,
             ]);
             Entitlement::create([
-                    'wallet_id' => $wallet->id,
-                    'sku_id' => $storage_sku->id,
-                    'cost' => 5000,
-                    'entitleable_id' => $ned->id,
-                    'entitleable_type' => User::class
+                'wallet_id' => $wallet->id,
+                'sku_id' => $storage_sku->id,
+                'cost' => 5000,
+                'entitleable_id' => $ned->id,
+                'entitleable_type' => User::class,
             ]);
 
             $page = new UserPage($ned->id);
@@ -436,7 +430,7 @@ class UserTest extends TestCaseDusk
 
             // Assert main info box content
             $browser->assertSeeIn('@user-info .card-title', $ned->email)
-                ->with('@user-info form', function (Browser $browser) use ($ned) {
+                ->with('@user-info form', static function (Browser $browser) use ($ned) {
                     $browser->assertSeeIn('.row:nth-child(2) label', 'ID (Created)')
                         ->assertSeeIn('.row:nth-child(2) #userid', "{$ned->id} ({$ned->created_at})");
                 });
@@ -451,7 +445,7 @@ class UserTest extends TestCaseDusk
             // Assert Aliases tab
             $browser->assertSeeIn('@nav #tab-aliases', 'Aliases (0)')
                 ->click('@nav #tab-aliases')
-                ->whenAvailable('@user-aliases', function (Browser $browser) {
+                ->whenAvailable('@user-aliases', static function (Browser $browser) {
                     $browser->assertElementsCount('table tbody tr', 0)
                         ->assertSeeIn('table tfoot tr td', 'This user has no email aliases.');
                 });
@@ -459,7 +453,7 @@ class UserTest extends TestCaseDusk
             // Assert Subscriptions tab, we expect John's discount here
             $browser->assertSeeIn('@nav #tab-subscriptions', 'Subscriptions (6)')
                 ->click('@nav #tab-subscriptions')
-                ->with('@user-subscriptions', function (Browser $browser) {
+                ->with('@user-subscriptions', static function (Browser $browser) {
                     $browser->assertElementsCount('table tbody tr', 6)
                         ->assertSeeIn('table tbody tr:nth-child(1) td:first-child', 'User Mailbox')
                         ->assertSeeIn('table tbody tr:nth-child(1) td:last-child', '4,50 CHF/month¹')
@@ -482,7 +476,7 @@ class UserTest extends TestCaseDusk
             // We don't expect John's domains here
             $browser->assertSeeIn('@nav #tab-domains', 'Domains (0)')
                 ->click('@nav #tab-domains')
-                ->with('@user-domains', function (Browser $browser) {
+                ->with('@user-domains', static function (Browser $browser) {
                     $browser->assertElementsCount('table tbody tr', 0)
                         ->assertSeeIn('table tfoot tr td', 'There are no domains in this account.');
                 });
@@ -490,7 +484,7 @@ class UserTest extends TestCaseDusk
             // We don't expect John's users here
             $browser->assertSeeIn('@nav #tab-users', 'Users (0)')
                 ->click('@nav #tab-users')
-                ->with('@user-users', function (Browser $browser) {
+                ->with('@user-users', static function (Browser $browser) {
                     $browser->assertElementsCount('table tbody tr', 0)
                         ->assertSeeIn('table tfoot tr td', 'There are no users in this account.');
                 });
@@ -498,7 +492,7 @@ class UserTest extends TestCaseDusk
             // We don't expect John's distribution lists here
             $browser->assertSeeIn('@nav #tab-distlists', 'Distribution lists (0)')
                 ->click('@nav #tab-distlists')
-                ->with('@user-distlists', function (Browser $browser) {
+                ->with('@user-distlists', static function (Browser $browser) {
                     $browser->assertElementsCount('table tbody tr', 0)
                         ->assertSeeIn('table tfoot tr td', 'There are no distribution lists in this account.');
                 });
@@ -506,7 +500,7 @@ class UserTest extends TestCaseDusk
             // We don't expect John's resources here
             $browser->assertSeeIn('@nav #tab-resources', 'Resources (0)')
                 ->click('@nav #tab-resources')
-                ->with('@user-resources', function (Browser $browser) {
+                ->with('@user-resources', static function (Browser $browser) {
                     $browser->assertElementsCount('table tbody tr', 0)
                         ->assertSeeIn('table tfoot tr td', 'There are no resources in this account.');
                 });
@@ -514,7 +508,7 @@ class UserTest extends TestCaseDusk
             // We don't expect John's folders here
             $browser->assertSeeIn('@nav #tab-folders', 'Shared folders (0)')
                 ->click('@nav #tab-folders')
-                ->with('@user-folders', function (Browser $browser) {
+                ->with('@user-folders', static function (Browser $browser) {
                     $browser->assertElementsCount('table tbody tr', 0)
                         ->assertSeeIn('table tfoot tr td', 'There are no shared folders in this account.');
                 });
@@ -522,7 +516,7 @@ class UserTest extends TestCaseDusk
             // Assert Settings tab
             $browser->assertSeeIn('@nav #tab-settings', 'Settings')
                 ->click('@nav #tab-settings')
-                ->whenAvailable('@user-settings form', function (Browser $browser) {
+                ->whenAvailable('@user-settings form', static function (Browser $browser) {
                     $browser->assertElementsCount('.row', 3)
                         ->assertSeeIn('.row:first-child label', 'Greylisting')
                         ->assertSeeIn('.row:first-child .text-danger', 'disabled');
@@ -544,7 +538,7 @@ class UserTest extends TestCaseDusk
                 ->waitFor('@user-info #external_email button')
                 ->click('@user-info #external_email button')
                 // Test dialog content, and closing it with Cancel button
-                ->with(new Dialog('#email-dialog'), function (Browser $browser) {
+                ->with(new Dialog('#email-dialog'), static function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'External Email')
                         ->assertFocused('@body input')
                         ->assertValue('@body input', 'john.doe.external@gmail.com')
@@ -555,7 +549,7 @@ class UserTest extends TestCaseDusk
                 ->assertMissing('#email-dialog')
                 ->click('@user-info #external_email button')
                 // Test email validation error handling, and email update
-                ->with(new Dialog('#email-dialog'), function (Browser $browser) {
+                ->with(new Dialog('#email-dialog'), static function (Browser $browser) {
                     $browser->type('@body input', 'test')
                         ->click('@button-action')
                         ->waitFor('@body input.is-invalid')
@@ -570,7 +564,7 @@ class UserTest extends TestCaseDusk
                 ->assertToast(Toast::TYPE_SUCCESS, 'User data updated successfully.')
                 ->assertSeeIn('@user-info #external_email a', 'test@test.com')
                 ->click('@user-info #external_email button')
-                ->with(new Dialog('#email-dialog'), function (Browser $browser) {
+                ->with(new Dialog('#email-dialog'), static function (Browser $browser) {
                     $browser->assertValue('@body input', 'test@test.com')
                         ->assertMissing('@body input.is-invalid')
                         ->assertMissing('@body input + .invalid-feedback')
@@ -597,7 +591,7 @@ class UserTest extends TestCaseDusk
                 ->assertVisible('@user-info #button-suspend')
                 ->assertMissing('@user-info #button-unsuspend')
                 ->click('@user-info #button-suspend')
-                ->with(new Dialog('#suspend-dialog'), function (Browser $browser) {
+                ->with(new Dialog('#suspend-dialog'), static function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Suspend')
                         ->assertSeeIn('@button-cancel', 'Cancel')
                         ->assertSeeIn('@button-action', 'Submit')
@@ -612,7 +606,7 @@ class UserTest extends TestCaseDusk
             $this->assertSame('test suspend', $event->comment);
 
             $browser->click('@user-info #button-unsuspend')
-                ->with(new Dialog('#suspend-dialog'), function (Browser $browser) {
+                ->with(new Dialog('#suspend-dialog'), static function (Browser $browser) {
                     $browser->assertSeeIn('@title', 'Unsuspend')
                         ->assertSeeIn('@button-cancel', 'Cancel')
                         ->assertSeeIn('@button-action', 'Submit')
@@ -624,7 +618,7 @@ class UserTest extends TestCaseDusk
                 ->assertMissing('@user-info #button-unsuspend');
 
             $event = EventLog::where('type', EventLog::TYPE_UNSUSPENDED)->first();
-            $this->assertSame(null, $event->comment);
+            $this->assertNull($event->comment);
         });
     }
 
@@ -658,13 +652,13 @@ class UserTest extends TestCaseDusk
             $browser->visit(new UserPage($user->id))
                 ->assertSeeIn('@user-info #status', 'Restricted')
                 ->click('@nav #tab-subscriptions')
-                ->with('@user-subscriptions', function (Browser $browser) use ($sku2fa) {
+                ->with('@user-subscriptions', static function (Browser $browser) use ($sku2fa) {
                     $browser->waitFor('#reset2fa')
                         ->assertVisible('#sku' . $sku2fa->id);
                 })
                 ->assertSeeIn('@nav #tab-subscriptions', 'Subscriptions (1)')
                 ->click('#reset2fa')
-                ->with(new Dialog('#reset-2fa-dialog'), function (Browser $browser) {
+                ->with(new Dialog('#reset-2fa-dialog'), static function (Browser $browser) {
                     $browser->assertSeeIn('@title', '2-Factor Authentication Reset')
                         ->assertSeeIn('@button-cancel', 'Cancel')
                         ->assertSeeIn('@button-action', 'Reset')
@@ -687,7 +681,7 @@ class UserTest extends TestCaseDusk
 
             $browser->visit(new UserPage($user->id))
                 ->click('@nav #tab-settings')
-                ->whenAvailable('@user-settings form', function (Browser $browser) {
+                ->whenAvailable('@user-settings form', static function (Browser $browser) {
                     $browser->assertSeeIn('.row:nth-child(3) label', 'Geo-lockin')
                         ->assertSeeIn('.row:nth-child(3) #limit_geo', 'Poland, Germany')
                         ->assertSeeIn('#limit_geo + button', 'Reset')

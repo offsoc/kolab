@@ -13,8 +13,6 @@ class FileName implements Rule
      *
      * @param string $attribute Attribute name
      * @param mixed  $name      The value to validate
-     *
-     * @return bool
      */
     public function passes($attribute, $name): bool
     {
@@ -48,8 +46,6 @@ class FileName implements Rule
 
     /**
      * Get the validation error message.
-     *
-     * @return string
      */
     public function message(): ?string
     {

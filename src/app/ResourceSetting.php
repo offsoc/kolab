@@ -3,6 +3,7 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * A collection of settings for a Resource.
@@ -20,7 +21,7 @@ class ResourceSetting extends Model
     /**
      * The resource to which this setting belongs.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Resource, $this>
+     * @return BelongsTo<Resource, $this>
      */
     public function resource()
     {

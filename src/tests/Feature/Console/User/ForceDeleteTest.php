@@ -2,15 +2,18 @@
 
 namespace Tests\Feature\Console\User;
 
+use App\Domain;
+use App\Entitlement;
+use App\Package;
+use App\Transaction;
+use App\User;
+use App\Wallet;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class ForceDeleteTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -18,10 +21,7 @@ class ForceDeleteTest extends TestCase
         $this->deleteTestDomain('force-delete.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('user@force-delete.com');
         $this->deleteTestDomain('force-delete.com');
@@ -36,16 +36,16 @@ class ForceDeleteTest extends TestCase
     {
         // Non-existing user
         $this->artisan('user:force-delete unknown@unknown.org')
-             ->assertExitCode(1);
+            ->assertExitCode(1);
 
         Queue::fake();
         $user = $this->getTestUser('user@force-delete.com');
         $domain = $this->getTestDomain('force-delete.com', [
-                'status' => \App\Domain::STATUS_NEW,
-                'type' => \App\Domain::TYPE_HOSTED,
+            'status' => Domain::STATUS_NEW,
+            'type' => Domain::TYPE_HOSTED,
         ]);
-        $package_kolab = \App\Package::withEnvTenantContext()->where('title', 'kolab')->first();
-        $package_domain = \App\Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
+        $package_kolab = Package::withEnvTenantContext()->where('title', 'kolab')->first();
+        $package_domain = Package::withEnvTenantContext()->where('title', 'domain-hosting')->first();
         $user->assignPackage($package_kolab);
         $domain->assignPackage($package_domain, $user);
         $wallet = $user->wallets()->first();
@@ -55,7 +55,7 @@ class ForceDeleteTest extends TestCase
 
         // Non-deleted user
         $this->artisan('user:force-delete user@force-delete.com')
-             ->assertExitCode(1);
+            ->assertExitCode(1);
 
         $user->delete();
 
@@ -64,33 +64,33 @@ class ForceDeleteTest extends TestCase
 
         // Deleted user
         $this->artisan('user:force-delete user@force-delete.com')
-             ->assertExitCode(0);
+            ->assertExitCode(0);
 
         $this->assertCount(
             0,
-            \App\User::withTrashed()->where('email', 'user@force-delete.com')->get()
+            User::withTrashed()->where('email', 'user@force-delete.com')->get()
         );
         $this->assertCount(
             0,
-            \App\Domain::withTrashed()->where('namespace', 'force-delete.com')->get()
+            Domain::withTrashed()->where('namespace', 'force-delete.com')->get()
         );
         $this->assertCount(
             0,
-            \App\Wallet::where('id', $wallet->id)->get()
+            Wallet::where('id', $wallet->id)->get()
         );
         $this->assertCount(
             0,
-            \App\Entitlement::withTrashed()->where('wallet_id', $wallet->id)->get()
+            Entitlement::withTrashed()->where('wallet_id', $wallet->id)->get()
         );
         $this->assertCount(
             0,
-            \App\Entitlement::withTrashed()->where('entitleable_id', $user->id)->get()
+            Entitlement::withTrashed()->where('entitleable_id', $user->id)->get()
         );
 
         $this->assertCount(
             0,
-            \App\Transaction::whereIn('object_id', $entitlements)
-                ->where('object_type', \App\Entitlement::class)
+            Transaction::whereIn('object_id', $entitlements)
+                ->where('object_type', Entitlement::class)
                 ->get()
         );
 

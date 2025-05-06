@@ -3,6 +3,7 @@
 namespace App\Console\Commands\Meet;
 
 use App\Console\Command;
+use App\Meet\Room;
 
 class RoomsCommand extends Command
 {
@@ -27,7 +28,7 @@ class RoomsCommand extends Command
      */
     public function handle()
     {
-        $rooms = \App\Meet\Room::all();
+        $rooms = Room::all();
 
         foreach ($rooms as $room) {
             $this->info("{$room->name}");

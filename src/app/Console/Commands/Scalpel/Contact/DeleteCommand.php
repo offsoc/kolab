@@ -3,6 +3,7 @@
 namespace App\Console\Commands\Scalpel\Contact;
 
 use App\Console\ObjectDeleteCommand;
+use App\Contact;
 
 class DeleteCommand extends ObjectDeleteCommand
 {
@@ -10,7 +11,7 @@ class DeleteCommand extends ObjectDeleteCommand
     protected $hidden = true;
 
     protected $commandPrefix = 'scalpel';
-    protected $objectClass = \App\Contact::class;
+    protected $objectClass = Contact::class;
     protected $objectName = 'contact';
-    protected $objectTitle = null;
+    protected $objectTitle;
 }

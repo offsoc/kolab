@@ -17,20 +17,14 @@ class TakeoutTest extends TestCase
 {
     use BackendsTrait;
 
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         MigratorQueue::truncate();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         MigratorQueue::truncate();
 
@@ -139,13 +133,13 @@ class TakeoutTest extends TestCase
         $this->davEmptyFolder($dav, 'Custom Calendar', Engine::TYPE_EVENT);
         $replace = [
             '/UID:aaa-aaa/' => 'UID:44gvk1rth37n1qk8nsml26o7og@google.com',
-            '/john@kolab.org/' => 'test@gmail.com'
+            '/john@kolab.org/' => 'test@gmail.com',
         ];
         $this->davAppend($dav, 'Calendar', ['event/3.ics'], Engine::TYPE_EVENT, $replace);
 
         // Run the migration
         $migrator = new Engine();
-        $migrator->migrate($src, $dst, ['force' => true,'sync' => true]);
+        $migrator->migrate($src, $dst, ['force' => true, 'sync' => true]);
 
         // Assert the migrated mail
         $messages = $this->imapList($imap, 'INBOX');
@@ -179,7 +173,7 @@ class TakeoutTest extends TestCase
         $dav_uri = \config('services.dav.uri');
         $dav_uri = preg_replace('|^http|', 'dav', $dav_uri);
         $imap_uri = \config('services.imap.uri');
-        if (strpos($imap_uri, '://') === false) {
+        if (!str_contains($imap_uri, '://')) {
             $imap_uri = 'imap://' . $imap_uri;
         }
 

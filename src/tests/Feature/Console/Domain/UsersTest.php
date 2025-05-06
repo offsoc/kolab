@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Console\Domain;
 
+use App\User;
 use Tests\TestCase;
 
 class UsersTest extends TestCase
@@ -16,9 +17,9 @@ class UsersTest extends TestCase
         $output = trim(\Artisan::output());
         $this->assertSame(0, $code);
 
-        $john = \App\User::where('email', 'john@kolab.org')->first();
+        $john = User::where('email', 'john@kolab.org')->first();
 
-        $this->assertTrue(strpos($output, (string) $john->id) !== false);
+        $this->assertTrue(str_contains($output, (string) $john->id));
 
         // TODO: Test output format and additional attributes
     }

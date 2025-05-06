@@ -3,10 +3,20 @@
 namespace App\Http\Controllers\API\V4\Admin;
 
 use App\Domain;
+use App\Entitlement;
 use App\EventLog;
+use App\Group;
+use App\Payment;
+use App\Resource;
+use App\SharedFolder;
+use App\SharedFolderAlias;
 use App\Sku;
 use App\User;
+use App\UserAlias;
+use App\UserSetting;
 use App\Wallet;
+use App\WalletSetting;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -17,7 +27,7 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
      *
      * @param string $id User identifier
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function destroy($id)
     {
@@ -27,7 +37,7 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
     /**
      * Searching of user accounts.
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function index()
     {
@@ -49,10 +59,10 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
 
             if ($result->isEmpty()) {
                 // Search by an alias
-                $user_ids = \App\UserAlias::where('alias', $search)->get()->pluck('user_id');
+                $user_ids = UserAlias::where('alias', $search)->get()->pluck('user_id');
 
                 // Search by an external email
-                $ext_user_ids = \App\UserSetting::where('key', 'external_email')
+                $ext_user_ids = UserSetting::where('key', 'external_email')
                     ->where('value', $search)
                     ->get()
                     ->pluck('user_id');
@@ -60,13 +70,13 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
                 $user_ids = $user_ids->merge($ext_user_ids)->unique();
 
                 // Search by an email of a group, resource, shared folder, etc.
-                if ($group = \App\Group::withTrashed()->where('email', $search)->first()) {
+                if ($group = Group::withTrashed()->where('email', $search)->first()) {
                     $user_ids = $user_ids->merge([$group->wallet()->user_id])->unique();
-                } elseif ($resource = \App\Resource::withTrashed()->where('email', $search)->first()) {
+                } elseif ($resource = Resource::withTrashed()->where('email', $search)->first()) {
                     $user_ids = $user_ids->merge([$resource->wallet()->user_id])->unique();
-                } elseif ($folder = \App\SharedFolder::withTrashed()->where('email', $search)->first()) {
+                } elseif ($folder = SharedFolder::withTrashed()->where('email', $search)->first()) {
                     $user_ids = $user_ids->merge([$folder->wallet()->user_id])->unique();
-                } elseif ($alias = \App\SharedFolderAlias::where('alias', $search)->first()) {
+                } elseif ($alias = SharedFolderAlias::where('alias', $search)->first()) {
                     $user_ids = $user_ids->merge([$alias->sharedFolder->wallet()->user_id])->unique();
                 }
 
@@ -84,7 +94,7 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
             if ($user) {
                 $result->push($user);
             }
-        } elseif (strpos($search, '.') !== false) {
+        } elseif (str_contains($search, '.')) {
             // Search by domain
             $domain = Domain::withTrashed()->where('namespace', $search)
                 ->first();
@@ -96,10 +106,10 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
             }
         // A mollie customer ID
         } elseif (substr($search, 0, 4) == 'cst_') {
-            $setting = \App\WalletSetting::where(
+            $setting = WalletSetting::where(
                 [
                     'key' => 'mollie_id',
-                    'value' => $search
+                    'value' => $search,
                 ]
             )->first();
 
@@ -112,7 +122,7 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
             }
         // A mollie transaction ID
         } elseif (substr($search, 0, 3) == 'tr_') {
-            $payment = \App\Payment::find($search);
+            $payment = Payment::find($search);
 
             if ($payment) {
                 if ($owner = $payment->wallet->owner()->withTrashed()->first()) {
@@ -148,10 +158,10 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
     /**
      * Reset 2-Factor Authentication for the user
      *
-     * @param \Illuminate\Http\Request $request The API request.
-     * @param string                   $id      User identifier
+     * @param Request $request the API request
+     * @param string  $id      User identifier
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function reset2FA(Request $request, $id)
     {
@@ -174,18 +184,18 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
         $entitlement->delete();
 
         return response()->json([
-                'status' => 'success',
-                'message' => self::trans('app.user-reset-2fa-success'),
+            'status' => 'success',
+            'message' => self::trans('app.user-reset-2fa-success'),
         ]);
     }
 
     /**
      * Reset Geo-Lockin for the user
      *
-     * @param \Illuminate\Http\Request $request The API request.
-     * @param string                   $id      User identifier
+     * @param Request $request the API request
+     * @param string  $id      User identifier
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function resetGeoLock(Request $request, $id)
     {
@@ -202,18 +212,18 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
         $user->setConfig(['limit_geo' => []]);
 
         return response()->json([
-                'status' => 'success',
-                'message' => self::trans('app.user-reset-geo-lock-success'),
+            'status' => 'success',
+            'message' => self::trans('app.user-reset-geo-lock-success'),
         ]);
     }
 
     /**
      * Resync the user
      *
-     * @param \Illuminate\Http\Request $request The API request.
-     * @param string                   $id      User identifier
+     * @param Request $request the API request
+     * @param string  $id      User identifier
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function resync(Request $request, $id)
     {
@@ -232,20 +242,19 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
         }
 
         return response()->json([
-                'status' => 'success',
-                'message' => self::trans('app.user-resync-success'),
+            'status' => 'success',
+            'message' => self::trans('app.user-resync-success'),
         ]);
     }
-
 
     /**
      * Set/Add a SKU for the user
      *
-     * @param \Illuminate\Http\Request $request The API request.
-     * @param string                   $id      User identifier
-     * @param string                   $sku     SKU title
+     * @param Request $request the API request
+     * @param string  $id      User identifier
+     * @param string  $sku     SKU title
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function setSku(Request $request, $id, $sku)
     {
@@ -276,26 +285,26 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
 
         $user->assignSku($sku);
 
-        /** @var \App\Entitlement $entitlement */
+        /** @var Entitlement $entitlement */
         $entitlement = $user->entitlements()->where('sku_id', $sku->id)->first();
 
         return response()->json([
-                'status' => 'success',
-                'message' => self::trans('app.user-set-sku-success'),
-                'sku' => [
-                    'cost' => $entitlement->cost,
-                    'name' => $sku->name,
-                    'id' => $sku->id,
-                ]
+            'status' => 'success',
+            'message' => self::trans('app.user-set-sku-success'),
+            'sku' => [
+                'cost' => $entitlement->cost,
+                'name' => $sku->name,
+                'id' => $sku->id,
+            ],
         ]);
     }
 
     /**
      * Create a new user record.
      *
-     * @param \Illuminate\Http\Request $request The API request.
+     * @param Request $request the API request
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function store(Request $request)
     {
@@ -305,10 +314,10 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
     /**
      * Suspend the user
      *
-     * @param \Illuminate\Http\Request $request The API request.
-     * @param string                   $id      User identifier
+     * @param Request $request the API request
+     * @param string  $id      User identifier
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function suspend(Request $request, $id)
     {
@@ -333,18 +342,18 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
         EventLog::createFor($user, EventLog::TYPE_SUSPENDED, $request->comment);
 
         return response()->json([
-                'status' => 'success',
-                'message' => self::trans('app.user-suspend-success'),
+            'status' => 'success',
+            'message' => self::trans('app.user-suspend-success'),
         ]);
     }
 
     /**
      * Un-Suspend the user
      *
-     * @param \Illuminate\Http\Request $request The API request.
-     * @param string                   $id      User identifier
+     * @param Request $request the API request
+     * @param string  $id      User identifier
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function unsuspend(Request $request, $id)
     {
@@ -369,18 +378,18 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
         EventLog::createFor($user, EventLog::TYPE_UNSUSPENDED, $request->comment);
 
         return response()->json([
-                'status' => 'success',
-                'message' => self::trans('app.user-unsuspend-success'),
+            'status' => 'success',
+            'message' => self::trans('app.user-unsuspend-success'),
         ]);
     }
 
     /**
      * Update user data.
      *
-     * @param \Illuminate\Http\Request $request The API request.
-     * @param string                   $id      User identifier
+     * @param Request $request the API request
+     * @param string  $id      User identifier
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function update(Request $request, $id)
     {
@@ -417,8 +426,8 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
         }
 
         return response()->json([
-                'status' => 'success',
-                'message' => self::trans('app.user-update-success'),
+            'status' => 'success',
+            'message' => self::trans('app.user-update-success'),
         ]);
     }
 
@@ -427,7 +436,7 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
      *
      * Useful for testing proxy settings and making sure the X-Forwarded-For Header is picked up.
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function inspectRequest(Request $request)
     {
@@ -435,7 +444,7 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
             'ip' => $request->ip(),
             'clientIps' => $request->getClientIps(),
             'isFromTrustedProxy' => $request->isFromTrustedProxy(),
-            'headers' => $request->headers->all()
+            'headers' => $request->headers->all(),
         ]);
     }
 }

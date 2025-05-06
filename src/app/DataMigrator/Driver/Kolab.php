@@ -2,12 +2,12 @@
 
 namespace App\DataMigrator\Driver;
 
+use App\Auth\Utils;
 use App\DataMigrator\Account;
 use App\DataMigrator\Engine;
 use App\DataMigrator\Interface\Folder;
 use App\DataMigrator\Interface\ImporterInterface;
 use App\DataMigrator\Interface\Item;
-use App\DataMigrator\Interface\ItemSet;
 use App\User;
 
 /**
@@ -30,7 +30,7 @@ class Kolab extends IMAP
     protected const IMAP_TYPES = [
         Engine::TYPE_MAIL,
         Engine::TYPE_CONFIGURATION,
-        Engine::TYPE_FILE
+        Engine::TYPE_FILE,
     ];
 
     /** @var DAV DAV importer/exporter engine */
@@ -58,9 +58,9 @@ class Kolab extends IMAP
             // the Authorize-As header, it is used only for cummunication with Murder backends.
             // We use a one-time token instead. It's valid for 6 hours, assume it's enough time
             // to migrate an account.
-            $account->password = \App\Auth\Utils::tokenCreate((string) $user->id, 6 * 60 * 60);
+            $account->password = Utils::tokenCreate((string) $user->id, 6 * 60 * 60);
             $account->username = $account->loginas;
-            unset($account->loginas);
+            $account->loginas = null;
         }
 
         // Setup DAV connection

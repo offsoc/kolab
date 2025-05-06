@@ -3,6 +3,9 @@
 namespace App\Console\Commands\Sku;
 
 use App\Console\Command;
+use App\Entitlement;
+use App\Sku;
+use App\User;
 
 class ListUsersCommand extends Command
 {
@@ -32,23 +35,23 @@ class ListUsersCommand extends Command
     {
         parent::handle();
 
-        $sku = $this->getObject(\App\Sku::class, $this->argument('sku'), 'title');
+        $sku = $this->getObject(Sku::class, $this->argument('sku'), 'title');
 
         if (!$sku) {
             $this->error("Unable to find the SKU.");
             return 1;
         }
 
-        $fn = function ($entitlement) {
+        $fn = static function ($entitlement) {
             $user_id = $entitlement->user_id;
-            if ($entitlement->entitleable_type == \App\User::class) {
+            if ($entitlement->entitleable_type == User::class) {
                 $user_id = $entitlement->entitleable_id;
             }
 
             return $user_id;
         };
 
-        $users = \App\Entitlement::select('user_id', 'entitleable_id', 'entitleable_type')
+        $users = Entitlement::select('user_id', 'entitleable_id', 'entitleable_type')
             ->join('wallets', 'wallets.id', '=', 'wallet_id')
             ->where('sku_id', $sku->id)
             ->get()
@@ -56,7 +59,7 @@ class ListUsersCommand extends Command
             ->unique();
 
         // TODO: This whereIn() might not scale
-        \App\User::whereIn('id', $users)->orderBy('email')->get()
+        User::whereIn('id', $users)->orderBy('email')->get()
             ->pluck('email')
             ->each(function ($email, $key) {
                 $this->info($email);

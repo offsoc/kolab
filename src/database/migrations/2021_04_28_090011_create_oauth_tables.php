@@ -4,19 +4,16 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-// phpcs:ignore
 class CreateOauthTables extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up()
     {
         Schema::create(
             'oauth_clients',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->uuid('id')->primary();
                 $table->bigInteger('user_id')->nullable()->index();
                 $table->string('name');
@@ -37,7 +34,7 @@ class CreateOauthTables extends Migration
 
         Schema::create(
             'oauth_personal_access_clients',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->uuid('client_id');
                 $table->timestamps();
@@ -51,7 +48,7 @@ class CreateOauthTables extends Migration
 
         Schema::create(
             'oauth_auth_codes',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->string('id', 100)->primary();
                 $table->bigInteger('user_id')->index();
                 $table->uuid('client_id');
@@ -73,7 +70,7 @@ class CreateOauthTables extends Migration
 
         Schema::create(
             'oauth_access_tokens',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->string('id', 100)->primary();
                 $table->bigInteger('user_id')->nullable()->index();
                 $table->uuid('client_id');
@@ -97,7 +94,7 @@ class CreateOauthTables extends Migration
 
         Schema::create(
             'oauth_refresh_tokens',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->string('id', 100)->primary();
                 $table->string('access_token_id', 100)->index();
                 $table->boolean('revoked');
@@ -108,8 +105,6 @@ class CreateOauthTables extends Migration
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
     public function down()
     {

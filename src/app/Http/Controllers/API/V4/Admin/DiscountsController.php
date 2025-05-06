@@ -4,6 +4,8 @@ namespace App\Http\Controllers\API\V4\Admin;
 
 use App\Discount;
 use App\Http\Controllers\Controller;
+use App\User;
+use Illuminate\Http\JsonResponse;
 
 class DiscountsController extends Controller
 {
@@ -12,11 +14,11 @@ class DiscountsController extends Controller
      *
      * @param int $id User identifier
      *
-     * @return \Illuminate\Http\JsonResponse JSON response
+     * @return JsonResponse JSON response
      */
     public function userDiscounts($id)
     {
-        $user = \App\User::find($id);
+        $user = User::find($id);
 
         if (!$this->checkTenant($user)) {
             return $this->errorResponse(404);
@@ -26,7 +28,7 @@ class DiscountsController extends Controller
             ->where('active', true)
             ->orderBy('discount')
             ->get()
-            ->map(function ($discount) {
+            ->map(static function ($discount) {
                 $label = $discount->discount . '% - ' . $discount->description;
 
                 if ($discount->code) {
@@ -43,9 +45,9 @@ class DiscountsController extends Controller
             });
 
         return response()->json([
-                'status' => 'success',
-                'list' => $discounts,
-                'count' => count($discounts),
+            'status' => 'success',
+            'list' => $discounts,
+            'count' => count($discounts),
         ]);
     }
 }

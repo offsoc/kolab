@@ -2,25 +2,21 @@
 
 namespace Tests\Feature\Console\Domain;
 
+use App\Domain;
+use App\Sku;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class SetWalletTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestDomain('domain-delete.com');
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestDomain('domain-delete.com');
 
@@ -41,8 +37,8 @@ class SetWalletTest extends TestCase
         $this->assertSame("Domain not found.", $output);
 
         $domain = $this->getTestDomain('domain-delete.com', [
-                'status' => \App\Domain::STATUS_NEW,
-                'type' => \App\Domain::TYPE_HOSTED,
+            'status' => Domain::STATUS_NEW,
+            'type' => Domain::TYPE_HOSTED,
         ]);
 
         // Non-existing wallet
@@ -67,7 +63,7 @@ class SetWalletTest extends TestCase
         $this->assertSame('', $output);
 
         $domain->refresh();
-        $sku = \App\Sku::withObjectTenantContext($domain)->where('title', 'domain-hosting')->first();
+        $sku = Sku::withObjectTenantContext($domain)->where('title', 'domain-hosting')->first();
         $entitlement = $domain->entitlements()->first();
 
         $this->assertSame($sku->id, $entitlement->sku_id);

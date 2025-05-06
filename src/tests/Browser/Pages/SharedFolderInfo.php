@@ -2,14 +2,13 @@
 
 namespace Tests\Browser\Pages;
 
+use Laravel\Dusk\Browser;
 use Laravel\Dusk\Page;
 
 class SharedFolderInfo extends Page
 {
     /**
      * Get the URL for the page.
-     *
-     * @return string
      */
     public function url(): string
     {
@@ -19,9 +18,7 @@ class SharedFolderInfo extends Page
     /**
      * Assert that the browser is on the page.
      *
-     * @param \Laravel\Dusk\Browser $browser The browser object
-     *
-     * @return void
+     * @param Browser $browser The browser object
      */
     public function assert($browser)
     {
@@ -31,8 +28,6 @@ class SharedFolderInfo extends Page
 
     /**
      * Get the element shortcuts for the page.
-     *
-     * @return array
      */
     public function elements(): array
     {

@@ -3,6 +3,7 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * A collection of settings for a Domain.
@@ -20,7 +21,7 @@ class DomainSetting extends Model
     /**
      * The domain to which this setting belongs.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Domain, $this>
+     * @return BelongsTo<Domain, $this>
      */
     public function domain()
     {

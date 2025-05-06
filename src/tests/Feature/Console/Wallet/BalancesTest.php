@@ -2,28 +2,24 @@
 
 namespace Tests\Feature\Console\Wallet;
 
+use App\Transaction;
+use App\Wallet;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class BalancesTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->deleteTestUser('wallets-controller@kolabnow.com');
 
-        \App\Wallet::query()->update(['balance' => 0]);
-        \App\Transaction::truncate();
+        Wallet::query()->update(['balance' => 0]);
+        Transaction::truncate();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('wallets-controller@kolabnow.com');
 
@@ -78,6 +74,6 @@ class BalancesTest extends TestCase
         $output = trim(\Artisan::output());
 
         $this->assertSame(0, $code);
-        $this->assertTrue(strpos($output, $wallet->id) === false);
+        $this->assertTrue(!str_contains($output, $wallet->id));
     }
 }

@@ -2,6 +2,7 @@
 
 namespace Tests\Browser\Reseller;
 
+use App\Utils;
 use Tests\Browser;
 use Tests\Browser\Pages\Admin\Stats;
 use Tests\Browser\Pages\Dashboard;
@@ -10,10 +11,7 @@ use Tests\TestCaseDusk;
 
 class StatsTest extends TestCaseDusk
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         self::useResellerUrl();
@@ -25,7 +23,7 @@ class StatsTest extends TestCaseDusk
     public function testStatsUnauth(): void
     {
         // Test that the page requires authentication
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit('/stats')->on(new Home());
         });
     }
@@ -35,9 +33,9 @@ class StatsTest extends TestCaseDusk
      */
     public function testStats(): void
     {
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit(new Home())
-                ->submitLogon('reseller@' . \config('app.domain'), \App\Utils::generatePassphrase(), true)
+                ->submitLogon('reseller@' . \config('app.domain'), Utils::generatePassphrase(), true)
                 ->on(new Dashboard())
                 ->assertSeeIn('@links .link-stats', 'Stats')
                 ->click('@links .link-stats')

@@ -9,6 +9,7 @@ use App\DataMigrator\Interface\ImporterInterface;
 use App\DataMigrator\Interface\Item;
 use App\DataMigrator\Interface\ItemSet;
 use Illuminate\Support\Str;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
 /**
  * Data migration engine
@@ -45,7 +46,6 @@ class Engine
     /** @var array Data migration options */
     protected $options = [];
 
-
     /**
      * Execute migration for the specified user
      */
@@ -56,7 +56,7 @@ class Engine
         $this->options = $options;
 
         // Create a unique identifier for the migration request
-        $queue_id = md5(strval($source) . strval($destination) . ($options['type'] ?? ''));
+        $queue_id = md5((string) $source . (string) $destination . ($options['type'] ?? ''));
 
         // TODO: When running in 'sync' mode we shouldn't create a queue at all
 
@@ -97,7 +97,7 @@ class Engine
         $location = storage_path('export/') . $source->email;
 
         if (!file_exists($location)) {
-            mkdir($location, 0740, true);
+            mkdir($location, 0o740, true);
         }
 
         $types = empty($options['type']) ? [] : preg_split('/\s*,\s*/', strtolower($options['type']));
@@ -128,7 +128,7 @@ class Engine
             // Apply name replacements
             $folder->targetname = $folder->fullname;
             foreach ($folderMapping as $key => $value) {
-                //TODO we should have a syntax for exact or prefix matching.
+                // TODO we should have a syntax for exact or prefix matching.
                 // There are at least two usecases:
                 // * Match a specific folder exactly
                 // * Match a parent folder in a hierarchy: "Posteingang/Foo" => "INBOX/Foo"
@@ -203,7 +203,7 @@ class Engine
                     }
                     $count++;
                 } else {
-                    $rate = (double)$itemCount / max((time() - $startTime), 1);
+                    $rate = (float) $itemCount / max(time() - $startTime, 1);
                     $this->progress(sprintf("  Item Progress [%d] %f items/s", $itemCount, $rate));
                     if ($item_or_set instanceof ItemSet) {
                         $this->processItemSet($item_or_set);
@@ -216,7 +216,7 @@ class Engine
         );
         $this->progressComplete();
 
-        $this->debug("Migrated $itemCount items");
+        $this->debug("Migrated {$itemCount} items");
         if ($count) {
             $this->queue->bumpJobsStarted($count);
         }
@@ -292,10 +292,10 @@ class Engine
     public function debug($line)
     {
         if (!empty($this->options['stdout'])) {
-            $output = new \Symfony\Component\Console\Output\ConsoleOutput();
-            $output->writeln("$line");
+            $output = new ConsoleOutput();
+            $output->writeln("{$line}");
         } else {
-            \Log::debug("[DataMigrator] $line");
+            \Log::debug("[DataMigrator] {$line}");
         }
     }
 
@@ -307,8 +307,8 @@ class Engine
     public function progress($line)
     {
         if (!empty($this->options['stdout'])) {
-            $output = new \Symfony\Component\Console\Output\ConsoleOutput();
-            $output->write("\r$line");
+            $output = new ConsoleOutput();
+            $output->write("\r{$line}");
         }
     }
 
@@ -318,7 +318,7 @@ class Engine
     public function progressComplete()
     {
         if (!empty($this->options['stdout'])) {
-            $output = new \Symfony\Component\Console\Output\ConsoleOutput();
+            $output = new ConsoleOutput();
             $output->writeln("");
         }
     }
@@ -400,33 +400,27 @@ class Engine
             case 'ews':
                 $driver = new Driver\EWS($account, $this);
                 break;
-
             case 'dav':
             case 'davs':
                 $driver = new Driver\DAV($account, $this);
                 break;
-
             case 'imap':
             case 'imaps':
             case 'tls':
             case 'ssl':
                 $driver = new Driver\IMAP($account, $this);
                 break;
-
             case 'kolab':
             case 'kolab3':
             case 'kolab4':
                 $driver = new Driver\Kolab($account, $this);
                 break;
-
             case 'takeout':
                 $driver = new Driver\Takeout($account, $this);
                 break;
-
             case 'test':
                 $driver = new Driver\Test($account, $this);
                 break;
-
             default:
                 throw new \Exception("Failed to init driver for '{$account->scheme}'");
         }

@@ -10,10 +10,7 @@ use Tests\TestCase;
 
 class SmtpAccessTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -26,10 +23,7 @@ class SmtpAccessTest extends TestCase
         $jack->save();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         Delegation::query()->delete();
         $john = $this->getTestUser('john@kolab.org');

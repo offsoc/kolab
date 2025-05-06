@@ -2,20 +2,29 @@
 
 namespace Tests;
 
+use App\Auth\SecondFactor;
 use App\Backends\IMAP;
 use App\Backends\LDAP;
 use App\CompanionApp;
 use App\Domain;
+use App\Entitlement;
 use App\Group;
+use App\Jobs\User\CreateJob;
+use App\Meet\Room;
+use App\Package;
 use App\Resource;
 use App\SharedFolder;
 use App\Sku;
 use App\Transaction;
 use App\User;
+use App\Utils;
+use App\Wallet;
 use Carbon\Carbon;
 use Illuminate\Contracts\Console\Kernel;
-use Illuminate\Support\Facades\Queue;
+use Illuminate\Foundation\Application;
+use Illuminate\Mail\Mailable;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Queue;
 use PHPUnit\Framework\Assert;
 
 trait TestCaseTrait
@@ -23,14 +32,14 @@ trait TestCaseTrait
     /**
      * A domain that is hosted.
      *
-     * @var ?\App\Domain
+     * @var ?Domain
      */
     protected $domainHosted;
 
     /**
      * The hosted domain owner.
      *
-     * @var ?\App\User
+     * @var ?User
      */
     protected $domainOwner;
 
@@ -48,42 +57,42 @@ trait TestCaseTrait
     /**
      * Some users for the hosted domain, ultimately including the owner.
      *
-     * @var \App\User[]
+     * @var User[]
      */
     protected $domainUsers = [];
 
     /**
      * A specific user that is a regular user in the hosted domain.
      *
-     * @var ?\App\User
+     * @var ?User
      */
     protected $jack;
 
     /**
      * A specific user that is a controller on the wallet to which the hosted domain is charged.
      *
-     * @var ?\App\User
+     * @var ?User
      */
     protected $jane;
 
     /**
      * A specific user that has a second factor configured.
      *
-     * @var ?\App\User
+     * @var ?User
      */
     protected $joe;
 
     /**
      * One of the domains that is available for public registration.
      *
-     * @var ?\App\Domain
+     * @var ?Domain
      */
     protected $publicDomain;
 
     /**
      * A newly generated user in a public domain.
      *
-     * @var ?\App\User
+     * @var ?User
      */
     protected $publicDomainUser;
 
@@ -107,7 +116,7 @@ trait TestCaseTrait
 
         if (!empty($titles)) {
             Sku::withEnvTenantContext()->whereIn('title', (array) $titles)->get()
-                ->each(function ($sku) use ($user) {
+                ->each(static function ($sku) use ($user) {
                     $user->assignSku($sku);
                 });
         }
@@ -116,14 +125,14 @@ trait TestCaseTrait
     /**
      * Assert that the entitlements for the user match the expected list of entitlements.
      *
-     * @param \App\User|\App\Domain $object   The object for which the entitlements need to be pulled.
-     * @param array                 $expected An array of expected \App\Sku titles.
+     * @param User|Domain $object   the object for which the entitlements need to be pulled
+     * @param array       $expected an array of expected \App\Sku titles
      */
     protected function assertEntitlements($object, $expected)
     {
         // Assert the user entitlements
         $skus = $object->entitlements()->get()
-            ->map(function ($ent) {
+            ->map(static function ($ent) {
                 return $ent->sku->title;
             })
             ->toArray();
@@ -173,17 +182,17 @@ trait TestCaseTrait
             $wallets[] = $entitlement->wallet_id;
         }
 
-        \App\Entitlement::whereIn('id', $ids)->update([
-                'created_at' => $targetCreatedDate ?: $targetDate,
-                'updated_at' => $targetDate,
+        Entitlement::whereIn('id', $ids)->update([
+            'created_at' => $targetCreatedDate ?: $targetDate,
+            'updated_at' => $targetDate,
         ]);
 
         if (!empty($wallets)) {
             $wallets = array_unique($wallets);
-            $owners = \App\Wallet::whereIn('id', $wallets)->pluck('user_id')->all();
+            $owners = Wallet::whereIn('id', $wallets)->pluck('user_id')->all();
 
-            \App\User::whereIn('id', $owners)->update([
-                    'created_at' => $targetCreatedDate ?: $targetDate
+            User::whereIn('id', $owners)->update([
+                'created_at' => $targetCreatedDate ?: $targetDate,
             ]);
         }
     }
@@ -199,13 +208,13 @@ trait TestCaseTrait
 
         $betas = Sku::whereIn('handler_class', $beta_handlers)->pluck('id')->all();
 
-        \App\Entitlement::whereIn('sku_id', $betas)->delete();
+        Entitlement::whereIn('sku_id', $betas)->delete();
     }
 
     /**
      * Creates the application.
      *
-     * @return \Illuminate\Foundation\Application
+     * @return Application
      */
     public function createApplication()
     {
@@ -240,7 +249,7 @@ trait TestCaseTrait
             [
                 'user_email' => 'jeroen@jeroen.jeroen',
                 'object_id' => $wallet->id,
-                'object_type' => \App\Wallet::class,
+                'object_type' => Wallet::class,
                 'type' => Transaction::WALLET_DEBIT,
                 'amount' => $debit * -1,
                 'description' => 'Payment',
@@ -255,7 +264,7 @@ trait TestCaseTrait
             [
                 'user_email' => null,
                 'object_id' => $wallet->id,
-                'object_type' => \App\Wallet::class,
+                'object_type' => Wallet::class,
                 'type' => Transaction::WALLET_CREDIT,
                 'amount' => 2000,
                 'description' => 'Payment',
@@ -279,7 +288,7 @@ trait TestCaseTrait
             $transaction = Transaction::create([
                 'user_email' => 'jeroen.@jeroen.jeroen',
                 'object_id' => $wallet->id,
-                'object_type' => \App\Wallet::class,
+                'object_type' => Wallet::class,
                 'type' => $type,
                 'amount' => 11 * (count($result) + 1) * ($type == Transaction::WALLET_PENALTY ? -1 : 1),
                 'description' => 'TRANS' . $loops,
@@ -369,7 +378,7 @@ trait TestCaseTrait
     {
         Queue::fake();
 
-        $room = \App\Meet\Room::withTrashed()->where('name', $name)->first();
+        $room = Room::withTrashed()->where('name', $name)->first();
 
         if (!$room) {
             return;
@@ -491,7 +500,7 @@ trait TestCaseTrait
         $resource = Resource::where('email', $email)->first();
 
         if (!$resource) {
-            list($local, $domain) = explode('@', $email, 2);
+            [$local, $domain] = explode('@', $email, 2);
 
             $resource = new Resource();
             $resource->email = $email;
@@ -519,7 +528,7 @@ trait TestCaseTrait
     protected function getTestRoom($name, $wallet = null, $attrib = [], $config = [], $title = null)
     {
         $attrib['name'] = $name;
-        $room = \App\Meet\Room::create($attrib);
+        $room = Room::create($attrib);
 
         if ($wallet) {
             $room->assignToWallet($wallet, $title);
@@ -544,7 +553,7 @@ trait TestCaseTrait
         $folder = SharedFolder::where('email', $email)->first();
 
         if (!$folder) {
-            list($local, $domain) = explode('@', $email, 2);
+            [$local, $domain] = explode('@', $email, 2);
 
             $folder = new SharedFolder();
             $folder->email = $email;
@@ -583,7 +592,7 @@ trait TestCaseTrait
         }
 
         if ($createInBackends) {
-            $job = new \App\Jobs\User\CreateJob($user->id);
+            $job = new CreateJob($user->id);
             $job->handle();
         }
 
@@ -605,7 +614,7 @@ trait TestCaseTrait
                 'device_id' => $deviceId,
                 'user_id' => $user->id,
                 'notification_token' => '',
-                'mfa_enabled' => 1
+                'mfa_enabled' => 1,
             ],
             $attrib
         );
@@ -615,15 +624,15 @@ trait TestCaseTrait
     /**
      * Call protected/private method of a class.
      *
-     * @param object $object     Instantiated object that we will run method on.
+     * @param object $object     instantiated object that we will run method on
      * @param string $methodName Method name to call
-     * @param array  $parameters Array of parameters to pass into method.
+     * @param array  $parameters array of parameters to pass into method
      *
-     * @return mixed Method return.
+     * @return mixed method return
      */
     protected function invokeMethod($object, $methodName, array $parameters = [])
     {
-        $reflection = new \ReflectionClass(get_class($object));
+        $reflection = new \ReflectionClass($object::class);
         $method = $reflection->getMethod($methodName);
         $method->setAccessible(true);
 
@@ -640,7 +649,7 @@ trait TestCaseTrait
         $prefix = $db->getOptions()->prefix?->getPrefix();
 
         foreach ($db->keys('*') as $key) {
-            if (strpos($key, 'laravel_unique_job') !== false) {
+            if (str_contains($key, 'laravel_unique_job')) {
                 $db->del($prefix ? substr($key, strlen($prefix)) : $key);
             }
         }
@@ -651,14 +660,14 @@ trait TestCaseTrait
     /**
      * Extract content of an email message.
      *
-     * @param \Illuminate\Mail\Mailable $mail Mailable object
+     * @param Mailable $mail Mailable object
      *
      * @return array Parsed message data:
      *               - 'plain': Plain text body
      *               - 'html: HTML body
      *               - 'subject': Mail subject
      */
-    protected function renderMail(\Illuminate\Mail\Mailable $mail): array
+    protected function renderMail(Mailable $mail): array
     {
         $mail->build(); // @phpstan-ignore-line
 
@@ -676,7 +685,7 @@ trait TestCaseTrait
      */
     public function resetTestRoom(string $room_name = 'john', $config = [])
     {
-        $room = \App\Meet\Room::where('name', $room_name)->first();
+        $room = Room::where('name', $room_name)->first();
         $room->setSettings(['password' => null, 'locked' => null, 'nomedia' => null]);
 
         if ($room->session_id) {
@@ -693,25 +702,25 @@ trait TestCaseTrait
 
     protected function setUpTest()
     {
-        $this->userPassword = \App\Utils::generatePassphrase();
+        $this->userPassword = Utils::generatePassphrase();
 
         $this->domainHosted = $this->getTestDomain(
             'test.domain',
             [
-                'type' => \App\Domain::TYPE_EXTERNAL,
-                'status' => \App\Domain::STATUS_ACTIVE | \App\Domain::STATUS_CONFIRMED | \App\Domain::STATUS_VERIFIED
+                'type' => Domain::TYPE_EXTERNAL,
+                'status' => Domain::STATUS_ACTIVE | Domain::STATUS_CONFIRMED | Domain::STATUS_VERIFIED,
             ]
         );
 
         $this->getTestDomain(
             'test2.domain2',
             [
-                'type' => \App\Domain::TYPE_EXTERNAL,
-                'status' => \App\Domain::STATUS_ACTIVE | \App\Domain::STATUS_CONFIRMED | \App\Domain::STATUS_VERIFIED
+                'type' => Domain::TYPE_EXTERNAL,
+                'status' => Domain::STATUS_ACTIVE | Domain::STATUS_CONFIRMED | Domain::STATUS_VERIFIED,
             ]
         );
 
-        $packageKolab = \App\Package::where('title', 'kolab')->first();
+        $packageKolab = Package::where('title', 'kolab')->first();
 
         $this->domainOwner = $this->getTestUser('john@test.domain', ['password' => $this->userPassword]);
         $this->domainOwner->assignPackage($packageKolab);
@@ -739,17 +748,17 @@ trait TestCaseTrait
 
         // assign second factor to joe
         $this->joe->assignSku(Sku::where('title', '2fa')->first());
-        \App\Auth\SecondFactor::seed($this->joe->email);
+        SecondFactor::seed($this->joe->email);
 
         usort(
             $this->domainUsers,
-            function ($a, $b) {
+            static function ($a, $b) {
                 return $a->email <=> $b->email;
             }
         );
 
         $this->domainHosted->assignPackage(
-            \App\Package::where('title', 'domain-hosting')->first(),
+            Package::where('title', 'domain-hosting')->first(),
             $this->domainOwner
         );
 
@@ -757,7 +766,7 @@ trait TestCaseTrait
 
         $wallet->addController($this->jane);
 
-        $this->publicDomain = \App\Domain::where('type', \App\Domain::TYPE_PUBLIC)->first();
+        $this->publicDomain = Domain::where('type', Domain::TYPE_PUBLIC)->first();
         $this->publicDomainUser = $this->getTestUser(
             'john@' . $this->publicDomain->namespace,
             ['password' => $this->userPassword]
@@ -768,7 +777,7 @@ trait TestCaseTrait
         Cache::forget('duskconfig');
     }
 
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         foreach ($this->domainUsers as $user) {
             if ($user == $this->domainOwner) {

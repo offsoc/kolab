@@ -7,12 +7,14 @@ use App\Fs\Property;
 use App\Http\Controllers\RelationController;
 use App\Rules\FileName;
 use App\Support\Facades\Storage;
-use App\User;
 use App\Utils;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class FsController extends RelationController
 {
@@ -29,13 +31,12 @@ class FsController extends RelationController
     /** @var string Resource model name */
     protected $model = Item::class;
 
-
     /**
      * Delete a file.
      *
      * @param string $id File identifier
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function destroy($id)
     {
@@ -55,17 +56,17 @@ class FsController extends RelationController
         }
 
         return response()->json([
-                'status' => 'success',
-                'message' => $message ?? self::trans('app.file-delete-success'),
+            'status' => 'success',
+            'message' => $message ?? self::trans('app.file-delete-success'),
         ]);
     }
 
     /**
      * Fetch content of a file.
      *
-     * @param string $id The download (not file) identifier.
+     * @param string $id the download (not file) identifier
      *
-     * @return \Illuminate\Http\Response|\Symfony\Component\HttpFoundation\StreamedResponse
+     * @return Response|StreamedResponse
      */
     public function download($id)
     {
@@ -87,9 +88,9 @@ class FsController extends RelationController
     /**
      * Fetch the permissions for the specific file.
      *
-     * @param string $fileId The file identifier.
+     * @param string $fileId the file identifier
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function getPermissions($fileId)
     {
@@ -101,7 +102,7 @@ class FsController extends RelationController
         }
 
         $result = $file->properties()->whereLike('key', 'share-%')->get()->map(
-            fn($prop) => self::permissionToClient($prop->key, $prop->value)
+            static fn ($prop) => self::permissionToClient($prop->key, $prop->value)
         );
 
         $result = [
@@ -115,9 +116,9 @@ class FsController extends RelationController
     /**
      * Add permission for the specific file.
      *
-     * @param string $fileId The file identifier.
+     * @param string $fileId the file identifier
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function createPermission($fileId)
     {
@@ -130,8 +131,8 @@ class FsController extends RelationController
 
         // Validate/format input
         $v = Validator::make(request()->all(), [
-                'user' => 'email|required',
-                'permissions' => 'string|required',
+            'user' => 'email|required',
+            'permissions' => 'string|required',
         ]);
 
         $errors = $v->fails() ? $v->errors()->toArray() : [];
@@ -156,29 +157,29 @@ class FsController extends RelationController
         }
 
         // Create the property (with a unique id)
-        while ($shareId = 'share-' . \App\Utils::uuidStr()) {
+        while ($shareId = 'share-' . Utils::uuidStr()) {
             if (!Property::where('key', $shareId)->exists()) {
                 break;
             }
         }
 
-        $file->setProperty($shareId, "$user:$acl");
+        $file->setProperty($shareId, "{$user}:{$acl}");
 
-        $result = self::permissionToClient($shareId, "$user:$acl");
+        $result = self::permissionToClient($shareId, "{$user}:{$acl}");
 
         return response()->json($result + [
-                'status' => 'success',
-                'message' => self::trans('app.file-permissions-create-success'),
+            'status' => 'success',
+            'message' => self::trans('app.file-permissions-create-success'),
         ]);
     }
 
     /**
      * Delete file permission.
      *
-     * @param string $fileId The file identifier.
-     * @param string $id     The file permission identifier.
+     * @param string $fileId the file identifier
+     * @param string $id     the file permission identifier
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function deletePermission($fileId, $id)
     {
@@ -198,19 +199,19 @@ class FsController extends RelationController
         $property->delete();
 
         return response()->json([
-                'status' => 'success',
-                'message' => self::trans('app.file-permissions-delete-success'),
+            'status' => 'success',
+            'message' => self::trans('app.file-permissions-delete-success'),
         ]);
     }
 
     /**
      * Update file permission.
      *
-     * @param \Illuminate\Http\Request $request The API request.
-     * @param string                   $fileId  The file identifier.
-     * @param string                   $id      The file permission identifier.
+     * @param Request $request the API request
+     * @param string  $fileId  the file identifier
+     * @param string  $id      the file permission identifier
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function updatePermission(Request $request, $fileId, $id)
     {
@@ -229,8 +230,8 @@ class FsController extends RelationController
 
         // Validate/format input
         $v = Validator::make($request->all(), [
-                'user' => 'email|required',
-                'permissions' => 'string|required',
+            'user' => 'email|required',
+            'permissions' => 'string|required',
         ]);
 
         $errors = $v->fails() ? $v->errors()->toArray() : [];
@@ -243,7 +244,7 @@ class FsController extends RelationController
 
         $user = \strtolower($request->input('user'));
 
-        if (empty($errors['user']) && strpos($property->value, "$user:") !== 0) {
+        if (empty($errors['user']) && !str_starts_with($property->value, "{$user}:")) {
             if ($file->properties()->whereLike('key', 'share-%')->whereLike('value', "{$user}:%")->exists()) {
                 $errors['user'] = self::trans('validation.file-perm-exists');
             }
@@ -253,26 +254,26 @@ class FsController extends RelationController
             return response()->json(['status' => 'error', 'errors' => $errors], 422);
         }
 
-        $property->value = "$user:$acl";
+        $property->value = "{$user}:{$acl}";
         $property->save();
 
         $result = self::permissionToClient($property->key, $property->value);
 
         return response()->json($result + [
-                'status' => 'success',
-                'message' => self::trans('app.file-permissions-update-success'),
+            'status' => 'success',
+            'message' => self::trans('app.file-permissions-update-success'),
         ]);
     }
 
     /**
      * Listing of files (and folders).
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function index()
     {
         $search = trim(request()->input('search'));
-        $page = intval(request()->input('page')) ?: 1;
+        $page = (int) (request()->input('page')) ?: 1;
         $parent = request()->input('parent');
         $type = request()->input('type');
         $pageSize = 100;
@@ -340,9 +341,9 @@ class FsController extends RelationController
     /**
      * Fetch the specific file metadata or content.
      *
-     * @param string $id The file identifier.
+     * @param string $id the file identifier
      *
-     * @return \Illuminate\Http\JsonResponse|\Symfony\Component\HttpFoundation\StreamedResponse
+     * @return JsonResponse|StreamedResponse
      */
     public function show($id)
     {
@@ -378,9 +379,9 @@ class FsController extends RelationController
     /**
      * Create a new file.
      *
-     * @param \Illuminate\Http\Request $request The API request.
+     * @param Request $request the API request
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function store(Request $request)
     {
@@ -460,10 +461,10 @@ class FsController extends RelationController
     /**
      * Update a file.
      *
-     * @param \Illuminate\Http\Request $request The API request.
-     * @param string                   $id      File identifier
+     * @param Request $request the API request
+     * @param string  $id      File identifier
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function update(Request $request, $id)
     {
@@ -559,10 +560,10 @@ class FsController extends RelationController
     /**
      * Upload a file content.
      *
-     * @param \Illuminate\Http\Request $request The API request.
-     * @param string                   $id      Upload (not file) identifier
+     * @param Request $request the API request
+     * @param string  $id      Upload (not file) identifier
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function upload(Request $request, $id)
     {
@@ -591,9 +592,9 @@ class FsController extends RelationController
     /**
      * Create a new collection.
      *
-     * @param \Illuminate\Http\Request $request The API request.
+     * @param Request $request the API request
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     protected function createCollection(Request $request)
     {
@@ -643,9 +644,9 @@ class FsController extends RelationController
         DB::commit();
 
         return response()->json([
-                'status' => 'success',
-                'id' => $item->id,
-                'message' => self::trans('app.collection-create-success'),
+            'status' => 'success',
+            'id' => $item->id,
+            'message' => self::trans('app.collection-create-success'),
         ]);
     }
 
@@ -660,7 +661,7 @@ class FsController extends RelationController
         if ($request->has('deduplicate-property')) {
             // query for item by deduplicate-value
             $item = $user->fsItems()->select('fs_items.*')
-                ->join('fs_properties', function ($join) use ($request) {
+                ->join('fs_properties', static function ($join) use ($request) {
                     $join->on('fs_items.id', '=', 'fs_properties.item_id')
                         ->where('fs_properties.key', $request->input('deduplicate-property'));
                 })
@@ -688,9 +689,9 @@ class FsController extends RelationController
      */
     protected static function permissionToClient(string $id, string $value): array
     {
-        list($user, $acl) = explode(':', $value);
+        [$user, $acl] = explode(':', $value);
 
-        $perms = strpos($acl, self::WRITE) !== false ? 'read-write' : 'read-only';
+        $perms = str_contains($acl, self::WRITE) ? 'read-write' : 'read-only';
 
         return [
             'id' => $id,
@@ -727,7 +728,7 @@ class FsController extends RelationController
      * @param string  $fileId     File or file permission identifier
      * @param ?string $permission Required access rights
      *
-     * @return \App\Fs\Item|int File object or error code
+     * @return Item|int File object or error code
      */
     protected function inputItem($fileId, $permission)
     {
@@ -742,9 +743,9 @@ class FsController extends RelationController
                 return 404;
             }
 
-            list($acl_user, $acl) = explode(':', $property->value);
+            [$acl_user, $acl] = explode(':', $property->value);
 
-            if (!$permission || $acl_user != $user->email || strpos($acl, $permission) === false) {
+            if (!$permission || $acl_user != $user->email || !str_contains($acl, $permission)) {
                 return 403;
             }
 
@@ -761,7 +762,7 @@ class FsController extends RelationController
             return 403;
         }
 
-        if ($file->type & Item::TYPE_FILE &&  $file->type & Item::TYPE_INCOMPLETE) {
+        if ($file->type & Item::TYPE_FILE && $file->type & Item::TYPE_INCOMPLETE) {
             return 404;
         }
 

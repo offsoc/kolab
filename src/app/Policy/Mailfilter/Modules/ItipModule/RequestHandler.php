@@ -54,7 +54,7 @@ class RequestHandler extends ItipModule
         // stop processing here and pass the message to the inbox?
 
         $requestMaster = $this->extractMainComponent($this->itip);
-        $recurrence_id = strval($requestMaster->{'RECURRENCE-ID'});
+        $recurrence_id = (string) $requestMaster->{'RECURRENCE-ID'};
 
         // The event does not exist yet in the recipient's calendar, create it
         if (!$existing) {
@@ -81,11 +81,11 @@ class RequestHandler extends ItipModule
             // A new recurrence instance, just add it to the existing event
             if (!$existingInstance) {
                 $existing->add($requestMaster);
-                // TODO: Bump LAST-MODIFIED on the master object
+            // TODO: Bump LAST-MODIFIED on the master object
             } else {
                 // SEQUENCE does not match, deliver the message, let the MUAs deal with this
                 // TODO: A higher SEQUENCE indicates a re-scheduled object, we should update the existing event.
-                if (intval(strval($existingInstance->SEQUENCE)) != intval(strval($requestMaster->SEQUENCE))) {
+                if ((int) ((string) $existingInstance->SEQUENCE) != (int) ((string) $requestMaster->SEQUENCE)) {
                     return null;
                 }
 
@@ -102,7 +102,7 @@ class RequestHandler extends ItipModule
 
             // SEQUENCE does not match, deliver the message, let the MUAs deal with this
             // TODO: A higher SEQUENCE indicates a re-scheduled object, we should update the existing event.
-            if (intval(strval($existingMaster->SEQUENCE)) != intval(strval($requestMaster->SEQUENCE))) {
+            if ((int) ((string) $existingMaster->SEQUENCE) != (int) ((string) $requestMaster->SEQUENCE)) {
                 return null;
             }
 

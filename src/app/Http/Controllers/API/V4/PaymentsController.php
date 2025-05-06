@@ -3,11 +3,15 @@
 namespace App\Http\Controllers\API\V4;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\Wallet\ChargeJob;
 use App\Payment;
 use App\Providers\PaymentProvider;
 use App\Tenant;
+use App\Utils;
 use App\Wallet;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Validator;
 
 class PaymentsController extends Controller
@@ -15,7 +19,7 @@ class PaymentsController extends Controller
     /**
      * Get the auto-payment mandate info.
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function mandate()
     {
@@ -32,9 +36,9 @@ class PaymentsController extends Controller
     /**
      * Create a new auto-payment mandate.
      *
-     * @param \Illuminate\Http\Request $request The API request.
+     * @param Request $request the API request
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function mandateCreate(Request $request)
     {
@@ -49,8 +53,8 @@ class PaymentsController extends Controller
         }
 
         $wallet->setSettings([
-                'mandate_amount' => $request->amount,
-                'mandate_balance' => $request->balance,
+            'mandate_amount' => $request->amount,
+            'mandate_balance' => $request->balance,
         ]);
 
         $mandate = [
@@ -82,7 +86,7 @@ class PaymentsController extends Controller
     /**
      * Revoke the auto-payment mandate.
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function mandateDelete()
     {
@@ -98,17 +102,17 @@ class PaymentsController extends Controller
         $wallet->setSetting('mandate_disabled', null);
 
         return response()->json([
-                'status' => 'success',
-                'message' => self::trans('app.mandate-delete-success'),
+            'status' => 'success',
+            'message' => self::trans('app.mandate-delete-success'),
         ]);
     }
 
     /**
      * Update a new auto-payment mandate.
      *
-     * @param \Illuminate\Http\Request $request The API request.
+     * @param Request $request the API request
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function mandateUpdate(Request $request)
     {
@@ -123,16 +127,16 @@ class PaymentsController extends Controller
         }
 
         $wallet->setSettings([
-                'mandate_amount' => $request->amount,
-                'mandate_balance' => $request->balance,
-                // Re-enable the mandate to give it a chance to charge again
-                // after it has been disabled (e.g. because the mandate amount was too small)
-                'mandate_disabled' => null,
+            'mandate_amount' => $request->amount,
+            'mandate_balance' => $request->balance,
+            // Re-enable the mandate to give it a chance to charge again
+            // after it has been disabled (e.g. because the mandate amount was too small)
+            'mandate_disabled' => null,
         ]);
 
         // Trigger auto-payment if the balance is below the threshold
         if ($wallet->balance < round($request->balance * 100)) {
-            \App\Jobs\Wallet\ChargeJob::dispatch($wallet->id);
+            ChargeJob::dispatch($wallet->id);
         }
 
         $result = self::walletMandate($wallet);
@@ -145,9 +149,9 @@ class PaymentsController extends Controller
     /**
      * Reset the auto-payment mandate, create a new payment for it.
      *
-     * @param \Illuminate\Http\Request $request The API request.
+     * @param Request $request the API request
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function mandateReset(Request $request)
     {
@@ -163,7 +167,7 @@ class PaymentsController extends Controller
                 . ' ' . self::trans('app.mandate-description-suffix'),
 
             'methodId' => $request->methodId ?: PaymentProvider::METHOD_CREDITCARD,
-            'redirectUrl' => \App\Utils::serviceUrl('/payment/status', $user->tenant_id),
+            'redirectUrl' => Utils::serviceUrl('/payment/status', $user->tenant_id),
         ];
 
         $provider = PaymentProvider::factory($wallet);
@@ -178,8 +182,8 @@ class PaymentsController extends Controller
     /**
      * Validate an auto-payment mandate request.
      *
-     * @param \Illuminate\Http\Request $request The API request.
-     * @param \App\Wallet              $wallet  The wallet
+     * @param Request $request the API request
+     * @param Wallet  $wallet  The wallet
      *
      * @return array|null List of errors on error or Null on success
      */
@@ -222,7 +226,7 @@ class PaymentsController extends Controller
     /**
      * Get status of the last payment.
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function paymentStatus()
     {
@@ -244,20 +248,20 @@ class PaymentsController extends Controller
         }
 
         return response()->json([
-                'id' => $payment->id,
-                'status' => $payment->status,
-                'type' => $payment->type,
-                'statusMessage' => self::trans($label),
-                'description' => $payment->description,
+            'id' => $payment->id,
+            'status' => $payment->status,
+            'type' => $payment->type,
+            'statusMessage' => self::trans($label),
+            'description' => $payment->description,
         ]);
     }
 
     /**
      * Create a new payment.
      *
-     * @param \Illuminate\Http\Request $request The API request.
+     * @param Request $request the API request
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function store(Request $request)
     {
@@ -310,9 +314,7 @@ class PaymentsController extends Controller
     /**
      * Delete a pending payment.
      *
-     * @param \Illuminate\Http\Request $request The API request.
-     *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     // TODO currently unused
     // public function cancel(Request $request)
@@ -346,7 +348,7 @@ class PaymentsController extends Controller
      *
      * @param string $provider Provider name
      *
-     * @return \Illuminate\Http\Response The response
+     * @return Response The response
      */
     public function webhook($provider)
     {
@@ -362,7 +364,7 @@ class PaymentsController extends Controller
     /**
      * Returns auto-payment mandate info for the specified wallet
      *
-     * @param \App\Wallet $wallet A wallet object
+     * @param Wallet $wallet A wallet object
      *
      * @return array A mandate metadata
      */
@@ -396,9 +398,9 @@ class PaymentsController extends Controller
     /**
      * List supported payment methods.
      *
-     * @param \Illuminate\Http\Request $request The API request.
+     * @param Request $request the API request
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function paymentMethods(Request $request)
     {
@@ -417,9 +419,9 @@ class PaymentsController extends Controller
     /**
      * Check for pending payments.
      *
-     * @param \Illuminate\Http\Request $request The API request.
+     * @param Request $request the API request
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function hasPayments(Request $request)
     {
@@ -431,24 +433,24 @@ class PaymentsController extends Controller
         $exists = Payment::where('wallet_id', $wallet->id)
             ->where('type', Payment::TYPE_ONEOFF)
             ->whereIn('status', [
-                    Payment::STATUS_OPEN,
-                    Payment::STATUS_PENDING,
-                    Payment::STATUS_AUTHORIZED
+                Payment::STATUS_OPEN,
+                Payment::STATUS_PENDING,
+                Payment::STATUS_AUTHORIZED,
             ])
             ->exists();
 
         return response()->json([
             'status' => 'success',
-            'hasPending' => $exists
+            'hasPending' => $exists,
         ]);
     }
 
     /**
      * List pending payments.
      *
-     * @param \Illuminate\Http\Request $request The API request.
+     * @param Request $request the API request
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function payments(Request $request)
     {
@@ -458,14 +460,14 @@ class PaymentsController extends Controller
         $wallet = $user->wallets()->first();
 
         $pageSize = 10;
-        $page = intval(request()->input('page')) ?: 1;
+        $page = (int) (request()->input('page')) ?: 1;
         $hasMore = false;
         $result = Payment::where('wallet_id', $wallet->id)
             ->where('type', Payment::TYPE_ONEOFF)
             ->whereIn('status', [
-                    Payment::STATUS_OPEN,
-                    Payment::STATUS_PENDING,
-                    Payment::STATUS_AUTHORIZED
+                Payment::STATUS_OPEN,
+                Payment::STATUS_PENDING,
+                Payment::STATUS_AUTHORIZED,
             ])
             ->orderBy('created_at', 'desc')
             ->limit($pageSize + 1)
@@ -477,7 +479,7 @@ class PaymentsController extends Controller
             $hasMore = true;
         }
 
-        $result = $result->map(function ($item) use ($wallet) {
+        $result = $result->map(static function ($item) use ($wallet) {
             $provider = PaymentProvider::factory($item->provider);
             $payment = $provider->getPayment($item->id);
             $entry = [
@@ -490,7 +492,7 @@ class PaymentsController extends Controller
                 // note: $item->currency/$item->currency_amount might be different
                 'status' => $item->status,
                 'isCancelable' => $payment['isCancelable'],
-                'checkoutUrl' => $payment['checkoutUrl']
+                'checkoutUrl' => $payment['checkoutUrl'],
             ];
 
             return $entry;

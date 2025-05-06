@@ -2,25 +2,20 @@
 
 namespace Tests\Feature\Console\Tenant;
 
+use App\Tenant;
 use App\TenantSetting;
 use Tests\TestCase;
 
 class ListSettingsTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         TenantSetting::truncate();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         TenantSetting::truncate();
 
@@ -37,7 +32,7 @@ class ListSettingsTest extends TestCase
         $this->assertSame(1, $code);
         $this->assertSame("Unable to find the tenant.", $output);
 
-        $tenant = \App\Tenant::whereNotIn('id', [1])->first();
+        $tenant = Tenant::whereNotIn('id', [1])->first();
 
         // A tenant without settings
         $code = \Artisan::call("tenant:list-settings {$tenant->id}");

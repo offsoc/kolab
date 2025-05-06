@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
 
 class RelationController extends ResourceController
@@ -26,7 +28,7 @@ class RelationController extends ResourceController
      *
      * @param string $id Resource identifier
      *
-     * @return \Illuminate\Http\JsonResponse The response
+     * @return JsonResponse The response
      */
     public function destroy($id)
     {
@@ -43,8 +45,8 @@ class RelationController extends ResourceController
         $resource->delete();
 
         return response()->json([
-                'status' => 'success',
-                'message' => \trans("app.{$this->label}-delete-success"),
+            'status' => 'success',
+            'message' => \trans("app.{$this->label}-delete-success"),
         ]);
     }
 
@@ -53,7 +55,7 @@ class RelationController extends ResourceController
      *
      * The resource entitlements billed to the current user wallet(s)
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function index()
     {
@@ -97,10 +99,10 @@ class RelationController extends ResourceController
     {
         $state = [];
 
-        $reflect = new \ReflectionClass(get_class($resource));
+        $reflect = new \ReflectionClass($resource::class);
 
         foreach (array_keys($reflect->getConstants()) as $const) {
-            if (strpos($const, 'STATUS_') === 0 && $const != 'STATUS_NEW') {
+            if (str_starts_with($const, 'STATUS_') && $const != 'STATUS_NEW') {
                 $method = Str::camel('is_' . strtolower(substr($const, 7)));
                 $state[$method] = $resource->{$method}();
             }
@@ -199,15 +201,15 @@ class RelationController extends ResourceController
         }
 
         $all = count($process);
-        $checked = count(array_filter($process, function ($v) {
-                return $v['state'];
+        $checked = count(array_filter($process, static function ($v) {
+            return $v['state'];
         }));
 
         $state = $all === $checked ? 'done' : 'running';
 
         // After 180 seconds assume the process is in failed state,
         // this should unlock the Refresh button in the UI
-        if ($all !== $checked && $object->created_at->diffInSeconds(\Carbon\Carbon::now()) > 180) {
+        if ($all !== $checked && $object->created_at->diffInSeconds(Carbon::now()) > 180) {
             $state = 'failed';
         }
 
@@ -277,7 +279,7 @@ class RelationController extends ResourceController
      *
      * @param int $id Resource identifier
      *
-     * @return \Illuminate\Http\JsonResponse|void
+     * @return JsonResponse|void
      */
     public function setConfig($id)
     {
@@ -304,17 +306,17 @@ class RelationController extends ResourceController
         }
 
         return response()->json([
-                'status' => 'success',
-                'message' => \trans("app.{$this->label}-setconfig-success"),
+            'status' => 'success',
+            'message' => \trans("app.{$this->label}-setconfig-success"),
         ]);
     }
 
     /**
      * Display information of a resource specified by $id.
      *
-     * @param string $id The resource to show information for.
+     * @param string $id the resource to show information for
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function show($id)
     {
@@ -356,7 +358,7 @@ class RelationController extends ResourceController
      *
      * @param int $id Resource identifier
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function skus($id)
     {
@@ -378,7 +380,7 @@ class RelationController extends ResourceController
      *
      * @param int $id Resource identifier
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function status($id)
     {

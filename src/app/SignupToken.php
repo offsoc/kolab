@@ -4,14 +4,15 @@ namespace App;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * The eloquent definition of a SignupToken.
  *
- * @property \Carbon\Carbon $created_at  The creation timestamp
- * @property int            $counter     Count of signups on this token
- * @property ?string        $id          Token
- * @property ?string        $plan_id     Plan identifier
+ * @property Carbon  $created_at The creation timestamp
+ * @property int     $counter    Count of signups on this token
+ * @property ?string $id         Token
+ * @property ?string $plan_id    Plan identifier
  */
 class SignupToken extends Model
 {
@@ -40,7 +41,7 @@ class SignupToken extends Model
     /**
      * The plan this token applies to
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Plan, $this>
+     * @return BelongsTo<Plan, $this>
      */
     public function plan()
     {

@@ -3,6 +3,7 @@
 namespace App\Console\Commands\Group;
 
 use App\Console\Command;
+use App\EventLog;
 
 class SuspendCommand extends Command
 {
@@ -36,6 +37,6 @@ class SuspendCommand extends Command
 
         $group->suspend();
 
-        \App\EventLog::createFor($group, \App\EventLog::TYPE_SUSPENDED, $this->option('comment'));
+        EventLog::createFor($group, EventLog::TYPE_SUSPENDED, $this->option('comment'));
     }
 }

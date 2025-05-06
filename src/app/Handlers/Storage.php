@@ -3,9 +3,11 @@
 namespace App\Handlers;
 
 use App\Entitlement;
+use App\Jobs\User\UpdateJob;
 use App\Sku;
+use App\User;
 
-class Storage extends \App\Handlers\Base
+class Storage extends Base
 {
     public const MAX_ITEMS = 100;
     public const ITEM_UNIT = 'GB';
@@ -15,7 +17,7 @@ class Storage extends \App\Handlers\Base
      */
     public static function entitleableClass(): string
     {
-        return \App\User::class;
+        return User::class;
     }
 
     /**
@@ -24,7 +26,7 @@ class Storage extends \App\Handlers\Base
     public static function entitlementCreated(Entitlement $entitlement): void
     {
         // Update the user IMAP mailbox quota
-        \App\Jobs\User\UpdateJob::dispatch($entitlement->entitleable_id);
+        UpdateJob::dispatch($entitlement->entitleable_id);
     }
 
     /**
@@ -33,7 +35,7 @@ class Storage extends \App\Handlers\Base
     public static function entitlementDeleted(Entitlement $entitlement): void
     {
         // Update the user IMAP mailbox quota
-        \App\Jobs\User\UpdateJob::dispatch($entitlement->entitleable_id);
+        UpdateJob::dispatch($entitlement->entitleable_id);
     }
 
     /**
@@ -46,9 +48,9 @@ class Storage extends \App\Handlers\Base
         $data['readonly'] = true; // only the checkbox will be disabled, not range
         $data['enabled'] = true;
         $data['range'] = [
-           'min' => $sku->units_free,
-           'max' => self::MAX_ITEMS,
-           'unit' => self::ITEM_UNIT,
+            'min' => $sku->units_free,
+            'max' => self::MAX_ITEMS,
+            'unit' => self::ITEM_UNIT,
         ];
 
         return $data;

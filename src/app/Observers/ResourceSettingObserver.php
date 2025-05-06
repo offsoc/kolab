@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Jobs\Resource\UpdateJob;
 use App\ResourceSetting;
 
 class ResourceSettingObserver
@@ -9,9 +10,7 @@ class ResourceSettingObserver
     /**
      * Handle the resource setting "created" event.
      *
-     * @param \App\ResourceSetting $resourceSetting Settings object
-     *
-     * @return void
+     * @param ResourceSetting $resourceSetting Settings object
      */
     public function created(ResourceSetting $resourceSetting)
     {
@@ -21,9 +20,7 @@ class ResourceSettingObserver
     /**
      * Handle the resource setting "updated" event.
      *
-     * @param \App\ResourceSetting $resourceSetting Settings object
-     *
-     * @return void
+     * @param ResourceSetting $resourceSetting Settings object
      */
     public function updated(ResourceSetting $resourceSetting)
     {
@@ -33,9 +30,7 @@ class ResourceSettingObserver
     /**
      * Handle the resource setting "deleted" event.
      *
-     * @param \App\ResourceSetting $resourceSetting Settings object
-     *
-     * @return void
+     * @param ResourceSetting $resourceSetting Settings object
      */
     public function deleted(ResourceSetting $resourceSetting)
     {
@@ -45,13 +40,13 @@ class ResourceSettingObserver
     /**
      * Dispatch resource update job (if needed)
      *
-     * @param \App\ResourceSetting $resourceSetting Settings object
+     * @param ResourceSetting $resourceSetting Settings object
      */
     private function dispatchUpdateJob(ResourceSetting $resourceSetting): void
     {
         if ($resourceSetting->isBackendSetting()) {
             $props = [$resourceSetting->key => $resourceSetting->getOriginal('value')];
-            \App\Jobs\Resource\UpdateJob::dispatch($resourceSetting->resource_id, $props);
+            UpdateJob::dispatch($resourceSetting->resource_id, $props);
         }
     }
 }

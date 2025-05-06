@@ -2,6 +2,9 @@
 
 namespace App\Console\Commands\Policy\RateLimit\Whitelist;
 
+use App\Domain;
+use App\Policy\RateLimit\Whitelist;
+use App\User;
 use Illuminate\Console\Command;
 
 class ReadCommand extends Command
@@ -27,13 +30,13 @@ class ReadCommand extends Command
      */
     public function handle()
     {
-        \App\Policy\RateLimit\Whitelist::each(
+        Whitelist::each(
             function ($item) {
                 $whitelistable = $item->whitelistable;
 
-                if ($whitelistable instanceof \App\Domain) {
+                if ($whitelistable instanceof Domain) {
                     $this->info("{$item->id}: {$item->whitelistable_type} {$whitelistable->namespace}");
-                } elseif ($whitelistable instanceof \App\User) {
+                } elseif ($whitelistable instanceof User) {
                     $this->info("{$item->id}: {$item->whitelistable_type} {$whitelistable->email}");
                 }
             }

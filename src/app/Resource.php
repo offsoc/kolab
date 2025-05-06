@@ -3,8 +3,8 @@
 namespace App;
 
 use App\Traits\BelongsToTenantTrait;
-use App\Traits\EntitleableTrait;
 use App\Traits\EmailPropertyTrait;
+use App\Traits\EntitleableTrait;
 use App\Traits\ResourceConfigTrait;
 use App\Traits\SettingsTrait;
 use App\Traits\StatusPropertyTrait;
@@ -30,16 +30,16 @@ class Resource extends Model
     use SoftDeletes;
     use StatusPropertyTrait;
     use UuidIntKeyTrait;
-    use EmailPropertyTrait; // must be first after UuidIntKeyTrait
+    use EmailPropertyTrait; // must be after UuidIntKeyTrait
 
     // we've simply never heard of this resource
-    public const STATUS_NEW        = 1 << 0;
+    public const STATUS_NEW = 1 << 0;
     // resource has been activated
-    public const STATUS_ACTIVE     = 1 << 1;
+    public const STATUS_ACTIVE = 1 << 1;
     // resource has been suspended.
     // public const STATUS_SUSPENDED  = 1 << 2;
     // resource has been deleted
-    public const STATUS_DELETED    = 1 << 3;
+    public const STATUS_DELETED = 1 << 3;
     // resource has been created in LDAP
     public const STATUS_LDAP_READY = 1 << 4;
     // resource has been created in IMAP
@@ -49,11 +49,11 @@ class Resource extends Model
     public const EMAIL_TEMPLATE = 'resource-{id}@{domainName}';
 
     /** @var int The allowed states for this object used in StatusPropertyTrait */
-    private int $allowed_states = self::STATUS_NEW |
-        self::STATUS_ACTIVE |
-        self::STATUS_DELETED |
-        self::STATUS_LDAP_READY |
-        self::STATUS_IMAP_READY;
+    private int $allowed_states = self::STATUS_NEW
+        | self::STATUS_ACTIVE
+        | self::STATUS_DELETED
+        | self::STATUS_LDAP_READY
+        | self::STATUS_IMAP_READY;
 
     /** @var array<string, string> The attributes that should be cast */
     protected $casts = [

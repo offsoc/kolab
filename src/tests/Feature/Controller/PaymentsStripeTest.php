@@ -2,25 +2,24 @@
 
 namespace Tests\Feature\Controller;
 
+use App\Jobs\Mail\PaymentJob;
+use App\Jobs\Mail\PaymentMandateDisabledJob;
+use App\Jobs\Wallet\ChargeJob;
 use App\Payment;
 use App\Providers\PaymentProvider;
 use App\Transaction;
+use App\VatRate;
 use App\Wallet;
 use App\WalletSetting;
-use App\VatRate;
-use GuzzleHttp\Psr7\Response;
 use Illuminate\Support\Facades\Bus;
-use Tests\TestCase;
 use Tests\StripeMocksTrait;
+use Tests\TestCase;
 
 class PaymentsStripeTest extends TestCase
 {
     use StripeMocksTrait;
 
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -44,10 +43,7 @@ class PaymentsStripeTest extends TestCase
         VatRate::query()->delete();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         if (\config('services.stripe.key')) {
             $this->deleteTestUser('payment-test@' . \config('app.domain'));
@@ -159,9 +155,9 @@ class PaymentsStripeTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertEquals(20.10, $json['amount']);
-        $this->assertEquals(0, $json['balance']);
-        $this->assertSame(false, $json['isDisabled']);
+        $this->assertSame('20.1', $json['amount']);
+        $this->assertSame('0', $json['balance']);
+        $this->assertFalse($json['isDisabled']);
 
         // We would have to invoke a browser to accept the "first payment" to make
         // the mandate validated/completed. Instead, we'll mock the mandate object.
@@ -202,12 +198,12 @@ class PaymentsStripeTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertEquals(20.10, $json['amount']);
-        $this->assertEquals(0, $json['balance']);
-        $this->assertEquals('Visa (**** **** **** 4242)', $json['method']);
-        $this->assertSame(false, $json['isPending']);
-        $this->assertSame(true, $json['isValid']);
-        $this->assertSame(true, $json['isDisabled']);
+        $this->assertSame('20.1', $json['amount']);
+        $this->assertSame('0', $json['balance']);
+        $this->assertSame('Visa (**** **** **** 4242)', $json['method']);
+        $this->assertFalse($json['isPending']);
+        $this->assertTrue($json['isValid']);
+        $this->assertTrue($json['isDisabled']);
 
         // Test updating mandate details (invalid input)
         $wallet->setSetting('mandate_disabled', null);
@@ -247,8 +243,8 @@ class PaymentsStripeTest extends TestCase
 
         $this->assertSame('success', $json['status']);
         $this->assertSame('The auto-payment has been updated.', $json['message']);
-        $this->assertEquals(30.10, $wallet->getSetting('mandate_amount'));
-        $this->assertEquals(10, $wallet->getSetting('mandate_balance'));
+        $this->assertSame('30.1', $wallet->getSetting('mandate_amount'));
+        $this->assertSame('10', $wallet->getSetting('mandate_balance'));
         $this->assertSame('AAA', $json['id']);
         $this->assertFalse($json['isDisabled']);
 
@@ -283,8 +279,8 @@ class PaymentsStripeTest extends TestCase
         $this->assertSame('AAA', $json['id']);
         $this->assertFalse($json['isDisabled']);
 
-        Bus::assertDispatchedTimes(\App\Jobs\Wallet\ChargeJob::class, 1);
-        Bus::assertDispatched(\App\Jobs\Wallet\ChargeJob::class, function ($job) use ($wallet) {
+        Bus::assertDispatchedTimes(ChargeJob::class, 1);
+        Bus::assertDispatched(ChargeJob::class, function ($job) use ($wallet) {
             $job_wallet_id = $this->getObjectProperty($job, 'walletId');
             return $job_wallet_id === $wallet->id;
         });
@@ -366,7 +362,7 @@ class PaymentsStripeTest extends TestCase
         $this->assertSame(1234, $payment->amount);
         $this->assertSame($user->tenant->title . ' Payment', $payment->description);
         $this->assertSame('open', $payment->status);
-        $this->assertEquals(0, $wallet->balance);
+        $this->assertSame(0, $wallet->balance);
 
         // Test the webhook
 
@@ -392,10 +388,10 @@ class PaymentsStripeTest extends TestCase
                     'livemode' => false,
                     'metadata' => [],
                     'receipt_email' => "payment-test@kolabnow.com",
-                    'status' => "succeeded"
-                ]
+                    'status' => "succeeded",
+                ],
             ],
-            'type' => "payment_intent.succeeded"
+            'type' => "payment_intent.succeeded",
         ];
 
         // Test payment succeeded event
@@ -403,7 +399,7 @@ class PaymentsStripeTest extends TestCase
         $response->assertStatus(200);
 
         $this->assertSame(Payment::STATUS_PAID, $payment->fresh()->status);
-        $this->assertEquals(1234, $wallet->fresh()->balance);
+        $this->assertSame(1234, $wallet->fresh()->balance);
 
         $transaction = $wallet->transactions()
             ->where('type', Transaction::WALLET_CREDIT)->get()->last();
@@ -416,14 +412,14 @@ class PaymentsStripeTest extends TestCase
 
         // Assert that email notification job wasn't dispatched,
         // it is expected only for recurring payments
-        Bus::assertDispatchedTimes(\App\Jobs\Mail\PaymentJob::class, 0);
+        Bus::assertDispatchedTimes(PaymentJob::class, 0);
 
         // Test that balance didn't change if the same event is posted
         $response = $this->webhookRequest($post);
         $response->assertStatus(200);
 
         $this->assertSame(Payment::STATUS_PAID, $payment->fresh()->status);
-        $this->assertEquals(1234, $wallet->fresh()->balance);
+        $this->assertSame(1234, $wallet->fresh()->balance);
 
         // Test for payment failure ('failed' status)
         $payment->refresh();
@@ -437,11 +433,11 @@ class PaymentsStripeTest extends TestCase
         $response->assertStatus(200);
 
         $this->assertSame(Payment::STATUS_FAILED, $payment->fresh()->status);
-        $this->assertEquals(1234, $wallet->fresh()->balance);
+        $this->assertSame(1234, $wallet->fresh()->balance);
 
         // Assert that email notification job wasn't dispatched,
         // it is expected only for recurring payments
-        Bus::assertDispatchedTimes(\App\Jobs\Mail\PaymentJob::class, 0);
+        Bus::assertDispatchedTimes(PaymentJob::class, 0);
 
         // Test for payment failure ('canceled' status)
         $payment->refresh();
@@ -455,11 +451,11 @@ class PaymentsStripeTest extends TestCase
         $response->assertStatus(200);
 
         $this->assertSame(Payment::STATUS_CANCELED, $payment->fresh()->status);
-        $this->assertEquals(1234, $wallet->fresh()->balance);
+        $this->assertSame(1234, $wallet->fresh()->balance);
 
         // Assert that email notification job wasn't dispatched,
         // it is expected only for recurring payments
-        Bus::assertDispatchedTimes(\App\Jobs\Mail\PaymentJob::class, 0);
+        Bus::assertDispatchedTimes(PaymentJob::class, 0);
     }
 
     /**
@@ -498,10 +494,10 @@ class PaymentsStripeTest extends TestCase
                     'customer' => "cus_HKDZ53OsKdlM83",
                     'last_setup_error' => null,
                     'metadata' => [],
-                    'status' => "succeeded"
-                ]
+                    'status' => "succeeded",
+                ],
             ],
-            'type' => "setup_intent.succeeded"
+            'type' => "setup_intent.succeeded",
         ];
 
         Bus::fake();
@@ -516,8 +512,8 @@ class PaymentsStripeTest extends TestCase
         $this->assertSame($payment->id, $wallet->fresh()->getSetting('stripe_mandate_id'));
 
         // Expect a wallet charge job if the balance is negative
-        Bus::assertDispatchedTimes(\App\Jobs\Wallet\ChargeJob::class, 1);
-        Bus::assertDispatched(\App\Jobs\Wallet\ChargeJob::class, function ($job) use ($wallet) {
+        Bus::assertDispatchedTimes(ChargeJob::class, 1);
+        Bus::assertDispatched(ChargeJob::class, static function ($job) use ($wallet) {
             $job_wallet_id = TestCase::getObjectProperty($job, 'walletId');
             return $job_wallet_id === $wallet->id;
         });
@@ -547,34 +543,34 @@ class PaymentsStripeTest extends TestCase
         ]);
 
         $setupIntent = json_encode([
-                "id" => "AAA",
-                "object" => "setup_intent",
-                "created" => 123456789,
-                "payment_method" => "pm_YYY",
-                "status" => "succeeded",
-                "usage" => "off_session",
-                "customer" => null
+            "id" => "AAA",
+            "object" => "setup_intent",
+            "created" => 123456789,
+            "payment_method" => "pm_YYY",
+            "status" => "succeeded",
+            "usage" => "off_session",
+            "customer" => null,
         ]);
 
         $paymentMethod = json_encode([
-                "id" => "pm_YYY",
-                "object" => "payment_method",
-                "card" => [
-                    "brand" => "visa",
-                    "country" => "US",
-                    "last4" => "4242"
-                ],
-                "created" => 123456789,
-                "type" => "card"
+            "id" => "pm_YYY",
+            "object" => "payment_method",
+            "card" => [
+                "brand" => "visa",
+                "country" => "US",
+                "last4" => "4242",
+            ],
+            "created" => 123456789,
+            "type" => "card",
         ]);
 
         $paymentIntent = json_encode([
-                "id" => "pi_XX",
-                "object" => "payment_intent",
-                "created" => 123456789,
-                "amount" => 2010,
-                "currency" => "chf",
-                "description" => $user->tenant->title . " Recurring Payment"
+            "id" => "pi_XX",
+            "object" => "payment_intent",
+            "created" => 123456789,
+            "amount" => 2010,
+            "currency" => "chf",
+            "description" => $user->tenant->title . " Recurring Payment",
         ]);
 
         $client = $this->mockStripe();
@@ -621,8 +617,8 @@ class PaymentsStripeTest extends TestCase
         $this->assertFalse($result);
         $this->assertCount(1, $wallet->payments()->get());
 
-        Bus::assertDispatchedTimes(\App\Jobs\Mail\PaymentMandateDisabledJob::class, 1);
-        Bus::assertDispatched(\App\Jobs\Mail\PaymentMandateDisabledJob::class, function ($job) use ($wallet) {
+        Bus::assertDispatchedTimes(PaymentMandateDisabledJob::class, 1);
+        Bus::assertDispatched(PaymentMandateDisabledJob::class, function ($job) use ($wallet) {
             $job_wallet = $this->getObjectProperty($job, 'wallet');
             return $job_wallet->id === $wallet->id;
         });
@@ -635,7 +631,7 @@ class PaymentsStripeTest extends TestCase
         $this->assertFalse($result);
         $this->assertCount(1, $wallet->payments()->get());
 
-        Bus::assertDispatchedTimes(\App\Jobs\Mail\PaymentMandateDisabledJob::class, 1);
+        Bus::assertDispatchedTimes(PaymentMandateDisabledJob::class, 1);
 
         $this->unmockStripe();
 
@@ -658,10 +654,10 @@ class PaymentsStripeTest extends TestCase
                     'last_payment_error' => null,
                     'metadata' => [],
                     'receipt_email' => "payment-test@kolabnow.com",
-                    'status' => "succeeded"
-                ]
+                    'status' => "succeeded",
+                ],
             ],
-            'type' => "payment_intent.succeeded"
+            'type' => "payment_intent.succeeded",
         ];
 
         // Test payment succeeded event
@@ -669,7 +665,7 @@ class PaymentsStripeTest extends TestCase
         $response->assertStatus(200);
 
         $this->assertSame(Payment::STATUS_PAID, $payment->fresh()->status);
-        $this->assertEquals(2010, $wallet->fresh()->balance);
+        $this->assertSame(2010, $wallet->fresh()->balance);
         $transaction = $wallet->transactions()
             ->where('type', Transaction::WALLET_CREDIT)->get()->last();
 
@@ -680,8 +676,8 @@ class PaymentsStripeTest extends TestCase
         );
 
         // Assert that email notification job has been dispatched
-        Bus::assertDispatchedTimes(\App\Jobs\Mail\PaymentJob::class, 1);
-        Bus::assertDispatched(\App\Jobs\Mail\PaymentJob::class, function ($job) use ($payment) {
+        Bus::assertDispatchedTimes(PaymentJob::class, 1);
+        Bus::assertDispatched(PaymentJob::class, function ($job) use ($payment) {
             $job_payment = $this->getObjectProperty($job, 'payment');
             return $job_payment->id === $payment->id;
         });
@@ -704,12 +700,12 @@ class PaymentsStripeTest extends TestCase
         $wallet->refresh();
 
         $this->assertSame(Payment::STATUS_FAILED, $payment->fresh()->status);
-        $this->assertEquals(2010, $wallet->balance);
+        $this->assertSame(2010, $wallet->balance);
         $this->assertTrue(!empty($wallet->getSetting('mandate_disabled')));
 
         // Assert that email notification job has been dispatched
-        Bus::assertDispatchedTimes(\App\Jobs\Mail\PaymentJob::class, 1);
-        Bus::assertDispatched(\App\Jobs\Mail\PaymentJob::class, function ($job) use ($payment) {
+        Bus::assertDispatchedTimes(PaymentJob::class, 1);
+        Bus::assertDispatched(PaymentJob::class, function ($job) use ($payment) {
             $job_payment = $this->getObjectProperty($job, 'payment');
             return $job_payment->id === $payment->id;
         });
@@ -728,11 +724,11 @@ class PaymentsStripeTest extends TestCase
         $response->assertStatus(200);
 
         $this->assertSame(Payment::STATUS_CANCELED, $payment->fresh()->status);
-        $this->assertEquals(2010, $wallet->fresh()->balance);
+        $this->assertSame(2010, $wallet->fresh()->balance);
 
         // Assert that email notification job wasn't dispatched,
         // it is expected only for recurring payments
-        Bus::assertDispatchedTimes(\App\Jobs\Mail\PaymentJob::class, 0);
+        Bus::assertDispatchedTimes(PaymentJob::class, 0);
     }
 
     /**
@@ -748,9 +744,9 @@ class PaymentsStripeTest extends TestCase
         $user->setSetting('country', 'US');
         $wallet = $user->wallets()->first();
         $vatRate = VatRate::create([
-                'country' => 'US',
-                'rate' => 5.0,
-                'start' => now()->subDay(),
+            'country' => 'US',
+            'rate' => 5.0,
+            'start' => now()->subDay(),
         ]);
 
         // Payment
@@ -760,7 +756,7 @@ class PaymentsStripeTest extends TestCase
 
         // Check that the payments table contains a new record with proper amount(s)
         $payment = $wallet->payments()->first();
-        $this->assertSame(1000 + intval(round(1000 * $vatRate->rate / 100)), $payment->amount);
+        $this->assertSame(1000 + (int) round(1000 * $vatRate->rate / 100), $payment->amount);
         $this->assertSame(1000, $payment->credit_amount);
         $this->assertSame($payment->amount, $payment->currency_amount);
         $this->assertSame('CHF', $payment->currency);
@@ -783,7 +779,7 @@ class PaymentsStripeTest extends TestCase
         $this->assertSame(0, $payment->amount);
         $this->assertSame(0, $payment->credit_amount);
         $this->assertSame(0, $payment->currency_amount);
-        $this->assertSame(null, $payment->vat_rate_id);
+        $this->assertNull($payment->vat_rate_id);
 
         $wallet->payments()->delete();
         $wallet->balance = -1000;
@@ -794,34 +790,34 @@ class PaymentsStripeTest extends TestCase
         // and the balance is below the threshold
         $wallet->setSettings(['stripe_mandate_id' => 'AAA']);
         $setupIntent = json_encode([
-                "id" => "AAA",
-                "object" => "setup_intent",
-                "created" => 123456789,
-                "payment_method" => "pm_YYY",
-                "status" => "succeeded",
-                "usage" => "off_session",
-                "customer" => null
+            "id" => "AAA",
+            "object" => "setup_intent",
+            "created" => 123456789,
+            "payment_method" => "pm_YYY",
+            "status" => "succeeded",
+            "usage" => "off_session",
+            "customer" => null,
         ]);
 
         $paymentMethod = json_encode([
-                "id" => "pm_YYY",
-                "object" => "payment_method",
-                "card" => [
-                    "brand" => "visa",
-                    "country" => "US",
-                    "last4" => "4242"
-                ],
-                "created" => 123456789,
-                "type" => "card"
+            "id" => "pm_YYY",
+            "object" => "payment_method",
+            "card" => [
+                "brand" => "visa",
+                "country" => "US",
+                "last4" => "4242",
+            ],
+            "created" => 123456789,
+            "type" => "card",
         ]);
 
         $paymentIntent = json_encode([
-                "id" => "pi_XX",
-                "object" => "payment_intent",
-                "created" => 123456789,
-                "amount" => 2010 + intval(round(2010 * $vatRate->rate / 100)),
-                "currency" => "chf",
-                "description" => "Recurring Payment"
+            "id" => "pi_XX",
+            "object" => "payment_intent",
+            "created" => 123456789,
+            "amount" => 2010 + (int) round(2010 * $vatRate->rate / 100),
+            "currency" => "chf",
+            "description" => "Recurring Payment",
         ]);
 
         $client = $this->mockStripe();
@@ -835,7 +831,7 @@ class PaymentsStripeTest extends TestCase
 
         // Check that the payments table contains a new record with proper amount(s)
         $payment = $wallet->payments()->first();
-        $this->assertSame(2010 + intval(round(2010 * $vatRate->rate / 100)), $payment->amount);
+        $this->assertSame(2010 + (int) round(2010 * $vatRate->rate / 100), $payment->amount);
         $this->assertSame(2010, $payment->credit_amount);
         $this->assertSame($payment->amount, $payment->currency_amount);
         $this->assertSame($vatRate->id, $payment->vat_rate_id);
@@ -858,7 +854,7 @@ class PaymentsStripeTest extends TestCase
 
         $hasCoinbase = !empty(\config('services.coinbase.key'));
 
-        $this->assertCount(2 + intval($hasCoinbase), $json);
+        $this->assertCount(2 + (int) $hasCoinbase, $json);
         $this->assertSame('creditcard', $json[0]['id']);
         $this->assertSame('paypal', $json[1]['id']);
         if ($hasCoinbase) {
@@ -881,7 +877,7 @@ class PaymentsStripeTest extends TestCase
         $secret = \config('services.stripe.webhook_secret');
         $ts = time();
 
-        $payload = "$ts." . json_encode($post);
+        $payload = "{$ts}." . json_encode($post);
         $sig = sprintf('t=%d,v1=%s', $ts, \hash_hmac('sha256', $payload, $secret));
 
         return $this->withHeaders(['Stripe-Signature' => $sig])

@@ -1,22 +1,19 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-// phpcs:ignore
 class CreateResourcesTables extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up()
     {
         Schema::create(
             'resources',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->unsignedBigInteger('id');
                 $table->string('email')->unique();
                 $table->string('name');
@@ -32,7 +29,7 @@ class CreateResourcesTables extends Migration
 
         Schema::create(
             'resource_settings',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->unsignedBigInteger('resource_id');
                 $table->string('key');
@@ -49,8 +46,6 @@ class CreateResourcesTables extends Migration
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
     public function down()
     {

@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands\PowerDNS\Domain;
 
+use App\PowerDNS\Domain;
 use Illuminate\Console\Command;
 
 class CreateCommand extends Command
@@ -39,13 +40,13 @@ class CreateCommand extends Command
             return 1;
         }
 
-        $domain = \App\PowerDNS\Domain::where('name', $name)->first();
+        $domain = Domain::where('name', $name)->first();
 
         if ($domain) {
             \Log::error("Domain already exists");
             return 1;
         }
 
-        \App\PowerDNS\Domain::create(['name' => $name]);
+        Domain::create(['name' => $name]);
     }
 }

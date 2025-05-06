@@ -2,14 +2,14 @@
 
 namespace App\Jobs\Domain;
 
+use App\Domain;
 use App\Jobs\DomainJob;
+use App\Support\Facades\LDAP;
 
 class CreateJob extends DomainJob
 {
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle()
     {
@@ -20,12 +20,12 @@ class CreateJob extends DomainJob
         }
 
         if (\config('app.with_ldap') && !$domain->isLdapReady()) {
-            \App\Support\Facades\LDAP::createDomain($domain);
+            LDAP::createDomain($domain);
 
-            $domain->status |= \App\Domain::STATUS_LDAP_READY;
+            $domain->status |= Domain::STATUS_LDAP_READY;
             $domain->save();
         }
 
-        \App\Jobs\Domain\VerifyJob::dispatch($domain->id);
+        VerifyJob::dispatch($domain->id);
     }
 }

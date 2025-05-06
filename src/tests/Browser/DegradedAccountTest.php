@@ -8,17 +8,14 @@ use Tests\Browser\Pages\Dashboard;
 use Tests\Browser\Pages\DistlistList;
 use Tests\Browser\Pages\DomainList;
 use Tests\Browser\Pages\Home;
-use Tests\Browser\Pages\UserList;
 use Tests\Browser\Pages\ResourceList;
 use Tests\Browser\Pages\SharedFolderList;
+use Tests\Browser\Pages\UserList;
 use Tests\TestCaseDusk;
 
 class DegradedAccountTest extends TestCaseDusk
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -32,10 +29,7 @@ class DegradedAccountTest extends TestCaseDusk
         $this->clearBetaEntitlements();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $john = $this->getTestUser('john@kolab.org');
 
@@ -58,7 +52,7 @@ class DegradedAccountTest extends TestCaseDusk
         $john = $this->getTestUser('john@kolab.org');
         $this->addBetaEntitlement($john);
 
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit(new Home())
                 ->submitLogon('john@kolab.org', 'simple123', true)
                 ->on(new Dashboard())
@@ -69,7 +63,7 @@ class DegradedAccountTest extends TestCaseDusk
             $browser->visit(new UserList())
                 ->assertSeeIn('#status-degraded p.alert', 'The account is degraded')
                 ->assertSeeIn('#status-degraded p.alert', 'Please, make a payment')
-                ->whenAvailable('@table', function (Browser $browser) {
+                ->whenAvailable('@table', static function (Browser $browser) {
                     $browser->waitFor('tbody tr')
                         ->assertVisible('tbody tr:nth-child(1) td:first-child svg.text-warning') // Jack
                         ->assertText('tbody tr:nth-child(2) td:first-child svg.text-warning title', 'Degraded')
@@ -114,7 +108,7 @@ class DegradedAccountTest extends TestCaseDusk
      */
     public function testDegradedAccountUser(): void
     {
-        $this->browse(function (Browser $browser) {
+        $this->browse(static function (Browser $browser) {
             $browser->visit(new Home())
                 ->submitLogon('jack@kolab.org', 'simple123', true)
                 ->on(new Dashboard())

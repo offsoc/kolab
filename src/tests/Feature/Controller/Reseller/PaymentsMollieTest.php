@@ -2,24 +2,21 @@
 
 namespace Tests\Feature\Controller\Reseller;
 
-use App\Http\Controllers\API\V4\Reseller\PaymentsController;
+use App\Jobs\Wallet\ChargeJob;
 use App\Payment;
 use App\Transaction;
 use App\Wallet;
 use App\WalletSetting;
 use GuzzleHttp\Psr7\Response;
 use Illuminate\Support\Facades\Bus;
-use Tests\TestCase;
 use Tests\BrowserAddonTrait;
+use Tests\TestCase;
 
 class PaymentsMollieTest extends TestCase
 {
     use BrowserAddonTrait;
 
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -38,10 +35,7 @@ class PaymentsMollieTest extends TestCase
         Transaction::where('object_id', $wallet->id)->delete();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         if (\config('services.mollie.key')) {
             $reseller = $this->getTestUser('reseller@' . \config('app.domain'));
@@ -97,12 +91,12 @@ class PaymentsMollieTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertEquals(20.10, $json['amount']);
-        $this->assertEquals(0, $json['balance']);
+        $this->assertSame(20.10, $json['amount']);
+        $this->assertSame(0, $json['balance']);
         $this->assertTrue(in_array($json['method'], ['Mastercard (**** **** **** 9399)', 'Credit Card']));
-        $this->assertSame(false, $json['isPending']);
-        $this->assertSame(true, $json['isValid']);
-        $this->assertSame(false, $json['isDisabled']);
+        $this->assertFalse($json['isPending']);
+        $this->assertTrue($json['isValid']);
+        $this->assertFalse($json['isDisabled']);
 
         $wallet = $reseller->wallets()->first();
         $wallet->setSetting('mandate_disabled', 1);
@@ -112,12 +106,12 @@ class PaymentsMollieTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertEquals(20.10, $json['amount']);
-        $this->assertEquals(0, $json['balance']);
+        $this->assertSame(20.10, $json['amount']);
+        $this->assertSame(0, $json['balance']);
         $this->assertTrue(in_array($json['method'], ['Mastercard (**** **** **** 9399)', 'Credit Card']));
-        $this->assertSame(false, $json['isPending']);
-        $this->assertSame(true, $json['isValid']);
-        $this->assertSame(true, $json['isDisabled']);
+        $this->assertFalse($json['isPending']);
+        $this->assertTrue($json['isValid']);
+        $this->assertTrue($json['isDisabled']);
 
         Bus::fake();
         $wallet->setSetting('mandate_disabled', null);
@@ -138,10 +132,10 @@ class PaymentsMollieTest extends TestCase
 
         $wallet->refresh();
 
-        $this->assertEquals(30.10, $wallet->getSetting('mandate_amount'));
-        $this->assertEquals(10, $wallet->getSetting('mandate_balance'));
+        $this->assertSame(30.10, $wallet->getSetting('mandate_amount'));
+        $this->assertSame(10, $wallet->getSetting('mandate_balance'));
 
-        Bus::assertDispatchedTimes(\App\Jobs\Wallet\ChargeJob::class, 0);
+        Bus::assertDispatchedTimes(ChargeJob::class, 0);
 
         // Delete mandate
         $response = $this->actingAs($reseller)->delete("api/v4/payments/mandate");
@@ -199,7 +193,7 @@ class PaymentsMollieTest extends TestCase
         $this->assertSame('success', $json['status']);
         $this->assertSame(0, $json['count']);
         $this->assertSame(1, $json['page']);
-        $this->assertSame(false, $json['hasMore']);
+        $this->assertFalse($json['hasMore']);
         $this->assertCount(0, $json['list']);
 
         $response = $this->actingAs($reseller)->get("api/v4/payments/has-pending");
@@ -207,7 +201,7 @@ class PaymentsMollieTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertSame(false, $json['hasPending']);
+        $this->assertFalse($json['hasPending']);
     }
 
     /**
@@ -227,7 +221,7 @@ class PaymentsMollieTest extends TestCase
 
         $hasCoinbase = !empty(\config('services.coinbase.key'));
 
-        $this->assertCount(3 + intval($hasCoinbase), $json);
+        $this->assertCount(3 + (int) $hasCoinbase, $json);
         $this->assertSame('creditcard', $json[0]['id']);
         $this->assertSame('paypal', $json[1]['id']);
         $this->assertSame('banktransfer', $json[2]['id']);

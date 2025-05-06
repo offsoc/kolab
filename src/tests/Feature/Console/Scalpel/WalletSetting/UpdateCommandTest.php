@@ -13,13 +13,13 @@ class UpdateCommandTest extends TestCase
         $wallet->setSetting('test', 'init');
 
         $this->artisan("scalpel:wallet-setting:update unknown --value=test")
-             ->assertExitCode(1)
-             ->expectsOutput("No such wallet-setting unknown");
+            ->assertExitCode(1)
+            ->expectsOutput("No such wallet-setting unknown");
 
         $setting = $wallet->settings()->where('key', 'test')->first();
 
         $this->artisan("scalpel:wallet-setting:update {$setting->id} --value=test")
-             ->assertExitCode(0);
+            ->assertExitCode(0);
 
         $this->assertSame('test', $setting->fresh()->value);
         $this->assertSame('test', $wallet->fresh()->getSetting('test'));

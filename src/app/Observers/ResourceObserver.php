@@ -2,6 +2,9 @@
 
 namespace App\Observers;
 
+use App\Jobs\Resource\CreateJob;
+use App\Jobs\Resource\DeleteJob;
+use App\Jobs\Resource\UpdateJob;
 use App\Resource;
 
 class ResourceObserver
@@ -9,9 +12,7 @@ class ResourceObserver
     /**
      * Handle the resource "creating" event.
      *
-     * @param \App\Resource $resource The resource
-     *
-     * @return void
+     * @param Resource $resource The resource
      */
     public function creating(Resource $resource): void
     {
@@ -21,9 +22,7 @@ class ResourceObserver
     /**
      * Handle the resource "created" event.
      *
-     * @param \App\Resource $resource The resource
-     *
-     * @return void
+     * @param Resource $resource The resource
      */
     public function created(Resource $resource)
     {
@@ -46,15 +45,13 @@ class ResourceObserver
         $resource->settings()->insert(array_values($settings));
 
         // Create the resource in the backend (LDAP and IMAP)
-        \App\Jobs\Resource\CreateJob::dispatch($resource->id);
+        CreateJob::dispatch($resource->id);
     }
 
     /**
      * Handle the resource "deleted" event.
      *
-     * @param \App\Resource $resource The resource
-     *
-     * @return void
+     * @param Resource $resource The resource
      */
     public function deleted(Resource $resource)
     {
@@ -62,20 +59,18 @@ class ResourceObserver
             return;
         }
 
-        \App\Jobs\Resource\DeleteJob::dispatch($resource->id);
+        DeleteJob::dispatch($resource->id);
     }
 
     /**
      * Handle the resource "updated" event.
      *
-     * @param \App\Resource $resource The resource
-     *
-     * @return void
+     * @param Resource $resource The resource
      */
     public function updated(Resource $resource)
     {
         if (!$resource->trashed()) {
-            \App\Jobs\Resource\UpdateJob::dispatch($resource->id);
+            UpdateJob::dispatch($resource->id);
         }
 
         // Update the folder property if name changed

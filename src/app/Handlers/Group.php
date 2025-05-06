@@ -2,7 +2,9 @@
 
 namespace App\Handlers;
 
-class Group extends \App\Handlers\Base
+use App\Sku;
+
+class Group extends Base
 {
     /**
      * The entitleable class for this handler.
@@ -15,7 +17,7 @@ class Group extends \App\Handlers\Base
     /**
      * SKU handler metadata.
      */
-    public static function metadata(\App\Sku $sku): array
+    public static function metadata(Sku $sku): array
     {
         $data = parent::metadata($sku);
 

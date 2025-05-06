@@ -1,22 +1,19 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-// phpcs:ignore
 class CreateDiscounts extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up()
     {
         Schema::create(
             'discounts',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->string('id', 36);
                 $table->tinyInteger('discount')->unsigned();
                 // was json, but mariadb
@@ -33,7 +30,7 @@ class CreateDiscounts extends Migration
 
         Schema::table(
             'wallets',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->string('discount_id', 36)->nullable();
 
                 $table->foreign('discount_id')->references('id')
@@ -44,14 +41,12 @@ class CreateDiscounts extends Migration
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
     public function down()
     {
         Schema::table(
             'wallets',
-            function (Blueprint $table) {
+            static function (Blueprint $table) {
                 $table->dropForeign(['discount_id']);
                 $table->dropColumn('discount_id');
             }

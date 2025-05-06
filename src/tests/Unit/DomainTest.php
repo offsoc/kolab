@@ -4,6 +4,7 @@ namespace Tests\Unit;
 
 use App\Domain;
 use Tests\TestCase;
+use Tests\Utils;
 
 class DomainTest extends TestCase
 {
@@ -22,14 +23,14 @@ class DomainTest extends TestCase
             Domain::STATUS_VERIFIED,
         ];
 
-        $domains = \Tests\Utils::powerSet($statuses);
+        $domains = Utils::powerSet($statuses);
 
         foreach ($domains as $domainStatuses) {
             $domain = new Domain(
                 [
                     'namespace' => 'test.com',
                     'status' => \array_sum($domainStatuses),
-                    'type' => Domain::TYPE_EXTERNAL
+                    'type' => Domain::TYPE_EXTERNAL,
                 ]
             );
 
@@ -92,7 +93,7 @@ class DomainTest extends TestCase
             Domain::TYPE_EXTERNAL,
         ];
 
-        $domains = \Tests\Utils::powerSet($types);
+        $domains = Utils::powerSet($types);
 
         foreach ($domains as $domain_types) {
             $domain = new Domain(

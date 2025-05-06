@@ -11,9 +11,7 @@ class ReferralCodeObserver
      *
      * Ensure that the code entry is created with a random code.
      *
-     * @param ReferralCode $code The code being created.
-     *
-     * @return void
+     * @param ReferralCode $code the code being created
      */
     public function creating(ReferralCode $code): void
     {
