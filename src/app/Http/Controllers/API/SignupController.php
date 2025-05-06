@@ -93,9 +93,17 @@ class SignupController extends Controller
      */
     public function init(Request $request)
     {
+        // Don't allow URLs in user names preventing abuse of signup email
+        // FIXME: I suppose we could also not use "Dear <user name>" in email
+        $name_validator = static function (string $attribute, mixed $value, \Closure $fail) {
+            if (str_contains($value, '://')) {
+                $fail(self::trans('validation.invalidvalue'));
+            }
+        };
+
         $rules = [
-            'first_name' => 'max:128',
-            'last_name' => 'max:128',
+            'first_name' => ['string', 'max:128', $name_validator],
+            'last_name' => ['string', 'max:128', $name_validator],
             'voucher' => 'max:32',
             'plan' => 'required',
         ];

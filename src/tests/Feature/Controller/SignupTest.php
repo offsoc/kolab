@@ -206,6 +206,26 @@ class SignupTest extends TestCase
         $this->assertArrayHasKey('first_name', $json['errors']);
         $this->assertArrayHasKey('last_name', $json['errors']);
 
+        // Data with names containing URLs
+        $data = [
+            'email' => 'UsersApiControllerTest1@UsersApiControllerTest.com',
+            'first_name' => 'BTC http://test.com Test',
+            'last_name' => 'http://test.com',
+            'plan' => 'individual',
+        ];
+
+        $response = $this->post('/api/auth/signup/init', $data);
+        $response->assertStatus(422);
+
+        $json = $response->json();
+
+        $this->assertSame('error', $json['status']);
+        $this->assertCount(2, $json['errors']);
+        $this->assertArrayHasKey('first_name', $json['errors']);
+        $this->assertArrayHasKey('last_name', $json['errors']);
+        $this->assertSame(['Invalid value'], $json['errors']['first_name']);
+        $this->assertSame(['Invalid value'], $json['errors']['last_name']);
+
         // Data with invalid email (but not phone number), and invalid plan
         $data = [
             'email' => '@example.org',
