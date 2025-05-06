@@ -2,18 +2,13 @@
 
 namespace Tests\Feature\Jobs\User\Delegation;
 
-use App\Delegation;
 use App\Support\Facades\Roundcube;
-use App\User;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class UserRefreshTest extends TestCase
 {
-    /**
-     * {@inheritDoc}
-     */
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -21,10 +16,7 @@ class UserRefreshTest extends TestCase
         $this->deleteTestUser('delegation-user2@' . \config('app.domain'));
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->deleteTestUser('delegation-user1@' . \config('app.domain'));
         $this->deleteTestUser('delegation-user2@' . \config('app.domain'));
