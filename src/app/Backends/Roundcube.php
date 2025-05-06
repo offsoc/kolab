@@ -265,7 +265,7 @@ class Roundcube
     }
 
     /**
-     * Validate user identities, remove these these that user no longer has access to.
+     * Validate user identities, remove those that user no longer has access to.
      *
      * @param User $user User
      */

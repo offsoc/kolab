@@ -78,6 +78,11 @@ class UserAliasObserver
         if ($alias->user) {
             UpdateJob::dispatch($alias->user_id);
 
+            \App\Delegation::where('user_id', $alias->user_id)->pluck('delegatee_id')
+                ->each(static function ($delegatee_id) {
+                    \App\Jobs\User\Delegation\UserRefreshJob::dispatch($delegatee_id);
+                });
+
             if (Tenant::getConfig($alias->user->tenant_id, 'pgp.enable')) {
                 KeyDeleteJob::dispatch($alias->user_id, $alias->alias);
             }

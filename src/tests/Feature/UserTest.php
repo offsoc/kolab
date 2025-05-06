@@ -1425,6 +1425,9 @@ class UserTest extends TestCase
 
         $user->tenant->setSetting('pgp.enable', 1);
 
+        $userB = $this->getTestUser('UserAccountB@UserAccount.com');
+        $delegation = Delegation::create(['user_id' => $user->id, 'delegatee_id' => $userB->id]);
+
         // Remove an alias
         $this->fakeQueueReset();
         $user->setAliases(['UserAlias1@UserAccount.com']);
@@ -1441,16 +1444,28 @@ class UserTest extends TestCase
                 return $userId == $user->id && $userEmail === 'useralias2@useraccount.com';
             }
         );
+        Queue::assertPushed(\App\Jobs\User\Delegation\UserRefreshJob::class, 1);
+        Queue::assertPushed(
+            \App\Jobs\User\Delegation\UserRefreshJob::class,
+            function ($job) use ($userB) {
+                $userId = TestCase::getObjectProperty($job, 'userId');
+                $userEmail = TestCase::getObjectProperty($job, 'userEmail');
+                return $userId == $userB->id && $userEmail === $userB->email;
+            }
+        );
 
         $aliases = $user->aliases()->get();
         $this->assertCount(1, $aliases);
         $this->assertSame('useralias1@useraccount.com', $aliases[0]['alias']);
+
+        $delegation->delete();
 
         // Remove all aliases
         $this->fakeQueueReset();
         $user->setAliases([]);
 
         Queue::assertPushed(UpdateJob::class, 1);
+        Queue::assertPushed(\App\Jobs\User\Delegation\UserRefreshJob::class, 0);
 
         $this->assertCount(0, $user->aliases()->get());
     }
