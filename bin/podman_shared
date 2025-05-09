@@ -171,6 +171,8 @@ podman__run_proxy() {
         -e ROUNDCUBE_BACKEND="http://localhost:8080" \
         -e DAV_BACKEND="http://localhost:11080" \
         -e DAV_PATH="/dav" \
+        -e FREEBUSY_BACKEND="http://localhost:11080" \
+        -e FREEBUSY_PATH="/freebusy" \
         -e COLLABORA_BACKEND="http://localhost:9980" \
         -e SIEVE_BACKEND="localhost:4190" \
         kolab-proxy:latest $@
@@ -200,6 +202,7 @@ podman__run_roundcube() {
         -e FILEAPI_KOLABFILES_BASEURI=http://localhost:8000/api \
         -e FILE_API_SERVER_URL=http://localhost:8080/chwala/api/ \
         -e KOLAB_ADDRESSBOOK_CARDDAV_SERVER=http://localhost:11080/dav \
+        -e KOLAB_FREEBUSY_SERVER=http://localhost:11080/freebusy/user/%u \
         -e CALENDAR_CALDAV_SERVER=http://localhost:11080/dav \
         -e TASKLIST_CALDAV_SERVER=http://localhost:11080/dav \
         -e PASSPORT_WEBMAIL_SSO_CLIENT_ID \

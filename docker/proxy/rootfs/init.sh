@@ -208,6 +208,13 @@ cat <<EOF >> /etc/nginx/nginx.conf
             proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         }
 
+        location /freebusy {
+            proxy_pass       $FREEBUSY_BACKEND$FREEBUSY_PATH;
+            proxy_set_header Host \$host;
+            proxy_set_header X-Real-IP \$remote_addr;
+            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        }
+
         # static files
         location ^~ /browser {
             proxy_pass $COLLABORA_BACKEND;

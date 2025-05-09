@@ -272,6 +272,7 @@ kolab__proxytest() {
         -e MEET_BACKEND="http://localhost:12080" \
         -e ROUNDCUBE_BACKEND="http://localhost:8080" \
         -e DAV_BACKEND="http://localhost:11080" \
+        -e FREEBUSY_BACKEND="http://localhost:11080" \
         -e COLLABORA_BACKEND="http://localhost:9980" \
         -e SIEVE_BACKEND="localhost:4190" \
         kolab-proxy:latest /init.sh validate
@@ -286,6 +287,7 @@ kolab__proxytest() {
         -e MEET_BACKEND="http://localhost:12080" \
         -e ROUNDCUBE_BACKEND="http://localhost:8080" \
         -e DAV_BACKEND="http://localhost:11080" \
+        -e FREEBUSY_BACKEND="http://localhost:11080" \
         -e COLLABORA_BACKEND="http://localhost:9980" \
         -e SIEVE_BACKEND="localhost:4190" \
         -e ELEMENT_BACKEND=http://element:8880 \
