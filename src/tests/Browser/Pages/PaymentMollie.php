@@ -22,7 +22,7 @@ class PaymentMollie extends Page
      */
     public function assert($browser)
     {
-        $browser->waitFor('form#body')->waitFor('@title');
+        $browser->waitFor('#card-form')->waitFor('@title');
     }
 
     /**
@@ -47,7 +47,7 @@ class PaymentMollie extends Page
         // https://docs.mollie.com/overview/testing
         // https://docs.mollie.com/components/testing
         $browser
-            ->withinFrame('form#body iframe', static function ($browser) {
+            ->withinFrame('#card-form iframe', static function ($browser) {
                 $browser->waitFor('#cardNumber')->type('#cardNumber', '2223 0000 1047 9399'); // Mastercard
                 $browser->waitFor('#cardHolder')->type('#cardHolder', 'Test');
                 $browser->waitFor('#cardExpiryDate')->type('#cardExpiryDate', '12/' . (date('y') + 1));
