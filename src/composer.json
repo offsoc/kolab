@@ -19,7 +19,7 @@
         "barryvdh/laravel-dompdf": "^2.0.1",
         "doctrine/dbal": "^3.6",
         "dyrynda/laravel-nullable-fields": "^4.3.0",
-        "garethp/php-ews": "dev-master",
+        "garethp/php-ews": "~0.10.3",
         "guzzlehttp/guzzle": "^7.8.0",
         "jeremy379/laravel-openid-connect": "~2.4.0",
         "kolab/net_ldap3": "dev-master",
