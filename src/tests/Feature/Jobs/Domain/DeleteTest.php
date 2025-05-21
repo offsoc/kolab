@@ -36,21 +36,33 @@ class DeleteTest extends TestCase
             ]
         );
 
-        \config(['app.with_ldap' => true]);
+        // Test job failure (domain not trashed)
+        $job = (new DeleteJob($domain->id))->withFakeQueueInteractions();
+        $job->handle();
+        $job->assertFailedWith("Domain {$domain->namespace} is not deleted.");
+
+        // Test job success
+        $domain->deleted_at = \now();
+        $domain->saveQuietly();
 
         $this->assertTrue($domain->isLdapReady());
+        $this->assertTrue($domain->trashed());
         $this->assertFalse($domain->isDeleted());
 
-        LDAP::shouldReceive('deleteDomain')->once()->with($domain)->andReturn(true);
+        \config(['app.with_ldap' => true]);
+        LDAP::shouldReceive('deleteDomain')->once()->with($domain);
 
-        $job = new DeleteJob($domain->id);
+        $job = (new DeleteJob($domain->id))->withFakeQueueInteractions();
         $job->handle();
+        $job->assertNotFailed();
 
         $domain->refresh();
         $this->assertFalse($domain->isLdapReady());
         $this->assertTrue($domain->isDeleted());
 
-        // TODO: More cases
-        $this->markTestIncomplete();
+        // Test job failure (domain marked as deleted)
+        $job = (new DeleteJob($domain->id))->withFakeQueueInteractions();
+        $job->handle();
+        $job->assertFailedWith("Domain {$domain->namespace} is already marked as deleted.");
     }
 }

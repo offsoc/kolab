@@ -20,13 +20,13 @@ class DeleteJob extends DomainJob
         }
 
         // sanity checks
-        if ($domain->trashed()) {
-            $this->fail("Domain {$this->domainId} is not deleted.");
+        if (!$domain->trashed()) {
+            $this->fail("Domain {$domain->namespace} is not deleted.");
             return;
         }
 
         if ($domain->isDeleted()) {
-            $this->fail("Domain {$this->domainId} is already marked as deleted.");
+            $this->fail("Domain {$domain->namespace} is already marked as deleted.");
             return;
         }
 
