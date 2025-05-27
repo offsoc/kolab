@@ -49,7 +49,7 @@ class MailfilterTest extends TestCase
         $request = new Request($get, [], [], [], [], [], $mail);
         $response = Mailfilter::handle($request);
 
-        $this->assertSame(Mailfilter::CODE_REJECT, $response->status());
+        $this->assertSame(Mailfilter::CODE_ACCEPT_EMPTY, $response->status());
         $this->assertSame('', $response->content());
 
         $john = $this->getTestUser('john@kolab.org');

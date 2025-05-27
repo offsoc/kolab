@@ -205,7 +205,7 @@ parser.add_argument('--timeout', help='Timeout in minutes', type=int, default=10
 parser.add_argument("--starttls", action='store_true', help="Use SMTP starttls over 587")
 parser.add_argument("--verbose", action='store_true', help="Verbose mode")
 parser.add_argument("--from-address", help="Source address instead of the sender username")
-parser.add_argument("--target-address", help="Target address instead of the recipient username")
+parser.add_argument("--target-address", help="Target address instead of the recipient username (can be specified multiple times)", action='append')
 parser.add_argument("--body", help="Body text to include")
 parser.add_argument("--validate", action='store_true', help="Validate the received message")
 parser.add_argument('--bulk-send', help='Bulk send email, then exit', type=int, default=0)

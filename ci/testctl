@@ -444,10 +444,21 @@ kolab__validate() {
     fi
 }
 
+kolab__policytest() {
+    POD=${POD:-dev}
+    OUTPUT=$($PODMAN exec $POD-postfix bash -c 'echo -e "request=smtpd_access_policy\nsender=admin@kolab.org\nrecipient=admin@kolab.org\ninstance=testinstance\nprotocol_state=DATA\n\n" | /usr/libexec/postfix/kolab_policy_submission')
+    if [[ $OUTPUT == "action=DUNNO" ]]; then
+        echo "Success"
+    else
+        echo "Fail: $OUTPUT"
+        exit 1
+    fi
+}
+
 kolab__mailtransporttest() {
     POD=${POD:-dev}
 
-    if $PODMAN run --rm -ti --pod=$POD kolab-utils:latest ./mailtransporttest.py --timeout 1 --sender-username admin@kolab.local --sender-password simple123 --sender-host localhost --sender-port 6465 --recipient-username noreply@kolab.local --recipient-password simple123 --recipient-host localhost --recipient-port 6993 --validate; then
+    if $PODMAN run --rm -ti --pod=$POD kolab-utils:latest ./mailtransporttest.py --timeout 1 --sender-username admin@kolab.local --sender-password simple123 --sender-host localhost --sender-port 6465 --recipient-username admin@kolab.local --recipient-password simple123 --recipient-host localhost --recipient-port 6993 --validate; then
         echo "Success"
     else
         exit 1

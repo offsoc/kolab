@@ -11,6 +11,7 @@ postlog             unix-dgram  n       -       n       -       1       postlogd
 10025               inet        n       -       n       -       -       smtpd
     -o content_filter=smtp-amavis:[AMAVIS_HOST]:13024
     -o cleanup_service_name=cleanup_inbound
+
 # Internal Submission, no tls, no starttls
 10587          inet        n       -       -       -       -       smtpd
     -o syslog_name=postfix/submission
@@ -102,7 +103,6 @@ smtp-amavis         unix        -       -       n       -       3       smtp
     -o disable_dns_lookups=yes
     -o smtp_send_xforward_command=yes
     -o max_use=20
-    # -o smtp_bind_address=127.0.0.1
 
 # Listener to re-inject email from Amavisd into Postfix
 0.0.0.0:13025     inet        n       -       n       -       100     smtpd
@@ -119,73 +119,20 @@ smtp-amavis         unix        -       -       n       -       3       smtp
     -o smtpd_authorized_xforward_hosts=MYNETWORKS
     -o syslog_name=postfix/amavis
 
-# Filter email through Wallace
-# smtp-wallace        unix        -       -       n       -       3       smtp
-#     -o default_destination_recipient_limit=1
-#     -o smtp_data_done_timeout=1800
-#     -o disable_dns_lookups=yes
-#     -o smtp_send_xforward_command=yes
-#     -o max_use=20
-
-# Listener to re-inject email from Wallace into Postfix
-# 127.0.0.1:10028     inet        n       -       n       -       100     smtpd
-#     -o cleanup_service_name=cleanup_internal
-#     -o content_filter=
-#     -o local_recipient_maps=
-#     -o relay_recipient_maps=
-#     -o smtpd_restriction_classes=
-#     -o smtpd_client_restrictions=
-#     -o smtpd_helo_restrictions=
-#     -o smtpd_sender_restrictions=
-#     -o smtpd_recipient_restrictions=permit_mynetworks,reject
-#     -o mynetworks=127.0.0.0/8
-#     -o smtpd_authorized_xforward_hosts=127.0.0.0/8
-
-# Filter email through Amavisd
-# amavis              unix        -       -       n       -       3       smtp
-#     -o disable_dns_lookups=yes
-#     -o max_use=20
-#     -o smtp_bind_address=127.0.0.1
-#     -o smtp_data_done_timeout=1800
-#     -o smtp_send_xforward_command=yes
-#     -o smtp_tls_security_level=none
-
-# Reinjection from amavis
-# 127.0.0.1:10025     inet        n       -       n       -       100     smtpd
-#     -o cleanup_service_name=cleanup_outbound
-#     -o content_filter=
-#     -o local_recipient_maps=
-#     -o mydestination=
-#     -o mynetworks=127.0.0.0/8
-#     -o relay_domains=
-#     -o relay_recipient_maps=
-#     -o smtpd_authorized_xforward_hosts=127.0.0.0/8
-#     -o smtpd_restriction_classes=
-#     -o smtpd_client_restrictions=
-#     -o smtpd_data_restrictions=
-#     -o smtpd_helo_restrictions=
-#     -o smtpd_sender_restrictions=
-#     -o smtpd_recipient_restrictions=permit_mynetworks,reject
-#     -o syslog_name=postfix/amavis
-
-# Outbound
-policy_ratelimit    unix        -       n       n       -       -       spawn
-    user=nobody argv=/usr/libexec/postfix/kolab_policy_ratelimit
-
 # Outbound
 policy_submission    unix        -       n       n       -       -       spawn
     user=nobody argv=/usr/libexec/postfix/kolab_policy_submission
 
 # Inbound
 policy_greylist     unix        -       n       n       -       -       spawn
-    user=nobody argv=/usr/libexec/postfix/kolab_policy_greylist
+    user=nobody argv=/usr/libexec/postfix/kolab_policy greylist /api/webhooks/policy/greylist
 
 # Inbound
 policy_spf          unix        -       n       n       -       -       spawn
-    user=nobody argv=/usr/libexec/postfix/kolab_policy_spf
+    user=nobody argv=/usr/libexec/postfix/kolab_policy spf /api/webhooks/policy/spf
 
 # Mailfilter via commandline, to be reinjected via sendmail.
 policy_mailfilter    unix  -       n       n       -       10      pipe
     flags=Rq user=nobody null_sender=
-    argv=/usr/libexec/postfix/kolab_contentfilter_cli.py -f ${sender} -- ${recipient}
+    argv=/usr/libexec/postfix/kolab_contentfilter_cli -f ${sender} -- ${recipient}
 

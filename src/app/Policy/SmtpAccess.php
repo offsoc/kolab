@@ -45,11 +45,18 @@ class SmtpAccess
             return new Response(Response::ACTION_REJECT, $reason, 403);
         }
 
+        // TODO: should we be using the $user or the $sender?
+        $response = RateLimit::verifyRequest($user, (array) $data['recipients']);
+        if ($response->action != Response::ACTION_DUNNO) {
+            return $response;
+        }
+
         // TODO: Prepending Sender/X-Sender/X-Authenticated-As headers?
         // TODO: Recipient policies here?
-        // TODO: Check rate limit here?
 
-        return new Response(Response::ACTION_PERMIT);
+        // Leave it up to the postfix configuration how to proceed
+        // (accept would stop processing)
+        return new Response(Response::ACTION_DUNNO);
     }
 
     /**

@@ -1,12 +1,16 @@
 #!/usr/bin/python3
 """
-This policy applies rate limitations
+This policy applies submission policies
+
+To manually test this you can issue something like this (see https://www.postfix.org/SMTPD_POLICY_README.html from more info on the protocol):
+echo -e "request=smtpd_access_policy\nsender=test1@kolab.org\nrecipient=test2@kolab.org\ninstance=testinstance\nprotocol_state=DATA\n\n" | /usr/libexec/postfix/kolab_policy_submission
+
 """
 
-import json
 import time
 import sys
-
+import json
+import logging
 import requests
 
 
@@ -14,14 +18,15 @@ class PolicyRequest:
     """
         A holder of policy request instances.
     """
-    db = None
     recipients = []
     sender = None
+    user = None
 
     def __init__(self, request):
         """
             Initialize a policy request, usually in RCPT protocol state.
         """
+        logging.debug("Initializing request.")
         if 'sender' in request:
             self.sender = request['sender']
 
@@ -29,6 +34,14 @@ class PolicyRequest:
             request['recipient'] = request['recipient']
 
             self.recipients.append(request['recipient'])
+
+        if 'sasl_sender' in request and request['sasl_sender']:
+            self.user = request['sasl_sender']
+        elif 'sasl_username' in request and request['sasl_username']:
+            self.user = request['sasl_username']
+
+        logging.debug(f"  {self.sender}")
+        logging.debug(f"  {self.recipients}")
 
     def add_request(self, request):
         """
@@ -40,21 +53,22 @@ class PolicyRequest:
 
             if not request['recipient'].strip() == '':
                 self.recipients.append(request['recipient'])
+            logging.debug(f"  {self.recipients}")
 
-    def check_rate(self):
+    def check_policy(self):
         """
-            Check the rates at which this sender is hitting our mailserver.
+            Pass the request to Kolab API
         """
-        if self.sender == "":
-            return {'response': 'DUNNO'}
-
         try:
+            logging.debug(f"  Checking policy for {self.sender}")
             response = requests.post(
                 URL,
                 data={
                     'sender': self.sender,
-                    'recipients': self.recipients
+                    'recipients': self.recipients,
+                    'user': self.user
                 },
+                # Skip certificate verification for this internal request
                 verify=False
             )
 
@@ -85,6 +99,7 @@ def read_request_input():
 
         request_line = sys.stdin.readline()
 
+        # The empty line terminates the request
         if request_line.strip() == '':
             if 'request' in policy_request:
                 end_of_request = True
@@ -99,34 +114,47 @@ def read_request_input():
 
 
 if __name__ == "__main__":
-    URL = 'SERVICES_HOST/api/webhooks/policy/ratelimit'
+    URL = 'SERVICES_HOST/api/webhooks/policy/submission'
 
-    POLICY_REQUESTS = {}
+    policy_requests = {}
+
+    logging.root.handlers = []
+    # Set to logging.DEBUG to enable logging
+    logging.basicConfig(level=logging.ERROR,
+                        format='%(asctime)s %(levelname)s %(message)s',
+                        filename='/var/log/kolab/postfix-policy-submission.log',
+                        filemode='a')
 
     # Start the work
     while True:
-        POLICY_REQUEST = read_request_input()
+        input = read_request_input()
+        logging.debug(input)
 
-        INSTANCE = POLICY_REQUEST['instance']
+        instance = input['instance']
 
-        if INSTANCE in POLICY_REQUESTS:
-            POLICY_REQUESTS[INSTANCE].add_request(POLICY_REQUEST)
+        if instance in policy_requests:
+            policy_requests[instance].add_request(input)
         else:
-            POLICY_REQUESTS[INSTANCE] = PolicyRequest(POLICY_REQUEST)
+            policy_requests[instance] = PolicyRequest(input)
 
-        protocol_state = POLICY_REQUEST['protocol_state'].strip().lower()
+        protocol_state = input['protocol_state'].strip().lower()
 
-        if not protocol_state == 'data':
+        # Only proceed with the request once we have collected sender and recipient information
+        if protocol_state != 'data' or not policy_requests[instance].sender or not policy_requests[instance].user:
             print("action=DUNNO\n")
+            logging.debug("DUNNO before state data.")
             sys.stdout.flush()
             sys.exit(0)
-        else:
-            RESPONSE = POLICY_REQUESTS[INSTANCE].check_rate()
+
+        response = policy_requests[instance].check_policy()
+        logging.debug(response)
 
         try:
-            R = json.loads(RESPONSE.text)
+            R = json.loads(response.text)
+            logging.debug(R)
         # pylint: disable=broad-except
         except Exception:
+            logging.warning("Failed to load json response.")
             print("action=DEFER_IF_PERMIT Temporary error, try again later.\n")
             sys.stdout.flush()
             sys.exit(0)
@@ -136,8 +164,10 @@ if __name__ == "__main__":
                 print("action=PREPEND {0}".format(prepend))
 
         if 'reason' in R:
+            logging.info("action={0} {1}\n".format(R['response'], R['reason']))
             print("action={0} {1}\n".format(R['response'], R['reason']))
         else:
+            logging.info("action={0}\n".format(R['response']))
             print("action={0}\n".format(R['response']))
 
         sys.stdout.flush()

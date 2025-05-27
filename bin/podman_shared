@@ -334,7 +334,7 @@ podman__run_amavis() {
     podman__run amavis \
         -e APP_DOMAIN \
         -e POSTFIX_HOST=localhost \
-        -e DB_HOST=localhost \
+        -e DB_HOST=127.0.0.1 \
         -e DB_USERNAME \
         -e DB_PASSWORD \
         -e DB_DATABASE \

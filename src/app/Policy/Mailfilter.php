@@ -47,12 +47,18 @@ class Mailfilter
         // then we'd send body in another request, but only if needed. For example, a text/plain
         // message from same domain sender does not include an iTip, nor needs a footer injection.
 
+        // Email with multiple recipients, which we don't handle at the moment.
+        // Likely an outgoing email, so we just accept.
+        if (str_contains($request->recipient, ",")) {
+            return response('', self::CODE_ACCEPT_EMPTY);
+        }
+
         // Find the recipient user
         $user = User::where('email', $request->recipient)->first();
 
+        // Not a local recipient, so e.g. an outgoing email
         if (empty($user)) {
-            // FIXME: Better code? Should we use custom header instead?
-            return response('', self::CODE_REJECT);
+            return response('', self::CODE_ACCEPT_EMPTY);
         }
 
         // Get list of enabled modules for the recipient user

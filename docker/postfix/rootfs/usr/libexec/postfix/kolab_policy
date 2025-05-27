@@ -1,12 +1,12 @@
 #!/usr/bin/python3
 """
-An example implementation of a policy service.
+This is the implementation of a (postfix) MTA policy service
 """
 
 import json
 import time
 import sys
-
+import logging
 import requests
 
 
@@ -22,6 +22,7 @@ def read_request_input():
 
     while not end_of_request:
         if (time.time() - start_time) >= 10:
+            logging.warning("took too long reading the request.")
             print("action=DEFER_IF_PERMIT Temporary error, try again later.\n")
             sys.stdout.flush()
             sys.exit(0)
@@ -42,9 +43,17 @@ def read_request_input():
 
 
 if __name__ == "__main__":
-    URL = 'https://services.kolabnow.com/api/webhooks/policy/greylist'
+    name = sys.argv[1]
+    path = sys.argv[2]
+    URL = f"SERVICES_HOST{path}"
 
-    # Start the work
+    logging.root.handlers = []
+    # Set to logging.DEBUG to enable logging
+    logging.basicConfig(level=logging.ERROR,
+                        format='%(asctime)s %(levelname)s %(message)s',
+                        filename=f"/var/log/kolab/postfix-policy-{name}.log",
+                        filemode='a')
+
     while True:
         REQUEST = read_request_input()
 
@@ -56,6 +65,7 @@ if __name__ == "__main__":
             )
         # pylint: disable=broad-except
         except Exception:
+            logging.warning(f"request failed.")
             print("action=DEFER_IF_PERMIT Temporary error, try again later.\n")
             sys.stdout.flush()
             sys.exit(0)
@@ -64,6 +74,7 @@ if __name__ == "__main__":
             R = json.loads(RESPONSE.text)
         # pylint: disable=broad-except
         except Exception:
+            logging.warning(f"Failed to load json from request.")
             print("action=DEFER_IF_PERMIT Temporary error, try again later.\n")
             sys.stdout.flush()
             sys.exit(0)
@@ -72,10 +83,16 @@ if __name__ == "__main__":
             for prepend in R['prepend']:
                 print("action=PREPEND {0}".format(prepend))
 
+        if 'log' in R:
+            for line in R['log']:
+                logging.info(line)
+
         if RESPONSE.ok:
             print("action={0}\n".format(R['response']))
+            logging.debug("success with response: %s" % R['response'])
         else:
             print("action={0} {1}\n".format(R['response'], R['reason']))
+            logging.info("failed with reason: %s" % R['reason'])
 
         sys.stdout.flush()
         sys.exit(0)
