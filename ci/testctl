@@ -458,11 +458,16 @@ kolab__policytest() {
 kolab__mailtransporttest() {
     POD=${POD:-dev}
 
-    if $PODMAN run --rm -ti --pod=$POD kolab-utils:latest ./mailtransporttest.py --timeout 1 --sender-username admin@kolab.local --sender-password simple123 --sender-host localhost --sender-port 6465 --recipient-username admin@kolab.local --recipient-password simple123 --recipient-host localhost --recipient-port 6993 --validate; then
-        echo "Success"
-    else
-        exit 1
-    fi
+    # Send email
+    $PODMAN run --rm -ti --pod=$POD kolab-utils:latest ./mailtransporttest.py --timeout 1 --sender-username admin@kolab.local --sender-password simple123 --sender-host localhost --sender-port 6465 --recipient-username admin@kolab.local --recipient-password simple123 --recipient-host localhost --recipient-port 6993 --validate || exit 1
+    # Send email to two recipients
+    $PODMAN run --rm -ti --pod=$POD kolab-utils:latest ./mailtransporttest.py --timeout 1 --sender-username admin@kolab.local --sender-password simple123 --sender-host localhost --sender-port 6465 --recipient-username admin@kolab.local --recipient-password simple123 --recipient-host localhost --recipient-port 6993 --validate --target-address admin@kolab.local --target-address test1@kolab.local || exit 1
+
+    # Expected failures
+    # Can't send with empty sender
+    $PODMAN run --rm -ti --pod=$POD kolab-utils:latest ./mailtransporttest.py --timeout 1 --sender-username admin@kolab.local --sender-password simple123 --sender-host localhost --sender-port 6465 --recipient-username admin@kolab.local --recipient-password simple123 --recipient-host localhost --recipient-port 6993 --validate --from-address "" && exit 1
+
+    echo "Success"
 }
 
 # Deploy a test deployment in the "dev" pod
@@ -486,6 +491,7 @@ kolab__deploy() {
         --publish "993:6993" \
         --publish "6379:6379" \
         --publish "3306:3306" \
+        --publish "10025:10025" \
         --publish "11080:11080" \
         --publish "11143:11143" \
         --publish "11993:11993" \

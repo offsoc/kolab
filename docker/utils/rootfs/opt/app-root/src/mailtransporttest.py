@@ -160,21 +160,30 @@ class SendTest:
             body=self.body,
         )
 
-    def send_mail(self, starttls):
+    def send_mail(self, starttls, smtp):
         if self.target_address:
             to = self.target_address
         else:
             to = self.recipient_username
 
-        if self.from_address:
+        if self.from_address is not None:
             from_address = self.from_address
         else:
             from_address = self.sender_username
 
         count = 1 if not self.bulk_send else self.bulk_send
         print(f"Sending {count} email to {to}")
+        if smtp:
+            with smtplib.SMTP(host=self.sender_host, port=self.sender_port or 25) as smtp:
+                if self.verbose:
+                    smtp.set_debuglevel(2)
+                smtp.ehlo()
+                smtp.noop()
+                for _ in range(count):
+                    smtp.sendmail(from_address, to, self.get_message(from_address, to))
+                    print(f"Email with uuid {self.uuid} sent")
 
-        if starttls:
+        elif starttls:
             with smtplib.SMTP(host=self.sender_host, port=self.sender_port or 587) as smtp:
                 smtp.starttls()
                 smtp.ehlo()
@@ -202,7 +211,8 @@ parser.add_argument('--recipient-password', help='The IMAP recipient password')
 parser.add_argument('--recipient-host', help='The IMAP recipient host')
 parser.add_argument('--recipient-port', help='The IMAP recipient port', default=993)
 parser.add_argument('--timeout', help='Timeout in minutes', type=int, default=10)
-parser.add_argument("--starttls", action='store_true', help="Use SMTP starttls over 587")
+parser.add_argument("--starttls", action='store_true', help="Use SMTP starttls over port 587")
+parser.add_argument("--smtp", action='store_true', help="Use SMTP over port 25")
 parser.add_argument("--verbose", action='store_true', help="Verbose mode")
 parser.add_argument("--from-address", help="Source address instead of the sender username")
 parser.add_argument("--target-address", help="Target address instead of the recipient username (can be specified multiple times)", action='append')
@@ -213,7 +223,7 @@ parser.add_argument('--bulk-send', help='Bulk send email, then exit', type=int, 
 args = parser.parse_args()
 
 obj = SendTest(args)
-obj.send_mail(args.starttls)
+obj.send_mail(args.starttls, args.smtp)
 
 if args.bulk_send:
     sys.exit(0)

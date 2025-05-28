@@ -508,7 +508,7 @@ smtpd_tls_auth_only = no
 
 # Inbound
 smtpd_client_restrictions =
-    #permit_mynetworks,
+    permit_mynetworks,
     reject_unknown_reverse_client_hostname,
     #reject_rbl_client zen.spamhaus.org,
     #reject_rhsbl_reverse_client dbl.spamhaus.org
@@ -516,7 +516,7 @@ smtpd_data_restrictions =
     reject_unauth_pipelining
 smtpd_helo_required = yes
 smtpd_helo_restrictions =
-    #permit_mynetworks,
+    permit_mynetworks,
     reject_invalid_helo_hostname,
     reject_non_fqdn_helo_hostname,
     # reject_rhsbl_helo dbl.spamhaus.org
@@ -526,7 +526,7 @@ smtpd_relay_restrictions =
     permit_sasl_authenticated,
     reject_unauth_destination
 smtpd_recipient_restrictions =
-    #permit_mynetworks,
+    permit_mynetworks,
     reject_invalid_hostname,
     reject_non_fqdn_sender,
     reject_non_fqdn_recipient,
@@ -544,9 +544,9 @@ smtpd_sender_login_maps =
     mysql:/etc/postfix/sql/local_recipient_maps.cf
 
 smtpd_sender_restrictions =
-    #permit_mynetworks,
     # We used to also block spammers via sender_access
     check_sender_access hash:/etc/postfix/sender_access,
+    permit_mynetworks,
     reject_unknown_sender_domain,
     #check_client_access hash:/etc/postfix/client_access,
     #check_client_access cidr:/etc/postfix/client_access_cidr,
