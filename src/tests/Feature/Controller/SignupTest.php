@@ -44,7 +44,7 @@ class SignupTest extends TestCase
         SI::truncate();
         SignupToken::truncate();
         Plan::where('title', 'test')->delete();
-        IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
+        IP4Net::where('net_number', inet_pton('128.0.0.0'))->delete();
         VatRate::query()->delete();
         ReferralProgram::query()->delete();
     }
@@ -64,7 +64,7 @@ class SignupTest extends TestCase
         SI::truncate();
         SignupToken::truncate();
         Plan::where('title', 'test')->delete();
-        IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
+        IP4Net::where('net_number', inet_pton('128.0.0.0'))->delete();
         VatRate::query()->delete();
         ReferralProgram::query()->delete();
 
@@ -1177,8 +1177,8 @@ class SignupTest extends TestCase
         ]);
 
         IP4Net::create([
-            'net_number' => '127.0.0.0',
-            'net_broadcast' => '127.255.255.255',
+            'net_number' => '128.0.0.0',
+            'net_broadcast' => '128.255.255.255',
             'net_mask' => 8,
             'country' => 'CH',
             'rir_name' => 'test',
@@ -1187,7 +1187,7 @@ class SignupTest extends TestCase
 
         // Test with mode=mandate plan, and valid voucher code
         $post['voucher'] = 'TEST';
-        $headers = ['X-Client-IP' => '127.0.0.2'];
+        $headers = ['X-Client-IP' => '128.0.0.2'];
         $response = $this->withHeaders($headers)->post('/api/auth/signup/validate', $post);
         $response->assertStatus(200);
 

@@ -119,3 +119,11 @@ kolabFolderType: event
 kolabTargetFolder: shared/Folder2@kolab3.com
 mail: folder2@kolab3.com
 acl: anyone, read-only
+
+# sample GAL entry
+dn: CN=Contact1,OU=Organizations,ou=Groups,dc=kolab3.com,dc=hosted,dc=com
+objectClass: groupofuniquenames
+objectClass: mailrecipient
+objectClass: top
+cn: Contact1
+mail: contact1@internal.domain.tld

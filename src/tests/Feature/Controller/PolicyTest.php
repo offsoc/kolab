@@ -19,11 +19,11 @@ class PolicyTest extends TestCase
     {
         parent::setUp();
 
-        $this->clientAddress = '127.0.0.100';
+        $this->clientAddress = '128.0.0.100';
 
         $this->net = IP4Net::create([
-            'net_number' => '127.0.0.0',
-            'net_broadcast' => '127.255.255.255',
+            'net_number' => '128.0.0.0',
+            'net_broadcast' => '128.255.255.255',
             'net_mask' => 8,
             'country' => 'US',
             'rir_name' => 'test',

@@ -40,10 +40,6 @@ class LdifTest extends TestCase
         $this->assertStringNotContainsString("Importing", $output);
         $this->assertStringNotContainsString("WARNING", $output);
         $this->assertStringContainsString(
-            "ERROR cn=error,ou=groups,ou=kolab3.com,dc=hosted,dc=com: Missing 'mail' attribute",
-            $output
-        );
-        $this->assertStringContainsString(
             "ERROR cn=error,ou=resources,ou=kolab3.com,dc=hosted,dc=com: Missing 'mail' attribute",
             $output
         );
@@ -166,6 +162,13 @@ class LdifTest extends TestCase
         $this->assertMatchesRegularExpression('/^resource-[0-9]+@kolab3\.com$/', $resources[0]->email);
         $this->assertSame('shared/Resource@kolab3.com', $resources[0]->getSetting('folder'));
         $this->assertSame('manual:user@kolab3.com', $resources[0]->getSetting('invitation_policy'));
+
+        // Contacts
+        $contacts = $owner->contacts()->orderBy('email')->get();
+
+        $this->assertCount(1, $contacts);
+        $this->assertSame('contact1@internal.domain.tld', $contacts[0]->email);
+        $this->assertSame('Contact1', $contacts[0]->name);
     }
 
     /**
@@ -250,6 +253,24 @@ class LdifTest extends TestCase
     }
 
     /**
+     * Test parseLDAPContact() method
+     */
+    public function testParseLDAPContact(): void
+    {
+        $command = new LdifCommand();
+
+        $entry = [];
+        $result = $this->invokeMethod($command, 'parseLDAPContact', [$entry]);
+        $this->assertSame([], $result[0]);
+        $this->assertSame("Missing 'mail' attribute", $result[1]);
+
+        $entry = ['mail' => ['test@test.com'], 'cn' => 'Test'];
+        $result = $this->invokeMethod($command, 'parseLDAPContact', [$entry]);
+        $this->assertSame(['name' => 'Test', 'email' => 'test@test.com'], $result[0]);
+        $this->assertNull($result[1]);
+    }
+
+    /**
      * Test parseLDAPDomain() method
      */
     public function testParseLDAPDomain(): void
@@ -259,7 +280,7 @@ class LdifTest extends TestCase
         $entry = [];
         $result = $this->invokeMethod($command, 'parseLDAPDomain', [$entry]);
         $this->assertSame([], $result[0]);
-        $this->assertSame("Missing 'associatedDomain' attribute", $result[1]);
+        $this->assertSame("Missing 'associatedDomain' and 'dn' attribute", $result[1]);
 
         $entry = ['associateddomain' => 'test.com'];
         $result = $this->invokeMethod($command, 'parseLDAPDomain', [$entry]);

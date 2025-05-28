@@ -106,6 +106,7 @@ class LdifCommand extends Command
         $this->importSharedFolders();
         $this->importResources();
         $this->importGroups();
+        $this->importContacts();
 
         // Print warnings collected in the whole process
         $this->printWarnings();
@@ -199,6 +200,38 @@ class LdifCommand extends Command
         }
 
         $insertFunc();
+
+        $bar->finish();
+
+        $this->info("DONE");
+    }
+
+    /**
+     * Import contacts from the temp table
+     */
+    protected function importContacts(): void
+    {
+        $contacts = DB::table(self::$table)->where('type', 'contact')->whereNull('error')->get();
+
+        $bar = $this->createProgressBar(count($contacts), "Importing contacts");
+
+        foreach ($contacts as $_contact) {
+            $bar->advance();
+
+            $data = json_decode($_contact->data);
+
+            $contact = $this->wallet->owner->contacts()->where('email', $data->email)->first();
+
+            if ($contact) {
+                $this->setImportWarning($_contact->id, "Contact already exists");
+                continue;
+            }
+
+            $this->wallet->owner->contacts()->create([
+                'name' => $data->name,
+                'email' => $data->email,
+            ]);
+        }
 
         $bar->finish();
 
@@ -579,13 +612,18 @@ class LdifCommand extends Command
      *
      * @param array $entry LDAP entry attributes
      *
-     * @return array Record data for inserting to the temp table
+     * @return array|null Record data for inserting to the temp table
      */
-    protected function parseLDAPEntry(array $entry): array
+    protected function parseLDAPEntry(array $entry): ?array
     {
         $type = null;
         $data = null;
         $error = null;
+
+        $classTypeMap = [
+            'domain' => 'domain',
+            'user' => 'kolabinetorgperson',
+        ];
 
         $ouTypeMap = [
             'Shared Folders' => 'sharedfolder',
@@ -595,15 +633,59 @@ class LdifCommand extends Command
             'Domains' => 'domain',
         ];
 
-        foreach ($ouTypeMap as $ou => $_type) {
-            if (stripos($entry['dn'], ",ou={$ou}")) {
-                $type = $_type;
-                break;
+        // Ignore LDIF header
+        if (!empty($entry['version'])) {
+            return null;
+        }
+
+        if (!isset($entry['objectclass'])) {
+            $entry['objectclass'] = [];
+        }
+
+        // Skip non-importable entries
+        if (
+            preg_match('/uid=(cyrus-admin|kolab-service)/', $entry['dn'])
+            || in_array('nsroledefinition', $entry['objectclass'])
+            || in_array('organizationalUnit', $entry['objectclass'])
+            || in_array('organizationalunit', $entry['objectclass'])
+        ) {
+            return null;
+        }
+
+        // Special handling for contacts
+        if (empty($entry['userpassword']) && empty($entry['kolabtargetfolder']) && empty($entry['owner'])
+            && !empty($entry['mail']) && in_array('mailrecipient', $entry['objectclass'])
+        ) {
+            $type = 'contact';
+        }
+
+        // Derive object type from objectclass attribute
+        if (empty($type) && !empty($entry['objectclass'])) {
+            foreach ($classTypeMap as $_type => $class) {
+                if (in_array($class, $entry['objectclass'])) {
+                    $type = $_type;
+                    break;
+                }
+            }
+        }
+
+        // Drive object type from DN
+        if (empty($type)) {
+            foreach ($ouTypeMap as $ou => $_type) {
+                if (stripos($entry['dn'], ",ou={$ou}")) {
+                    $type = $_type;
+                    break;
+                }
             }
         }
 
         if (!$type) {
             $error = "Unknown record type";
+        }
+
+        // Silently ignore groups with no 'mail' attribute
+        if ($type == 'group' && empty($entry['mail'])) {
+            return null;
         }
 
         if (empty($error)) {
@@ -624,6 +706,27 @@ class LdifCommand extends Command
     }
 
     /**
+     * Convert LDAP GAL entry into Kolab4 "format"
+     */
+    protected function parseLDAPContact($entry)
+    {
+        $error = null;
+        $result = [];
+
+        if (empty($entry['mail'])) {
+            $error = "Missing 'mail' attribute";
+        } else {
+            if (!empty($entry['cn'])) {
+                $result['name'] = $this->attrStringValue($entry, 'cn');
+            }
+
+            $result['email'] = strtolower($this->attrStringValue($entry, 'mail'));
+        }
+
+        return [$result, $error];
+    }
+
+    /**
      * Convert LDAP domain data into Kolab4 "format"
      */
     protected function parseLDAPDomain($entry)
@@ -631,18 +734,19 @@ class LdifCommand extends Command
         $error = null;
         $result = [];
 
-        if (empty($entry['associateddomain'])) {
-            $error = "Missing 'associatedDomain' attribute";
-        } elseif (!empty($entry['inetdomainstatus']) && $entry['inetdomainstatus'] == 'deleted') {
+        if (!empty($entry['inetdomainstatus']) && $entry['inetdomainstatus'] == 'deleted') {
             $error = "Domain deleted";
-        } else {
+        } elseif (!empty($entry['associateddomain'])) {
+            // TODO: inetdomainstatus = suspended ???
             $result['namespace'] = strtolower($this->attrStringValue($entry, 'associateddomain'));
 
             if (is_array($entry['associateddomain']) && count($entry['associateddomain']) > 1) {
                 $result['aliases'] = array_slice($entry['associateddomain'], 1);
             }
-
-            // TODO: inetdomainstatus = suspended ???
+        } elseif (!empty($entry['dn']) && str_starts_with($entry['dn'], 'dc=')) {
+            $result['namespace'] = strtolower(str_replace(['dc=', ','], ['', '.'], $entry['dn']));
+        } else {
+            $error = "Missing 'associatedDomain' and 'dn' attribute";
         }
 
         return [$result, $error];

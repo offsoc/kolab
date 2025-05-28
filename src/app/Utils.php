@@ -55,7 +55,12 @@ class Utils
     public static function countryForIP($ip, $fallback = 'CH')
     {
         if (!str_contains($ip, ':')) {
-            $net = IP4Net::getNet($ip);
+            // Skip the query if private network
+            if (str_starts_with($ip, '127.')) {
+                $net = null;
+            } else {
+                $net = IP4Net::getNet($ip);
+            }
         } else {
             $net = IP6Net::getNet($ip);
         }

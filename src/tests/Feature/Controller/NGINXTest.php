@@ -22,7 +22,7 @@ class NGINXTest extends TestCase
             'limit_geo' => null,
             'guam_enabled' => null,
         ]);
-        IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
+        IP4Net::where('net_number', inet_pton('128.0.0.0'))->delete();
 
         $this->useServicesUrl();
     }
@@ -36,7 +36,7 @@ class NGINXTest extends TestCase
             'limit_geo' => null,
             'guam_enabled' => null,
         ]);
-        IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
+        IP4Net::where('net_number', inet_pton('128.0.0.0'))->delete();
 
         parent::tearDown();
     }
@@ -60,8 +60,8 @@ class NGINXTest extends TestCase
             'Auth-Protocol' => 'imap',
             'Auth-Ssl' => 'on',
             'Auth-User' => 'john@kolab.org',
-            'Client-Ip' => '127.0.0.1',
-            'Host' => '127.0.0.1',
+            'Client-Ip' => '128.0.0.1',
+            'Host' => '128.0.0.1',
             'Auth-SSL' => 'on',
             'Auth-SSL-Verify' => 'SUCCESS',
             'Auth-SSL-Subject' => '/CN=example.com',
@@ -148,7 +148,7 @@ class NGINXTest extends TestCase
         );
 
         // 2-FA with accepted auth attempt
-        $authAttempt = AuthAttempt::recordAuthAttempt($john, "127.0.0.1");
+        $authAttempt = AuthAttempt::recordAuthAttempt($john, '128.0.0.1');
         $authAttempt->accept();
 
         $response = $this->withHeaders($headers)->get("api/webhooks/nginx");
@@ -171,7 +171,7 @@ class NGINXTest extends TestCase
         $john->setSettings(['limit_geo' => '["PL","US"]']);
 
         $headers['Auth-Protocol'] = 'imap';
-        $headers['Client-Ip'] = '127.0.0.1';
+        $headers['Client-Ip'] = '128.0.0.1';
 
         $response = $this->withHeaders($headers)->get("api/webhooks/nginx");
         $response->assertStatus(200);
@@ -183,8 +183,8 @@ class NGINXTest extends TestCase
 
         // Geo-lockin (success)
         IP4Net::create([
-            'net_number' => '127.0.0.0',
-            'net_broadcast' => '127.255.255.255',
+            'net_number' => '128.0.0.0',
+            'net_broadcast' => '128.255.255.255',
             'net_mask' => 8,
             'country' => 'US',
             'rir_name' => 'test',
@@ -225,10 +225,10 @@ class NGINXTest extends TestCase
         $headers = [
             'Php-Auth-Pw' => $pass,
             'Php-Auth-User' => 'john@kolab.org',
-            'X-Forwarded-For' => '127.0.0.1',
+            'X-Forwarded-For' => '128.0.0.1',
             'X-Forwarded-Proto' => 'https',
             'X-Original-Uri' => '/iRony/',
-            'X-Real-Ip' => '127.0.0.1',
+            'X-Real-Ip' => '128.0.0.1',
         ];
 
         // Pass
@@ -282,7 +282,7 @@ class NGINXTest extends TestCase
         );
 
         // 2-FA with accepted auth attempt
-        $authAttempt = AuthAttempt::recordAuthAttempt($john, "127.0.0.1");
+        $authAttempt = AuthAttempt::recordAuthAttempt($john, '128.0.0.1');
         $authAttempt->accept();
 
         $response = $this->withHeaders($headers)->get("api/webhooks/nginx-httpauth");

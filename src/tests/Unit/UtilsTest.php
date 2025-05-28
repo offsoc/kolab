@@ -17,7 +17,7 @@ class UtilsTest extends TestCase
     public function testCountryForIP(): void
     {
         // Create some network records, the tables might be empty
-        IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
+        IP4Net::where('net_number', inet_pton('128.0.0.0'))->delete();
         IP6Net::where('net_number', inet_pton('2001:db8::ff00:42:0'))->delete();
 
         $this->assertSame('', Utils::countryForIP('127.0.0.1', ''));
@@ -26,8 +26,8 @@ class UtilsTest extends TestCase
         $this->assertSame('CH', Utils::countryForIP('2001:db8::ff00:42:1'));
 
         IP4Net::create([
-            'net_number' => '127.0.0.0',
-            'net_broadcast' => '127.255.255.255',
+            'net_number' => '128.0.0.0',
+            'net_broadcast' => '128.255.255.255',
             'net_mask' => 8,
             'country' => 'US',
             'rir_name' => 'test',
@@ -43,12 +43,12 @@ class UtilsTest extends TestCase
             'serial' => 1,
         ]);
 
-        $this->assertSame('US', Utils::countryForIP('127.0.0.1', ''));
-        $this->assertSame('US', Utils::countryForIP('127.0.0.1'));
+        $this->assertSame('US', Utils::countryForIP('128.0.0.1', ''));
+        $this->assertSame('US', Utils::countryForIP('128.0.0.1'));
         $this->assertSame('PL', Utils::countryForIP('2001:db8::ff00:42:1', ''));
         $this->assertSame('PL', Utils::countryForIP('2001:db8::ff00:42:1'));
 
-        IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
+        IP4Net::where('net_number', inet_pton('128.0.0.0'))->delete();
         IP6Net::where('net_number', inet_pton('2001:db8::ff00:42:0'))->delete();
     }
 

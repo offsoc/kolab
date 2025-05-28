@@ -30,7 +30,7 @@ class AuthTest extends TestCase
 
         $this->expectedExpiry = \config('auth.token_expiry_minutes') * 60;
 
-        IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
+        IP4Net::where('net_number', inet_pton('128.0.0.0'))->delete();
 
         $user = $this->getTestUser('john@kolab.org');
         $user->setSetting('limit_geo', null);
@@ -41,7 +41,7 @@ class AuthTest extends TestCase
         $this->deleteTestUser('UsersControllerTest1@userscontroller.com');
         $this->deleteTestDomain('userscontroller.com');
 
-        IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
+        IP4Net::where('net_number', inet_pton('128.0.0.0'))->delete();
 
         $user = $this->getTestUser('john@kolab.org');
         $user->setSetting('limit_geo', null);
@@ -107,19 +107,19 @@ class AuthTest extends TestCase
         $response = $this->get("api/auth/location");
         $response->assertStatus(401);
 
-        $headers = ['X-Client-IP' => '127.0.0.2'];
+        $headers = ['X-Client-IP' => '128.0.0.2'];
 
         $response = $this->actingAs($user)->withHeaders($headers)->get("api/auth/location");
         $response->assertStatus(200);
 
         $json = $response->json();
 
-        $this->assertSame('127.0.0.2', $json['ipAddress']);
+        $this->assertSame('128.0.0.2', $json['ipAddress']);
         $this->assertSame('', $json['countryCode']);
 
         IP4Net::create([
-            'net_number' => '127.0.0.0',
-            'net_broadcast' => '127.255.255.255',
+            'net_number' => '128.0.0.0',
+            'net_broadcast' => '128.255.255.255',
             'net_mask' => 8,
             'country' => 'US',
             'rir_name' => 'test',
@@ -131,7 +131,7 @@ class AuthTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertSame('127.0.0.2', $json['ipAddress']);
+        $this->assertSame('128.0.0.2', $json['ipAddress']);
         $this->assertSame('US', $json['countryCode']);
     }
 
@@ -233,7 +233,7 @@ class AuthTest extends TestCase
         $user = $this->getTestUser('john@kolab.org');
         $user->setSetting('limit_geo', json_encode(['US']));
 
-        $headers['X-Client-IP'] = '127.0.0.2';
+        $headers['X-Client-IP'] = '128.0.0.2';
         $post = ['email' => 'john@kolab.org', 'password' => 'simple123'];
 
         $response = $this->withHeaders($headers)->post("api/auth/login", $post);
@@ -245,8 +245,8 @@ class AuthTest extends TestCase
         $this->assertSame('error', $json['status']);
 
         IP4Net::create([
-            'net_number' => '127.0.0.0',
-            'net_broadcast' => '127.255.255.255',
+            'net_number' => '128.0.0.0',
+            'net_broadcast' => '128.255.255.255',
             'net_mask' => 8,
             'country' => 'US',
             'rir_name' => 'test',

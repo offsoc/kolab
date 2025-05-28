@@ -56,7 +56,7 @@ class GreylistTest extends TestCase
         $request = new Greylist([
             'sender' => 'someone@sender.domain',
             'recipient' => $this->domainOwner->email,
-            'client_address' => '127.128.129.130',
+            'client_address' => '128.128.129.130',
             'client_name' => 'some.mx',
         ]);
 

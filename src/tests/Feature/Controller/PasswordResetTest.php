@@ -18,14 +18,14 @@ class PasswordResetTest extends TestCase
 
         $this->deleteTestUser('passwordresettest@' . \config('app.domain'));
 
-        IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
+        IP4Net::where('net_number', inet_pton('128.0.0.0'))->delete();
     }
 
     protected function tearDown(): void
     {
         $this->deleteTestUser('passwordresettest@' . \config('app.domain'));
 
-        IP4Net::where('net_number', inet_pton('127.0.0.0'))->delete();
+        IP4Net::where('net_number', inet_pton('128.0.0.0'))->delete();
 
         parent::tearDown();
     }
@@ -142,7 +142,7 @@ class PasswordResetTest extends TestCase
         $user->setSetting('limit_geo', json_encode(['US']));
         $user->setSetting('external_email', 'ext@email.com');
 
-        $headers['X-Client-IP'] = '127.0.0.2';
+        $headers['X-Client-IP'] = '128.0.0.2';
         $post = ['email' => 'passwordresettest@' . \config('app.domain')];
 
         $response = $this->withHeaders($headers)->post('/api/auth/password-reset/init', $post);
@@ -155,8 +155,8 @@ class PasswordResetTest extends TestCase
         $this->assertSame("The request location is not allowed.", $json['errors']['email']);
 
         IP4Net::create([
-            'net_number' => '127.0.0.0',
-            'net_broadcast' => '127.255.255.255',
+            'net_number' => '128.0.0.0',
+            'net_broadcast' => '128.255.255.255',
             'net_mask' => 8,
             'country' => 'US',
             'rir_name' => 'test',
