@@ -179,20 +179,6 @@ cat <<EOF >> /etc/nginx/nginx.conf
             fastcgi_read_timeout 910s;
         }
 
-        location ~* ^/\\.well-known/autoconfig {
-            proxy_pass       $ROUNDCUBE_BACKEND;
-            proxy_set_header Host \$host;
-            proxy_set_header X-Real-IP \$remote_addr;
-            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        }
-
-        location ~* ^/autodiscover/autodiscover\.xml {
-            proxy_pass       $ROUNDCUBE_BACKEND;
-            proxy_set_header Host \$host;
-            proxy_set_header X-Real-IP \$remote_addr;
-            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        }
-
         location ~* ^/\.well-known/(caldav|carddav) {
             proxy_pass       $DAV_BACKEND;
             proxy_redirect   http:// \$scheme://;
@@ -282,7 +268,6 @@ cat <<EOF >> /etc/nginx/nginx.conf
         error_page 500 502 503 504 /50x.html;
             location = /50x.html {
         }
-
     }
 }
 

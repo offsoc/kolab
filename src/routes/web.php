@@ -65,3 +65,5 @@ Route::group(
         Route::get('/mta-sts.txt', [Controllers\WellKnownController::class, 'mtaSts']);
     }
 );
+
+Controllers\DiscoveryController::registerRoutes();

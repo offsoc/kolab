@@ -108,8 +108,13 @@ return [
         'domain_filter' => env('LDAP_DOMAIN_FILTER', '(associateddomain=%s)'),
     ],
 
-    'autodiscover' => [
-        'uri' => env('AUTODISCOVER_URI', env('APP_URL', 'http://localhost')),
+    'discovery' => [
+        'activesync' => env('APP_DISCOVERY_ACTIVESYNC', 'activesync.%h'),
+        'imap' => env('APP_DISCOVERY_IMAP', 'ssl://imap.%h:993'),
+        'pop3' => env('APP_DISCOVERY_POP3', 'ssl://pop3.%h:995'),
+        'smtp' => env('APP_DISCOVERY_SMTP', 'ssl://smtp.%h:465'),
+        'name' => env('APP_NAME', 'Kolab'),
+        'name_short' => env('APP_NAME_SHORT', ''),
     ],
 
     'activesync' => [
