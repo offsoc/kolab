@@ -669,7 +669,7 @@ class LdifCommand extends Command
             }
         }
 
-        // Drive object type from DN
+        // Derive object type from DN
         if (empty($type)) {
             foreach ($ouTypeMap as $ou => $_type) {
                 if (stripos($entry['dn'], ",ou={$ou}")) {
