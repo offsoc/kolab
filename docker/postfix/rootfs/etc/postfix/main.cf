@@ -569,6 +569,8 @@ submission_client_restrictions =
     #reject_rhsbl_reverse_client dbl.spamhaus.org
 submission_sender_restrictions =
     reject_non_fqdn_sender, 
+    # We used to also block spammers via sender_access
+    check_sender_access hash:/etc/postfix/sender_access,
     # Uses smtpd_sender_login_maps
     reject_sender_login_mismatch,
     check_policy_service unix:private/policy_ratelimit

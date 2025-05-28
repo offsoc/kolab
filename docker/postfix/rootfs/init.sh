@@ -63,6 +63,7 @@ sed -i -r \
 
 # echo "/$APP_DOMAIN/              lmtp:$LMTP_DESTINATION" >> /etc/postfix/transport
 # postmap /etc/postfix/transport
+postmap /etc/postfix/sender_access
 
 /usr/sbin/postfix check
 exec /usr/sbin/postfix -c /etc/postfix start-fg
