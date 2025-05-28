@@ -1730,7 +1730,32 @@ class UserTest extends TestCase
         $this->assertTrue($user->password_ldap == $ldap); // @phpstan-ignore-line
         $this->assertTrue(strlen($user->password) == strlen($hash)); // @phpstan-ignore-line
 
-        // TODO: sha1 passwords in password_ldap (or remove this code)
+        // Test PBKDF2-SHA512 algorithm (389-ds)
+        $pass = '{PBKDF2-SHA512}10000$hbMHmUXNh3UoHNlDu+NJBOW+hVAhP3C0$ax9vNLL1rr85ppODFTykPC46igHh92v'
+            . 'ULWpZaR/CQqyD4IGG/IyPYbbC2v7BxSPIDUXc0e9AGX9IuwinIj5a/w==';
+        $user->setRawAttributes(array_merge($attrs, ['password_ldap' => $pass, 'password' => null]));
+
+        $this->assertTrue($user->validatePassword('12345678_kolab'));
+        $this->assertFalse($user->validatePassword('badpass'));
+
+        // Test SSHA algorithm
+        $pass = '{SSHA}kor2Qo2qEsP1XojQe3esWFB8IvYKqwUH';
+        $user->setRawAttributes(array_merge($attrs, ['password_ldap' => $pass, 'password' => null]));
+
+        $this->assertTrue($user->validatePassword('test123'));
+        $this->assertFalse($user->validatePassword('badpass'));
+
+        // Test PBKDF2_SHA256 algorithm (389-ds)
+        $pass = '{PBKDF2_SHA256}AAAIABzpVq0s1Ta7cqubx+19QOzsI7n7KRLu0SovLVivxUVCn0+ghlj3+9+tf3jqurd'
+            . 'QhpQ/OWYmxMlAJCAeIU3jN0DDW7ODk9FpLFzhO2055J+vY5M7EXAGrvhUlkiyeH/zx/RBp2pVQq/2vtI+qmO'
+            . 'GOGUXdZ0hK00yNXpZ7K7WTwsnEXeWs4DGkGkxwyPgsGTyEwwdYK4YpCFdjJi/dXI6+kKf72j+B+epuzPtuvd'
+            . 'Mj5xGnqe9jS+BN9Huzkof4vRPX3bYecywPaeNcdXPUY3iSj8hxFqiWbBDZ0mYy9aYAy6QgMitcdEGadPcR+d'
+            . 'HXWNGK1qSLrFJJrB3cQtYhl+OgtHlwI0H4XTGBdp4MbegM3VgpUKuBNyIypwZ5oB/PRHA188bmsMjDmyN2kE'
+            . 'nHSb1CK9MXcuS4bCQzNtutmQCxBCo';
+        $user->setRawAttributes(array_merge($attrs, ['password_ldap' => $pass, 'password' => null]));
+
+        $this->assertTrue($user->validatePassword('Simple321Simple321'));
+        $this->assertFalse($user->validatePassword('badpass'));
     }
 
     /**
