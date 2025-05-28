@@ -20,7 +20,7 @@ class ExternalEmail implements Rule
      */
     public function passes($attribute, $email): bool
     {
-        $v = Validator::make(['email' => $email], ['email' => 'required|email']);
+        $v = Validator::make(['email' => $email], ['email' => 'required|email:strict']);
 
         if ($v->fails()) {
             $this->message = \trans('validation.emailinvalid');
@@ -31,6 +31,18 @@ class ExternalEmail implements Rule
 
         // don't allow @localhost and other no-fqdn
         if (!str_contains($domain, '.')) {
+            $this->message = \trans('validation.emailinvalid');
+            return false;
+        }
+
+        // don't allow IPv6 addresses in the domain part
+        if (str_contains($domain, ':')) {
+            $this->message = \trans('validation.emailinvalid');
+            return false;
+        }
+
+        // don't allow IPv4 addresses in the domain part
+        if (preg_match('/^[0-9.]+$/', $domain)) {
             $this->message = \trans('validation.emailinvalid');
             return false;
         }

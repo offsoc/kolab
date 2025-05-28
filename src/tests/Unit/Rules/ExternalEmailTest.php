@@ -42,11 +42,17 @@ class ExternalEmailTest extends TestCase
             ['example.org', 'The specified email address is invalid.'],
             ['@example.org', 'The specified email address is invalid.'],
             ['test@localhost', 'The specified email address is invalid.'],
+            ['nick@mykolab..com', 'The specified email address is invalid.'],
+            ['nick..test@mykolab.com', 'The specified email address is invalid.'],
+            ['test@123.123.123.123', 'The specified email address is invalid.'],
+            ['test@2001:db8::8a2e:370:7334', 'The specified email address is invalid.'],
             // FIXME: empty - valid ??????
             ['', null],
             // valid
             ['test@domain.tld', null],
             ['&@example.org', null],
+            ['test@example123.com', null],
+            ['test@123.com', null],
         ];
     }
 }
