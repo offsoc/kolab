@@ -5,10 +5,8 @@ use Lcobucci\JWT\Signer\Rsa\Sha256;
 
 return [
     'passport' => [
-        /*
-         * Place your Passport and OpenID Connect scopes here.
-         * To receive an `id_token`, you should at least provide the openid scope.
-         */
+        // Place your Passport and OpenID Connect scopes here.
+        // To receive an `id_token`, you should at least provide the openid scope.
         'tokens_can' => [
             'openid' => 'Enable OpenID Connect',
             'email' => 'Information about your email address',
@@ -43,26 +41,22 @@ return [
     ],
 
     'routes' => [
-        /*
-         * When set to true, this package will expose the OpenID Connect Discovery endpoint.
-         *  - /.well-known/openid-configuration
-         */
+        // When set to true, this package will expose the OpenID Connect Discovery endpoint.
+        // - /.well-known/openid-configuration
         'discovery' => true,
+
         // When set to true, this package will expose the JSON Web Key Set endpoint.
         'jwks' => true,
-        /*
-          * Optional URL to change the JWKS path to align with your custom Passport routes.
-          * Defaults to /oauth/jwks
-          */
+
+        // Optional URL to change the JWKS path to align with your custom Passport routes.
+        // Defaults to /oauth/jwks
         'jwks_url' => '/oauth/jwks',
     ],
 
     // Settings for the discovery endpoint
     'discovery' => [
-        /*
-         * Hide scopes that aren't from the OpenID Core spec from the Discovery,
-         * default = false (all scopes are listed)
-         */
+        // Hide scopes that aren't from the OpenID Core spec from the Discovery,
+        // default = false (all scopes are listed)
         'hide_scopes' => false,
     ],
 

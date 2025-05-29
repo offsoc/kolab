@@ -320,6 +320,45 @@ class UsersTest extends TestCase
     }
 
     /**
+     * Test login-as request (POST /api/v4/users/<user-id>/login-as)
+     */
+    public function testLoginAs(): void
+    {
+        Queue::fake();
+
+        $user = $this->getTestUser('UsersControllerTest1@userscontroller.com');
+        $admin = $this->getTestUser('jeroen@jeroen.jeroen');
+
+        // Test non-existing user
+        $response = $this->actingAs($admin)->post("/api/v4/users/123456/login-as", []);
+        $response->assertStatus(404);
+
+        // Test unauthorized access to admin API
+        $response = $this->actingAs($user)->post("/api/v4/users/{$user->id}/login-as", []);
+        $response->assertStatus(403);
+
+        // Test user w/o mailbox SKU
+        $response = $this->actingAs($admin)->post("/api/v4/users/{$user->id}/login-as", []);
+        $response->assertStatus(403);
+
+        $sku = Sku::withObjectTenantContext($user)->where(['title' => 'mailbox'])->first();
+        $user->assignSku($sku);
+
+        // Test login-as
+        $response = $this->actingAs($admin)->post("/api/v4/users/{$user->id}/login-as", []);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        parse_str(parse_url($json['redirectUrl'], \PHP_URL_QUERY), $params);
+
+        $this->assertSame('success', $json['status']);
+        $this->assertSame('1', $params['helpdesk']);
+
+        // TODO: Assert the Roundcube cache entry
+    }
+
+    /**
      * Test reseting 2FA (POST /api/v4/users/<user-id>/reset2FA)
      */
     public function testReset2FA(): void

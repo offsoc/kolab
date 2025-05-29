@@ -22,6 +22,7 @@ class PassportClient extends Client
         if ($this->allowed_scopes) {
             return $this->allowed_scopes;
         }
+
         return [];
     }
 }

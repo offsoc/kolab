@@ -2,19 +2,16 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Auth\PassportClient;
+use App\Auth\OAuth;
 use App\Http\Controllers\Controller;
 use App\User;
 use App\Utils;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
 use Laravel\Passport\RefreshTokenRepository;
 use Laravel\Passport\TokenRepository;
 use League\OAuth2\Server\AuthorizationServer;
-use League\OAuth2\Server\Exception\OAuthServerException;
-use Nyholm\Psr7\Response as Psr7Response;
 use Psr\Http\Message\ServerRequestInterface;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -117,83 +114,9 @@ class AuthController extends Controller
      */
     public function oauthApprove(ServerRequestInterface $psrRequest, Request $request, AuthorizationServer $server)
     {
-        $clientId = $request->input('client_id');
         $user = $this->guard()->user();
-        $cacheKey = "oauth-seen-{$user->id}-{$clientId}";
 
-        try {
-            if ($request->response_type != 'code') {
-                throw new \Exception('Invalid response_type');
-            }
-
-            // OpenID handler reads parameters from the request query string (GET)
-            $request->query->replace($request->input());
-
-            // OAuth2 server's code also expects GET parameters, but we're using POST here
-            $psrRequest = $psrRequest->withQueryParams($request->input());
-
-            $authRequest = $server->validateAuthorizationRequest($psrRequest);
-
-            // Check if the client was approved before (in last x days)
-            if ($clientId && $request->ifSeen) {
-                $client = PassportClient::find($clientId);
-
-                if ($client && !Cache::has($cacheKey)) {
-                    throw new \Exception('Not seen yet');
-                }
-            }
-
-            // TODO I'm not sure if we should still execute this to deny the request
-            $authRequest->setUser(new \Laravel\Passport\Bridge\User($user->getAuthIdentifier()));
-            $authRequest->setAuthorizationApproved(true);
-
-            // This will generate a 302 redirect to the redirect_uri with the generated authorization code
-            $response = $server->completeAuthorizationRequest($authRequest, new Psr7Response());
-
-            // Remember the approval for x days.
-            // In this time we'll not show the UI form and we'll redirect automatically
-            // TODO: If we wanted to give users ability to remove this "approved" state for a client,
-            // we would have to store these records in SQL table. It would become handy especially
-            // if we give users possibility to register external OAuth apps.
-            Cache::put($cacheKey, 1, now()->addDays(14));
-        } catch (OAuthServerException $e) {
-            // Note: We don't want 401 or 400 codes here, use 422 which is used in our API
-            $code = $e->getHttpStatusCode();
-            $response = $e->getPayload();
-            $response['redirectUrl'] = !empty($client) ? $client->redirect : $request->input('redirect_uri');
-
-            return self::errorResponse($code < 500 ? 422 : 500, $e->getMessage(), $response);
-        } catch (\Exception $e) {
-            if (!empty($client)) {
-                $scopes = preg_split('/\s+/', (string) $request->input('scope'));
-
-                $claims = [];
-                foreach (array_intersect($scopes, $client->allowed_scopes) as $claim) {
-                    $claims[$claim] = self::trans("auth.claim.{$claim}");
-                }
-
-                return response()->json([
-                    'status' => 'prompt',
-                    'client' => [
-                        'name' => $client->name,
-                        'url' => $client->redirect,
-                        'claims' => $claims,
-                    ],
-                ]);
-            }
-
-            $response = [
-                'error' => $e->getMessage() == 'Invalid response_type' ? 'unsupported_response_type' : 'server_error',
-                'redirectUrl' => $request->input('redirect_uri'),
-            ];
-
-            return self::errorResponse(422, self::trans('auth.error.invalidrequest'), $response);
-        }
-
-        return response()->json([
-            'status' => 'success',
-            'redirectUrl' => $response->getHeader('Location')[0],
-        ]);
+        return OAuth::approve($user, $psrRequest, $request, $server);
     }
 
     /**
@@ -205,23 +128,7 @@ class AuthController extends Controller
     {
         $user = $this->guard()->user();
 
-        $response = [
-            // Per OIDC spec. 'sub' must be always returned
-            'sub' => $user->id,
-        ];
-
-        if ($user->tokenCan('email')) {
-            $response['email'] = $user->email;
-            $response['email_verified'] = $user->isActive();
-            // At least synapse depends on a "settings" structure being available
-            $response['settings'] = ['name' => $user->name()];
-        }
-
-        // TODO: Other claims (https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims)
-        // address: address
-        // phone: phone_number and phone_number_verified
-        // profile: name, family_name, given_name, middle_name, nickname, preferred_username,
-        //    profile, picture, website, gender, birthdate, zoneinfo, locale, and updated_at
+        $response = OAuth::userInfo($user);
 
         return response()->json($response);
     }

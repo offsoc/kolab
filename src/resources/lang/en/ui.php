@@ -531,6 +531,7 @@ return [
         'imapproxy-text' => "Enables IMAP proxy that filters out non-mail groupware folders, so your IMAP clients do not see them.",
         'list-title' => "User accounts",
         'list-empty' => "There are no users in this account.",
+        'login-as' => "Log into webmail",
         'managed-by' => "Managed by",
         'new' => "New user account",
         'org' => "Organization",

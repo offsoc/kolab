@@ -261,6 +261,7 @@ if (\config('app.with_admin')) {
 
             Route::apiResource('users', API\V4\Admin\UsersController::class);
             Route::get('users/{id}/discounts', [API\V4\Admin\DiscountsController::class, 'userDiscounts']);
+            Route::post('users/{id}/login-as', [API\V4\Admin\UsersController::class, 'loginAs']);
             Route::post('users/{id}/reset2FA', [API\V4\Admin\UsersController::class, 'reset2FA']);
             Route::post('users/{id}/resetGeoLock', [API\V4\Admin\UsersController::class, 'resetGeoLock']);
             Route::post('users/{id}/resync', [API\V4\Admin\UsersController::class, 'resync']);

@@ -13,6 +13,7 @@ class Roundcube
     private const FILESTORE_TABLE = 'filestore';
     private const USERS_TABLE = 'users';
     private const IDENTITIES_TABLE = 'identities';
+    private const SHARED_CACHE_TABLE = 'cache_shared';
 
     /** @var array List of GnuPG files to store */
     private static $enigma_files = ['pubring.gpg', 'secring.gpg', 'pubring.kbx'];
@@ -31,6 +32,28 @@ class Roundcube
         }
 
         return DB::connection('roundcube');
+    }
+
+    /**
+     * Store a shared cache entry (used in the kolab plugin)
+     *
+     * @param string       $key   Cache key name
+     * @param string|array $value Cache value
+     * @param int          $ttl   TTL (in seconds)
+     */
+    public static function cacheSet(string $key, $value, int $ttl): void
+    {
+        if (is_array($value)) {
+            $value = json_encode($value);
+        }
+
+        $db = self::dbh();
+
+        $db->table(self::SHARED_CACHE_TABLE)->insert([
+            'cache_key' => 'kolab.' . $key,
+            'data' => $value,
+            'expires' => DB::raw("now() + INTERVAL {$ttl} SECOND"),
+        ]);
     }
 
     /**
