@@ -359,7 +359,7 @@ class UsersTest extends TestCase
     }
 
     /**
-     * Test reseting 2FA (POST /api/v4/users/<user-id>/reset2FA)
+     * Test reseting 2FA (POST /api/v4/users/<user-id>/reset-2fa)
      */
     public function testReset2FA(): void
     {
@@ -373,7 +373,7 @@ class UsersTest extends TestCase
         SecondFactor::seed('userscontrollertest1@userscontroller.com');
 
         // Test unauthorized access to admin API
-        $response = $this->actingAs($user)->post("/api/v4/users/{$user->id}/reset2FA", []);
+        $response = $this->actingAs($user)->post("/api/v4/users/{$user->id}/reset-2fa", []);
         $response->assertStatus(403);
 
         $entitlements = $user->fresh()->entitlements()->where('sku_id', $sku2fa->id)->get();
@@ -383,7 +383,7 @@ class UsersTest extends TestCase
         $this->assertCount(1, $sf->factors());
 
         // Test reseting 2FA
-        $response = $this->actingAs($admin)->post("/api/v4/users/{$user->id}/reset2FA", []);
+        $response = $this->actingAs($admin)->post("/api/v4/users/{$user->id}/reset-2fa", []);
         $response->assertStatus(200);
 
         $json = $response->json();
@@ -400,7 +400,7 @@ class UsersTest extends TestCase
     }
 
     /**
-     * Test reseting Geo-Lock (POST /api/v4/users/<user-id>/resetGeoLock)
+     * Test reseting Geo-Lock (POST /api/v4/users/<user-id>/reset-geolock)
      */
     public function testResetGeoLock(): void
     {
@@ -411,11 +411,11 @@ class UsersTest extends TestCase
         $user->setConfig(['limit_geo' => ['US']]);
 
         // Test unauthorized access to admin API
-        $response = $this->actingAs($user)->post("/api/v4/users/{$user->id}/resetGeoLock", []);
+        $response = $this->actingAs($user)->post("/api/v4/users/{$user->id}/reset-geolock", []);
         $response->assertStatus(403);
 
         // Test reseting Geo-Lock
-        $response = $this->actingAs($admin)->post("/api/v4/users/{$user->id}/resetGeoLock", []);
+        $response = $this->actingAs($admin)->post("/api/v4/users/{$user->id}/reset-geolock", []);
         $response->assertStatus(200);
 
         $json = $response->json();

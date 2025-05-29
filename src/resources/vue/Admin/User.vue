@@ -585,7 +585,7 @@
             },
             reset2FA() {
                 this.$refs.reset2faDialog.hide()
-                axios.post('/api/v4/users/' + this.user.id + '/reset2FA')
+                axios.post('/api/v4/users/' + this.user.id + '/reset-2fa')
                     .then(response => {
                         if (response.data.status == 'success') {
                             this.$toast.success(response.data.message)
@@ -596,7 +596,7 @@
                     })
             },
             resetGeoLock() {
-                axios.post('/api/v4/users/' + this.user.id + '/resetGeoLock')
+                axios.post('/api/v4/users/' + this.user.id + '/reset-geolock')
                     .then(response => {
                         if (response.data.status == 'success') {
                             this.$toast.success(response.data.message)
