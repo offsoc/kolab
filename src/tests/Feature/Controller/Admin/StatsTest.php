@@ -94,6 +94,19 @@ class StatsTest extends TestCase
         $this->assertCount(54, $json['data']['labels']);
         $this->assertCount(1, $json['data']['datasets']);
 
+        // 'users-per-country' chart
+        $response = $this->actingAs($admin)->get("api/v4/stats/chart/users-per-country");
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        $this->assertSame('Users per country', $json['title']);
+        $this->assertSame('donut', $json['type']);
+        $this->assertContains('Switzerland', $json['data']['labels']);
+        $this->assertContains('United States', $json['data']['labels']);
+        $this->assertContains('Other', $json['data']['labels']);
+        $this->assertCount(1, $json['data']['datasets']);
+
         // 'vouchers' chart
         $discount = Discount::withObjectTenantContext($user)->where('code', 'TEST')->first();
         $wallet = $user->wallets->first();

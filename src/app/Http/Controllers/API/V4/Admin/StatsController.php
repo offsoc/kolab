@@ -4,9 +4,11 @@ namespace App\Http\Controllers\API\V4\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Payment;
+use App\User;
 use App\Utils;
 use Carbon\Carbon;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 
@@ -30,6 +32,7 @@ class StatsController extends Controller
         'users',
         'users-all',
         'vouchers',
+        'users-per-country',
     ];
 
     /**
@@ -371,6 +374,55 @@ class StatsController extends Controller
     }
 
     /**
+     * Get users-per-country chart
+     */
+    protected function chartUsersPerCountry(): array
+    {
+        $counts = DB::table('users')
+            ->selectRaw("user_settings.value as country, count(users.id) as cnt")
+            ->leftJoin('user_settings', function (JoinClause $join) {
+                $join->on('users.id', '=', 'user_settings.user_id')
+                    ->where('key', 'country');
+            })
+            ->whereNull('users.deleted_at')
+            ->whereNot('users.status', '&', User::STATUS_DEGRADED)
+            ->whereNot('users.status', '&', User::STATUS_SUSPENDED)
+            ->groupByRaw('1');
+
+        $addTenantScope = static function ($builder, $tenantId) {
+            return $builder->where('users.tenant_id', $tenantId);
+        };
+
+        // We get 7 countries with biggest count, the rest is aggregated in 'Other' item
+        $result = [];
+        $other = 0;
+        $counts = $this->applyTenantScope($counts, $addTenantScope)
+            ->pluck('cnt', 'country')
+            ->each(function (int $count, string $country) use (&$result, &$other) {
+                if (empty($country) || count($result) >= 7) {
+                    $other += $count;
+                } else {
+                    $result[$country] = $count;
+                }
+            })
+            ->all();
+
+        if ($other) {
+            $result[self::trans('app.other')] = $other;
+        }
+
+        arsort($result, \SORT_NUMERIC);
+
+        $labels = self::countryLabels(array_keys($result));
+        $result = array_values($result);
+
+        // $labels = ['Other', 'Germany', 'Poland', 'Switzerland'];
+        // $result = [200, 120, 30, 50];
+
+        return $this->donutChart(self::trans('app.chart-users-per-country'), $labels, $result);
+    }
+
+    /**
      * Get vouchers chart
      */
     protected function chartVouchers(): array
@@ -400,6 +452,19 @@ class StatsController extends Controller
         // $vouchers = [100, 120, 30, 50];
 
         return $this->donutChart(self::trans('app.chart-vouchers'), $labels, $vouchers);
+    }
+
+    /**
+     * Convert country codes into country names
+     */
+    protected static function countryLabels(array $labels): array
+    {
+        $countries = include resource_path('countries.php');
+
+        return array_map(
+            fn (string $code) => $countries[$code][1] ?? $code,
+            $labels
+        );
     }
 
     protected static function donutChart($title, $labels, $data): array

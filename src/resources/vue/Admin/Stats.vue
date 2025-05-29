@@ -9,7 +9,7 @@
         data() {
             return {
                 charts: {},
-                chartTypes: ['users', 'users-all', 'income', 'payers', 'discounts', 'vouchers']
+                chartTypes: ['users', 'users-all', 'income', 'payers', 'discounts', 'vouchers', 'users-per-country']
             }
         },
         mounted() {

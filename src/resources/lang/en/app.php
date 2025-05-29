@@ -18,6 +18,7 @@ return [
     'chart-income' => 'Income in :currency - last 8 weeks',
     'chart-payers' => 'Payers - last year',
     'chart-users' => 'Users - last 8 weeks',
+    'chart-users-per-country' => 'Users per country',
 
     'companion-create-success' => 'Companion app has been created.',
     'companion-delete-success' => 'Companion app has been removed.',
@@ -32,6 +33,7 @@ return [
 
     'mandate-description-suffix' => 'Auto-Payment Setup',
 
+    'other' => 'Other',
     'planbutton' => 'Choose :plan',
 
     'process-async' => 'Setup process has been pushed. Please wait.',

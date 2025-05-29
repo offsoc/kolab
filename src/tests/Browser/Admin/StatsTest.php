@@ -29,13 +29,14 @@ class StatsTest extends TestCaseDusk
                 ->assertSeeIn('@links .link-stats', 'Stats')
                 ->click('@links .link-stats')
                 ->on(new Stats())
-                ->assertElementsCount('@container > div', 6)
+                ->assertElementsCount('@container > div', 7)
                 ->waitForTextIn('@container #chart-users svg .title', 'Users - last 8 weeks')
                 ->waitForTextIn('@container #chart-users-all svg .title', 'All Users - last year')
                 ->waitForTextIn('@container #chart-payers svg .title', 'Payers - last year')
                 ->waitForTextIn('@container #chart-income svg .title', 'Income in CHF - last 8 weeks')
                 ->waitForTextIn('@container #chart-discounts svg .title', 'Discounts')
-                ->waitForTextIn('@container #chart-vouchers svg .title', 'Vouchers');
+                ->waitForTextIn('@container #chart-vouchers svg .title', 'Vouchers')
+                ->waitForTextIn('@container #chart-users-per-country svg .title', 'Users per country');
         });
     }
 }
