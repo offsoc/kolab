@@ -3,9 +3,10 @@
 namespace App\Policy\Mailfilter\Modules;
 
 use App\Policy\Mailfilter\MailParser;
+use App\Policy\Mailfilter\Module;
 use App\Policy\Mailfilter\Result;
 
-class ExternalSenderModule
+class ExternalSenderModule extends Module
 {
     /**
      * Handle the email message

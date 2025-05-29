@@ -36,6 +36,8 @@ class UserInfo extends Page
             '@nav' => 'ul.nav-tabs',
             '@packages' => '#user-packages',
             '@settings' => '#settings',
+            '@setting-maildelivery' => '#maildelivery .accordion-body',
+            '@setting-maildelivery-head' => '#maildelivery-header',
             '@setting-options' => '#options .accordion-body',
             '@setting-options-head' => '#options-header',
             '@setting-delegation' => '#delegation .accordion-body',

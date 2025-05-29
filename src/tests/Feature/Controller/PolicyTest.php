@@ -52,6 +52,10 @@ class PolicyTest extends TestCase
         Greylist\Connect::where('sender_domain', 'sender.domain')->delete();
         Greylist\Whitelist::where('sender_domain', 'sender.domain')->delete();
 
+        $john = $this->getTestUser('john@kolab.org');
+        $john->settings()
+            ->whereIn('key', ['password_policy', 'max_password_age', 'itip_policy', 'externalsender_policy'])->delete();
+
         parent::tearDown();
     }
 
@@ -95,6 +99,95 @@ class PolicyTest extends TestCase
     }
 
     /**
+     * Test fetching account 'password' policies
+     */
+    public function testIndexPassword(): void
+    {
+        $this->useRegularUrl();
+
+        $jack = $this->getTestUser('jack@kolab.org');
+        $john = $this->getTestUser('john@kolab.org');
+        $john->setSetting('password_policy', 'min:8,max:255,special');
+        $john->setSetting('max_password_age', 6);
+
+        // Unauth access not allowed
+        $response = $this->get('/api/v4/policies');
+        $response->assertStatus(401);
+
+        // Test acting as non-controller
+        $response = $this->actingAs($jack)->get('/api/v4/policies');
+        $response->assertStatus(403);
+
+        // Get available policy rules
+        $response = $this->actingAs($john)->get('/api/v4/policies');
+        $json = $response->json();
+
+        $response->assertStatus(200);
+
+        $this->assertCount(7, $json['password']);
+        $this->assertSame('6', $json['config']['max_password_age']);
+        $this->assertSame('Minimum password length: 8 characters', $json['password'][0]['name']);
+        $this->assertSame('min', $json['password'][0]['label']);
+        $this->assertSame('8', $json['password'][0]['param']);
+        $this->assertTrue($json['password'][0]['enabled']);
+        $this->assertSame('Maximum password length: 255 characters', $json['password'][1]['name']);
+        $this->assertSame('max', $json['password'][1]['label']);
+        $this->assertSame('255', $json['password'][1]['param']);
+        $this->assertTrue($json['password'][1]['enabled']);
+        $this->assertSame('lower', $json['password'][2]['label']);
+        $this->assertFalse($json['password'][2]['enabled']);
+        $this->assertSame('upper', $json['password'][3]['label']);
+        $this->assertFalse($json['password'][3]['enabled']);
+        $this->assertSame('digit', $json['password'][4]['label']);
+        $this->assertFalse($json['password'][4]['enabled']);
+        $this->assertSame('special', $json['password'][5]['label']);
+        $this->assertTrue($json['password'][5]['enabled']);
+        $this->assertSame('last', $json['password'][6]['label']);
+        $this->assertFalse($json['password'][6]['enabled']);
+    }
+
+    /**
+     * Test fetching account 'mailDelivery' policies
+     */
+    public function testIndexMailDelivery(): void
+    {
+        $this->useRegularUrl();
+
+        $jack = $this->getTestUser('jack@kolab.org');
+        $john = $this->getTestUser('john@kolab.org');
+        $john->settings()->whereIn('key', ['itip_policy', 'externalsender_policy'])->delete();
+
+        // Unauth access not allowed
+        $response = $this->get('/api/v4/policies');
+        $response->assertStatus(401);
+
+        // Test acting as non-controller
+        $response = $this->actingAs($jack)->get('/api/v4/policies');
+        $response->assertStatus(403);
+
+        // Get polcies when mailfilter is disabled
+        \config(['app.with_mailfilter' => false]);
+        $response = $this->actingAs($john)->get('/api/v4/policies');
+        $json = $response->json();
+
+        $response->assertStatus(200);
+
+        $this->assertCount(0, $json['mailDelivery']);
+
+        // Get polcies when mailfilter is enabled
+        \config(['app.with_mailfilter' => true]);
+        $john->setConfig(['externalsender_policy' => true]);
+        $response = $this->actingAs($john)->get('/api/v4/policies');
+        $json = $response->json();
+
+        $response->assertStatus(200);
+
+        $this->assertSame(['itip_policy', 'externalsender_policy'], $json['mailDelivery']);
+        $this->assertFalse($json['config']['itip_policy']);
+        $this->assertTrue($json['config']['externalsender_policy']);
+    }
+
+    /**
      * Test mail filter (POST /api/webhooks/policy/mail/filter)
      */
     public function testMailfilter()
@@ -102,8 +195,10 @@ class PolicyTest extends TestCase
         // Note: Only basic tests here. More detailed policy handler tests are in another place
 
         $headers = ['CONTENT_TYPE' => 'message/rfc822'];
-        $post = file_get_contents(__DIR__ . '/../../data/mail/1.eml');
+        $post = file_get_contents(self::BASE_DIR . '/data/mail/1.eml');
         $post = str_replace("\n", "\r\n", $post);
+
+        $john = $this->getTestUser('john@kolab.org');
 
         // Basic test, no changes to the mail content
         $url = '/api/webhooks/policy/mail/filter?recipient=john@kolab.org&sender=jack@kolab.org';
@@ -111,6 +206,7 @@ class PolicyTest extends TestCase
             ->assertNoContent(204);
 
         // Test returning (modified) mail content
+        $john->setConfig(['externalsender_policy' => true]);
         $url = '/api/webhooks/policy/mail/filter?recipient=john@kolab.org&sender=jack@external.tld';
         $content = $this->call('POST', $url, [], [], [], $headers, $post)
             ->assertStatus(200)
@@ -118,11 +214,6 @@ class PolicyTest extends TestCase
             ->streamedContent();
 
         $this->assertStringContainsString('Subject: [EXTERNAL] test sync', $content);
-
-        // TODO: Test multipart/form-data request
-        // TODO: Test rejecting mail
-        // TODO: Test two modules that both modify the mail content
-        $this->markTestIncomplete();
     }
 
     /**

@@ -332,10 +332,17 @@ class MailParser
 
     /**
      * Set email address of the recipient
+     *
+     * @param string|User $recipient Recipient email address or User object
      */
-    public function setRecipient(string $recipient): void
+    public function setRecipient($recipient): void
     {
-        $this->recipient = $recipient;
+        if ($recipient instanceof User) {
+            $this->user = $recipient;
+            $this->recipient = $recipient->email;
+        } else {
+            $this->recipient = $recipient;
+        }
     }
 
     /**

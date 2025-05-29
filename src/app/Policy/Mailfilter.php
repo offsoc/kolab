@@ -5,12 +5,19 @@ namespace App\Policy;
 use App\Policy\Mailfilter\MailParser;
 use App\Policy\Mailfilter\Modules;
 use App\Policy\Mailfilter\Result;
+use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class Mailfilter
 {
+    public const CODE_ACCEPT = 200;
+    public const CODE_ACCEPT_EMPTY = 204;
+    public const CODE_DISCARD = 461;
+    public const CODE_REJECT = 460;
+    public const CODE_ERROR = 500;
+
     /**
      * SMTP Content Filter
      *
@@ -40,11 +47,28 @@ class Mailfilter
         // then we'd send body in another request, but only if needed. For example, a text/plain
         // message from same domain sender does not include an iTip, nor needs a footer injection.
 
+        // Find the recipient user
+        $user = User::where('email', $request->recipient)->first();
+
+        if (empty($user)) {
+            // FIXME: Better code? Should we use custom header instead?
+            return response('', self::CODE_REJECT);
+        }
+
+        // Get list of enabled modules for the recipient user
+        $modules = self::getModulesConfig($user);
+
+        if (empty($modules)) {
+            return response('', self::CODE_ACCEPT_EMPTY);
+        }
+
+        // Handle the mail content from the input
         $files = $request->allFiles();
+
         if (count($files) == 1) {
             $file = $files[array_key_first($files)];
             if (!$file->isValid()) {
-                return response('Invalid file upload', 500);
+                return response('Invalid file upload', self::CODE_ERROR);
             }
 
             $stream = fopen($file->path(), 'r');
@@ -52,35 +76,28 @@ class Mailfilter
             $stream = $request->getContent(true);
         }
 
+        // Initialize mail parser
         $parser = new MailParser($stream);
-
-        if ($recipient = $request->recipient) {
-            $parser->setRecipient($recipient);
-        }
+        $parser->setRecipient($user);
 
         if ($sender = $request->sender) {
             $parser->setSender($sender);
         }
 
-        // TODO: The list of modules and their config will come from somewhere
-        $modules = [
-            'itip' => Modules\ItipModule::class,
-            'external-sender' => Modules\ExternalSenderModule::class,
-        ];
-
-        foreach ($modules as $module) {
-            $engine = new $module();
+        // Execute modules
+        foreach ($modules as $module => $config) {
+            $engine = new $module($config);
 
             $result = $engine->handle($parser);
 
             if ($result) {
                 if ($result->getStatus() == Result::STATUS_REJECT) {
                     // FIXME: Better code? Should we use custom header instead?
-                    return response('', 460);
+                    return response('', self::CODE_REJECT);
                 }
                 if ($result->getStatus() == Result::STATUS_DISCARD) {
                     // FIXME: Better code? Should we use custom header instead?
-                    return response('', 461);
+                    return response('', self::CODE_DISCARD);
                 }
             }
         }
@@ -104,6 +121,46 @@ class Mailfilter
             return $response;
         }
 
-        return response('', 204);
+        return response('', self::CODE_ACCEPT_EMPTY);
+    }
+
+    /**
+     * Get list of enabled mail filter modules with their configuration
+     */
+    protected static function getModulesConfig(User $user): array
+    {
+        $modules = [
+            Modules\ItipModule::class => [],
+            Modules\ExternalSenderModule::class => [],
+        ];
+
+        // Get user configuration (and policy if it is the account owner)
+        $config = $user->getConfig();
+
+        // Include account policy (if it is not the account owner)
+        $wallet = $user->wallet();
+        if ($wallet->user_id != $user->id) {
+            $policy = array_filter(
+                $wallet->owner->getConfig(),
+                fn ($key) => str_contains($key, 'policy'),
+                \ARRAY_FILTER_USE_KEY
+            );
+
+            $config = array_merge($config, $policy);
+        }
+
+        foreach ($modules as $class => $module_config) {
+            $module = strtolower(str_replace('Module', '', class_basename($class)));
+            if (
+                (isset($config["{$module}_config"]) && $config["{$module}_config"] === false)
+                || (!isset($config["{$module}_config"]) && empty($config["{$module}_policy"]))
+            ) {
+                unset($modules[$class]);
+            }
+
+            // TODO: Collect module configuration
+        }
+
+        return $modules;
     }
 }

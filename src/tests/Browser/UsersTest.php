@@ -35,6 +35,8 @@ class UsersTest extends TestCaseDusk
         'billing_address' => "601 13th Street NW\nSuite 900 South\nWashington, DC 20005",
         'external_email' => 'john.doe.external@gmail.com',
         'phone' => '+1 509-248-1111',
+        'itip_config' => null,
+        'externalsender_config' => null,
     ];
 
     protected function setUp(): void
@@ -414,41 +416,54 @@ class UsersTest extends TestCaseDusk
         $john->setSetting('greylist_enabled', null);
         $john->setSetting('guam_enabled', null);
         $john->setSetting('limit_geo', null);
+        $john->setSetting('externalsender_config', 'false');
 
+        // Mail delivery section
         $this->browse(static function (Browser $browser) use ($john) {
             $browser->visit('/user/' . $john->id)
                 ->on(new UserInfo())
                 ->assertSeeIn('@nav #tab-settings', 'Settings')
                 ->click('@nav #tab-settings')
-                ->assertSeeIn('@setting-options-head', 'Main Options')
-                ->with('@setting-options', static function (Browser $browser) {
+                ->assertMissing('@setting-options-head') // all main options are hidden
+                ->assertMissing('@setting-options')
+                ->assertSeeIn('@setting-maildelivery-head', 'Mail delivery')
+                ->with('@setting-maildelivery', static function (Browser $browser) {
                     $browser->assertSeeIn('div.row:nth-child(1) label', 'Greylisting')
-                        ->assertMissing('div.row:nth-child(2)') // guam and geo-lockin settings are hidden
                         ->click('div.row:nth-child(1) input[type=checkbox]:checked')
+                        ->assertSeeIn('div.row:nth-child(2) label', 'Calendar invitations')
+                        ->assertSelectHasOptions('div.row:nth-child(2) select', ['', 'true', 'false'])
+                        ->assertSelected('div.row:nth-child(2) select', '')
+                        ->select('div.row:nth-child(2) select', 'true')
+                        ->assertSeeIn('div.row:nth-child(3) label', 'External sender warning')
+                        ->assertSelectHasOptions('div.row:nth-child(3) select', ['', 'true', 'false'])
+                        ->assertSelected('div.row:nth-child(3) select', 'false')
+                        ->select('div.row:nth-child(3) select', '')
                         ->click('button[type=submit]')
                         ->assertToast(Toast::TYPE_SUCCESS, 'User settings updated successfully.');
                 });
         });
 
         $this->assertSame('false', $john->getSetting('greylist_enabled'));
+        $this->assertSame('true', $john->getSetting('itip_config'));
+        $this->assertNull($john->getSetting('externalsender_config'));
 
+        // Main options section
         $this->addBetaEntitlement($john);
-
         $this->browse(function (Browser $browser) use ($john) {
             $browser->refresh()
                 ->on(new UserInfo())
                 ->click('@nav #tab-settings')
+                ->assertSeeIn('@setting-options-head', 'Main options')
                 ->with('@setting-options', function (Browser $browser) use ($john) {
-                    $browser->assertSeeIn('div.row:nth-child(1) label', 'Greylisting')
-                        ->assertSeeIn('div.row:nth-child(2) label', 'IMAP proxy')
-                        ->assertNotChecked('div.row:nth-child(2) input')
-                        ->assertSeeIn('div.row:nth-child(3) label', 'Geo-lockin')
+                    $browser->assertSeeIn('div.row:nth-child(1) label', 'IMAP proxy')
+                        ->assertNotChecked('div.row:nth-child(1) input')
+                        ->assertSeeIn('div.row:nth-child(2) label', 'Geo-lockin')
                         ->with(new CountrySelect('#limit_geo'), static function ($browser) {
                             $browser->assertCountries([])
                                 ->setCountries(['CH', 'PL'])
                                 ->assertCountries(['CH', 'PL']);
                         })
-                        ->click('div.row:nth-child(2) input')
+                        ->click('div.row:nth-child(1) input')
                         ->click('button[type=submit]')
                         ->assertToast(Toast::TYPE_SUCCESS, 'User settings updated successfully.');
 
@@ -460,7 +475,7 @@ class UsersTest extends TestCaseDusk
                             $browser->setCountries([])
                                 ->assertCountries([]);
                         })
-                        ->click('div.row:nth-child(2) input')
+                        ->click('div.row:nth-child(1) input')
                         ->click('button[type=submit]')
                         ->assertToast(Toast::TYPE_SUCCESS, 'User settings updated successfully.');
 
@@ -876,9 +891,11 @@ class UsersTest extends TestCaseDusk
                 ->click('@links .link-settings')
                 ->on(new UserInfo())
                 ->click('@nav #tab-settings')
-                // Note: Jack should not see Main Options
+                // Note: Jack should not see Main options nor Mail delivery
                 ->assertMissing('@setting-options')
                 ->assertMissing('@setting-options-head')
+                ->assertMissing('@setting-maildelivery')
+                ->assertMissing('@setting-maildelivery-head')
                 ->assertSeeIn('@setting-delegation-head', 'Delegation')
                 // ->click('@settings .accordion-item:nth-child(2) .accordion-button')
                 ->whenAvailable('@setting-delegation', static function (Browser $browser) {

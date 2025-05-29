@@ -5,6 +5,7 @@ namespace App\Policy\Mailfilter\Modules;
 use App\Auth\Utils;
 use App\Backends\DAV;
 use App\Policy\Mailfilter\MailParser;
+use App\Policy\Mailfilter\Module;
 use App\Policy\Mailfilter\Result;
 use App\Support\Facades\DAV as DAVFacade;
 use App\User;
@@ -12,7 +13,7 @@ use Sabre\VObject\Component;
 use Sabre\VObject\Document;
 use Sabre\VObject\Reader;
 
-class ItipModule
+class ItipModule extends Module
 {
     protected $davClient;
     protected $davFolder;

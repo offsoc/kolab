@@ -258,6 +258,7 @@ class UsersController extends RelationController
             'enableDistlists' => $isController && $hasCustomDomain && \config('app.with_distlists'),
             'enableFiles' => !$isDegraded && $hasBeta && \config('app.with_files'),
             'enableFolders' => $isController && $hasCustomDomain && \config('app.with_shared_folders'),
+            'enableMailfilter' => $isController && config('app.with_mailfilter'),
             'enableResources' => $isController && $hasCustomDomain && $hasBeta && \config('app.with_resources'),
             'enableRooms' => $hasMeet,
             'enableSettings' => $isController,

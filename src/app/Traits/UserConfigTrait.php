@@ -13,16 +13,24 @@ trait UserConfigTrait
     public function getConfig(): array
     {
         $settings = $this->getSettings([
+            'externalsender_config',
+            'externalsender_policy',
             'greylist_enabled',
             'guam_enabled',
-            'password_policy',
-            'max_password_age',
+            'itip_config',
+            'itip_policy',
             'limit_geo',
+            'max_password_age',
+            'password_policy',
         ]);
 
         $config = [
+            'externalsender_config' => self::boolOrNull($settings['externalsender_config']),
+            'externalsender_policy' => $settings['externalsender_policy'] === 'true',
             'greylist_enabled' => $settings['greylist_enabled'] !== 'false',
             'guam_enabled' => $settings['guam_enabled'] === 'true',
+            'itip_config' => self::boolOrNull($settings['itip_config']),
+            'itip_policy' => $settings['itip_policy'] === 'true',
             'limit_geo' => $settings['limit_geo'] ? json_decode($settings['limit_geo'], true) : [],
             'max_password_age' => $settings['max_password_age'],
             'password_policy' => $settings['password_policy'],
@@ -43,8 +51,10 @@ trait UserConfigTrait
         $errors = [];
 
         foreach ($config as $key => $value) {
-            if ($key == 'greylist_enabled') {
+            if (in_array($key, ['greylist_enabled', 'itip_policy', 'externalsender_policy'])) {
                 $this->setSetting($key, $value ? 'true' : 'false');
+            } elseif (in_array($key, ['itip_config', 'externalsender_config'])) {
+                $this->setSetting($key, $value === null ? null : ($value ? 'true' : 'false'));
             } elseif ($key == 'guam_enabled') {
                 $this->setSetting($key, $value ? 'true' : null);
             } elseif ($key == 'limit_geo') {
@@ -82,6 +92,14 @@ trait UserConfigTrait
         }
 
         return $errors;
+    }
+
+    /**
+     * Convert string value into real value (bool or null)
+     */
+    private static function boolOrNull($value): ?bool
+    {
+        return $value === 'true' ? true : ($value === 'false' ? false : null);
     }
 
     /**

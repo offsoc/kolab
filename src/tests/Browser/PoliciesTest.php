@@ -12,6 +12,17 @@ use Tests\TestCaseDusk;
 
 class PoliciesTest extends TestCaseDusk
 {
+    protected function tearDown(): void
+    {
+        $john = $this->getTestUser('john@kolab.org');
+        $john->setSettings([
+            'itip_policy' => null,
+            'externalsender_policy' => null,
+        ]);
+
+        parent::tearDown();
+    }
+
     /**
      * Test Policies page (unauthenticated)
      */
@@ -50,11 +61,11 @@ class PoliciesTest extends TestCaseDusk
     }
 
     /**
-     * Test Policies page
+     * Test password policies page
      *
      * @depends testDashboard
      */
-    public function testPolicies(): void
+    public function testPasswordPolicies(): void
     {
         $john = $this->getTestUser('john@kolab.org');
         $john->setSetting('password_policy', 'min:5,max:100,lower');
@@ -64,9 +75,9 @@ class PoliciesTest extends TestCaseDusk
             $browser->click('@links .link-policies')
                 ->on(new Policies())
                 ->assertSeeIn('#policies .card-title', 'Policies')
-                // Password policy
-                ->assertSeeIn('@form .row:nth-child(1) > label', 'Password Policy')
-                ->with('@form #password_policy', static function (Browser $browser) {
+                ->assertSeeIn('#policies .nav-item:nth-child(1)', 'Password')
+                ->assertSeeIn('@password-form .row:nth-child(1) > label', 'Password Policy')
+                ->with('@password-form #password_policy', static function (Browser $browser) {
                     $browser->assertElementsCount('li', 7)
                         ->assertSeeIn('li:nth-child(1) label', 'Minimum password length')
                         ->assertChecked('li:nth-child(1) input[type=checkbox]')
@@ -99,8 +110,8 @@ class PoliciesTest extends TestCaseDusk
                         ->click('li:nth-child(3) input[type=checkbox]')
                         ->click('li:nth-child(4) input[type=checkbox]');
                 })
-                ->assertSeeIn('@form .row:nth-child(2) > label', 'Password Retention')
-                ->with('@form #password_retention', static function (Browser $browser) {
+                ->assertSeeIn('@password-form .row:nth-child(2) > label', 'Password Retention')
+                ->with('@password-form #password_retention', static function (Browser $browser) {
                     $browser->assertElementsCount('li', 1)
                         ->assertSeeIn('li:nth-child(1) label', 'Require a password change every')
                         ->assertNotChecked('li:nth-child(1) input[type=checkbox]')
@@ -110,11 +121,48 @@ class PoliciesTest extends TestCaseDusk
                         ->check('li:nth-child(1) input[type=checkbox]')
                         ->select('li:nth-child(1) select', 6);
                 })
-                ->click('button[type=submit]')
+                ->click('@password-form button[type=submit]')
                 ->assertToast(Toast::TYPE_SUCCESS, 'User settings updated successfully.');
         });
 
         $this->assertSame('min:11,max:120,upper', $john->getSetting('password_policy'));
         $this->assertSame('6', $john->getSetting('max_password_age'));
+    }
+
+    /**
+     * Test maildelivery policies page
+     *
+     * @depends testDashboard
+     */
+    public function testMailDeliveryPolicies(): void
+    {
+        $john = $this->getTestUser('john@kolab.org');
+        $john->setSettings([
+            'itip_policy' => 'true',
+            'externalsender_policy' => null,
+        ]);
+
+        $this->browse(static function (Browser $browser) {
+            $browser->visit('/policies')
+                ->on(new Policies())
+                ->assertSeeIn('#policies .card-title', 'Policies')
+                ->assertSeeIn('#policies .nav-item:nth-child(2)', 'Mail delivery')
+                ->click('#policies .nav-item:nth-child(2)')
+                ->with('@maildelivery-form', static function (Browser $browser) {
+                    $browser->assertElementsCount('div.row', 2)
+                        ->assertSeeIn('div.row:nth-child(1) label', 'Calendar invitations')
+                        ->assertChecked('div.row:nth-child(1) input[type=checkbox]')
+                        ->assertSeeIn('div.row:nth-child(2) label', 'External sender warning')
+                        ->assertNotChecked('div.row:nth-child(2) input[type=checkbox]')
+                        // Change the policy
+                        ->click('div.row:nth-child(1) input[type=checkbox]')
+                        ->click('div.row:nth-child(2) input[type=checkbox]')
+                        ->click('button[type=submit]');
+                })
+                ->assertToast(Toast::TYPE_SUCCESS, 'User settings updated successfully.');
+        });
+
+        $this->assertSame('false', $john->getSetting('itip_policy'));
+        $this->assertSame('true', $john->getSetting('externalsender_policy'));
     }
 }

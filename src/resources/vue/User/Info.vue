@@ -92,15 +92,6 @@
                             <accordion class="mt-3" id="settings-all" :names="settingsSections" :buttons="settingsButtons">
                                 <template #options v-if="settingsSections.options">
                                     <form @submit.prevent="submitSettings">
-                                        <div class="row checkbox mb-3">
-                                            <label for="greylist_enabled" class="col-sm-4 col-form-label">{{ $t('user.greylisting') }}</label>
-                                            <div class="col-sm-8 pt-2">
-                                                <input type="checkbox" id="greylist_enabled" name="greylist_enabled" value="1" class="form-check-input d-block mb-2" :checked="user.config.greylist_enabled">
-                                                <small id="greylisting-hint" class="text-muted">
-                                                    {{ $t('user.greylisting-text') }}
-                                                </small>
-                                            </div>
-                                        </div>
                                         <div v-if="$root.hasPermission('beta')" class="row checkbox mb-3">
                                             <label for="guam_enabled" class="col-sm-4 col-form-label">
                                                 {{ $t('user.imapproxy') }}
@@ -122,6 +113,46 @@
                                                 <country-select id="limit_geo" v-model="user.config.limit_geo"></country-select>
                                                 <small id="geolimit-hint" class="text-muted">
                                                     {{ $t('user.geolimit-text') }}
+                                                </small>
+                                            </div>
+                                        </div>
+                                        <btn class="btn-primary" type="submit" icon="check">{{ $t('btn.submit') }}</btn>
+                                    </form>
+                                </template>
+                                <template #maildelivery v-if="settingsSections.maildelivery">
+                                    <form @submit.prevent="submitMailDelivery">
+                                        <div class="row checkbox mb-3">
+                                            <label for="greylist_enabled" class="col-sm-4 col-form-label">{{ $t('user.greylisting') }}</label>
+                                            <div class="col-sm-8 pt-2">
+                                                <input type="checkbox" id="greylist_enabled" name="greylist_enabled" value="1" class="form-check-input d-block mb-2" :checked="user.config.greylist_enabled">
+                                                <small id="greylisting-hint" class="text-muted">
+                                                    {{ $t('user.greylisting-text') }}
+                                                </small>
+                                            </div>
+                                        </div>
+                                        <div class="row mb-3" v-if="$root.authInfo.statusInfo.enableMailfilter">
+                                            <label for="itip_config" class="col-sm-4 col-form-label">{{ $t('policies.calinvitations') }}</label>
+                                            <div class="col-sm-8">
+                                                <select id="itip_config" name="itip" class="form-select">
+                                                    <option value="" :selected="user.config.itip_config == null">{{ $t('form.default') }}</option>
+                                                    <option value="true" :selected="user.config.itip_config === true">{{ $t('form.enabled') }}</option>
+                                                    <option value="false" :selected="user.config.itip_config === false">{{ $t('form.disabled') }}</option>
+                                                </select>
+                                                <small id="itip-hint" class="text-muted">
+                                                    {{ $t('policies.calinvitations-text') }}
+                                                </small>
+                                            </div>
+                                        </div>
+                                        <div class="row mb-3" v-if="$root.authInfo.statusInfo.enableMailfilter">
+                                            <label for="externalsender_config" class="col-sm-4 col-form-label">{{ $t('policies.extsender') }}</label>
+                                            <div class="col-sm-8">
+                                                <select id="externalsender_config" name="extsender" class="form-select">
+                                                    <option value="" :selected="user.config.externalsender_config == null">{{ $t('form.default') }}</option>
+                                                    <option value="true" :selected="user.config.externalsender_config === true">{{ $t('form.enabled') }}</option>
+                                                    <option value="false" :selected="user.config.externalsender_config === false">{{ $t('form.disabled') }}</option>
+                                                </select>
+                                                <small id="externalsender-hint" class="text-muted">
+                                                    {{ $t('policies.extsender-text') }}
                                                 </small>
                                             </div>
                                         </div>
@@ -321,7 +352,10 @@
             settingsSections: function () {
                 let opts = {}
                 if (this.isController) {
-                    opts.options = this.$t('form.mainopts')
+                    if (this.$root.hasPermission('beta')) {
+                        opts.options = this.$t('form.mainopts')
+                    }
+                    opts.maildelivery = this.$t('policies.mailDelivery')
                 }
                 if ((this.isController || this.isSelf) && this.$root.authInfo.statusInfo.enableDelegation) {
                     opts.delegation = this.$t('user.delegation')
@@ -481,6 +515,25 @@
                         }
                     })
             },
+            submitMailDelivery() {
+                this.$root.clearFormValidation('#maildelivery form')
+
+                const typeMap = { 'true': true, 'false': false }
+                let post = {}
+
+                $('#maildelivery form').find('select,input[type=checkbox]').each(function() {
+                    if (this.nodeName == 'INPUT') {
+                        post[this.id] = this.checked ? 1 : 0
+                    } else {
+                        post[this.id] = typeMap[this.value] || null
+                    }
+                })
+
+                axios.post('/api/v4/users/' + this.user_id + '/config', post)
+                    .then(response => {
+                        this.$toast.success(response.data.message)
+                    })
+            },
             submitPersonalSettings() {
                 this.$root.clearFormValidation($('#personal form'))
 
@@ -504,8 +557,7 @@
 
                 let post = this.$root.pick(this.user.config, ['limit_geo'])
 
-                const checklist = ['greylist_enabled', 'guam_enabled']
-                checklist.forEach(name => {
+                ['guam_enabled'].forEach(name => {
                     if ($('#' + name).length) {
                         post[name] = $('#' + name).prop('checked') ? 1 : 0
                     }

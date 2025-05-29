@@ -22,7 +22,7 @@ class Policies extends Page
      */
     public function assert($browser)
     {
-        $browser->waitFor('@form')
+        $browser->waitFor('@password-form')
             ->waitUntilMissing('.app-loader');
     }
 
@@ -33,7 +33,8 @@ class Policies extends Page
     {
         return [
             '@app' => '#app',
-            '@form' => '#policies form',
+            '@password-form' => '#password form',
+            '@maildelivery-form' => '#mailDelivery form',
         ];
     }
 }

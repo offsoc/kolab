@@ -11,33 +11,6 @@ use Illuminate\Http\Request;
 class PasswordPolicyController extends Controller
 {
     /**
-     * Fetch the password policy for the current user account.
-     * The result includes all supported policy rules.
-     *
-     * @return JsonResponse
-     */
-    public function index(Request $request)
-    {
-        // Get the account owner
-        $owner = $this->guard()->user()->walletOwner();
-
-        // Get the policy
-        $policy = new Password($owner);
-        $rules = $policy->rules(true);
-
-        // Get the account's password retention config
-        $config = [
-            'max_password_age' => $owner->getSetting('max_password_age'),
-        ];
-
-        return response()->json([
-            'list' => array_values($rules),
-            'count' => count($rules),
-            'config' => $config,
-        ]);
-    }
-
-    /**
      * Validate the password regarding the defined policies.
      *
      * @return JsonResponse
