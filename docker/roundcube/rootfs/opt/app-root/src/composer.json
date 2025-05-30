@@ -14,6 +14,13 @@
     "repositories": [
         {
             "type": "path",
+            "url": "/opt/app-root/src/roundcubemail-plugins-kolab/plugins/kolab",
+            "options": {
+                "symlink": false
+            }
+        },
+        {
+            "type": "path",
             "url": "/opt/app-root/src/roundcubemail-plugins-kolab/plugins/kolab_activesync",
             "options": {
                 "symlink": false
@@ -145,6 +152,7 @@
         "endroid/qr-code": "~1.6.5",
         "guzzlehttp/guzzle": "^7.4.1",
         "kolab/calendar": "~3.6.0",
+        "kolab/kolab": "~3.6.0",
         "kolab/kolab_activesync": "~3.6.0",
         "kolab/kolab_addressbook": "~3.6.0",
         "kolab/kolab_auth": "~3.6.0",

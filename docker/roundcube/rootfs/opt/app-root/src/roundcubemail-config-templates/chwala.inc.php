@@ -25,9 +25,8 @@ if (getenv('KOLABOBJECTS_COMPAT_MODE') == "true") {
 // $config['fileapi_drivers'] = array('seafile', 'webdav');
 // $config['fileapi_drivers'] = array('webdav');
 
-
-// Disable the kolab-auth plugin
-$config['fileapi_plugins'] = ['kolab_folders'];
+// Roundcube plugins that have to be enabled for Chwala
+$config['fileapi_plugins'] = [];
 
 // Pre-defined list of external storage sources.
 // Here admins can define sources which will be "mounted" into users folder tree

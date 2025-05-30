@@ -84,6 +84,7 @@ if (!function_exists("getenvlist")) {
         'archive',
         'calendar',
         'jqueryui',
+        'kolab',
         'kolab_activesync',
         'kolab_addressbook',
         'kolab_files',
@@ -92,7 +93,6 @@ if (!function_exists("getenvlist")) {
         'newmail_notifier',
         'odfviewer',
         'redundant_attachments',
-        'contextmenu',
         'tasklist',
         'enigma',
     ];

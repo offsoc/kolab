@@ -200,6 +200,7 @@ podman__run_roundcube() {
         -e KOLAB_FILES_SERVER_URL=http://localhost:8080/chwala \
         -e FILEAPI_WOPI_OFFICE=http://localhost:9980 \
         -e FILEAPI_KOLABFILES_BASEURI=http://localhost:8000/api \
+        -e KOLAB_API_URL=http://localhost:8000 \
         -e FILE_API_SERVER_URL=http://localhost:8080/chwala/api/ \
         -e KOLAB_ADDRESSBOOK_CARDDAV_SERVER=http://localhost:11080/dav \
         -e KOLAB_FREEBUSY_SERVER=http://localhost:11080/freebusy/user/%u \
