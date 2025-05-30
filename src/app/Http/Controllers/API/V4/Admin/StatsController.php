@@ -385,18 +385,21 @@ class StatsController extends Controller
                     ->where('key', 'country');
             })
             ->whereNull('users.deleted_at')
+            ->whereNull('users.role')
             ->whereNot('users.status', '&', User::STATUS_DEGRADED)
             ->whereNot('users.status', '&', User::STATUS_SUSPENDED)
-            ->groupByRaw('1');
+            ->groupByRaw('1')
+            ->orderBy('cnt', 'desc');
 
         $addTenantScope = static function ($builder, $tenantId) {
             return $builder->where('users.tenant_id', $tenantId);
         };
 
-        // We get 7 countries with biggest count, the rest is aggregated in 'Other' item
         $result = [];
         $other = 0;
-        $counts = $this->applyTenantScope($counts, $addTenantScope)
+
+        // We get 7 countries with the biggest count, the rest is aggregated in 'Other' item
+        $this->applyTenantScope($counts, $addTenantScope)
             ->pluck('cnt', 'country')
             ->each(function (int $count, string $country) use (&$result, &$other) {
                 if (empty($country) || count($result) >= 7) {
@@ -404,8 +407,7 @@ class StatsController extends Controller
                 } else {
                     $result[$country] = $count;
                 }
-            })
-            ->all();
+            });
 
         if ($other) {
             $result[self::trans('app.other')] = $other;
