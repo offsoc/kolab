@@ -71,7 +71,7 @@
                 const cancelToken = axios.CancelToken;
                 this.cancelToken = cancelToken.source();
 
-                axios.post('/api/auth/password-policy/check', post, { cancelToken: this.cancelToken.token })
+                axios.post('/api/auth/password-policy-check', post, { cancelToken: this.cancelToken.token })
                     .then(response => {
                         if (response.data.list) {
                             this.policy = response.data.list

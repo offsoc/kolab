@@ -9,6 +9,7 @@ use App\Policy\RateLimit;
 use App\Policy\SmtpAccess;
 use App\Policy\SPF;
 use App\Rules\Password;
+use App\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -16,9 +17,40 @@ use Illuminate\Http\Response;
 class PolicyController extends Controller
 {
     /**
+     * Validate the password regarding the defined policies.
+     *
+     * @return JsonResponse
+     */
+    public function checkPassword(Request $request)
+    {
+        $userId = $request->input('user');
+
+        $user = !empty($userId) ? User::find($userId) : null;
+
+        // Get the policy
+        $policy = new Password($user ? $user->walletOwner() : null, $user);
+
+        // Check the password
+        $status = $policy->check($request->input('password'));
+
+        $passed = array_filter(
+            $status,
+            static function ($rule) {
+                return !empty($rule['status']);
+            }
+        );
+
+        return response()->json([
+            'status' => count($passed) == count($status) ? 'success' : 'error',
+            'list' => array_values($status),
+            'count' => count($status),
+        ]);
+    }
+
+    /**
      * Take a greylist policy request
      *
-     * @return JsonResponse The response
+     * @return JsonResponse
      */
     public function greylist()
     {
@@ -86,7 +118,7 @@ class PolicyController extends Controller
     /*
      * Apply a sensible rate limitation to a request.
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function ratelimit()
     {
@@ -98,7 +130,7 @@ class PolicyController extends Controller
     /*
      * Apply the sender policy framework to a request.
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function senderPolicyFramework()
     {
@@ -110,7 +142,7 @@ class PolicyController extends Controller
     /*
      * Validate sender/recipients in an SMTP submission request.
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function submission()
     {

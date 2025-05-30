@@ -34,7 +34,7 @@ Route::group(
         'prefix' => 'auth',
     ],
     static function () {
-        Route::post('password-policy/check', [API\PasswordPolicyController::class, 'check']);
+        Route::post('password-policy-check', [API\V4\PolicyController::class, 'checkPassword']);
 
         Route::post('password-reset/init', [API\PasswordResetController::class, 'init']);
         Route::post('password-reset/verify', [API\PasswordResetController::class, 'verify']);
