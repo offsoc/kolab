@@ -104,10 +104,120 @@ if (\config('app.with_files')) {
     );
 }
 
+if (\config('app.with_admin')) {
+    Route::group(
+        [
+            'domain' => 'admin.' . \config('app.website_domain'),
+            'middleware' => ['auth:api', 'admin'],
+            'prefix' => 'v4',
+        ],
+        static function () {
+            Route::apiResource('domains', API\V4\Admin\DomainsController::class);
+            Route::get('domains/{id}/skus', [API\V4\Admin\DomainsController::class, 'skus']);
+            Route::post('domains/{id}/suspend', [API\V4\Admin\DomainsController::class, 'suspend']);
+            Route::post('domains/{id}/unsuspend', [API\V4\Admin\DomainsController::class, 'unsuspend']);
+
+            Route::get('eventlog/{type}/{id}', [API\V4\Admin\EventLogController::class, 'index']);
+
+            Route::apiResource('groups', API\V4\Admin\GroupsController::class);
+            Route::post('groups/{id}/suspend', [API\V4\Admin\GroupsController::class, 'suspend']);
+            Route::post('groups/{id}/unsuspend', [API\V4\Admin\GroupsController::class, 'unsuspend']);
+
+            Route::apiResource('resources', API\V4\Admin\ResourcesController::class);
+            Route::apiResource('shared-folders', API\V4\Admin\SharedFoldersController::class);
+            Route::apiResource('skus', API\V4\Admin\SkusController::class);
+
+            Route::apiResource('users', API\V4\Admin\UsersController::class);
+            Route::get('users/{id}/discounts', [API\V4\Admin\DiscountsController::class, 'userDiscounts']);
+            Route::post('users/{id}/login-as', [API\V4\Admin\UsersController::class, 'loginAs']);
+            Route::post('users/{id}/reset-2fa', [API\V4\Admin\UsersController::class, 'reset2FA']);
+            Route::post('users/{id}/reset-geolock', [API\V4\Admin\UsersController::class, 'resetGeoLock']);
+            Route::post('users/{id}/resync', [API\V4\Admin\UsersController::class, 'resync']);
+            Route::get('users/{id}/skus', [API\V4\Admin\UsersController::class, 'skus']);
+            Route::post('users/{id}/skus/{sku}', [API\V4\Admin\UsersController::class, 'setSku']);
+            Route::post('users/{id}/suspend', [API\V4\Admin\UsersController::class, 'suspend']);
+            Route::post('users/{id}/unsuspend', [API\V4\Admin\UsersController::class, 'unsuspend']);
+
+            Route::apiResource('wallets', API\V4\Admin\WalletsController::class);
+            Route::post('wallets/{id}/one-off', [API\V4\Admin\WalletsController::class, 'oneOff']);
+            Route::get('wallets/{id}/receipts', [API\V4\Admin\WalletsController::class, 'receipts']);
+            Route::get('wallets/{id}/receipts/{receipt}', [API\V4\Admin\WalletsController::class, 'receiptDownload']);
+            Route::get('wallets/{id}/transactions', [API\V4\Admin\WalletsController::class, 'transactions']);
+
+            Route::get('stats/chart/{chart}', [API\V4\Admin\StatsController::class, 'chart']);
+        }
+    );
+
+    Route::group(
+        [
+            'domain' => 'admin.' . \config('app.website_domain'),
+            'prefix' => 'v4',
+        ],
+        static function () {
+            Route::get('inspect-request', [API\V4\Admin\UsersController::class, 'inspectRequest']);
+        }
+    );
+}
+
+if (\config('app.with_reseller')) {
+    Route::group(
+        [
+            'domain' => 'reseller.' . \config('app.website_domain'),
+            'middleware' => ['auth:api', 'reseller'],
+            'prefix' => 'v4',
+        ],
+        static function () {
+            Route::apiResource('domains', API\V4\Reseller\DomainsController::class);
+            Route::get('domains/{id}/skus', [API\V4\Reseller\DomainsController::class, 'skus']);
+            Route::post('domains/{id}/suspend', [API\V4\Reseller\DomainsController::class, 'suspend']);
+            Route::post('domains/{id}/unsuspend', [API\V4\Reseller\DomainsController::class, 'unsuspend']);
+
+            Route::get('eventlog/{type}/{id}', [API\V4\Reseller\EventLogController::class, 'index']);
+
+            Route::apiResource('groups', API\V4\Reseller\GroupsController::class);
+            Route::post('groups/{id}/suspend', [API\V4\Reseller\GroupsController::class, 'suspend']);
+            Route::post('groups/{id}/unsuspend', [API\V4\Reseller\GroupsController::class, 'unsuspend']);
+
+            Route::apiResource('invitations', API\V4\Reseller\InvitationsController::class);
+            Route::post('invitations/{id}/resend', [API\V4\Reseller\InvitationsController::class, 'resend']);
+
+            Route::post('payments', [API\V4\Reseller\PaymentsController::class, 'store']);
+            Route::get('payments/mandate', [API\V4\Reseller\PaymentsController::class, 'mandate']);
+            Route::post('payments/mandate', [API\V4\Reseller\PaymentsController::class, 'mandateCreate']);
+            Route::put('payments/mandate', [API\V4\Reseller\PaymentsController::class, 'mandateUpdate']);
+            Route::delete('payments/mandate', [API\V4\Reseller\PaymentsController::class, 'mandateDelete']);
+            Route::get('payments/methods', [API\V4\Reseller\PaymentsController::class, 'paymentMethods']);
+            Route::get('payments/pending', [API\V4\Reseller\PaymentsController::class, 'payments']);
+            Route::get('payments/has-pending', [API\V4\Reseller\PaymentsController::class, 'hasPayments']);
+
+            Route::apiResource('resources', API\V4\Reseller\ResourcesController::class);
+            Route::apiResource('shared-folders', API\V4\Reseller\SharedFoldersController::class);
+            Route::apiResource('skus', API\V4\Reseller\SkusController::class);
+
+            Route::apiResource('users', API\V4\Reseller\UsersController::class);
+            Route::get('users/{id}/discounts', [API\V4\Reseller\DiscountsController::class, 'userDiscounts']);
+            Route::post('users/{id}/reset-2fa', [API\V4\Reseller\UsersController::class, 'reset2FA']);
+            Route::post('users/{id}/reset-geolock', [API\V4\Reseller\UsersController::class, 'resetGeoLock']);
+            Route::post('users/{id}/resync', [API\V4\Reseller\UsersController::class, 'resync']);
+            Route::get('users/{id}/skus', [API\V4\Reseller\UsersController::class, 'skus']);
+            Route::post('users/{id}/skus/{sku}', [API\V4\Reseller\UsersController::class, 'setSku']);
+            Route::post('users/{id}/suspend', [API\V4\Reseller\UsersController::class, 'suspend']);
+            Route::post('users/{id}/unsuspend', [API\V4\Reseller\UsersController::class, 'unsuspend']);
+
+            Route::apiResource('wallets', API\V4\Reseller\WalletsController::class);
+            Route::post('wallets/{id}/one-off', [API\V4\Reseller\WalletsController::class, 'oneOff']);
+            Route::get('wallets/{id}/receipts', [API\V4\Reseller\WalletsController::class, 'receipts']);
+            Route::get('wallets/{id}/receipts/{receipt}', [API\V4\Reseller\WalletsController::class, 'receiptDownload']);
+            Route::get('wallets/{id}/transactions', [API\V4\Reseller\WalletsController::class, 'transactions']);
+
+            Route::get('stats/chart/{chart}', [API\V4\Reseller\StatsController::class, 'chart']);
+        }
+    );
+}
+
 Route::group(
     [
-        'domain' => \config('app.website_domain'),
-        'middleware' => ['auth:api', 'scope:api'],
+        'middleware' => ['regularHosts', 'auth:api', 'scope:api'],
         'prefix' => 'v4',
     ],
     static function () {
@@ -236,113 +346,3 @@ if (\config('app.with_services')) {
 Route::get('health/readiness', [API\V4\HealthController::class, 'readiness']);
 Route::get('health/liveness', [API\V4\HealthController::class, 'liveness']);
 
-if (\config('app.with_admin')) {
-    Route::group(
-        [
-            'domain' => 'admin.' . \config('app.website_domain'),
-            'middleware' => ['auth:api', 'admin'],
-            'prefix' => 'v4',
-        ],
-        static function () {
-            Route::apiResource('domains', API\V4\Admin\DomainsController::class);
-            Route::get('domains/{id}/skus', [API\V4\Admin\DomainsController::class, 'skus']);
-            Route::post('domains/{id}/suspend', [API\V4\Admin\DomainsController::class, 'suspend']);
-            Route::post('domains/{id}/unsuspend', [API\V4\Admin\DomainsController::class, 'unsuspend']);
-
-            Route::get('eventlog/{type}/{id}', [API\V4\Admin\EventLogController::class, 'index']);
-
-            Route::apiResource('groups', API\V4\Admin\GroupsController::class);
-            Route::post('groups/{id}/suspend', [API\V4\Admin\GroupsController::class, 'suspend']);
-            Route::post('groups/{id}/unsuspend', [API\V4\Admin\GroupsController::class, 'unsuspend']);
-
-            Route::apiResource('resources', API\V4\Admin\ResourcesController::class);
-            Route::apiResource('shared-folders', API\V4\Admin\SharedFoldersController::class);
-            Route::apiResource('skus', API\V4\Admin\SkusController::class);
-
-            Route::apiResource('users', API\V4\Admin\UsersController::class);
-            Route::get('users/{id}/discounts', [API\V4\Admin\DiscountsController::class, 'userDiscounts']);
-            Route::post('users/{id}/login-as', [API\V4\Admin\UsersController::class, 'loginAs']);
-            Route::post('users/{id}/reset-2fa', [API\V4\Admin\UsersController::class, 'reset2FA']);
-            Route::post('users/{id}/reset-geolock', [API\V4\Admin\UsersController::class, 'resetGeoLock']);
-            Route::post('users/{id}/resync', [API\V4\Admin\UsersController::class, 'resync']);
-            Route::get('users/{id}/skus', [API\V4\Admin\UsersController::class, 'skus']);
-            Route::post('users/{id}/skus/{sku}', [API\V4\Admin\UsersController::class, 'setSku']);
-            Route::post('users/{id}/suspend', [API\V4\Admin\UsersController::class, 'suspend']);
-            Route::post('users/{id}/unsuspend', [API\V4\Admin\UsersController::class, 'unsuspend']);
-
-            Route::apiResource('wallets', API\V4\Admin\WalletsController::class);
-            Route::post('wallets/{id}/one-off', [API\V4\Admin\WalletsController::class, 'oneOff']);
-            Route::get('wallets/{id}/receipts', [API\V4\Admin\WalletsController::class, 'receipts']);
-            Route::get('wallets/{id}/receipts/{receipt}', [API\V4\Admin\WalletsController::class, 'receiptDownload']);
-            Route::get('wallets/{id}/transactions', [API\V4\Admin\WalletsController::class, 'transactions']);
-
-            Route::get('stats/chart/{chart}', [API\V4\Admin\StatsController::class, 'chart']);
-        }
-    );
-
-    Route::group(
-        [
-            'domain' => 'admin.' . \config('app.website_domain'),
-            'prefix' => 'v4',
-        ],
-        static function () {
-            Route::get('inspect-request', [API\V4\Admin\UsersController::class, 'inspectRequest']);
-        }
-    );
-}
-
-if (\config('app.with_reseller')) {
-    Route::group(
-        [
-            'domain' => 'reseller.' . \config('app.website_domain'),
-            'middleware' => ['auth:api', 'reseller'],
-            'prefix' => 'v4',
-        ],
-        static function () {
-            Route::apiResource('domains', API\V4\Reseller\DomainsController::class);
-            Route::get('domains/{id}/skus', [API\V4\Reseller\DomainsController::class, 'skus']);
-            Route::post('domains/{id}/suspend', [API\V4\Reseller\DomainsController::class, 'suspend']);
-            Route::post('domains/{id}/unsuspend', [API\V4\Reseller\DomainsController::class, 'unsuspend']);
-
-            Route::get('eventlog/{type}/{id}', [API\V4\Reseller\EventLogController::class, 'index']);
-
-            Route::apiResource('groups', API\V4\Reseller\GroupsController::class);
-            Route::post('groups/{id}/suspend', [API\V4\Reseller\GroupsController::class, 'suspend']);
-            Route::post('groups/{id}/unsuspend', [API\V4\Reseller\GroupsController::class, 'unsuspend']);
-
-            Route::apiResource('invitations', API\V4\Reseller\InvitationsController::class);
-            Route::post('invitations/{id}/resend', [API\V4\Reseller\InvitationsController::class, 'resend']);
-
-            Route::post('payments', [API\V4\Reseller\PaymentsController::class, 'store']);
-            Route::get('payments/mandate', [API\V4\Reseller\PaymentsController::class, 'mandate']);
-            Route::post('payments/mandate', [API\V4\Reseller\PaymentsController::class, 'mandateCreate']);
-            Route::put('payments/mandate', [API\V4\Reseller\PaymentsController::class, 'mandateUpdate']);
-            Route::delete('payments/mandate', [API\V4\Reseller\PaymentsController::class, 'mandateDelete']);
-            Route::get('payments/methods', [API\V4\Reseller\PaymentsController::class, 'paymentMethods']);
-            Route::get('payments/pending', [API\V4\Reseller\PaymentsController::class, 'payments']);
-            Route::get('payments/has-pending', [API\V4\Reseller\PaymentsController::class, 'hasPayments']);
-
-            Route::apiResource('resources', API\V4\Reseller\ResourcesController::class);
-            Route::apiResource('shared-folders', API\V4\Reseller\SharedFoldersController::class);
-            Route::apiResource('skus', API\V4\Reseller\SkusController::class);
-
-            Route::apiResource('users', API\V4\Reseller\UsersController::class);
-            Route::get('users/{id}/discounts', [API\V4\Reseller\DiscountsController::class, 'userDiscounts']);
-            Route::post('users/{id}/reset-2fa', [API\V4\Reseller\UsersController::class, 'reset2FA']);
-            Route::post('users/{id}/reset-geolock', [API\V4\Reseller\UsersController::class, 'resetGeoLock']);
-            Route::post('users/{id}/resync', [API\V4\Reseller\UsersController::class, 'resync']);
-            Route::get('users/{id}/skus', [API\V4\Reseller\UsersController::class, 'skus']);
-            Route::post('users/{id}/skus/{sku}', [API\V4\Reseller\UsersController::class, 'setSku']);
-            Route::post('users/{id}/suspend', [API\V4\Reseller\UsersController::class, 'suspend']);
-            Route::post('users/{id}/unsuspend', [API\V4\Reseller\UsersController::class, 'unsuspend']);
-
-            Route::apiResource('wallets', API\V4\Reseller\WalletsController::class);
-            Route::post('wallets/{id}/one-off', [API\V4\Reseller\WalletsController::class, 'oneOff']);
-            Route::get('wallets/{id}/receipts', [API\V4\Reseller\WalletsController::class, 'receipts']);
-            Route::get('wallets/{id}/receipts/{receipt}', [API\V4\Reseller\WalletsController::class, 'receiptDownload']);
-            Route::get('wallets/{id}/transactions', [API\V4\Reseller\WalletsController::class, 'transactions']);
-
-            Route::get('stats/chart/{chart}', [API\V4\Reseller\StatsController::class, 'chart']);
-        }
-    );
-}

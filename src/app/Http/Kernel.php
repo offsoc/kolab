@@ -11,6 +11,7 @@ use App\Http\Middleware\DevelConfig;
 use App\Http\Middleware\Locale;
 use App\Http\Middleware\PreventRequestsDuringMaintenance;
 use App\Http\Middleware\RedirectIfAuthenticated;
+use App\Http\Middleware\RegularHosts;
 use App\Http\Middleware\RequestLogger;
 use App\Http\Middleware\TrimStrings;
 use App\Http\Middleware\TrustProxies;
@@ -96,6 +97,7 @@ class Kernel extends HttpKernel
         'scopes' => CheckScopes::class,
         'scope' => CheckForAnyScope::class,
         'allowedHosts' => AllowedHosts::class,
+        'regularHosts' => RegularHosts::class,
     ];
 
     /**
