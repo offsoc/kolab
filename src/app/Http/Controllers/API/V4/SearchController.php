@@ -27,6 +27,11 @@ class SearchController extends Controller
     public function searchContacts(Request $request)
     {
         $user = $this->guard()->user();
+
+        if (!$user) {
+            return $this->errorResponse(403);
+        }
+
         $search = trim(request()->input('search'));
         $limit = (int) request()->input('limit');
 
