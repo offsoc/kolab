@@ -547,6 +547,15 @@ kolab__run() {
     podman__run_$NAME $@
 }
 
+kolab__refresh() {
+    POD=${POD:-dev}
+    if [ "$1" == "webapp" ]; then
+        podman exec -ti $POD-webapp bash -c "/update-source.sh; ./artisan octane:reload" &
+    else
+        echo "Not implemented"
+    fi
+}
+
 kolab__debug() {
     DEBUG_ARGS="-ti --rm --name debug-$1"
     podman__run_$1 /bin/bash
