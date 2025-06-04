@@ -112,18 +112,15 @@ if [ "$1" == "syncroton" ]; then
         php \
             -dmemory_limit=-1 \
             ../vendor/bin/phpunit \
-            --verbose \
             --testsuite Unit
         php \
             -dmemory_limit=-1 \
             ../vendor/bin/phpunit \
-            --verbose \
             --testsuite Sync
     elif [ "$2" == "quicktest" ]; then
         php \
             -dmemory_limit=-1 \
             ../vendor/bin/phpunit \
-            --verbose \
             --testsuite Unit
     elif [ "$2" == "lint" ]; then
         popd
@@ -135,7 +132,6 @@ if [ "$1" == "syncroton" ]; then
         php \
             -dmemory_limit=-1 \
             ../vendor/bin/phpunit \
-            --verbose \
             --stop-on-defect \
             --stop-on-error \
             --stop-on-failure \
@@ -150,15 +146,13 @@ elif [ "$1" == "irony" ]; then
     if [ "$2" == "testsuite" ]; then
         php \
             -dmemory_limit=-1 \
-            ../vendor/bin/phpunit \
-            --verbose
+            ../vendor/bin/phpunit
     elif [ "$2" == "shell" ]; then
         exec /bin/bash
     else
         php \
             -dmemory_limit=-1 \
             ../vendor/bin/phpunit \
-            --verbose \
             --stop-on-defect \
             --stop-on-error \
             --stop-on-failure \
@@ -192,8 +186,7 @@ elif [ "$1" == "roundcubemail-plugins-kolab" ]; then
         #* there's some error about serializing a libcalendaring object to a string?
         php \
             -dmemory_limit=-1 \
-            ../roundcubemail/vendor/bin/phpunit \
-            --verbose
+            ../roundcubemail/vendor/bin/phpunit
     elif [ "$2" == "lint" ]; then
         cp ../roundcubemail-plugins-kolab.phpstan.neon phpstan.neon
         php -dmemory_limit=-1 ../roundcubemail/vendor/bin/phpstan
@@ -204,7 +197,6 @@ elif [ "$1" == "roundcubemail-plugins-kolab" ]; then
         php \
             -dmemory_limit=-1 \
             ../roundcubemail/vendor/bin/phpunit \
-            --verbose \
             --stop-on-defect \
             --stop-on-error \
             --stop-on-failure \

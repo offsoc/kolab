@@ -23,28 +23,24 @@ if [ "$1" == "browsertest" ]; then
         -dmemory_limit=-1 \
         vendor/bin/phpunit \
         --exclude-group "$EXCLUDE_GROUPS" \
-        --verbose \
         --testsuite Browser
 elif [ "$1" == "testsuite" ]; then
     php \
         -dmemory_limit=-1 \
         vendor/bin/phpunit \
         --exclude-group "$EXCLUDE_GROUPS" \
-        --verbose \
         --testsuite Unit
 
     php \
         -dmemory_limit=-1 \
         vendor/bin/phpunit \
         --exclude-group "$EXCLUDE_GROUPS" \
-        --verbose \
         --testsuite Feature
 elif [ "$1" == "quicktest" ]; then
     php \
         -dmemory_limit=-1 \
         vendor/bin/phpunit \
         --exclude-group "$EXCLUDE_GROUPS" \
-        --verbose \
         --stop-on-defect \
         --stop-on-error \
         --stop-on-failure \
@@ -54,7 +50,6 @@ elif [ "$1" == "quicktest" ]; then
         -dmemory_limit=-1 \
         vendor/bin/phpunit \
         --exclude-group "$EXCLUDE_GROUPS" \
-        --verbose \
         --stop-on-defect \
         --stop-on-error \
         --stop-on-failure \
@@ -83,7 +78,6 @@ EOF
         -dmemory_limit=-1 \
         vendor/bin/phpunit \
         --exclude-group "$EXCLUDE_GROUPS" \
-        --verbose \
         --stop-on-defect \
         --stop-on-error \
         --stop-on-failure \
@@ -100,7 +94,6 @@ else
         -dmemory_limit=-1 \
         vendor/bin/phpunit \
         --exclude-group "$EXCLUDE_GROUPS" \
-        --verbose \
         --stop-on-defect \
         --stop-on-error \
         --stop-on-failure \
