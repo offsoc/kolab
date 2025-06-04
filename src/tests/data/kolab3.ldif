@@ -1,3 +1,6 @@
+version: 1
+
+# entry-id: 1
 dn: associateddomain=kolab3.com,ou=Domains,dc=hosted,dc=com
 objectClass: top
 objectClass: domainrelatedobject
@@ -5,6 +8,17 @@ objectClass: inetdomain
 inetDomainBaseDN: ou=kolab3.com,dc=hosted,dc=com
 associatedDomain: kolab3.com
 associatedDomain: kolab3-alias.com
+
+# entry-id: 2
+dn: ou=my.kolab3.com,ou=Domains,dc=hosted,dc=com
+modifyTimestamp: 20220912130615Z
+modifiersName: cn=directory manager
+nsUniqueId: ed008f0d-21fe11ed-90dee5c5-e8b7dc42
+ou: my.kolab3.com
+objectClass: top
+objectClass: organizationalunit
+creatorsName: cn=directory manager
+createTimestamp: 20220822094441Z
 
 dn: uid=owner@kolab3.com,ou=People,ou=kolab3.com,dc=hosted,dc=com
 cn: Aleksander Machniak
@@ -56,6 +70,33 @@ mailQuota: 2097152
 uid: user@kolab3.com
 userPassword:: e1NTSEE1MTJ9Zzc0K1NFQ1RMc00xeDBhWWtTclRHOXNPRnpFcDh3akNmbGhzaHIyRGpFN21pMUczaU5iNENsSDNsam9yUFJsVGdaMTA1UHNRR0VwTnROcitYUmppZ2c9PQ==
 nsUniqueID: 229dc20c-1b6a11f7-b7c1edc1-0e0f46c4
+kolabDelegate: uid=user2@kolab3.com,ou=People,ou=kolab3.com,dc=hosted,dc=com
+kolabDelegate: uid=user3@kolab3.com,ou=People,ou=kolab3.com,dc=hosted,dc=com
+passwordHistory: 20230705141628Z{PBKDF2_SHA256}AAAIAF
+passwordHistory: 20231004083539Z{PBKDF2_SHA256}AAAIAB
+
+dn: uid=user2@kolab3.com,ou=People,ou=kolab3.com,dc=hosted,dc=com
+cn: Jack Rian
+objectClass: top
+objectClass: inetorgperson
+objectClass: kolabinetorgperson
+objectClass: organizationalperson
+objectClass: mailrecipient
+objectClass: person
+mail: user2@kolab3.com
+uid: user2@kolab3.com
+userPassword:: e1NTSEE1MTJ9Zzc0K1NFQ1RMc00xeDBhWWtTclRHOXNPRnpFcDh3akNmbGhzaHIyRGpFN21pMUczaU5iNENsSDNsam9yUFJsVGdaMTA1UHNRR0VwTnROcitYUmppZ2c9PQ==
+nsUniqueID: 229dc20c-1b6a11f7-b7c1edc1-0e0f46c5
+
+dn: uid=user3@kolab3.com,ou=People,ou=kolab3.com,dc=hosted,dc=com
+cn: User3
+objectClass: top
+objectClass: inetorgperson
+objectClass: kolabinetorgperson
+mail: user3@kolab3.com
+uid: user3@kolab3.com
+userPassword:: e1NTSEE1MTJ9Zzc0K1NFQ1RMc00xeDBhWWtTclRHOXNPRnpFcDh3akNmbGhzaHIyRGpFN21pMUczaU5iNENsSDNsam9yUFJsVGdaMTA1UHNRR0VwTnROcitYUmppZ2c9PQ==
+nsUniqueID: 229dc20c-1b6a11f7-b7c1edc1-0e0f46c6
 
 dn: cn=Group,ou=Groups,ou=kolab3.com,dc=hosted,dc=com
 cn: Group
@@ -66,7 +107,7 @@ objectClass: kolabgroupofuniquenames
 uniqueMember: uid=user@kolab3.com,ou=People,ou=kolab3.com,dc=hosted,dc=com
 uniqueMember: uid=owner@kolab3.com,ou=People,ou=kolab3.com,dc=hosted,dc=com
 kolabAllowSMTPRecipient: recipient@kolab.org
-kolabAllowSMTPSender: sender@gmail.com
+kolabAllowSMTPSender: Sender@gmail.com
 
 dn: cn=Error,ou=Groups,ou=kolab3.com,dc=hosted,dc=com
 cn: Error
@@ -108,7 +149,7 @@ mail: folder1@kolab3.com
 alias: folder-alias1@kolab3.com
 alias: folder-alias2@kolab3.com
 acl: anyone, read-write
-acl: owner@kolab3.com, full
+acl: Owner@kolab3.com, full
 
 dn: cn=Folder2,ou=Shared Folders,ou=kolab3.com,dc=hosted,dc=com
 cn: Folder2

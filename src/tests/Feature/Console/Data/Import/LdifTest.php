@@ -8,6 +8,7 @@ use App\Group;
 use App\Resource;
 use App\SharedFolder;
 use App\User;
+use Illuminate\Support\Collection;
 use Symfony\Component\Console\Input\ArrayInput;
 use Tests\TestCase;
 
@@ -88,42 +89,61 @@ class LdifTest extends TestCase
         ]);
 
         // Users
-        $this->assertSame(2, $owner->users(false)->count());
-        /** @var User $user */
-        $user = $owner->users(false)->where('email', 'user@kolab3.com')->first();
+        /** @var Collection<User> $users */
+        $users = $owner->users(false)->orderBy('email')->get()->keyBy('email');
+        $this->assertCount(4, $users);
 
         // User settings
-        $this->assertSame('Jane', $user->getSetting('first_name'));
-        $this->assertSame('Doe', $user->getSetting('last_name'));
-        $this->assertSame('1234567890', $user->getSetting('phone'));
-        $this->assertSame('ext@gmail.com', $user->getSetting('external_email'));
-        $this->assertSame('Org AG', $user->getSetting('organization'));
+        $this->assertSame('Jane', $users['user@kolab3.com']->getSetting('first_name'));
+        $this->assertSame('Doe', $users['user@kolab3.com']->getSetting('last_name'));
+        $this->assertSame('1234567890', $users['user@kolab3.com']->getSetting('phone'));
+        $this->assertSame('ext@gmail.com', $users['user@kolab3.com']->getSetting('external_email'));
+        $this->assertSame('Org AG', $users['user@kolab3.com']->getSetting('organization'));
 
         // User aliases
-        $aliases = $user->aliases()->orderBy('alias')->pluck('alias')->all();
+        $aliases = $users['user@kolab3.com']->aliases()->orderBy('alias')->pluck('alias')->all();
         $this->assertSame(['alias2@kolab3.com'], $aliases);
 
-        $this->assertEntitlements($user, [
+        $this->assertEntitlements($users['user@kolab3.com'], [
             'groupware',
             'mailbox',
             'storage', 'storage', 'storage', 'storage', 'storage',
         ]);
 
+        // User passwords history
+        $passwords = $users['user@kolab3.com']->passwords()->orderBy('created_at')->get();
+        $this->assertCount(2, $passwords);
+        $this->assertSame('2023-07-05 14:16:28', $passwords[0]->created_at->format('Y-m-d H:i:s'));
+        $this->assertSame('{PBKDF2_SHA256}AAAIAF', $passwords[0]->password);
+        $this->assertSame('2023-10-04 08:35:39', $passwords[1]->created_at->format('Y-m-d H:i:s'));
+        $this->assertSame('{PBKDF2_SHA256}AAAIAB', $passwords[1]->password);
+
+        // User delegation
+        /** @var Collection<User> $delegates */
+        $delegates = $users['user@kolab3.com']->delegatees()->orderBy('email')->get()->keyBy('email');
+        $this->assertCount(2, $delegates);
+        $this->assertSame(['user2@kolab3.com', 'user3@kolab3.com'], $delegates->pluck('email')->all());
+        $this->assertCount(0, $users['user2@kolab3.com']->delegatees()->get());
+        $this->assertCount(0, $users['user3@kolab3.com']->delegatees()->get());
+
         // Domains
-        /** @var Domain[] $domains */
+        /** @var Collection<Domain> $domains */
         $domains = $owner->domains(false, false)->orderBy('namespace')->get();
 
-        $this->assertCount(2, $domains);
+        $this->assertCount(3, $domains);
         $this->assertSame('kolab3-alias.com', $domains[0]->namespace);
         $this->assertSame('kolab3.com', $domains[1]->namespace);
+        $this->assertSame('my.kolab3.com', $domains[2]->namespace);
         $this->assertSame(Domain::TYPE_EXTERNAL, $domains[0]->type);
         $this->assertSame(Domain::TYPE_EXTERNAL, $domains[1]->type);
+        $this->assertSame(Domain::TYPE_EXTERNAL, $domains[2]->type);
 
         $this->assertEntitlements($domains[0], ['domain-hosting']);
         $this->assertEntitlements($domains[1], ['domain-hosting']);
+        $this->assertEntitlements($domains[2], ['domain-hosting']);
 
         // Shared folders
-        /** @var SharedFolder[] $folders */
+        /** @var Collection<SharedFolder> $folders */
         $folders = $owner->sharedFolders(false)->orderBy('email')->get();
 
         $this->assertCount(2, $folders);
@@ -144,7 +164,7 @@ class LdifTest extends TestCase
         );
 
         // Groups
-        /** @var Group[] $groups */
+        /** @var Collection<Group> $groups */
         $groups = $owner->groups(false)->orderBy('email')->get();
 
         $this->assertCount(1, $groups);
@@ -154,7 +174,7 @@ class LdifTest extends TestCase
         $this->assertSame('["sender@gmail.com","-"]', $groups[0]->getSetting('sender_policy'));
 
         // Resources
-        /** @var Resource[] $resources */
+        /** @var Collection<Resource> $resources */
         $resources = $owner->resources(false)->orderBy('email')->get();
 
         $this->assertCount(1, $resources);
@@ -268,6 +288,11 @@ class LdifTest extends TestCase
         $result = $this->invokeMethod($command, 'parseLDAPContact', [$entry]);
         $this->assertSame(['name' => 'Test', 'email' => 'test@test.com'], $result[0]);
         $this->assertNull($result[1]);
+
+        $entry = ['mail' => ['test@test.com'], 'cn' => 'Test', 'displayname' => 'Display Name'];
+        $result = $this->invokeMethod($command, 'parseLDAPContact', [$entry]);
+        $this->assertSame(['name' => 'Display Name', 'email' => 'test@test.com'], $result[0]);
+        $this->assertNull($result[1]);
     }
 
     /**
@@ -285,6 +310,16 @@ class LdifTest extends TestCase
         $entry = ['associateddomain' => 'test.com'];
         $result = $this->invokeMethod($command, 'parseLDAPDomain', [$entry]);
         $this->assertSame(['namespace' => 'test.com'], $result[0]);
+        $this->assertNull($result[1]);
+
+        $entry = ['ou' => 'sub.test.com'];
+        $result = $this->invokeMethod($command, 'parseLDAPDomain', [$entry]);
+        $this->assertSame(['namespace' => 'sub.test.com'], $result[0]);
+        $this->assertNull($result[1]);
+
+        $entry = ['dn' => 'dc=test,dc=kolab,dc=org'];
+        $result = $this->invokeMethod($command, 'parseLDAPDomain', [$entry]);
+        $this->assertSame(['namespace' => 'test.kolab.org'], $result[0]);
         $this->assertNull($result[1]);
 
         $entry = ['associateddomain' => 'test.com', 'inetdomainstatus' => 'deleted'];
@@ -454,6 +489,8 @@ class LdifTest extends TestCase
                 'organization' => 'Org',
             ],
             'aliases' => ['test1@domain.tld', 'test2@domain.tld'],
+            'delegates' => [],
+            'passwords' => [],
             'password' => 'pass',
             'quota' => '12345678',
         ];

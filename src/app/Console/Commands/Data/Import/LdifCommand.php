@@ -3,6 +3,7 @@
 namespace App\Console\Commands\Data\Import;
 
 use App\Console\Command;
+use App\Delegation;
 use App\Domain;
 use App\Group;
 use App\Package;
@@ -11,6 +12,7 @@ use App\SharedFolder;
 use App\Sku;
 use App\Tenant;
 use App\User;
+use App\UserPassword;
 use App\Utils;
 use App\Wallet;
 use Illuminate\Database\Schema\Blueprint;
@@ -35,6 +37,9 @@ class LdifCommand extends Command
 
     /** @var array Aliases email addresses of the owner */
     protected $aliases = [];
+
+    /** @var array Delegation information */
+    protected $delegations = [];
 
     /** @var array List of imported domains */
     protected $domains = [];
@@ -103,6 +108,7 @@ class LdifCommand extends Command
 
         // Import other objects
         $this->importUsers();
+        $this->importDelegations();
         $this->importSharedFolders();
         $this->importResources();
         $this->importGroups();
@@ -179,10 +185,10 @@ class LdifCommand extends Command
                 [$attr, $remainder] = explode(':', $line, 2);
                 $attr = strtolower($attr);
 
-                if ($remainder[0] === ':') {
+                if (isset($remainder[0]) && $remainder[0] === ':') {
                     $remainder = base64_decode(substr($remainder, 2));
                 } else {
-                    $remainder = ltrim($remainder);
+                    $remainder = ltrim((string) $remainder);
                 }
 
                 if (array_key_exists($attr, $entry)) {
@@ -228,9 +234,35 @@ class LdifCommand extends Command
             }
 
             $this->wallet->owner->contacts()->create([
-                'name' => $data->name,
+                'name' => $data->name ?? null,
                 'email' => $data->email,
             ]);
+        }
+
+        $bar->finish();
+
+        $this->info("DONE");
+    }
+
+    /**
+     * Import delegations
+     */
+    protected function importDelegations(): void
+    {
+        $bar = $this->createProgressBar(count($this->delegations), "Importing delegations");
+
+        foreach ($this->delegations as $user_id => $delegates) {
+            $bar->advance();
+
+            foreach ($this->resolveUserDNs($delegates, true) as $id) {
+                $delegation = new Delegation();
+                $delegation->user_id = $user_id;
+                $delegation->delegatee_id = $id;
+                // FIXME: Should we set any options? For existing delegations just the relation might be enough.
+                // We don't want to give more permissions than intended.
+                $delegation->options = [];
+                $delegation->save();
+            }
         }
 
         $bar->finish();
@@ -562,7 +594,9 @@ class LdifCommand extends Command
             return;
         }
 
-        $user = User::create(['email' => $data->email]);
+        $user = new User();
+        $user->setRawAttributes(['email' => $data->email, 'password_ldap' => $data->password]);
+        $user->save();
 
         // Entitlements
         $user->assignPackageAndWallet($this->packages['user'], $this->wallet ?: $user->wallets()->first());
@@ -588,11 +622,6 @@ class LdifCommand extends Command
             DB::table('user_settings')->insert($settings);
         }
 
-        // Update password
-        if ($data->password != $user->password_ldap) {
-            User::where('id', $user->id)->update(['password_ldap' => $data->password]);
-        }
-
         // Import aliases
         if (!empty($data->aliases)) {
             if (!$this->wallet) {
@@ -602,6 +631,28 @@ class LdifCommand extends Command
             } else {
                 $this->setObjectAliases($user, $data->aliases);
             }
+        }
+
+        // Old passwords
+        if (!empty($data->passwords)) {
+            // Note: We'll import all old passwords even if account policy has a different limit
+            $passwords = array_map(
+                function ($pass) use ($user) {
+                    return [
+                        'created_at' => $pass[0],
+                        'password' => $pass[1],
+                        'user_id' => $user->id,
+                    ];
+                },
+                $data->passwords
+            );
+
+            UserPassword::insert($passwords);
+        }
+
+        // Collect delegation info tobe imported later
+        if (!empty($data->delegates)) {
+            $this->delegations[$user->id] = $data->delegates;
         }
 
         return $user;
@@ -633,6 +684,14 @@ class LdifCommand extends Command
             'Domains' => 'domain',
         ];
 
+        // Skip entries with these classes
+        $ignoreByClass = [
+            'cossuperdefinition',
+            'extensibleobject',
+            'nscontainer',
+            'nsroledefinition',
+        ];
+
         // Ignore LDIF header
         if (!empty($entry['version'])) {
             return null;
@@ -640,15 +699,17 @@ class LdifCommand extends Command
 
         if (!isset($entry['objectclass'])) {
             $entry['objectclass'] = [];
+        } else {
+            $entry['objectclass'] = array_map('strtolower', (array) $entry['objectclass']);
         }
 
         // Skip non-importable entries
-        if (
-            preg_match('/uid=(cyrus-admin|kolab-service)/', $entry['dn'])
-            || in_array('nsroledefinition', $entry['objectclass'])
-            || in_array('organizationalUnit', $entry['objectclass'])
-            || in_array('organizationalunit', $entry['objectclass'])
-        ) {
+        if (count(array_intersect($entry['objectclass'], $ignoreByClass)) > 0) {
+            return null;
+        }
+
+        // Skip special entries
+        if (preg_match('/uid=(cyrus-admin|kolab-service)/', $entry['dn'])) {
             return null;
         }
 
@@ -684,7 +745,7 @@ class LdifCommand extends Command
         }
 
         // Silently ignore groups with no 'mail' attribute
-        if ($type == 'group' && empty($entry['mail'])) {
+        if (empty($entry['mail']) && $type == 'group') {
             return null;
         }
 
@@ -716,7 +777,9 @@ class LdifCommand extends Command
         if (empty($entry['mail'])) {
             $error = "Missing 'mail' attribute";
         } else {
-            if (!empty($entry['cn'])) {
+            if (!empty($entry['displayname'])) {
+                $result['name'] = $this->attrStringValue($entry, 'displayname');
+            } elseif (!empty($entry['cn'])) {
                 $result['name'] = $this->attrStringValue($entry, 'cn');
             }
 
@@ -745,6 +808,8 @@ class LdifCommand extends Command
             }
         } elseif (!empty($entry['dn']) && str_starts_with($entry['dn'], 'dc=')) {
             $result['namespace'] = strtolower(str_replace(['dc=', ','], ['', '.'], $entry['dn']));
+        } elseif (!empty($entry['ou']) && preg_match('/^[a-zA-Z0-9.]+\.[a-zA-Z]+$/', $entry['ou'])) {
+            $result['namespace'] = strtolower($entry['ou']);
         } else {
             $error = "Missing 'associatedDomain' and 'dn' attribute";
         }
@@ -873,6 +938,8 @@ class LdifCommand extends Command
             $result['email'] = strtolower($this->attrStringValue($entry, 'mail'));
             $result['settings'] = [];
             $result['aliases'] = [];
+            $result['delegates'] = [];
+            $result['passwords'] = [];
 
             foreach ($settingAttrs as $attr => $setting) {
                 if (!empty($entry[$attr])) {
@@ -884,8 +951,25 @@ class LdifCommand extends Command
                 $result['aliases'] = $this->attrArrayValue($entry, 'alias');
             }
 
+            if (!empty($entry['kolabdelegate'])) {
+                $result['delegates'] = $this->attrArrayValue($entry, 'kolabdelegate');
+            }
+
             if (!empty($entry['userpassword'])) {
                 $result['password'] = $this->attrStringValue($entry, 'userpassword');
+            }
+
+            if (!empty($entry['passwordhistory'])) {
+                $regexp = '/^([0-9]{4})([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})Z(\{.*)$/';
+                foreach ($this->attrArrayValue($entry, 'passwordhistory') as $pass) {
+                    if (preg_match($regexp, $pass, $matches)) {
+                        $result['passwords'][] = [
+                            $matches[1] . '-' . $matches[2] . '-' . $matches[3] . ' '
+                                . $matches[4] . ':' . $matches[5] . ':' . $matches[6],
+                            $matches[7],
+                        ];
+                    }
+                }
             }
 
             if (!empty($entry['mailquota'])) {
@@ -951,8 +1035,10 @@ class LdifCommand extends Command
     /**
      * Resolve a list of user DNs into email addresses. Makes sure
      * the returned addresses exist in Kolab4 database.
+     *
+     * @param bool $return_ids Return user IDs instead of email addresses
      */
-    protected function resolveUserDNs($user_dns): array
+    protected function resolveUserDNs($user_dns, $return_ids = false): array
     {
         // Get email addresses from the import data
         $users = DB::table(self::$table)->whereIn('dn', $user_dns)
@@ -971,7 +1057,7 @@ class LdifCommand extends Command
 
         // Get email addresses for existing Kolab4 users
         if (!empty($users)) {
-            $users = User::whereIn('email', $users)->get()->pluck('email')->all();
+            $users = User::whereIn('email', $users)->get()->pluck($return_ids ? 'id' : 'email')->all();
         }
 
         return $users;
@@ -1001,6 +1087,7 @@ class LdifCommand extends Command
                 $rights = $map[$rights] ?? $rights;
 
                 if (in_array($rights, $supportedRights) && ($label === 'anyone' || strpos($label, '@'))) {
+                    $label = strtolower($label);
                     $entry = "{$label}, {$rights}";
                 }
 
@@ -1047,7 +1134,7 @@ class LdifCommand extends Command
 
             // 'deny' rules aren't supported
             if (isset($entry[0]) && $entry[0] !== '-') {
-                $rule = $entry;
+                $rule = strtolower($entry);
             }
 
             $rules[$idx] = $rule;
@@ -1115,7 +1202,10 @@ class LdifCommand extends Command
             }
 
             if (!empty($aliases)) {
-                $object->setAliases($aliases);
+                $class = $object::class . 'Alias';
+                $aliases = array_map(fn ($alias) => new $class(['alias' => $alias]), $aliases);
+
+                $object->aliases()->saveManyQuietly($aliases);
             }
         }
     }
