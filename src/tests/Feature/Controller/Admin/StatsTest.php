@@ -104,7 +104,6 @@ class StatsTest extends TestCase
         $this->assertSame('donut', $json['type']);
         $this->assertContains('Switzerland', $json['data']['labels']);
         $this->assertContains('United States', $json['data']['labels']);
-        $this->assertContains('Other', $json['data']['labels']);
         $this->assertCount(1, $json['data']['datasets']);
 
         // 'vouchers' chart

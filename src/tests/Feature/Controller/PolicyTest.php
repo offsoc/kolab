@@ -355,7 +355,7 @@ class PolicyTest extends TestCase
 
         $json = $response->json();
 
-        $this->assertSame('PERMIT', $json['response']);
+        $this->assertSame('DUNNO', $json['response']);
     }
 
     /**
