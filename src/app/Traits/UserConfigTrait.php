@@ -2,7 +2,7 @@
 
 namespace App\Traits;
 
-use App\Rules\Password;
+use App\Policy\Password;
 use App\Utils;
 
 trait UserConfigTrait

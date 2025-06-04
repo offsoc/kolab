@@ -11,8 +11,8 @@ use App\Jobs\PGP\KeyDeleteJob;
 use App\Jobs\User\CreateJob;
 use App\Jobs\User\DeleteJob;
 use App\Jobs\User\UpdateJob;
+use App\Policy\Password;
 use App\Policy\RateLimit\Whitelist;
-use App\Rules\Password;
 use App\Tenant;
 use App\Transaction;
 use App\User;
@@ -319,29 +319,6 @@ class UserObserver
             'password_update' => now()->format('Y-m-d H:i:s'),
         ]);
 
-        // Note: All this is kinda heavy and complicated because we don't want to store
-        // more old passwords than we need. However, except the complication/performance,
-        // there's one issue with it. E.g. the policy changes from 2 to 4, and we already
-        // removed the old passwords that were excessive before, but not now.
-
-        // Get the account password policy
-        $policy = new Password($user->walletOwner());
-        $rules = $policy->rules();
-
-        // Password history disabled?
-        if (empty($rules['last']) || $rules['last']['param'] < 2) {
-            return;
-        }
-
-        // Store the old password
-        $user->passwords()->create(['password' => $password]);
-
-        // Remove passwords that we don't need anymore
-        $limit = $rules['last']['param'] - 1;
-        $ids = $user->passwords()->latest()->limit($limit)->pluck('id')->all();
-
-        if (count($ids) >= $limit) {
-            $user->passwords()->where('id', '<', $ids[count($ids) - 1])->delete();
-        }
+        Password::saveHash($user, $password);
     }
 }

@@ -4,6 +4,7 @@ namespace App;
 
 use App\Auth\SecondFactor;
 use App\Auth\Utils as AuthUtils;
+use App\Policy\Password;
 use App\Traits\AliasesTrait;
 use App\Traits\BelongsToTenantTrait;
 use App\Traits\EmailPropertyTrait;
@@ -760,42 +761,13 @@ class User extends Authenticatable
      */
     public function validatePassword(string $password): bool
     {
-        $authenticated = false;
-
         if (!empty($this->password)) {
             $authenticated = Hash::check($password, $this->password);
         } elseif (!empty($this->password_ldap)) {
-            if (preg_match('/^\{([A-Z0-9_-]+)\}/', $this->password_ldap, $matches)) {
-                switch ($matches[1]) {
-                    case 'SSHA':
-                        $salt = substr(base64_decode(substr($this->password_ldap, 6)), 20);
-                        $hash = '{SSHA}' . base64_encode(sha1($password . $salt, true) . $salt);
-                        break;
-                    case 'SSHA512':
-                        $salt = substr(base64_decode(substr($this->password_ldap, 9)), 64);
-                        $hash = '{SSHA512}' . base64_encode(pack('H*', hash('sha512', $password . $salt)) . $salt);
-                        break;
-                    case 'PBKDF2_SHA256':
-                        // Algorithm based on https://github.com/thesubtlety/389-ds-password-check/blob/master/389ds-pwdcheck.py
-                        $decoded = base64_decode(substr($this->password_ldap, 15));
-                        $param = unpack('Niterations/a64salt', $decoded);
-                        $hash = hash_pbkdf2('sha256', $password, $param['salt'], $param['iterations'], 256, true);
-                        $hash = '{' . $matches[1] . '}' . base64_encode(substr($decoded, 0, 68) . $hash);
-                        break;
-                    case 'PBKDF2-SHA512':
-                        [, $algo] = explode('-', $matches[1]);
-                        [$iterations, $salt] = explode('$', substr($this->password_ldap, 15));
-                        $hash = hash_pbkdf2($algo, $password, base64_decode($salt), (int) $iterations, 0, true);
-                        $hash = '{' . $matches[1] . '}' . $iterations . '$' . $salt . '$' . base64_encode($hash);
-                        break;
-                    default:
-                        \Log::warning("Unsupported password hashing algorithm {$matches[1]}");
-                }
-            }
-
-            $authenticated = isset($hash) && $hash === $this->password_ldap;
+            $authenticated = Password::checkHash($password, $this->password_ldap);
         } else {
             \Log::error("Missing password for {$this->email}");
+            $authenticated = false;
         }
 
         if ($authenticated) {

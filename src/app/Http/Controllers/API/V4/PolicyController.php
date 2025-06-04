@@ -5,10 +5,10 @@ namespace App\Http\Controllers\API\V4;
 use App\Http\Controllers\Controller;
 use App\Policy\Greylist;
 use App\Policy\Mailfilter;
+use App\Policy\Password;
 use App\Policy\RateLimit;
 use App\Policy\SmtpAccess;
 use App\Policy\SPF;
-use App\Rules\Password;
 use App\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -27,11 +27,8 @@ class PolicyController extends Controller
 
         $user = !empty($userId) ? User::find($userId) : null;
 
-        // Get the policy
-        $policy = new Password($user ? $user->walletOwner() : null, $user);
-
         // Check the password
-        $status = $policy->check($request->input('password'));
+        $status = Password::checkPolicy($request->input('password'), $user, $user ? $user->walletOwner() : null);
 
         $passed = array_filter(
             $status,
@@ -83,8 +80,7 @@ class PolicyController extends Controller
         $policy_config = [];
 
         // Get the password policies
-        $policy = new Password($owner);
-        $password_policy = $policy->rules(true);
+        $password_policy = Password::rules($owner, true);
         $policy_config['max_password_age'] = $config['max_password_age'];
 
         // Get the mail delivery policies
