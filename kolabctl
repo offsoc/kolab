@@ -430,16 +430,18 @@ kolab__build() {
         podman__build docker/mariadb mariadb
         podman__build docker/redis redis
         podman__build_proxy
-        podman__build docker/synapse synapse
-        podman__build docker/element element
         podman__build_roundcube
+        if [ "$DISABLE_MATRIX" != "true" ]; then
+            podman__build docker/synapse synapse
+            podman__build docker/element element
+        fi
 
         podman__build_utils
         podman__build_postfix
         podman__build_amavis
         podman__build_collabora
         podman__build docker/vector vector
-        podman pull docker.io/minio/minio:latest
+        podman pull quay.io/minio/minio:latest
         env CERT_DIR=docker/certs APP_DOMAIN=$HOST bin/regen-certs
     fi
 }
