@@ -1,12 +1,4 @@
 <?php
-    if (getenv('KOLABOBJECTS_COMPAT_MODE') == "true") {
-        $config['calendar_driver'] = "kolab";
-    } else {
-        $config['calendar_driver'] = "caldav";
-        # This is for internal access
-        $config['calendar_caldav_server'] = getenv('CALENDAR_CALDAV_SERVER') ?: "https://" . ($_SERVER["HTTP_HOST"] ?? null) . "/dav";
-    }
-
     # This is for external access
     $config['calendar_caldav_url'] = 'https://%h/dav/calendars/%u/%i';
 

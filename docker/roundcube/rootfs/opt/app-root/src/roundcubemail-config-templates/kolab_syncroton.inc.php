@@ -5,12 +5,6 @@
 // Enables ActiveSync protocol debuging
 $config['activesync_debug'] = getenv('ACTIVESYNC_DEBUG');
 
-if (getenv('KOLABOBJECTS_COMPAT_MODE') != "true") {
-    // Configure for dav backend
-    $config['activesync_storage'] = 'kolab4';
-    $config['activesync_dav_server'] = getenv('CALENDAR_CALDAV_SERVER') ?: "https://" . ($_SERVER["HTTP_HOST"] ?? null) . "/dav";
-}
-
 // If specified all ActiveSync-related logs will be saved to this file
 // Note: This doesn't change Roundcube Framework log locations
 $config['activesync_log_file'] = null;

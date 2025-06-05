@@ -15,3 +15,40 @@ $config['kolab_client_cache'] = 'redis';
 
 // Lifetime of cache entries. Possible units: s, m, h, d, w
 $config['kolab_client_cache_ttl'] = '10m';
+
+$config['configuration-overlays']['kolabobjects'] = [
+    'plugins' => ['kolab_config', 'kolab_folders', 'kolab_notes'],
+    'calendar_driver' => 'kolab',
+    'fileapi_backend' => 'kolab',
+    'kolab_tags_driver' => 'kolab',
+    'tasklist_driver' => 'kolab'
+];
+
+$config['configuration-overlays']['kolab4'] = [
+    'calendar_driver' => 'caldav',
+    'calendar_caldav_server' => getenv('CALENDAR_CALDAV_SERVER') ?: "https://" . ($_SERVER["HTTP_HOST"] ?? null) . "/dav",
+    'fileapi_backend' => 'kolabfiles',
+    'fileapi_kolabfiles_baseuri' => getenv('FILEAPI_KOLABFILES_BASEURI'),
+    'activesync_storage' => 'kolab4',
+    'activesync_dav_server' => getenv('CALENDAR_CALDAV_SERVER') ?: "https://" . ($_SERVER["HTTP_HOST"] ?? null) . "/dav",
+    'kolab_tags_driver' => 'annotate',
+    'tasklist_driver' => 'caldav',
+    'tasklist_caldav_server' => getenv('TASKLIST_CALDAV_SERVER') ?: "https://" . ($_SERVER["HTTP_HOST"] ?? null) . "/dav",
+];
+
+$config['configuration-overlays']['activesync'] = [
+    'plugins' => ['kolab_activesync']
+];
+
+$config['configuration-overlays']['2fa'] = [
+    'plugins' => ['kolab_2fa']
+];
+
+$config['configuration-overlays']['groupware'] = [
+    'plugins' => ['calendar', 'kolab_files', 'kolab_addressbook', 'kolab_tags', 'kolab_notes', 'tasklist']
+];
+
+if ($disabledPlugins = getenvlist('DISABLED_PLUGINS')) {
+    $config['configuration-overlays']['kolabobjects']['plugins'] = array_diff($config['configuration-overlays']['groupware']['plugins'], $disabledPlugins);
+    $config['configuration-overlays']['groupware']['plugins'] = array_diff($config['configuration-overlays']['groupware']['plugins'], $disabledPlugins);
+}

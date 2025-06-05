@@ -22,35 +22,26 @@ class ConfigController extends Controller
         }
 
         $config = [
-            'plugins' => [],
+            'kolab-configuration-overlays' => [],
         ];
 
         $skus = $user->skuTitles();
 
+        // TODO conditionally switch to kolabobjects
+        $config['kolab-configuration-overlays'][] = 'kolab4';
+
         if (in_array('activesync', $skus)) {
-            $config['plugins'][] = 'kolab_activesync';
+            $config['kolab-configuration-overlays'][] = 'activesync';
         }
 
         if (in_array('2fa', $skus)) {
-            $config['plugins'][] = 'kolab_2fa';
+            $config['kolab-configuration-overlays'][] = '2fa';
         }
 
         if (in_array('groupware', $skus)) {
-            $config['plugins'][] = 'calendar';
-            $config['plugins'][] = 'kolab_files';
-            $config['plugins'][] = 'kolab_addressbook';
-            $config['plugins'][] = 'kolab_tags';
-            // $config['plugins'][] = 'kolab_notes';
-            $config['plugins'][] = 'tasklist';
-        } else {
-            // disable groupware plugins in case they are enabled by default
-            $config['calendar_disabled'] = true;
-            $config['kolab_files_disabled'] = true;
-            // $config['kolab_addressbook_disabled'] = true;
-            // $config['kolab_notes_disabled'] = true;
-            $config['kolab_tags_disabled'] = true;
-            $config['tasklist_disabled'] = true;
+            $config['kolab-configuration-overlays'][] = 'groupware';
         }
+
 
         // TODO: Per-domain configuration, e.g. skin/logo
         // $config['skin'] = 'apostrophy';

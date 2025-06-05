@@ -82,40 +82,30 @@ if (!function_exists("getenvlist")) {
     $plugins = [
         'acl',
         'archive',
-        'calendar',
-        'jqueryui',
         'kolab',
+        // 'calendar',
+        'jqueryui',
         'kolab_activesync',
-        'kolab_addressbook',
-        'kolab_files',
-        'kolab_tags',
+        // 'kolab_addressbook',
+        // 'kolab_files',
+        // 'kolab_tags',
         'managesieve',
         'newmail_notifier',
         'odfviewer',
         'redundant_attachments',
-        'tasklist',
+        // 'tasklist',
         'enigma',
+        // contextmenu must be after kolab_addressbook (#444)
+        'contextmenu',
     ];
-
-    if (getenv('KOLABOBJECTS_COMPAT_MODE') == "true") {
-        $plugins[] = 'kolab_config';
-        $plugins[] = 'kolab_folders';
-        $plugins[] = 'kolab_notes';
-
-        // These require ldap
-        // $plugins[] = 'kolab_auth';
-        // $plugins[] = 'kolab_delegation';
-    }
 
     if ($disabledPlugins = getenvlist('DISABLED_PLUGINS')) {
         $plugins = array_diff($plugins, $disabledPlugins);
     }
+
     if ($extraPlugins = getenvlist('EXTRA_PLUGINS')) {
         $plugins = array_merge($plugins, $extraPlugins);
     }
-
-    // contextmenu must be after kolab_addressbook (#444)
-    $plugins[] = 'contextmenu';
 
     $config['plugins'] = $plugins;
 
