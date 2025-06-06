@@ -551,6 +551,8 @@ kolab__refresh() {
     POD=${POD:-dev}
     if [ "$1" == "webapp" ]; then
         podman exec -ti $POD-webapp bash -c "/update-source.sh; ./artisan octane:reload" &
+    elif [ "$1" == "roundcube" ]; then
+        podman exec -ti $POD-roundcube bash -c "./update-from-source.sh; ./reload.sh" &
     else
         echo "Not implemented"
     fi
