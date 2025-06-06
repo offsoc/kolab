@@ -345,4 +345,3 @@ if (\config('app.with_services')) {
 
 Route::get('health/readiness', [API\V4\HealthController::class, 'readiness']);
 Route::get('health/liveness', [API\V4\HealthController::class, 'liveness']);
-

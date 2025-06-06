@@ -18,7 +18,7 @@ class RegularHosts
         $host = request()->getHost();
         foreach (["admin.", "reseller."] as $subdomain) {
             if (str_starts_with($host, $subdomain)) {
-                \Log::debug("Only regular hosts allowed: $host");
+                \Log::debug("Only regular hosts allowed: {$host}");
                 abort(404);
             }
         }
