@@ -20,17 +20,19 @@ class Kernel extends ConsoleKernel
         // This notifies users about coming password expiration
         $schedule->command('password:retention')->dailyAt('06:00');
 
-        // This applies wallet charges
-        $schedule->command('wallet:charge')->everyFourHours();
+        if (\config('app.with_wallet')) {
+            // This applies wallet charges
+            $schedule->command('wallet:charge')->everyFourHours();
+
+            // This notifies users about an end of the trial period
+            $schedule->command('wallet:trial-end')->dailyAt('07:00');
+        }
 
         // This removes deleted storage files/file chunks from the filesystem
         $schedule->command('fs:expunge')->hourly();
 
         // This cleans up IMAP ACL for deleted users/etc.
         // $schedule->command('imap:cleanup')->dailyAt('03:00');
-
-        // This notifies users about an end of the trial period
-        $schedule->command('wallet:trial-end')->dailyAt('07:00');
 
         // This collects some statistics into the database
         $schedule->command('data:stats:collector')->dailyAt('23:00');
