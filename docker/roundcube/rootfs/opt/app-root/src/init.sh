@@ -19,6 +19,10 @@ fi
 ## Copy our configs over the default ones
 cp /opt/app-root/src/roundcubemail-config-templates/* roundcubemail/config/
 
+sed -i "s/?>//" roundcubemail/config/config.inc.php
+echo "$EXTRA_CONFIG" >> roundcubemail/config/config.inc.php
+printf "\n?>" >> roundcubemail/config/config.inc.php
+
 if [[ "$RUN_MIGRATIONS" == "true" ]]; then
     # Initialize the db
     if [[ "$DB_ROOT_PASSWORD" == "" ]]; then
