@@ -86,11 +86,14 @@ class OwnerSwapCommand extends Command
             $target->save();
         }
 
-        // Move plan_id setting
-        if ($plan_id = $source->getSetting('plan_id')) {
-            $target->setSetting('plan_id', $plan_id);
-            $source->removeSetting('plan_id');
-        }
+        // Move plan_id, *_policy settings
+        $keys = ['plan_id', 'max_password_age'];
+        $source->settings()->whereLike('key', '%_policy')->orWhereIn('key', $keys)
+            ->get()
+            ->each(function ($setting) use ($target) {
+                $target->setSetting($setting->key, $setting->value);
+                $setting->delete();
+            });
     }
 
     /**

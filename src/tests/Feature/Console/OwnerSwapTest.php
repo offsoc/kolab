@@ -58,6 +58,7 @@ class OwnerSwapTest extends TestCase
         $owner->created_at = \now()->subMonths(1);
         $owner->save();
         $owner->setSetting('plan_id', 'test');
+        $owner->setSetting('greylist_policy', 'true');
 
         $entitlements = $wallet->entitlements()->orderBy('id')->pluck('id')->all();
         $this->assertCount(15, $entitlements);
@@ -94,11 +95,15 @@ class OwnerSwapTest extends TestCase
         $this->assertTrue($user->created_at->toDateTimeString() === $owner->created_at->toDateTimeString());
         $this->assertSame('test', $target_wallet->getSetting('test'));
         $this->assertSame('test', $user->getSetting('plan_id'));
+        $this->assertSame('true', $user->getSetting('greylist_policy'));
+        $this->assertNull($owner->getSetting('plan_id'));
+        $this->assertNull($owner->getSetting('greylist_policy'));
 
         $wallet->refresh();
         $this->assertNull($wallet->getSetting('test'));
         $this->assertSame(0, $wallet->balance);
 
+        sleep(2); // it may take a while for Mollie to notice the new customer
         $target_customer = $this->getMollieCustomer($target_wallet->getSetting('mollie_id'));
         $this->assertSame($customer->id, $target_customer->id);
         $this->assertTrue($customer->email != $target_customer->email);
