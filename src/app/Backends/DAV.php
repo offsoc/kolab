@@ -184,8 +184,9 @@ class DAV
      */
     public static function healthcheck(): bool
     {
-        // TODO
-        return true;
+        $dav = new self();
+        $dav->setUrl(\config('services.dav.uri'));
+        return $dav->options() != false;
     }
 
     /**
@@ -859,9 +860,11 @@ class DAV
             $url .= $path;
         }
 
-        $client = Http::withBasicAuth($this->user, $this->password)
+        $client = Http::withOptions(['verify' => \config('services.dav.verify')]);
             // ->withToken($token) // Bearer token
-            ->withOptions(['verify' => \config('services.dav.verify')]);
+        if ($this->user) {
+            $client = $client->withBasicAuth($this->user, $this->password);
+        }
 
         if ($body) {
             if (!isset($headers['Content-Type'])) {
