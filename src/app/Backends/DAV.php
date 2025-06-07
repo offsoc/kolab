@@ -861,7 +861,7 @@ class DAV
         }
 
         $client = Http::withOptions(['verify' => \config('services.dav.verify')]);
-            // ->withToken($token) // Bearer token
+
         if ($this->user) {
             $client = $client->withBasicAuth($this->user, $this->password);
         }

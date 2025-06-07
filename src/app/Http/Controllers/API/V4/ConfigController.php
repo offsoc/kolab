@@ -42,7 +42,6 @@ class ConfigController extends Controller
             $config['kolab-configuration-overlays'][] = 'groupware';
         }
 
-
         // TODO: Per-domain configuration, e.g. skin/logo
         // $config['skin'] = 'apostrophy';
         // $config['skin_logo'] = 'data:image/svg+xml;base64,'
