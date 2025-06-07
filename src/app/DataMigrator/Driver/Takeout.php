@@ -275,8 +275,8 @@ class Takeout implements ExporterInterface
         // Use the same location as in the DataMigrator Engine
         $location = storage_path('export/') . $this->account->email;
 
-        if (is_dir($location)) {
-            $this->engine->debug("ZIP archive is already extracted at {$location}");
+        if (is_dir("{$location}/Takeout")) {
+            $this->engine->debug("ZIP archive is already extracted at {$location}/Takeout");
             $this->location = "{$location}/Takeout";
             return;
         }

@@ -22,6 +22,8 @@ class TakeoutTest extends TestCase
         parent::setUp();
 
         MigratorQueue::truncate();
+
+        exec('rm -rf ' . storage_path('export/test@gmail.com'));
     }
 
     protected function tearDown(): void
