@@ -428,21 +428,25 @@ class WalletTest extends TestCase
         $userA = $this->getTestUser('UserWallet1@UserWallet.com');
         $userB = $this->getTestUser('UserWallet2@UserWallet.com');
 
+        $this->assertSame(0, $userB->accounts()->count());
+
         $userA->wallets()->each(
-            static function ($wallet) use ($userB) {
+            function ($wallet) use ($userB) {
                 $wallet->addController($userB);
+                $this->assertTrue($wallet->isController($userB));
             }
         );
 
-        $userB->refresh();
+        $this->assertSame(1, $userB->accounts()->count());
 
         $userB->accounts()->each(
-            static function ($wallet) use ($userB) {
+            function ($wallet) use ($userB) {
                 $wallet->removeController($userB);
+                $this->assertFalse($wallet->isController($userB));
             }
         );
 
-        $this->assertCount(0, $userB->accounts);
+        $this->assertSame(0, $userB->accounts()->count());
     }
 
     /**

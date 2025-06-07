@@ -66,6 +66,7 @@ class Wallet extends Model
     {
         if (!$this->controllers->contains($user)) {
             $this->controllers()->save($user);
+            $this->unsetRelation('controllers');
         }
     }
 
@@ -456,6 +457,7 @@ class Wallet extends Model
     {
         if ($this->controllers->contains($user)) {
             $this->controllers()->detach($user);
+            $this->unsetRelation('controllers');
         }
     }
 
