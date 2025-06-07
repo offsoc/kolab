@@ -198,11 +198,21 @@ class User extends Authenticatable
         }
 
         $wallet = $object->wallet();
+        if (!$wallet) {
+            return false;
+        }
 
-        // TODO: For now controller can delete/update the account owner,
-        //       this may change in future, controllers are not 0-regression feature
+        // Wallet owner can do everything
+        if ($wallet->user_id == $this->id) {
+            return true;
+        }
 
-        return $wallet && ($wallet->user_id == $this->id || $this->accounts->contains($wallet));
+        // Other wallet controllers can remove users but not the account owner
+        if ($object instanceof self && $object->id == $wallet->user_id) {
+            return false;
+        }
+
+        return $wallet->isController($this);
     }
 
     /**

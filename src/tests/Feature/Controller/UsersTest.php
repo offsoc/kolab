@@ -113,17 +113,25 @@ class UsersTest extends TestCase
         // Test access to other user/account
         $response = $this->actingAs($john)->delete("api/v4/users/{$user2->id}");
         $response->assertStatus(403);
-        $response = $this->actingAs($john)->delete("api/v4/users/{$user1->id}");
-        $response->assertStatus(403);
         $json = $response->json();
 
         $this->assertSame('error', $json['status']);
-        $this->assertSame("Access denied", $json['message']);
-        $this->assertCount(2, $json);
+        $this->assertSame('Access denied', $json['message']);
 
         // Test that non-controller cannot remove himself
         $response = $this->actingAs($user3)->delete("api/v4/users/{$user3->id}");
         $response->assertStatus(403);
+
+        // Test that wallet controller cannot remove the account owner
+        $user1->wallets()->first()->addController($user3);
+        $response = $this->actingAs($user3)->delete("api/v4/users/{$user1->id}");
+        $response->assertStatus(403);
+
+        // Test that wallet controller can delete other non-owner users
+        $response = $this->actingAs($user3)->delete("api/v4/users/{$user2->id}");
+        $response->assertStatus(200);
+
+        $this->assertTrue($user2->fresh()->trashed());
 
         // Test removing a non-controller user
         $response = $this->actingAs($user1)->delete("api/v4/users/{$user3->id}");
@@ -142,50 +150,7 @@ class UsersTest extends TestCase
 
         $this->assertSame('success', $json['status']);
         $this->assertSame('User deleted successfully.', $json['message']);
-    }
-
-    /**
-     * Test user deleting (DELETE /api/v4/users/<id>)
-     */
-    public function testDestroyByController(): void
-    {
-        // Create an account with additional controller - $user2
-        $package_kolab = Package::where('title', 'kolab')->first();
-        $package_domain = Package::where('title', 'domain-hosting')->first();
-        $user1 = $this->getTestUser('UsersControllerTest1@userscontroller.com');
-        $user2 = $this->getTestUser('UsersControllerTest2@userscontroller.com');
-        $user3 = $this->getTestUser('UsersControllerTest3@userscontroller.com');
-        $domain = $this->getTestDomain('userscontroller.com', [
-            'status' => Domain::STATUS_NEW,
-            'type' => Domain::TYPE_PUBLIC,
-        ]);
-        $user1->assignPackage($package_kolab);
-        $domain->assignPackage($package_domain, $user1);
-        $user1->assignPackage($package_kolab, $user2);
-        $user1->assignPackage($package_kolab, $user3);
-        $user1->wallets()->first()->addController($user2);
-
-        // TODO/FIXME:
-        //   For now controller can delete himself, as well as
-        //   the whole account he has control to, including the owner
-        //   Probably he should not be able to do none of those
-        //   However, this is not 0-regression scenario as we
-        //   do not fully support additional controllers.
-
-        // $response = $this->actingAs($user2)->delete("api/v4/users/{$user2->id}");
-        // $response->assertStatus(403);
-
-        $response = $this->actingAs($user2)->delete("api/v4/users/{$user3->id}");
-        $response->assertStatus(200);
-
-        $response = $this->actingAs($user2)->delete("api/v4/users/{$user1->id}");
-        $response->assertStatus(200);
-
-        // Note: More detailed assertions in testDestroy() above
-
         $this->assertTrue($user1->fresh()->trashed());
-        $this->assertTrue($user2->fresh()->trashed());
-        $this->assertTrue($user3->fresh()->trashed());
     }
 
     /**
@@ -716,6 +681,11 @@ class UsersTest extends TestCase
         $response = $this->actingAs($jack)->post("/api/v4/users/{$jack->id}/config", $post);
         $response->assertStatus(403);
 
+        // Another account controller can't update owner's data
+        $ned = $this->getTestUser('ned@kolab.org');
+        $response = $this->actingAs($ned)->post("/api/v4/users/{$john->id}/config", $post);
+        $response->assertStatus(403);
+
         // Test some invalid data
         $post = ['grey' => 1, 'password_policy' => 'min:1,max:255'];
         $response = $this->actingAs($john)->post("/api/v4/users/{$john->id}/config", $post);
@@ -752,22 +722,6 @@ class UsersTest extends TestCase
         $this->assertSame('true', $john->getSetting('guam_enabled'));
         $this->assertSame('min:10,max:255,upper,lower,digit,special', $john->getSetting('password_policy'));
         $this->assertSame('6', $john->getSetting('max_password_age'));
-
-        // Test some valid data, acting as another account controller
-        $ned = $this->getTestUser('ned@kolab.org');
-        $post = ['greylist_enabled' => 0, 'guam_enabled' => 0, 'password_policy' => 'min:10,max:255,upper,last:1'];
-        $response = $this->actingAs($ned)->post("/api/v4/users/{$john->id}/config", $post);
-        $response->assertStatus(200);
-
-        $json = $response->json();
-
-        $this->assertCount(2, $json);
-        $this->assertSame('success', $json['status']);
-        $this->assertSame('User settings updated successfully.', $json['message']);
-
-        $this->assertSame('false', $john->fresh()->getSetting('greylist_enabled'));
-        $this->assertNull($john->fresh()->getSetting('guam_enabled'));
-        $this->assertSame('min:10,max:255,upper,last:1', $john->fresh()->getSetting('password_policy'));
     }
 
     /**
