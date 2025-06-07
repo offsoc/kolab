@@ -252,6 +252,66 @@ class UsersTest extends TestCase
     }
 
     /**
+     * Test login-as request (POST /api/v4/users/<user-id>/login-as)
+     */
+    public function testLoginAs(): void
+    {
+        Queue::fake();
+
+        $john = $this->getTestUser('john@kolab.org');
+        $jack = $this->getTestUser('jack@kolab.org');
+        $jane = $this->getTestUser('jane@kolabnow.com');
+        $ned = $this->getTestUser('ned@kolab.org');
+        $wallet = $john->wallet();
+
+        \config(['app.with_loginas' => true]);
+
+        // Test non-existing user
+        $response = $this->actingAs($john)->post("/api/v4/users/123456/login-as", []);
+        $response->assertStatus(404);
+
+        // Test unauthorized access
+        $response = $this->actingAs($jack)->post("/api/v4/users/{$ned->id}/login-as", []);
+        $response->assertStatus(403);
+
+        // Test unauthorized access (Jane is not in the same account yet)
+        $response = $this->actingAs($john)->post("/api/v4/users/{$jane->id}/login-as", []);
+        $response->assertStatus(403);
+
+        $sku = Sku::withObjectTenantContext($john)->where(['title' => 'storage'])->first();
+        $jane->assignSku($sku, 1, $wallet);
+
+        // Test user w/o mailbox SKU
+        $response = $this->actingAs($john)->post("/api/v4/users/{$jane->id}/login-as", []);
+        $response->assertStatus(403);
+
+        $sku = Sku::withObjectTenantContext($john)->where(['title' => 'mailbox'])->first();
+        $jane->assignSku($sku, 1, $wallet);
+
+        // Test login-as
+        $response = $this->actingAs($john)->post("/api/v4/users/{$jane->id}/login-as", []);
+        $response->assertStatus(200);
+
+        $json = $response->json();
+
+        parse_str(parse_url($json['redirectUrl'], \PHP_URL_QUERY), $params);
+
+        $this->assertSame('success', $json['status']);
+        $this->assertSame('1', $params['helpdesk']);
+
+        // TODO: Assert the Roundcube cache entry
+
+        // Test login-as acting as wallet controller
+        $response = $this->actingAs($ned)->post("/api/v4/users/{$jane->id}/login-as", []);
+        $response->assertStatus(200);
+
+        // Test with disabled feature
+        \config(['app.with_loginas' => false]);
+        $response = $this->actingAs($john)->post("/api/v4/users/{$jack->id}/login-as", []);
+        $response->assertStatus(404);
+    }
+
+    /**
      * Test fetching user data/profile (GET /api/v4/users/<user-id>)
      */
     public function testShow(): void

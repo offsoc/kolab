@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\API\V4\Admin;
 
-use App\Auth\OAuth;
 use App\Domain;
 use App\Entitlement;
 use App\EventLog;
@@ -20,8 +19,6 @@ use App\WalletSetting;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use League\OAuth2\Server\AuthorizationServer;
-use Psr\Http\Message\ServerRequestInterface;
 
 class UsersController extends \App\Http\Controllers\API\V4\UsersController
 {
@@ -156,35 +153,6 @@ class UsersController extends \App\Http\Controllers\API\V4\UsersController
         ];
 
         return response()->json($result);
-    }
-
-    /**
-     * Webmail Login-As session initialization (via SSO)
-     *
-     * @param string                 $id         The account to log into
-     * @param ServerRequestInterface $psrRequest PSR request
-     * @param Request                $request    The API request
-     * @param AuthorizationServer    $server     Authorization server
-     *
-     * @return JsonResponse
-     */
-    public function loginAs($id, ServerRequestInterface $psrRequest, Request $request, AuthorizationServer $server)
-    {
-        $user = User::find($id);
-
-        if (!$this->checkTenant($user)) {
-            return $this->errorResponse(404);
-        }
-
-        if ($this->guard()->user()->role != User::ROLE_ADMIN) {
-            return $this->errorResponse(403);
-        }
-
-        if (!$user->hasSku('mailbox')) {
-            return $this->errorResponse(403);
-        }
-
-        return OAuth::loginAs($user, $psrRequest, $request, $server);
     }
 
     /**

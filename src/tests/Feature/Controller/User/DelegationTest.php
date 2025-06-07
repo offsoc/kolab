@@ -33,7 +33,7 @@ class DelegationTest extends TestCase
         Queue::fake();
 
         $john = $this->getTestUser('john@kolab.org');
-        $jane = $this->getTestUser('jane@kolab.org');
+        $joe = $this->getTestUser('joe@kolab.org');
         $jack = $this->getTestUser('jack@kolab.org');
         $ned = $this->getTestUser('ned@kolab.org');
 
@@ -66,7 +66,7 @@ class DelegationTest extends TestCase
         $this->assertSame(["The specified email address is not a valid delegation target."], $json['errors']['email']);
 
         // Invalid options
-        $post = ['email' => $jane->email, 'options' => ['ufo' => 're']];
+        $post = ['email' => $joe->email, 'options' => ['ufo' => 're']];
         $response = $this->actingAs($john)->post("api/v4/users/{$john->id}/delegations", $post);
         $response->assertStatus(422);
 
@@ -76,7 +76,7 @@ class DelegationTest extends TestCase
         $this->assertSame(["The specified delegation options are invalid."], $json['errors']['options']);
 
         // Valid input
-        $post = ['email' => $jane->email, 'options' => ['mail' => 'read-only']];
+        $post = ['email' => $joe->email, 'options' => ['mail' => 'read-only']];
         $response = $this->actingAs($john)->post("api/v4/users/{$john->id}/delegations", $post);
         $response->assertStatus(200);
 
@@ -86,7 +86,7 @@ class DelegationTest extends TestCase
         $this->assertSame("Delegation created successfully.", $json['message']);
 
         $delegatee = $john->delegatees()->first();
-        $this->assertSame($jane->email, $delegatee->email);
+        $this->assertSame($joe->email, $delegatee->email);
         $this->assertSame(['mail' => 'read-only'], $delegatee->delegation->options);
 
         // Valid input (action taken by another wallet controller)
@@ -108,13 +108,13 @@ class DelegationTest extends TestCase
         Queue::fake();
 
         $john = $this->getTestUser('john@kolab.org');
-        $jane = $this->getTestUser('jane@kolab.org');
+        $joe = $this->getTestUser('joe@kolab.org');
         $jack = $this->getTestUser('jack@kolab.org');
         $ned = $this->getTestUser('ned@kolab.org');
         $user = $this->getTestUser('deleted@kolabnow.com');
 
         Delegation::create(['user_id' => $john->id, 'delegatee_id' => $jack->id]);
-        Delegation::create(['user_id' => $john->id, 'delegatee_id' => $jane->id, 'options' => ['mail' => 'r']]);
+        Delegation::create(['user_id' => $john->id, 'delegatee_id' => $joe->id, 'options' => ['mail' => 'r']]);
 
         // Test unauth access
         $response = $this->get("api/v4/users/{$john->id}/delegations");
@@ -138,7 +138,7 @@ class DelegationTest extends TestCase
         $this->assertSame(2, $json['count']);
         $this->assertSame($jack->email, $json['list'][0]['email']);
         $this->assertSame([], $json['list'][0]['options']);
-        $this->assertSame($jane->email, $json['list'][1]['email']);
+        $this->assertSame($joe->email, $json['list'][1]['email']);
         $this->assertSame(['mail' => 'r'], $json['list'][1]['options']);
 
         // Test request made by the delegators wallet controller

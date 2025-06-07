@@ -86,6 +86,9 @@
                                     <subscription-select v-if="user.id" class="col-sm-8 pt-sm-1" :object="user" ref="skus"></subscription-select>
                                 </div>
                                 <btn class="btn-primary" type="submit" icon="check">{{ $t('btn.submit') }}</btn>
+                                <btn id="button-login-as" class="btn-outline-secondary float-end" @click="loginAs" v-if="$route.name != 'settings' && $root.hasPermission('loginAs')">
+                                    {{ $t('user.login-as') }}
+                                </btn>
                             </form>
                         </div>
                         <div v-if="Object.keys(settingsSections).length > 0" class="tab-pane" id="settings" role="tabpanel" aria-labelledby="tab-settings">
@@ -620,7 +623,15 @@
                             }
                         }
                     })
-            }
+            },
+            loginAs() {
+                axios.post('/api/v4/users/' + this.user_id + '/login-as')
+                   .then(response => {
+                       if (response.data.redirectUrl) {
+                           window.open(response.data.redirectUrl)
+                       }
+                   })
+           }
         }
     }
 </script>

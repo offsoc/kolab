@@ -83,9 +83,6 @@
                         <btn id="button-resync" class="btn-outline-primary" @click="resyncUser">
                             {{ $t('btn.resync') }}
                         </btn>
-                        <btn id="button-login-as" class="btn-outline-primary" @click="loginAs">
-                            {{ $t('user.login-as') }}
-                        </btn>
                     </div>
                 </div>
             </div>
@@ -552,14 +549,6 @@
                 this.external_email = this.user.external_email
                 this.$root.clearFormValidation($('#email-dialog'))
                 this.$refs.emailDialog.show()
-            },
-            loginAs() {
-                axios.post('/api/v4/users/' + this.user.id + '/login-as')
-                    .then(response => {
-                        if (response.data.redirectUrl) {
-                            window.open(response.data.redirectUrl)
-                        }
-                    })
             },
             setMandateState() {
                 let mandate = this.wallet.mandate
