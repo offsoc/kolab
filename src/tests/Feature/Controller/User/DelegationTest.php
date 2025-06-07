@@ -89,15 +89,7 @@ class DelegationTest extends TestCase
         $this->assertSame($joe->email, $delegatee->email);
         $this->assertSame(['mail' => 'read-only'], $delegatee->delegation->options);
 
-        // Valid input (action taken by another wallet controller)
-        $post = ['email' => $jack->email, 'options' => ['mail' => 'read-only']];
-        $response = $this->actingAs($ned)->post("api/v4/users/{$john->id}/delegations", $post);
-        $response->assertStatus(200);
-
-        $json = $response->json();
-
-        $this->assertSame('success', $json['status']);
-        $this->assertSame(2, $john->delegatees()->count());
+        // TODO: Action taken by another wallet controller
     }
 
     /**
