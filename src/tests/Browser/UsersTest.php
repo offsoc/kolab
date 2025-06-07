@@ -37,6 +37,7 @@ class UsersTest extends TestCaseDusk
         'phone' => '+1 509-248-1111',
         'itip_config' => null,
         'externalsender_config' => null,
+        'greylist_policy' => null,
     ];
 
     protected function setUp(): void
@@ -414,6 +415,7 @@ class UsersTest extends TestCaseDusk
     {
         $john = $this->getTestUser('john@kolab.org');
         $john->setSetting('greylist_enabled', null);
+        $john->setSetting('greylist_policy', null);
         $john->setSetting('guam_enabled', null);
         $john->setSetting('limit_geo', null);
         $john->setSetting('externalsender_config', 'false');
@@ -429,14 +431,19 @@ class UsersTest extends TestCaseDusk
                 ->assertSeeIn('@setting-maildelivery-head', 'Mail delivery')
                 ->with('@setting-maildelivery', static function (Browser $browser) {
                     $browser->assertSeeIn('div.row:nth-child(1) label', 'Greylisting')
-                        ->click('div.row:nth-child(1) input[type=checkbox]:checked')
+                        ->assertSelectHasOptions('div.row:nth-child(1) select', ['', 'true', 'false'])
+                        ->assertSelected('div.row:nth-child(1) select', '')
+                        ->assertText('div.row:nth-child(1) select > option:nth-child(1)', 'default (enabled)')
+                        ->select('div.row:nth-child(1) select', 'false')
                         ->assertSeeIn('div.row:nth-child(2) label', 'Calendar invitations')
                         ->assertSelectHasOptions('div.row:nth-child(2) select', ['', 'true', 'false'])
                         ->assertSelected('div.row:nth-child(2) select', '')
+                        ->assertText('div.row:nth-child(2) select > option:nth-child(1)', 'default (disabled)')
                         ->select('div.row:nth-child(2) select', 'true')
                         ->assertSeeIn('div.row:nth-child(3) label', 'External sender warning')
                         ->assertSelectHasOptions('div.row:nth-child(3) select', ['', 'true', 'false'])
                         ->assertSelected('div.row:nth-child(3) select', 'false')
+                        ->assertText('div.row:nth-child(3) select > option:nth-child(1)', 'default (disabled)')
                         ->select('div.row:nth-child(3) select', '')
                         ->click('button[type=submit]')
                         ->assertToast(Toast::TYPE_SUCCESS, 'User settings updated successfully.');

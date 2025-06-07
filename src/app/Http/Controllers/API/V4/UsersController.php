@@ -203,7 +203,7 @@ class UsersController extends RelationController
         $response = $this->userResponse($user);
 
         $response['skus'] = Entitlement::objectEntitlementsSummary($user);
-        $response['config'] = $user->getConfig();
+        $response['config'] = $user->getConfig(true);
         $response['aliases'] = $user->aliases()->pluck('alias')->all();
 
         $code = $user->verificationcodes()->where('active', true)

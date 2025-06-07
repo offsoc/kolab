@@ -295,6 +295,14 @@ return [
             . " Entrez le code que nous vous avons envoyé, ou cliquez sur le lien dans le message.",
     ],
 
+    'policies' => [
+        'greylist' => "Greylisting",
+        'greylist-text' => "La greylisting est une méthode de défense des utilisateurs contre le spam."
+            . " Tout e-mail entrant provenant d'un expéditeur non reconnu est temporairement rejeté."
+            . " Le serveur d'origine doit réessayer après un délai cette fois-ci, le mail sera accepté."
+            . " Les spammeurs ne réessayent généralement pas de remettre le mail.",
+    ],
+
     'resource' => [
         'create' => "Créer une ressource",
         'delete' => "Supprimer une ressource",
@@ -401,11 +409,6 @@ return [
         'email-aliases' => "Alias E-mail",
         'ext-email' => "E-mail externe",
         'finances' => "Finances",
-        'greylisting' => "Greylisting",
-        'greylisting-text' => "La greylisting est une méthode de défense des utilisateurs contre le spam."
-            . " Tout e-mail entrant provenant d'un expéditeur non reconnu est temporairement rejeté."
-            . " Le serveur d'origine doit réessayer après un délai cette fois-ci, le mail sera accepté."
-            . " Les spammeurs ne réessayent généralement pas de remettre le mail.",
         'list-title' => "Comptes d'utilisateur",
         'list-empty' => "Il n'y a aucun utilisateur dans ce compte.",
         'managed-by' => "Géré par",

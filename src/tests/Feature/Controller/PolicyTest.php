@@ -216,7 +216,7 @@ class PolicyTest extends TestCase
 
         $jack = $this->getTestUser('jack@kolab.org');
         $john = $this->getTestUser('john@kolab.org');
-        $john->settings()->whereIn('key', ['itip_policy', 'externalsender_policy'])->delete();
+        $john->settings()->whereIn('key', ['itip_policy', 'externalsender_policy', 'greylist_policy'])->delete();
 
         // Unauth access not allowed
         $response = $this->get('/api/v4/policies');
@@ -233,7 +233,8 @@ class PolicyTest extends TestCase
 
         $response->assertStatus(200);
 
-        $this->assertCount(0, $json['mailDelivery']);
+        $this->assertSame(['greylist_policy'], $json['mailDelivery']);
+        $this->assertTrue($json['config']['greylist_policy']);
 
         // Get polcies when mailfilter is enabled
         \config(['app.with_mailfilter' => true]);
@@ -243,8 +244,9 @@ class PolicyTest extends TestCase
 
         $response->assertStatus(200);
 
-        $this->assertSame(['itip_policy', 'externalsender_policy'], $json['mailDelivery']);
+        $this->assertSame(['greylist_policy', 'itip_policy', 'externalsender_policy'], $json['mailDelivery']);
         $this->assertFalse($json['config']['itip_policy']);
+        $this->assertTrue($json['config']['greylist_policy']);
         $this->assertTrue($json['config']['externalsender_policy']);
     }
 

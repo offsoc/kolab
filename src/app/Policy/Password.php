@@ -109,22 +109,6 @@ class Password
     }
 
     /**
-     * Parse configured policy string
-     *
-     * @param ?string $policy Policy specification
-     *
-     * @return array Policy specification as an array indexed by the policy rule type
-     */
-    public static function parsePolicy(?string $policy): array
-    {
-        $policy = explode(',', strtolower((string) $policy));
-        $policy = array_map('trim', $policy);
-        $policy = array_unique(array_filter($policy));
-
-        return self::mapWithKeys($policy);
-    }
-
-    /**
      * Get the list of rules for a password
      *
      * @param ?User $owner The account owner (to get password policy from)
@@ -147,8 +131,8 @@ class Password
             $conf = \config('app.password_policy');
         }
 
-        $supported = self::parsePolicy($supported);
-        $conf = self::parsePolicy($conf);
+        $supported = Utils::parsePolicy($supported);
+        $conf = Utils::parsePolicy($conf);
         $rules = $all ? $supported : $conf;
 
         foreach ($rules as $idx => $rule) {
@@ -237,28 +221,5 @@ class Password
         }
 
         return $status;
-    }
-
-    /**
-     * Convert an array with password policy rules into one indexed by the rule name
-     *
-     * @param array $rules The rules list
-     */
-    private static function mapWithKeys(array $rules): array
-    {
-        $result = [];
-
-        foreach ($rules as $rule) {
-            $key = $rule;
-            $value = null;
-
-            if (strpos($key, ':')) {
-                [$key, $value] = explode(':', $key, 2);
-            }
-
-            $result[$key] = $value;
-        }
-
-        return $result;
     }
 }

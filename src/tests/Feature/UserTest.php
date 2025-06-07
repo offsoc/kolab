@@ -565,7 +565,7 @@ class UserTest extends TestCase
         $user->setSetting('limit_geo', null);
 
         // greylist_enabled
-        $this->assertTrue($user->getConfig()['greylist_enabled']);
+        $this->assertNull($user->getConfig()['greylist_enabled']);
 
         $result = $user->setConfig(['greylist_enabled' => false, 'unknown' => false]);
 
@@ -674,6 +674,15 @@ class UserTest extends TestCase
         $this->assertSame([], $result);
         $this->assertSame(['US', 'CH'], $user->getConfig()['limit_geo']);
         $this->assertSame('["US","CH"]', $user->getSetting('limit_geo'));
+
+        // Test getting account owner policies
+        $userB = $this->getTestUser('UserAccountB@UserAccount.com');
+        $package_kolab = Package::withEnvTenantContext()->where('title', 'kolab')->first();
+        $user->assignPackage($package_kolab, $userB);
+        $user->setConfig(['greylist_policy' => false]);
+
+        $this->assertTrue($userB->getConfig()['greylist_policy']);
+        $this->assertFalse($userB->getConfig(true)['greylist_policy']);
     }
 
     /**

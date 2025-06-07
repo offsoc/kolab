@@ -18,6 +18,7 @@ class PoliciesTest extends TestCaseDusk
         $john->setSettings([
             'itip_policy' => null,
             'externalsender_policy' => null,
+            'greylist_policy' => null,
         ]);
 
         parent::tearDown();
@@ -140,6 +141,7 @@ class PoliciesTest extends TestCaseDusk
         $john->setSettings([
             'itip_policy' => 'true',
             'externalsender_policy' => null,
+            'greylist_policy' => null,
         ]);
 
         $this->browse(static function (Browser $browser) {
@@ -149,19 +151,23 @@ class PoliciesTest extends TestCaseDusk
                 ->assertSeeIn('#policies .nav-item:nth-child(2)', 'Mail delivery')
                 ->click('#policies .nav-item:nth-child(2)')
                 ->with('@maildelivery-form', static function (Browser $browser) {
-                    $browser->assertElementsCount('div.row', 2)
-                        ->assertSeeIn('div.row:nth-child(1) label', 'Calendar invitations')
+                    $browser->assertElementsCount('div.row', 3)
+                        ->assertSeeIn('div.row:nth-child(1) label', 'Greylisting')
                         ->assertChecked('div.row:nth-child(1) input[type=checkbox]')
-                        ->assertSeeIn('div.row:nth-child(2) label', 'External sender warning')
-                        ->assertNotChecked('div.row:nth-child(2) input[type=checkbox]')
+                        ->assertSeeIn('div.row:nth-child(2) label', 'Calendar invitations')
+                        ->assertChecked('div.row:nth-child(2) input[type=checkbox]')
+                        ->assertSeeIn('div.row:nth-child(3) label', 'External sender warning')
+                        ->assertNotChecked('div.row:nth-child(3) input[type=checkbox]')
                         // Change the policy
                         ->click('div.row:nth-child(1) input[type=checkbox]')
                         ->click('div.row:nth-child(2) input[type=checkbox]')
+                        ->click('div.row:nth-child(3) input[type=checkbox]')
                         ->click('button[type=submit]');
                 })
                 ->assertToast(Toast::TYPE_SUCCESS, 'User settings updated successfully.');
         });
 
+        $this->assertSame('false', $john->getSetting('greylist_policy'));
         $this->assertSame('false', $john->getSetting('itip_policy'));
         $this->assertSame('true', $john->getSetting('externalsender_policy'));
     }

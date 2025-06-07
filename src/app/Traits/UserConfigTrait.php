@@ -3,19 +3,23 @@
 namespace App\Traits;
 
 use App\Policy\Password;
+use App\Policy\Utils as PolicyUtils;
 use App\Utils;
 
 trait UserConfigTrait
 {
     /**
      * A helper to get the user configuration.
+     *
+     * @param bool $include_account_policies Get the policies options from the account owner
      */
-    public function getConfig(): array
+    public function getConfig($include_account_policies = false): array
     {
         $settings = $this->getSettings([
             'externalsender_config',
             'externalsender_policy',
             'greylist_enabled',
+            'greylist_policy',
             'guam_enabled',
             'itip_config',
             'itip_policy',
@@ -27,7 +31,8 @@ trait UserConfigTrait
         $config = [
             'externalsender_config' => self::boolOrNull($settings['externalsender_config']),
             'externalsender_policy' => $settings['externalsender_policy'] === 'true',
-            'greylist_enabled' => $settings['greylist_enabled'] !== 'false',
+            'greylist_enabled' => self::boolOrNull($settings['greylist_enabled']),
+            'greylist_policy' => $settings['greylist_policy'] !== 'false',
             'guam_enabled' => $settings['guam_enabled'] === 'true',
             'itip_config' => self::boolOrNull($settings['itip_config']),
             'itip_policy' => $settings['itip_policy'] === 'true',
@@ -35,6 +40,19 @@ trait UserConfigTrait
             'max_password_age' => $settings['max_password_age'],
             'password_policy' => $settings['password_policy'],
         ];
+
+        // If user is not an account owner read the policy from the owner config
+        if ($include_account_policies) {
+            $wallet = $this->wallet();
+            if ($wallet && $wallet->user_id != $this->id) {
+                $account_config = $wallet->owner->getConfig();
+                foreach (array_keys($config) as $name) {
+                    if (str_contains($name, '_policy')) {
+                        $config[$name] = $account_config[$name];
+                    }
+                }
+            }
+        }
 
         return $config;
     }
@@ -51,9 +69,9 @@ trait UserConfigTrait
         $errors = [];
 
         foreach ($config as $key => $value) {
-            if (in_array($key, ['greylist_enabled', 'itip_policy', 'externalsender_policy'])) {
+            if (in_array($key, ['greylist_policy', 'itip_policy', 'externalsender_policy'])) {
                 $this->setSetting($key, $value ? 'true' : 'false');
-            } elseif (in_array($key, ['itip_config', 'externalsender_config'])) {
+            } elseif (in_array($key, ['greylist_enabled', 'itip_config', 'externalsender_config'])) {
                 $this->setSetting($key, $value === null ? null : ($value ? 'true' : 'false'));
             } elseif ($key == 'guam_enabled') {
                 $this->setSetting($key, $value ? 'true' : null);
@@ -119,7 +137,7 @@ trait UserConfigTrait
             return \trans('validation.invalid-password-policy');
         }
 
-        $systemPolicy = Password::parsePolicy(\config('app.password_policy'));
+        $systemPolicy = PolicyUtils::parsePolicy(\config('app.password_policy'));
 
         // Min/Max values cannot exceed the system defaults, i.e. if system policy
         // is min:5, user's policy cannot be set to a smaller number.

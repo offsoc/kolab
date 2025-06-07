@@ -96,8 +96,7 @@ class SettingsTest extends TestCaseDusk
                 ->assertSeeIn('@nav #tab-settings', 'Settings')
                 ->click('@nav #tab-settings')
                 ->with('@settings', static function (Browser $browser) {
-                    $browser->assertSeeIn('div.row:nth-child(1) label', 'Greylisting')
-                        ->click('div.row:nth-child(1) input[type=checkbox]');
+                    // This is tested in another place
                 })
                 ->assertSeeIn('@nav #tab-personal', 'Personal information')
                 ->click('@nav #tab-personal')

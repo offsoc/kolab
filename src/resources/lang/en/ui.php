@@ -380,6 +380,10 @@ return [
         'calinvitations-text' => "Enables automated handling of calendar invitations in incoming email.",
         'extsender' => "External sender warning",
         'extsender-text' => "Adds a warning to every delivered message sent by an external sender.",
+        'greylist' => "Greylisting",
+        'greylist-text' => "Greylisting is a method of defending users against spam. Any incoming mail from an unrecognized sender "
+            . "is temporarily rejected. The originating server should try again after a delay. "
+            . "This time the email will be accepted. Spammers usually do not reattempt mail delivery.",
         'mailDelivery' => "Mail delivery",
         'password' => "Password",
         'password-policy' => "Password Policy",
@@ -530,10 +534,6 @@ return [
         'finances' => "Finances",
         'geolimit' => "Geo-lockin",
         'geolimit-text' => "Defines a list of locations that are allowed for logon. You will not be able to login from a country that is not listed here.",
-        'greylisting' => "Greylisting",
-        'greylisting-text' => "Greylisting is a method of defending users against spam. Any incoming mail from an unrecognized sender "
-            . "is temporarily rejected. The originating server should try again after a delay. "
-            . "This time the email will be accepted. Spammers usually do not reattempt mail delivery.",
         'imapproxy' => "IMAP proxy",
         'imapproxy-text' => "Enables IMAP proxy that filters out non-mail groupware folders, so your IMAP clients do not see them.",
         'list-title' => "User accounts",

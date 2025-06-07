@@ -140,20 +140,8 @@ class Mailfilter
             Modules\ExternalSenderModule::class => [],
         ];
 
-        // Get user configuration (and policy if it is the account owner)
-        $config = $user->getConfig();
-
-        // Include account policy (if it is not the account owner)
-        $wallet = $user->wallet();
-        if ($wallet->user_id != $user->id) {
-            $policy = array_filter(
-                $wallet->owner->getConfig(),
-                fn ($key) => str_contains($key, 'policy'),
-                \ARRAY_FILTER_USE_KEY
-            );
-
-            $config = array_merge($config, $policy);
-        }
+        // Get user configuration and account policy
+        $config = $user->getConfig(true);
 
         foreach ($modules as $class => $module_config) {
             $module = strtolower(str_replace('Module', '', class_basename($class)));

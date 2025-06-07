@@ -50,6 +50,15 @@
                         <div class="tab-pane" id="mailDelivery" role="tabpanel" aria-labelledby="tab-mailDelivery">
                             <form class="card-body" @submit.prevent="submitMailDelivery">
                                 <div class="row checkbox mb-3">
+                                    <label for="greylist_policy" class="col-sm-4 col-form-label">{{ $t('policies.greylist') }}</label>
+                                    <div class="col-sm-8 pt-2">
+                                        <input type="checkbox" id="greylist_policy" name="greylist" value="1" class="form-check-input d-block mb-2" :checked="config.greylist_policy">
+                                        <small id="itip-hint" class="text-muted">
+                                            {{ $t('policies.greylist-text') }}
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="row checkbox mb-3">
                                     <label for="itip_policy" class="col-sm-4 col-form-label">{{ $t('policies.calinvitations') }}</label>
                                     <div class="col-sm-8 pt-2">
                                         <input type="checkbox" id="itip_policy" name="itip" value="1" class="form-check-input d-block mb-2" :checked="config.itip_policy">

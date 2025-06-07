@@ -303,7 +303,7 @@ class UsersTest extends TestCase
         $this->assertSame($userA->email, $json['email']);
         $this->assertTrue(is_array($json['statusInfo']));
         $this->assertTrue(is_array($json['settings']));
-        $this->assertTrue($json['config']['greylist_enabled']);
+        $this->assertNull($json['config']['greylist_enabled']);
         $this->assertFalse($json['config']['guam_enabled']);
         $this->assertSame([], $json['skus']);
         $this->assertSame([], $json['aliases']);

@@ -84,11 +84,13 @@ class PolicyController extends Controller
         $policy_config['max_password_age'] = $config['max_password_age'];
 
         // Get the mail delivery policies
-        $mail_delivery_policy = [];
+        $mail_delivery_policy = ['greylist_policy'];
+        $policy_config['greylist_policy'] = $config['greylist_policy'];
+
         if (config('app.with_mailfilter')) {
             foreach (['itip_policy', 'externalsender_policy'] as $name) {
                 $mail_delivery_policy[] = $name;
-                $policy_config[$name] = $config[$name] ?? null;
+                $policy_config[$name] = $config[$name];
             }
         }
 

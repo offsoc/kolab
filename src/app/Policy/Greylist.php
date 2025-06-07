@@ -4,6 +4,7 @@ namespace App\Policy;
 
 use App\Policy\Greylist\Connect;
 use App\Policy\Greylist\Whitelist;
+use App\Policy\Utils as PolicyUtils;
 use App\Utils;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -129,7 +130,7 @@ class Greylist
         // See if the recipient opted-out of the feature
         $enabled = true;
         if ($recipient) {
-            $enabled = $recipient->getSetting('greylist_enabled') !== 'false';
+            $enabled = PolicyUtils::getPolicySetting($recipient, 'greylist_enabled');
         }
 
         // FIXME: Shouldn't we bail-out (return early) if there's no $recipient?

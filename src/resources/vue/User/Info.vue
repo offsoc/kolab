@@ -121,12 +121,16 @@
                                 </template>
                                 <template #maildelivery v-if="settingsSections.maildelivery">
                                     <form @submit.prevent="submitMailDelivery">
-                                        <div class="row checkbox mb-3">
-                                            <label for="greylist_enabled" class="col-sm-4 col-form-label">{{ $t('user.greylisting') }}</label>
-                                            <div class="col-sm-8 pt-2">
-                                                <input type="checkbox" id="greylist_enabled" name="greylist_enabled" value="1" class="form-check-input d-block mb-2" :checked="user.config.greylist_enabled">
+                                        <div class="row mb-3">
+                                            <label for="greylist_enabled" class="col-sm-4 col-form-label">{{ $t('policies.greylist') }}</label>
+                                            <div class="col-sm-8">
+                                                <select id="greylist_enabled" name="greylist" class="form-select">
+                                                    <option value="" :selected="user.config.greylist_enabled == null">{{ $t('form.default') }} ({{ $t(user.config.greylist_policy ? 'form.enabled' : 'form.disabled') }})</option>
+                                                    <option value="true" :selected="user.config.greylist_enabled === true">{{ $t('form.enabled') }}</option>
+                                                    <option value="false" :selected="user.config.greylist_enabled === false">{{ $t('form.disabled') }}</option>
+                                                </select>
                                                 <small id="greylisting-hint" class="text-muted">
-                                                    {{ $t('user.greylisting-text') }}
+                                                    {{ $t('policies.greylist-text') }}
                                                 </small>
                                             </div>
                                         </div>
@@ -134,7 +138,7 @@
                                             <label for="itip_config" class="col-sm-4 col-form-label">{{ $t('policies.calinvitations') }}</label>
                                             <div class="col-sm-8">
                                                 <select id="itip_config" name="itip" class="form-select">
-                                                    <option value="" :selected="user.config.itip_config == null">{{ $t('form.default') }}</option>
+                                                    <option value="" :selected="user.config.itip_config == null">{{ $t('form.default') }} ({{ $t(user.itip_policy ? 'form.enabled' : 'form.disabled') }})</option>
                                                     <option value="true" :selected="user.config.itip_config === true">{{ $t('form.enabled') }}</option>
                                                     <option value="false" :selected="user.config.itip_config === false">{{ $t('form.disabled') }}</option>
                                                 </select>
@@ -147,7 +151,7 @@
                                             <label for="externalsender_config" class="col-sm-4 col-form-label">{{ $t('policies.extsender') }}</label>
                                             <div class="col-sm-8">
                                                 <select id="externalsender_config" name="extsender" class="form-select">
-                                                    <option value="" :selected="user.config.externalsender_config == null">{{ $t('form.default') }}</option>
+                                                    <option value="" :selected="user.config.externalsender_config == null">{{ $t('form.default') }} ({{ $t(user.config.externalsender_policy ? 'form.enabled' : 'form.disabled') }})</option>
                                                     <option value="true" :selected="user.config.externalsender_config === true">{{ $t('form.enabled') }}</option>
                                                     <option value="false" :selected="user.config.externalsender_config === false">{{ $t('form.disabled') }}</option>
                                                 </select>
@@ -521,12 +525,8 @@
                 const typeMap = { 'true': true, 'false': false }
                 let post = {}
 
-                $('#maildelivery form').find('select,input[type=checkbox]').each(function() {
-                    if (this.nodeName == 'INPUT') {
-                        post[this.id] = this.checked ? 1 : 0
-                    } else {
-                        post[this.id] = typeMap[this.value] || null
-                    }
+                $('#maildelivery form').find('select').each(function() {
+                    post[this.id] = this.value in typeMap ? typeMap[this.value] : null
                 })
 
                 axios.post('/api/v4/users/' + this.user_id + '/config', post)
@@ -556,8 +556,9 @@
                 this.$root.clearFormValidation($('#settings form'))
 
                 let post = this.$root.pick(this.user.config, ['limit_geo'])
+                const names = ['guam_enabled']
 
-                ['guam_enabled'].forEach(name => {
+                names.forEach(name => {
                     if ($('#' + name).length) {
                         post[name] = $('#' + name).prop('checked') ? 1 : 0
                     }
