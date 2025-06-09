@@ -296,9 +296,7 @@ Route::group(
 
         Route::get('search/self', [API\V4\SearchController::class, 'searchSelf']);
         Route::get('search/contacts', [API\V4\SearchController::class, 'searchContacts']);
-        if (\config('app.with_user_search')) {
-            Route::get('search/user', [API\V4\SearchController::class, 'searchUser']);
-        }
+        Route::get('search/user', [API\V4\SearchController::class, 'searchUser']);
 
         Route::post('support/request', [API\V4\SupportController::class, 'request'])
             ->withoutMiddleware(['auth:api', 'scope:api'])

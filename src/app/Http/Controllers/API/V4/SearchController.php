@@ -121,6 +121,10 @@ class SearchController extends Controller
      */
     public function searchUser(Request $request)
     {
+        if (!\config('app.with_user_search')) {
+            return $this->errorResponse(404);
+        }
+
         $user = $this->guard()->user();
         $search = trim(request()->input('search'));
         $with_aliases = !empty(request()->input('alias'));

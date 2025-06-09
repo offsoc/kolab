@@ -160,16 +160,7 @@ class SearchTest extends TestCase
      */
     public function testSearchUser(): void
     {
-        // FIXME: It looks it's not working when you have APP_WITH_USER_SEARCH=true in .env file
-        \putenv('APP_WITH_USER_SEARCH=false'); // can't be done using \config()
-        $this->refreshApplication(); // reload routes
-
-        // User search route disabled
-        $response = $this->get("api/v4/search/user");
-        $response->assertStatus(404);
-
-        \putenv('APP_WITH_USER_SEARCH=true'); // can't be done using \config()
-        $this->refreshApplication(); // reload routes
+        \config(['app.with_user_search' => true]);
 
         // Unauth access not allowed
         $response = $this->get("api/v4/search/user");
@@ -262,5 +253,10 @@ class SearchTest extends TestCase
         $json = $response->json();
 
         $this->assertSame(0, $json['count']);
+
+        // User search feature disabled
+        \config(['app.with_user_search' => false]);
+        $response = $this->actingAs($john)->get("api/v4/search/user?alias=1&search=jane");
+        $response->assertStatus(404);
     }
 }
