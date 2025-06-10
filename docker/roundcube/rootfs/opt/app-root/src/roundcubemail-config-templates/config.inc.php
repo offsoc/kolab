@@ -93,6 +93,7 @@ if (!function_exists("getenvlist")) {
         'newmail_notifier',
         'odfviewer',
         'redundant_attachments',
+        'vcard_attachments',
         // 'tasklist',
         'enigma',
         // contextmenu must be after kolab_addressbook (#444)
