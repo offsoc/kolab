@@ -155,6 +155,11 @@ class ActiveSync:
         else:
             self.sync_key = 0
 
+        if hasattr(options, 'folder_sync_key') and options.folder_sync_key:
+            self.folder_sync_key = options.folder_sync_key
+        else:
+            self.folder_sync_key = 0
+
         if hasattr(options, 'poll') and options.poll:
             self.poll = options.poll
         else:
@@ -487,14 +492,17 @@ class ActiveSync:
         print("Elapsed: " + str(end - start))
         print("\n")
 
-    def folder_sync(self):
+    def folder_sync(self, sync_key = 0):
         request = """
             <?xml version="1.0" encoding="utf-8"?>
             <!DOCTYPE ActiveSync PUBLIC "-//MICROSOFT//DTD ActiveSync//EN" "http://www.microsoft.com/">
             <FolderSync xmlns="FolderHierarchy:">
-                <SyncKey>0</SyncKey>
+                <SyncKey>{sync_key}</SyncKey>
             </FolderSync>
-        """.replace('    ', '').replace('\n', '')
+        """.replace('    ', '').replace('\n', '').format(sync_key=sync_key)
+
+        if self.verbose:
+            print(request)
 
         response = self.send_request('FolderSync', request)
 
@@ -519,7 +527,7 @@ class ActiveSync:
         return [folder_sync_key, root]
 
     def list(self):
-        [folder_sync_key, root] = self.folder_sync()
+        [folder_sync_key, root] = self.folder_sync(self.folder_sync_key)
 
         xmlns = "http://synce.org/formats/airsync_wm5/folderhierarchy"
         folders = {}
@@ -594,7 +602,7 @@ def main():
 
     parser_list = subparsers.add_parser('list')
     parser_list.add_argument("--folder", help="Folder")
-    parser_list.add_argument("--sync_key", help="Sync key to start from")
+    parser_list.add_argument("--folder_sync_key", help="Sync key to start from")
     parser_list.set_defaults(func=lambda args: ActiveSync(args).list())
 
     parser_list = subparsers.add_parser('sync')
