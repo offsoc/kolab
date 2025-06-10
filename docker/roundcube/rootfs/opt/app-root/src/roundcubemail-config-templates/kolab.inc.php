@@ -32,6 +32,7 @@ $config['configuration-overlays']['kolab4'] = [
     'activesync_storage' => 'kolab4',
     'activesync_dav_server' => getenv('CALENDAR_CALDAV_SERVER') ?: "https://" . ($_SERVER["HTTP_HOST"] ?? null) . "/dav",
     'kolab_tags_driver' => 'annotate',
+    'kolab_dav_sharing' => 'sharing',
     'tasklist_driver' => 'caldav',
     'tasklist_caldav_server' => getenv('TASKLIST_CALDAV_SERVER') ?: "https://" . ($_SERVER["HTTP_HOST"] ?? null) . "/dav",
 ];
