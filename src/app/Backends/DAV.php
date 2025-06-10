@@ -856,7 +856,7 @@ class DAV
                 $path = substr($path, strlen($rootPath));
             }
 
-            $url .= $path;
+            $url = rtrim($url, '/') . $path;
         }
 
         $client = Http::withOptions(['verify' => \config('services.dav.verify')]);
