@@ -44,7 +44,7 @@ EOF
 
 cat <<EOF >> /etc/nginx/nginx.conf
     server {
-        listen 6080;
+        listen 6080 default_server;
         listen 6443 default_server ssl;
         listen [::]:6443 ssl ipv6only=on;
 
