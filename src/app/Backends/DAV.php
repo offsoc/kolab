@@ -182,11 +182,10 @@ class DAV
      *
      * @return bool True on success, False otherwise
      */
-    public static function healthcheck(): bool
+    public static function healthcheck($username, $password): bool
     {
-        $dav = new self();
-        $dav->setUrl(\config('services.dav.uri'));
-        return $dav->options() != false;
+        $homes = self::getInstance($username, $password)->discover();
+        return !empty($homes);
     }
 
     /**

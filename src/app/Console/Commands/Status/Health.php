@@ -73,7 +73,7 @@ class Health extends Command
     private function checkDAV()
     {
         try {
-            return DAV::healthcheck();
+            return DAV::healthcheck($this->option('user'), $this->option('password'));
         } catch (\Exception $exception) {
             $this->line($exception);
             return false;
@@ -196,10 +196,11 @@ class Health extends Command
         $steps = $this->option('check');
         if (empty($steps)) {
             $steps = [
-                'DB', 'Redis', 'Roundcube', 'Meet', 'DAV', 'Mollie', 'OpenExchangeRates',
+                'DB', 'Redis', 'Roundcube', 'Meet',
             ];
             if (!empty($this->option('user'))) {
                 array_unshift($steps, 'Auth');
+                array_unshift($steps, 'DAV');
                 array_unshift($steps, 'SMTP');
             }
             if (\config('app.with_ldap')) {
@@ -210,6 +211,12 @@ class Health extends Command
             }
             if (\config('app.with_files')) {
                 array_unshift($steps, 'Storage');
+            }
+            if (\config('services.mollie.key')) {
+                array_unshift($steps, 'Mollie');
+            }
+            if (\config('services.openexchangerates.api_key')) {
+                array_unshift($steps, 'OpenExchangeRates');
             }
         }
 

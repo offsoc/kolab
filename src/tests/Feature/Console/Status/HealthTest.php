@@ -8,19 +8,20 @@ use App\Support\Facades\LDAP;
 use App\Support\Facades\Roundcube;
 use App\Support\Facades\Storage;
 use Tests\TestCase;
+use App\Utils;
 
 class HealthTest extends TestCase
 {
     /**
      * Test the command
-     *
-     * @group meet
-     * @group mollie
      */
     public function testHandle(): void
     {
         \config(['app.with_ldap' => true]);
         \config(['app.with_imap' => true]);
+
+        $userPassword = Utils::generatePassphrase();
+        $user = $this->getTestUser('user@health-test.com', ['password' => $userPassword]);
 
         DAV::shouldReceive('healthcheck')->once()->andReturn(true);
         IMAP::shouldReceive('healthcheck')->once()->andReturn(true);
@@ -28,9 +29,9 @@ class HealthTest extends TestCase
         Roundcube::shouldReceive('healthcheck')->once()->andReturn(true);
         Storage::shouldReceive('healthcheck')->once()->andReturn(true);
 
-        $code = \Artisan::call("status:health");
+        $code = \Artisan::call("status:health --check DB --check Redis --check Roundcube --check DAV --check IMAP --check LDAP --check Storage --user {$user->email} --password $userPassword");
         $output = trim(\Artisan::output());
-
+        $this->assertStringNotContainsString("Error", $output);
         $this->assertSame(0, $code);
     }
 }
