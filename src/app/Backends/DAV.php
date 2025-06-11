@@ -854,6 +854,8 @@ class DAV
 
             if ($rootPath && str_starts_with($path, $rootPath)) {
                 $path = substr($path, strlen($rootPath));
+                // If rootPath has a trailing slash we end up removing it.
+                $path = '/' . ltrim($path, '/');
             }
 
             $url = rtrim($url, '/') . $path;
