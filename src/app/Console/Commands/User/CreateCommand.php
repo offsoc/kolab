@@ -61,9 +61,13 @@ class CreateCommand extends Command
         // TODO: Assigning user to an existing account
         // TODO: Making him an operator of the reseller wallet
         } else {
+            if ($role && !in_array($role, User::supportedRoles())) {
+                $this->error("Invalid role: {$role}");
+                return 1;
+            }
+
             [$local, $domainName] = explode('@', $email, 2);
 
-            $role = null;
             $domain = $this->getDomain($domainName);
 
             if (!$domain) {
