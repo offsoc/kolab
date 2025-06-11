@@ -7,8 +7,8 @@ use App\Support\Facades\IMAP;
 use App\Support\Facades\LDAP;
 use App\Support\Facades\Roundcube;
 use App\Support\Facades\Storage;
-use Tests\TestCase;
 use App\Utils;
+use Tests\TestCase;
 
 class HealthTest extends TestCase
 {
@@ -29,7 +29,7 @@ class HealthTest extends TestCase
         Roundcube::shouldReceive('healthcheck')->once()->andReturn(true);
         Storage::shouldReceive('healthcheck')->once()->andReturn(true);
 
-        $code = \Artisan::call("status:health --check DB --check Redis --check Roundcube --check DAV --check IMAP --check LDAP --check Storage --user {$user->email} --password $userPassword");
+        $code = \Artisan::call("status:health --check DB --check Redis --check Roundcube --check DAV --check IMAP --check LDAP --check Storage --user {$user->email} --password {$userPassword}");
         $output = trim(\Artisan::output());
         $this->assertStringNotContainsString("Error", $output);
         $this->assertSame(0, $code);
