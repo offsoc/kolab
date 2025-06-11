@@ -39,8 +39,7 @@ class CreateJob extends UserJob
             return;
         }
 
-        if ($user->role) {
-            // Admins/resellers/service-accounts don't reside in LDAP (for now)
+        if ($user->role == User::ROLE_SERVICE) {
             return;
         }
 
@@ -58,6 +57,10 @@ class CreateJob extends UserJob
 
         if ($user->trashed()) {
             $this->fail("User {$this->userId} is actually deleted.");
+            return;
+        }
+
+        if (!$user->hasSku('mailbox')) {
             return;
         }
 

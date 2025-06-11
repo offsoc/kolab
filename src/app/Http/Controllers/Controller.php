@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\User;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
@@ -64,7 +65,7 @@ class Controller extends BaseController
 
         $user = $this->guard()->user();
 
-        if ($user->role == 'admin') {
+        if ($user->role == User::ROLE_ADMIN) {
             return true;
         }
 

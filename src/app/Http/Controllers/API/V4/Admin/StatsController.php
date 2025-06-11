@@ -523,7 +523,7 @@ class StatsController extends Controller
         $user = $this->guard()->user();
 
         // For resellers return their wallet currency
-        if ($user->role == 'reseller') {
+        if ($user->role == User::ROLE_RESELLER) {
             $currency = $user->wallet()->currency;
         }
 

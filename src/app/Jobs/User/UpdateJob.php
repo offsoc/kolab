@@ -5,6 +5,7 @@ namespace App\Jobs\User;
 use App\Jobs\UserJob;
 use App\Support\Facades\IMAP;
 use App\Support\Facades\LDAP;
+use App\User;
 use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
 
 class UpdateJob extends UserJob implements ShouldBeUniqueUntilProcessing
@@ -28,7 +29,7 @@ class UpdateJob extends UserJob implements ShouldBeUniqueUntilProcessing
             return;
         }
 
-        if ($user->role) {
+        if ($user->role == User::ROLE_SERVICE) {
             // Admins/resellers don't reside in LDAP (for now)
             return;
         }

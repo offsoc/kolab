@@ -63,6 +63,7 @@ class CreateCommand extends Command
         } else {
             [$local, $domainName] = explode('@', $email, 2);
 
+            $role = null;
             $domain = $this->getDomain($domainName);
 
             if (!$domain) {

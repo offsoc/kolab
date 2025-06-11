@@ -90,11 +90,8 @@ class UsersController extends \App\Http\Controllers\API\V4\Admin\UsersController
                 ->first();
 
             if ($domain) {
-                if (
-                    ($wallet = $domain->wallet())
-                    && ($owner = $wallet->owner()->withTrashed()->withSubjectTenantContext()->first())
-                    && empty($owner->role)
-                ) {
+                $wallet = $domain->wallet();
+                if ($wallet && ($owner = $wallet->owner()->withTrashed()->withSubjectTenantContext()->first())) {
                     $result->push($owner);
                 }
             }

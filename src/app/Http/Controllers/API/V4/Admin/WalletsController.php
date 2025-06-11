@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\V4\Admin;
 use App\Discount;
 use App\Http\Controllers\API\V4\PaymentsController;
 use App\Providers\PaymentProvider;
+use App\User;
 use App\Wallet;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -86,7 +87,7 @@ class WalletsController extends \App\Http\Controllers\API\V4\WalletsController
 
         $wallet->{$method}(abs($amount), $request->description);
 
-        if ($user->role == 'reseller') {
+        if ($user->role == User::ROLE_RESELLER) {
             if ($user->tenant && ($tenant_wallet = $user->tenant->wallet())) {
                 $desc = ($amount > 0 ? 'Awarded' : 'Penalized') . " user {$wallet->owner->email}";
                 $tenant_method = $amount > 0 ? 'debit' : 'credit';

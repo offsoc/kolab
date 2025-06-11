@@ -3,6 +3,7 @@
 namespace App\Console\Commands\User;
 
 use App\Console\Command;
+use App\User;
 
 class SetRoleCommand extends Command
 {
@@ -28,16 +29,21 @@ class SetRoleCommand extends Command
     public function handle()
     {
         $user = $this->getUser($this->argument('user'));
+        $role = $this->argument('role');
 
         if (!$user) {
             $this->error("User not found.");
             return 1;
         }
-        $role = $this->argument('role');
+
         if ($role === 'null') {
             $this->info("Removing role.");
             $role = null;
+        } elseif (!in_array($role, User::supportedRoles())) {
+            $this->error("Invalid role.");
+            return 1;
         }
+
         $user->role = $role;
         $user->save();
     }

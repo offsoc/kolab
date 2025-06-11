@@ -743,6 +743,20 @@ class User extends Authenticatable
     }
 
     /**
+     * Returns list of supported user roles
+     */
+    public static function supportedRoles(): array
+    {
+        $class = new \ReflectionClass(__CLASS__);
+
+        return array_values(array_filter(
+            $class->getConstants(),
+            fn ($key) => str_starts_with($key, 'ROLE_'),
+            \ARRAY_FILTER_USE_KEY
+        ));
+    }
+
+    /**
      * Suspend all users/domains/groups in this account.
      */
     public function suspendAccount(): void

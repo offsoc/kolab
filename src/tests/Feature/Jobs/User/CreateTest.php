@@ -4,6 +4,7 @@ namespace Tests\Feature\Jobs\User;
 
 use App\Domain;
 use App\Jobs\User\CreateJob;
+use App\Sku;
 use App\Support\Facades\DAV;
 use App\Support\Facades\IMAP;
 use App\Support\Facades\LDAP;
@@ -35,6 +36,7 @@ class CreateTest extends TestCase
         Queue::fake();
 
         $user = $this->getTestUser('new-job-user@' . \config('app.domain'), ['status' => User::STATUS_NEW]);
+        $user->assignSku(Sku::withEnvTenantContext()->where('title', 'mailbox')->first());
         $domain = Domain::where('namespace', \config('app.domain'))->first();
         $domain->status |= Domain::STATUS_LDAP_READY;
         $domain->save();

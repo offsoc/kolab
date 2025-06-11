@@ -57,7 +57,7 @@ trait DelegationTrait
     {
         $user = User::find($id);
 
-        if (!$this->checkTenant($user) || $user->role) {
+        if (!$this->checkTenant($user) || $user->role == User::ROLE_SERVICE) {
             return $this->errorResponse(404);
         }
 

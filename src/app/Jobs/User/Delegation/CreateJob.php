@@ -48,7 +48,7 @@ class CreateJob extends UserJob
         $user = $delegation->user;
         $delegatee = $delegation->delegatee;
 
-        if (!$user || !$delegatee || $user->role || $delegatee->role || $user->trashed() || $delegatee->trashed()) {
+        if (!$user || !$delegatee || $user->trashed() || $delegatee->trashed()) {
             return;
         }
 

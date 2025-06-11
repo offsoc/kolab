@@ -168,7 +168,7 @@ class CreateCommand extends Command
         $user = new User();
         $user->email = $email;
         $user->password = $this->option('password');
-        $user->role = 'reseller';
+        $user->role = User::ROLE_RESELLER;
         $user->tenant_id = $tenant->id;
 
         if ($error = UsersController::validateEmail($email, $user)) {
