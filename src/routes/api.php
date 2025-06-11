@@ -3,6 +3,9 @@
 use App\Http\Controllers\API;
 use Illuminate\Support\Facades\Route;
 
+Route::get('health/readiness', [API\V4\HealthController::class, 'readiness']);
+Route::get('health/liveness', [API\V4\HealthController::class, 'liveness']);
+
 Route::post('oauth/approve', [API\AuthController::class, 'oauthApprove'])
     ->middleware(['auth:api']);
 
@@ -13,6 +16,21 @@ Route::group(
     ],
     static function () {
         Route::post('login', [API\AuthController::class, 'login']);
+
+        Route::post('password-policy-check', [API\V4\PolicyController::class, 'checkPassword']);
+        Route::post('password-reset/init', [API\PasswordResetController::class, 'init']);
+        Route::post('password-reset/verify', [API\PasswordResetController::class, 'verify']);
+        Route::post('password-reset', [API\PasswordResetController::class, 'reset']);
+
+        if (\config('app.with_signup')) {
+            Route::get('signup/domains', [API\SignupController::class, 'domains']);
+            Route::post('signup/init', [API\SignupController::class, 'init']);
+            Route::get('signup/invitations/{id}', [API\SignupController::class, 'invitation']);
+            Route::get('signup/plans', [API\SignupController::class, 'plans']);
+            Route::post('signup/validate', [API\SignupController::class, 'signupValidate']);
+            Route::post('signup/verify', [API\SignupController::class, 'verify']);
+            Route::post('signup', [API\SignupController::class, 'signup']);
+        }
 
         Route::group(
             ['middleware' => ['auth:api', 'scope:api']],
@@ -26,40 +44,6 @@ Route::group(
         );
     }
 );
-
-Route::group(
-    [
-        'domain' => \config('app.website_domain'),
-        'middleware' => 'api',
-        'prefix' => 'auth',
-    ],
-    static function () {
-        Route::post('password-policy-check', [API\V4\PolicyController::class, 'checkPassword']);
-
-        Route::post('password-reset/init', [API\PasswordResetController::class, 'init']);
-        Route::post('password-reset/verify', [API\PasswordResetController::class, 'verify']);
-        Route::post('password-reset', [API\PasswordResetController::class, 'reset']);
-    }
-);
-
-if (\config('app.with_signup')) {
-    Route::group(
-        [
-            'domain' => \config('app.website_domain'),
-            'middleware' => 'api',
-            'prefix' => 'auth',
-        ],
-        static function () {
-            Route::get('signup/domains', [API\SignupController::class, 'domains']);
-            Route::post('signup/init', [API\SignupController::class, 'init']);
-            Route::get('signup/invitations/{id}', [API\SignupController::class, 'invitation']);
-            Route::get('signup/plans', [API\SignupController::class, 'plans']);
-            Route::post('signup/validate', [API\SignupController::class, 'signupValidate']);
-            Route::post('signup/verify', [API\SignupController::class, 'verify']);
-            Route::post('signup', [API\SignupController::class, 'signup']);
-        }
-    );
-}
 
 Route::group(
     [
@@ -80,26 +64,20 @@ Route::group(
 if (\config('app.with_files')) {
     Route::group(
         [
-            'middleware' => ['auth:api', 'scope:fs,api'],
+            'middleware' => ($middleware = ['auth:api', 'scope:fs,api']),
             'prefix' => 'v4',
         ],
-        static function () {
+        static function () use ($middleware) {
             Route::apiResource('fs', API\V4\FsController::class);
             Route::get('fs/{itemId}/permissions', [API\V4\FsController::class, 'getPermissions']);
             Route::post('fs/{itemId}/permissions', [API\V4\FsController::class, 'createPermission']);
             Route::put('fs/{itemId}/permissions/{id}', [API\V4\FsController::class, 'updatePermission']);
             Route::delete('fs/{itemId}/permissions/{id}', [API\V4\FsController::class, 'deletePermission']);
-        }
-    );
-    Route::group(
-        [
-            'middleware' => [],
-            'prefix' => 'v4',
-        ],
-        static function () {
+
             Route::post('fs/uploads/{id}', [API\V4\FsController::class, 'upload'])
-                ->middleware(['api']);
-            Route::get('fs/downloads/{id}', [API\V4\FsController::class, 'download']);
+                ->withoutMiddleware($middleware)->middleware(['api']);
+            Route::get('fs/downloads/{id}', [API\V4\FsController::class, 'download'])
+                ->withoutMiddleware($middleware);
         }
     );
 }
@@ -144,16 +122,9 @@ if (\config('app.with_admin')) {
             Route::get('wallets/{id}/transactions', [API\V4\Admin\WalletsController::class, 'transactions']);
 
             Route::get('stats/chart/{chart}', [API\V4\Admin\StatsController::class, 'chart']);
-        }
-    );
 
-    Route::group(
-        [
-            'domain' => 'admin.' . \config('app.website_domain'),
-            'prefix' => 'v4',
-        ],
-        static function () {
-            Route::get('inspect-request', [API\V4\Admin\UsersController::class, 'inspectRequest']);
+            Route::get('inspect-request', [API\V4\Admin\UsersController::class, 'inspectRequest'])
+                ->withoutMiddleware(['auth:api', 'admin']);
         }
     );
 }
@@ -340,6 +311,3 @@ if (\config('app.with_services')) {
         }
     );
 }
-
-Route::get('health/readiness', [API\V4\HealthController::class, 'readiness']);
-Route::get('health/liveness', [API\V4\HealthController::class, 'liveness']);

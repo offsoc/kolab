@@ -66,6 +66,23 @@ class UsersTest extends TestCase
     }
 
     /**
+     * Test inspect request (GET /api/v4/inspect-request)
+     */
+    public function testInspectRequest(): void
+    {
+        // No authentication required here
+        $this->get("api/v4/inspect-request")
+            ->assertStatus(200)
+            ->assertJson(function ($json) {
+                $json->hasAll(['ip', 'clientIps', 'isFromTrustedProxy', 'headers']);
+            });
+
+        // Normal users have no access to this end-point
+        self::useRegularUrl();
+        $this->get("api/v4/inspect-request")->assertStatus(404);
+    }
+
+    /**
      * Test users searching (/api/v4/users)
      */
     public function testIndex(): void
