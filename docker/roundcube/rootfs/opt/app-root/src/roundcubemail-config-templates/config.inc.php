@@ -85,7 +85,6 @@ if (!function_exists("getenvlist")) {
         'kolab',
         // 'calendar',
         'jqueryui',
-        'kolab_activesync',
         // 'kolab_addressbook',
         // 'kolab_files',
         // 'kolab_tags',
