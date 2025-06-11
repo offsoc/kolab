@@ -99,6 +99,11 @@
                         if (redirect && redirect.redirectUrl) {
                             let params = this.$root.pick(redirect, ['error', 'error_description'])
                             params.state = this.$route.query.state
+
+                            try {
+                                params.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                            } catch (e) {}
+
                             this.redirect(redirect.redirectUrl, params)
                         }
                     })
