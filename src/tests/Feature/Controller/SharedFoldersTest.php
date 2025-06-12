@@ -508,6 +508,8 @@ class SharedFoldersTest extends TestCase
         $this->assertSame(["The specified domain is invalid."], $json['errors']['aliases']);
         $this->assertCount(3, $json['errors']);
 
+        \config(['app.shared_folder_types' => ['mail', 'event']]);
+
         // Test successful folder creation
         $post['name'] = 'Test Folder';
         $post['type'] = 'event';

@@ -62,6 +62,8 @@ class CreateTest extends TestCase
         $this->assertSame(1, $code);
         $this->assertSame("The specified type is invalid.", $output);
 
+        \config(['app.shared_folder_types' => ['mail', 'task']]);
+
         // Invalid acl
         $code = \Artisan::call("sharedfolder:create kolab.org Test --type=task --acl=\"anyone,unknown\"");
         $output = trim(\Artisan::output());

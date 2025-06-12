@@ -76,7 +76,7 @@ class SharedFolderTest extends TestCase
     {
         $folder = new SharedFolder(['name' => 'test']);
 
-        foreach (SharedFolder::SUPPORTED_TYPES as $type) {
+        foreach (\config('app.shared_folder_types') as $type) {
             $folder->type = $type;
         }
 

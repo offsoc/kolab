@@ -33,6 +33,8 @@ class LdifTest extends TestCase
      */
     public function testHandle(): void
     {
+        \config(['app.shared_folder_types' => ['mail', 'event']]);
+
         $code = \Artisan::call("data:import:ldif tests/data/kolab3.ldif owner@kolab3.com");
         $output = trim(\Artisan::output());
 
@@ -412,6 +414,7 @@ class LdifTest extends TestCase
      */
     public function testParseLDAPSharedFolder(): void
     {
+        \config(['app.shared_folder_types' => ['mail', 'event']]);
         $command = new LdifCommand();
 
         $entry = [];

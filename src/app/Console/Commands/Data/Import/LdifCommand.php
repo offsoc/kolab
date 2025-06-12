@@ -896,6 +896,10 @@ class LdifCommand extends Command
 
             if (!empty($entry['kolabfoldertype'])) {
                 $result['type'] = $this->attrStringValue($entry, 'kolabfoldertype');
+
+                if (!in_array($result['type'], \config('app.shared_folder_types'))) {
+                    $error = "Unsupported shared folder type: {$result['type']}";
+                }
             }
 
             if (!empty($entry['kolabtargetfolder'])) {

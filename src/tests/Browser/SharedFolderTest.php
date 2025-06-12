@@ -95,25 +95,25 @@ class SharedFolderTest extends TestCaseDusk
     public function testCreateUpdateDelete(): void
     {
         $this->browse(function (Browser $browser) {
+            $cfg = ['app.shared_folder_types' => ['mail', 'event', 'task', 'contact']];
+
             // Create a folder
-            $browser->visit(new SharedFolderList())
+            $browser->withConfig($cfg)
+                ->visit(new SharedFolderList())
                 ->assertSeeIn('button.shared-folder-new', 'Create folder')
                 ->click('button.shared-folder-new')
                 ->on(new SharedFolderInfo())
                 ->assertSeeIn('#folder-info .card-title', 'New shared folder')
                 ->assertSeeIn('@nav #tab-general', 'General')
                 ->assertMissing('@nav #tab-settings')
-                ->with('@general', static function (Browser $browser) {
+                ->with('@general', static function (Browser $browser) use ($cfg) {
                     // Assert form content
                     $browser->assertMissing('#status')
                         ->assertFocused('#name')
                         ->assertSeeIn('div.row:nth-child(1) label', 'Name')
                         ->assertValue('div.row:nth-child(1) input[type=text]', '')
                         ->assertSeeIn('div.row:nth-child(2) label', 'Type')
-                        ->assertSelectHasOptions(
-                            'div.row:nth-child(2) select',
-                            ['mail', 'event', 'task', 'contact', 'note', 'file']
-                        )
+                        ->assertSelectHasOptions('div.row:nth-child(2) select', $cfg['app.shared_folder_types'])
                         ->assertValue('div.row:nth-child(2) select', 'mail')
                         ->assertSeeIn('div.row:nth-child(3) label', 'Domain')
                         ->assertSelectHasOptions('div.row:nth-child(3) select', ['kolab.org'])

@@ -283,4 +283,9 @@ return [
     ],
 
     'mta_sts' => env('MTA_STS'),
+
+    'shared_folder_types' => array_merge(
+        ['mail'],
+        \env('IMAP_WITH_GROUPWARE_DEFAULT_FOLDERS', true) ? ['event', 'contact', 'task', 'note', 'file'] : []
+    ),
 ];

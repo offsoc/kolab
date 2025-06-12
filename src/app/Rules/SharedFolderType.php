@@ -2,7 +2,6 @@
 
 namespace App\Rules;
 
-use App\SharedFolder;
 use Illuminate\Contracts\Validation\Rule;
 
 class SharedFolderType implements Rule
@@ -17,7 +16,7 @@ class SharedFolderType implements Rule
      */
     public function passes($attribute, $type): bool
     {
-        if (empty($type) || !is_string($type) || !in_array($type, SharedFolder::SUPPORTED_TYPES)) {
+        if (empty($type) || !is_string($type) || !in_array($type, \config('app.shared_folder_types'))) {
             $this->message = \trans('validation.entryinvalid', ['attribute' => $attribute]);
             return false;
         }

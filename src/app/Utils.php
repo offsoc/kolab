@@ -499,6 +499,7 @@ class Utils
             'app.support_email',
             'app.company.copyright',
             'app.companion_download_link',
+            'app.shared_folder_types',
             'app.with_signup',
             'mail.from.address',
         ];

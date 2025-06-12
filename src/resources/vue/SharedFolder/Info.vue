@@ -95,7 +95,7 @@
                 folder_id: null,
                 folder: { type: 'mail', config: {}, aliases: [] },
                 status: {},
-                types: [ 'mail', 'event', 'task', 'contact', 'note', 'file' ]
+                types: window.config['app.shared_folder_types'],
             }
         },
         created() {
