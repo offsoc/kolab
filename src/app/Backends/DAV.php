@@ -600,8 +600,16 @@ class DAV
             $share_resource = new DAV\ShareResource();
             $share_resource->href = $folder['href'];
             $share_resource->sharees = [$dav->principalLocation($to->email) => $folder['acl']];
-            if (!$dav->shareResource($share_resource)) {
-                throw new \Exception("Failed to share DAV folder {$folder['href']}");
+
+            try {
+                if (!$dav->shareResource($share_resource)) {
+                    throw new \Exception("Failed to share DAV folder {$folder['href']}");
+                }
+            } catch (RequestException $e) {
+                // Silently ignore non-existing folders
+                if ($e->getCode() != 404) {
+                    throw $e;
+                }
             }
         }
 
