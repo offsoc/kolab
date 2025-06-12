@@ -86,7 +86,7 @@
                                     <subscription-select v-if="user.id" class="col-sm-8 pt-sm-1" :object="user" ref="skus"></subscription-select>
                                 </div>
                                 <btn class="btn-primary" type="submit" icon="check">{{ $t('btn.submit') }}</btn>
-                                <btn id="button-login-as" class="btn-outline-secondary float-end" @click="loginAs" v-if="$route.name != 'settings' && $root.hasPermission('loginAs')">
+                                <btn id="button-login-as" class="btn-outline-secondary float-end" @click="loginAs" v-if="$route.name != 'settings' && user_id !== 'new' && $root.hasPermission('loginAs')">
                                     {{ $t('user.login-as') }}
                                 </btn>
                             </form>
