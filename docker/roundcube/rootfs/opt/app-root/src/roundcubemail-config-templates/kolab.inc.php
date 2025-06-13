@@ -50,6 +50,9 @@ $config['configuration-overlays']['groupware'] = [
 ];
 
 if ($disabledPlugins = getenvlist('DISABLED_PLUGINS')) {
-    $config['configuration-overlays']['kolabobjects']['plugins'] = array_diff($config['configuration-overlays']['groupware']['plugins'], $disabledPlugins);
-    $config['configuration-overlays']['groupware']['plugins'] = array_diff($config['configuration-overlays']['groupware']['plugins'], $disabledPlugins);
+    foreach ($config['configuration-overlays'] as $key => $value) {
+        if (isset($value['plugins'])) {
+            $config['configuration-overlays'][$key]['plugins'] = array_diff($value['plugins'], $disabledPlugins);
+        }
+    }
 }
