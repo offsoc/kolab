@@ -67,10 +67,7 @@ $config['activesync_gal_cache_ttl'] = '1d';
 
 // List of Roundcube plugins
 // WARNING: Not all plugins used in Roundcube can be listed here
-$config['activesync_plugins'] = array(
-    'libcalendaring',
-    'libkolab'
-);
+$config['activesync_plugins'] = ['kolab'];
 
 // Defines for how many seconds we'll sleep between every
 // action for detecting changes in folders. Default: 60
