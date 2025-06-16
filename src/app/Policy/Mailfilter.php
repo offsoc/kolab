@@ -143,16 +143,24 @@ class Mailfilter
         // Get user configuration and account policy
         $config = $user->getConfig(true);
 
-        foreach ($modules as $class => $module_config) {
+        foreach (array_keys($modules) as $class) {
             $module = strtolower(str_replace('Module', '', class_basename($class)));
+
+            // Check if the module is enabled
             if (
                 (isset($config["{$module}_config"]) && $config["{$module}_config"] === false)
                 || (!isset($config["{$module}_config"]) && empty($config["{$module}_policy"]))
             ) {
                 unset($modules[$class]);
+                continue;
             }
 
-            // TODO: Collect module configuration
+            // Collect module configuration
+            foreach ($config as $key => $value) {
+                if (str_starts_with($key, "{$module}_")) {
+                    $modules[$class][$key] = $value;
+                }
+            }
         }
 
         return $modules;

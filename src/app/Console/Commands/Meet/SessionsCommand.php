@@ -35,7 +35,7 @@ class SessionsCommand extends Command
         foreach ($response->json() as $session) {
             $room = Room::where('session_id', $session['roomId'])->first();
             if ($room) {
-                $owner = $room->wallet()->owner->email;
+                $owner = $room->walletOwner()->email;
                 $roomName = $room->name;
             } else {
                 $owner = '(none)';

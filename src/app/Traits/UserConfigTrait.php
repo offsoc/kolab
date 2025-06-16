@@ -5,6 +5,7 @@ namespace App\Traits;
 use App\Policy\Password;
 use App\Policy\Utils as PolicyUtils;
 use App\Utils;
+use Illuminate\Support\Facades\Validator;
 
 trait UserConfigTrait
 {
@@ -18,6 +19,7 @@ trait UserConfigTrait
         $settings = $this->getSettings([
             'externalsender_config',
             'externalsender_policy',
+            'externalsender_policy_domains',
             'greylist_enabled',
             'greylist_policy',
             'guam_enabled',
@@ -28,27 +30,40 @@ trait UserConfigTrait
             'password_policy',
         ]);
 
-        $config = [
-            'externalsender_config' => self::boolOrNull($settings['externalsender_config']),
-            'externalsender_policy' => $settings['externalsender_policy'] === 'true',
-            'greylist_enabled' => self::boolOrNull($settings['greylist_enabled']),
-            'greylist_policy' => $settings['greylist_policy'] !== 'false',
-            'guam_enabled' => $settings['guam_enabled'] === 'true',
-            'itip_config' => self::boolOrNull($settings['itip_config']),
-            'itip_policy' => $settings['itip_policy'] === 'true',
-            'limit_geo' => $settings['limit_geo'] ? json_decode($settings['limit_geo'], true) : [],
-            'max_password_age' => $settings['max_password_age'],
-            'password_policy' => $settings['password_policy'],
-        ];
+        $config = [];
+        foreach ($settings as $key => $value) {
+            switch ($key) {
+                case 'externalsender_config':
+                case 'greylist_enabled':
+                case 'itip_config':
+                    $config[$key] = self::boolOrNull($value);
+                    break;
+                case 'externalsender_policy_domains':
+                case 'limit_geo':
+                    $config[$key] = $value ? json_decode($value, true) : [];
+                    break;
+                case 'greylist_policy':
+                    $config[$key] = $value !== 'false';
+                    break;
+                case 'externalsender_policy':
+                case 'guam_enabled':
+                case 'itip_policy':
+                    $config[$key] = $value === 'true';
+                    break;
+                case 'max_password_age':
+                case 'password_policy':
+                default:
+                    $config[$key] = $value;
+            }
+        }
 
         // If user is not an account owner read the policy from the owner config
         if ($include_account_policies) {
-            $wallet = $this->wallet();
-            if ($wallet && $wallet->user_id != $this->id) {
-                $account_config = $wallet->owner->getConfig();
-                foreach (array_keys($config) as $name) {
+            $owner = $this->walletOwner();
+            if ($owner && $owner->id != $this->id) {
+                foreach ($owner->getConfig() as $name => $value) {
                     if (str_contains($name, '_policy')) {
-                        $config[$name] = $account_config[$name];
+                        $config[$name] = $value;
                     }
                 }
             }
@@ -77,6 +92,13 @@ trait UserConfigTrait
                 $this->setSetting($key, $value ? 'true' : null);
             } elseif ($key == 'limit_geo') {
                 if ($error = $this->validateLimitGeo($value)) {
+                    $errors[$key] = $error;
+                    continue;
+                }
+
+                $this->setSetting($key, !empty($value) ? json_encode($value) : null);
+            } elseif ($key == 'externalsender_policy_domains') {
+                if ($error = $this->validateExternalsenderPolicyDomains($value)) {
                     $errors[$key] = $error;
                     continue;
                 }
@@ -118,6 +140,34 @@ trait UserConfigTrait
     private static function boolOrNull($value): ?bool
     {
         return $value === 'true' ? true : ($value === 'false' ? false : null);
+    }
+
+    /**
+     * Validates externalsender_policy_domains setting
+     *
+     * @param mixed $value List of domains input
+     *
+     * @return ?string An error message on error, Null otherwise
+     */
+    protected function validateExternalsenderPolicyDomains(&$value): ?string
+    {
+        if (!is_array($value)) {
+            return \trans('validation.invalid-externalsender-domains');
+        }
+
+        foreach ($value as $idx => $domain) {
+            $domain = \strtolower($domain);
+
+            // TODO: Support asterisk expressions, e.g. *.domain.tld
+            $v = Validator::make(['email' => 'user@' . $domain], ['email' => 'required|email:strict']);
+            if ($v->fails()) {
+                return \trans('validation.invalid-externalsender-domains');
+            }
+
+            $value[$idx] = $domain;
+        }
+
+        return null;
     }
 
     /**

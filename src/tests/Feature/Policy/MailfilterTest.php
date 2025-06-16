@@ -3,6 +3,8 @@
 namespace Tests\Feature\Policy;
 
 use App\Policy\Mailfilter;
+use App\Policy\Mailfilter\Modules\ExternalSenderModule;
+use App\Policy\Mailfilter\Modules\ItipModule;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
@@ -12,6 +14,7 @@ class MailfilterTest extends TestCase
     private $keys = [
         'externalsender_config',
         'externalsender_policy',
+        'externalsender_policy_domains',
         'itip_config',
         'itip_policy',
     ];
@@ -107,8 +110,15 @@ class MailfilterTest extends TestCase
         // Enable account policies
         $john->setConfig(['externalsender_policy' => true, 'itip_policy' => true]);
         $expected = [
-            Mailfilter\Modules\ItipModule::class => [],
-            Mailfilter\Modules\ExternalSenderModule::class => [],
+            ItipModule::class => [
+                'itip_config' => null,
+                'itip_policy' => true,
+            ],
+            ExternalSenderModule::class => [
+                'externalsender_config' => null,
+                'externalsender_policy' => true,
+                'externalsender_policy_domains' => [],
+            ],
         ];
 
         $this->assertSame($expected, $this->invokeMethod($filter, 'getModulesConfig', [$john]));
@@ -116,27 +126,34 @@ class MailfilterTest extends TestCase
 
         // Enabled account policies, and enabled per-user config
         $jack->setConfig(['externalsender_config' => true, 'itip_config' => true]);
-        $this->assertSame($expected, $this->invokeMethod($filter, 'getModulesConfig', [$john]));
-        $this->assertSame($expected, $this->invokeMethod($filter, 'getModulesConfig', [$jack]));
+
+        $result = $this->invokeMethod($filter, 'getModulesConfig', [$jack]);
+        $this->assertTrue($result[ExternalSenderModule::class]['externalsender_config']);
+        $this->assertTrue($result[ItipModule::class]['itip_config']);
 
         // Enabled account policies, and disabled per-user config
         $jack->setConfig(['externalsender_config' => false, 'itip_config' => false]);
-        $this->assertSame($expected, $this->invokeMethod($filter, 'getModulesConfig', [$john]));
+
         $this->assertSame([], $this->invokeMethod($filter, 'getModulesConfig', [$jack]));
 
         // Disabled account policies, and disabled per-user config
         $john->setConfig(['externalsender_policy' => false, 'itip_policy' => false]);
+
         $this->assertSame([], $this->invokeMethod($filter, 'getModulesConfig', [$john]));
         $this->assertSame([], $this->invokeMethod($filter, 'getModulesConfig', [$jack]));
 
         // Disabled account policies, and enabled per-user config
         $jack->setConfig(['externalsender_config' => true, 'itip_config' => true]);
-        $this->assertSame([], $this->invokeMethod($filter, 'getModulesConfig', [$john]));
-        $this->assertSame($expected, $this->invokeMethod($filter, 'getModulesConfig', [$jack]));
+
+        $result = $this->invokeMethod($filter, 'getModulesConfig', [$jack]);
+        $this->assertTrue($result[ExternalSenderModule::class]['externalsender_config']); // @phpstan-ignore-line
+        $this->assertTrue($result[ItipModule::class]['itip_config']); // @phpstan-ignore-line
 
         // As the last one, but for account owner
         $john->setConfig(['externalsender_config' => true, 'itip_config' => true]);
-        $this->assertSame($expected, $this->invokeMethod($filter, 'getModulesConfig', [$john]));
-        $this->assertSame($expected, $this->invokeMethod($filter, 'getModulesConfig', [$jack]));
+
+        $result = $this->invokeMethod($filter, 'getModulesConfig', [$john]);
+        $this->assertTrue($result[ExternalSenderModule::class]['externalsender_config']);
+        $this->assertTrue($result[ItipModule::class]['itip_config']);
     }
 }

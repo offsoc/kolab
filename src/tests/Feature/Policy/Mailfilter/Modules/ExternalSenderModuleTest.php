@@ -31,6 +31,15 @@ class ExternalSenderModuleTest extends TestCase
         $this->assertNull($result);
         $this->assertSame('[EXTERNAL] test sync', $parser->getHeader('subject'));
 
+        // Test an email from an external sender - added domain to exceptions list
+        $john = $this->getTestUser('john@kolab.org');
+        $parser = MailParserTest::getParserForFile('mail/1.eml', 'john@kolab.org', "joe@{$domain}");
+        $module = new ExternalSenderModule(['externalsender_policy_domains' => [$domain]]);
+        $result = $module->handle($parser);
+
+        $this->assertNull($result);
+        $this->assertSame('test sync', $parser->getHeader('subject'));
+
         // Test an email from an internal sender (same domain)
         $parser = MailParserTest::getParserForFile('mail/1.eml', 'john@kolab.org', 'jack@kolab.org');
         $module = new ExternalSenderModule();
@@ -46,7 +55,5 @@ class ExternalSenderModuleTest extends TestCase
 
         $this->assertNull($result);
         $this->assertSame('test sync', $parser->getHeader('subject'));
-
-        // TODO: Test other account domains
     }
 }

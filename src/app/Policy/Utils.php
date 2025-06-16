@@ -26,10 +26,10 @@ class Utils
         $value = $settings[$name] ?? null;
 
         if ($value === null) {
-            $wallet = $user->wallet();
+            $owner = $user->walletOwner();
 
-            if ($wallet && $wallet->user_id != $user->id) {
-                $value = $wallet->owner->getSetting($policy_name);
+            if ($owner && $owner->id != $user->id) {
+                $value = $owner->getSetting($policy_name);
             } elseif (isset($settings[$policy_name])) {
                 $value = $settings[$policy_name];
             }

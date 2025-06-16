@@ -170,6 +170,7 @@ return [
     'nameexists' => 'The specified name is not available.',
     'nameinvalid' => 'The specified name is invalid.',
     'password-policy-error' => 'Specified password does not comply with the policy.',
+    'invalid-externalsender-domains' => 'Specified configuration is invalid. Expected a list domain names.',
     'invalid-limit-geo' => 'Specified configuration is invalid. Expected a list of two-letter country codes.',
     'invalid-limit-geo-missing-current' => 'Specified configuration is invalid. Missing country of the current connection (:code).',
     'invalid-password-policy' => 'Specified password policy is invalid.',

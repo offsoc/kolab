@@ -380,6 +380,8 @@ return [
         'calinvitations-text' => "Enables automated handling of calendar invitations in incoming email.",
         'extsender' => "External sender warning",
         'extsender-text' => "Adds a warning to every delivered message sent by an external sender.",
+        'internaldomains' => "Internal domains",
+        'internaldomains-text' => "A list of internet domains to be considered as internal in context of the external sender warning.",
         'greylist' => "Greylisting",
         'greylist-text' => "Greylisting is a method of defending users against spam. Any incoming mail from an unrecognized sender "
             . "is temporarily rejected. The originating server should try again after a delay. "

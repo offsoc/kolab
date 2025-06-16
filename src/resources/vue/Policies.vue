@@ -71,9 +71,18 @@
                                     <label for="externalsender_policy" class="col-sm-4 col-form-label">{{ $t('policies.extsender') }}</label>
                                     <div class="col-sm-8 pt-2">
                                         <input type="checkbox" id="externalsender_policy" name="externalsender" value="1" class="form-check-input d-block mb-2" :checked="config.externalsender_policy">
-                                        <small id="externalsender-hint" class="text-muted">
+                                        <small id="externalsender-hint" class="text-muted d-block mb-2">
                                             {{ $t('policies.extsender-text') }}
                                         </small>
+                                        <div class="row">
+                                            <label for="externalsender_policy_domains-input" class="col-sm-4 col-form-label">{{ $t('policies.internaldomains') }}</label>
+                                            <div class="col-sm-8">
+                                                <list-input id="externalsender_policy_domains" :list="config.externalsender_policy_domains"></list-input>
+                                                <small id="externalsenderdomains-hint" class="text-muted d-block mt-2">
+                                                    {{ $t('policies.internaldomains-text') }}
+                                                </small>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 <btn class="btn-primary" type="submit" icon="check">{{ $t('btn.submit') }}</btn>
@@ -87,9 +96,14 @@
 </template>
 
 <script>
+    import ListInput from './Widgets/ListInput'
+
     const POLICY_TYPES = ['password', 'mailDelivery']
 
     export default {
+        components: {
+            ListInput,
+        },
         data() {
             return {
                 config: [],
@@ -134,10 +148,13 @@
                     </label>`
             },
             submitMailDelivery() {
-                this.$root.clearFormValidation('#maildelivery form')
+                this.$root.clearFormValidation('#mailDelivery form')
 
-                let post = {}
-                this.mailDeliveryPolicy.forEach(element => post[element] = $('#' + element)[0].checked)
+                let post = this.$root.pick(this.config, ['externalsender_policy_domains'])
+
+                this.mailDeliveryPolicy
+                    .filter((element) => element != 'externalsender_policy_domains')
+                    .forEach(element => post[element] = $('#' + element)[0].checked)
 
                 axios.post('/api/v4/users/' + this.wallet.user_id + '/config', post)
                     .then(response => {

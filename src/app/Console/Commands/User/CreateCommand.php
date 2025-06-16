@@ -76,7 +76,7 @@ class CreateCommand extends Command
             }
 
             if (!$domain->isPublic()) {
-                $owner = $domain->wallet()->owner;
+                $owner = $domain->walletOwner();
             }
 
             // Tenant context for the getObject() call below, and for the new user

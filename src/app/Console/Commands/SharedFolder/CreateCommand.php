@@ -58,7 +58,7 @@ class CreateCommand extends Command
             return 1;
         }
 
-        $owner = $domain->wallet()->owner;
+        $owner = $domain->walletOwner();
 
         // Validate folder name and type
         $rules = [

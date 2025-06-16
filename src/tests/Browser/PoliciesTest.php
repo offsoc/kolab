@@ -3,6 +3,7 @@
 namespace Tests\Browser;
 
 use Tests\Browser;
+use Tests\Browser\Components\ListInput;
 use Tests\Browser\Components\Menu;
 use Tests\Browser\Components\Toast;
 use Tests\Browser\Pages\Dashboard;
@@ -18,6 +19,7 @@ class PoliciesTest extends TestCaseDusk
         $john->setSettings([
             'itip_policy' => null,
             'externalsender_policy' => null,
+            'externalsender_policy_domains' => null,
             'greylist_policy' => null,
         ]);
 
@@ -141,6 +143,7 @@ class PoliciesTest extends TestCaseDusk
         $john->setSettings([
             'itip_policy' => 'true',
             'externalsender_policy' => null,
+            'externalsender_policy_domains' => null,
             'greylist_policy' => null,
         ]);
 
@@ -151,13 +154,19 @@ class PoliciesTest extends TestCaseDusk
                 ->assertSeeIn('#policies .nav-item:nth-child(2)', 'Mail delivery')
                 ->click('#policies .nav-item:nth-child(2)')
                 ->with('@maildelivery-form', static function (Browser $browser) {
-                    $browser->assertElementsCount('div.row', 3)
-                        ->assertSeeIn('div.row:nth-child(1) label', 'Greylisting')
+                    $browser->assertSeeIn('div.row:nth-child(1) label', 'Greylisting')
                         ->assertChecked('div.row:nth-child(1) input[type=checkbox]')
                         ->assertSeeIn('div.row:nth-child(2) label', 'Calendar invitations')
                         ->assertChecked('div.row:nth-child(2) input[type=checkbox]')
-                        ->assertSeeIn('div.row:nth-child(3) label', 'External sender warning')
+                        ->assertSeeIn('div.row:nth-child(3) > label', 'External sender warning')
                         ->assertNotChecked('div.row:nth-child(3) input[type=checkbox]')
+                        ->assertSeeIn('div.row:nth-child(3) .row > label', 'Internal domains')
+                        ->with(new ListInput('#externalsender_policy_domains'), static function (Browser $browser) {
+                            $browser->assertListInputValue([])
+                                ->assertValue('@input', '')
+                                ->addListEntry('test1.com')
+                                ->addListEntry('test2.com');
+                        })
                         // Change the policy
                         ->click('div.row:nth-child(1) input[type=checkbox]')
                         ->click('div.row:nth-child(2) input[type=checkbox]')
@@ -170,5 +179,6 @@ class PoliciesTest extends TestCaseDusk
         $this->assertSame('false', $john->getSetting('greylist_policy'));
         $this->assertSame('false', $john->getSetting('itip_policy'));
         $this->assertSame('true', $john->getSetting('externalsender_policy'));
+        $this->assertSame('["test1.com","test2.com"]', $john->getSetting('externalsender_policy_domains'));
     }
 }

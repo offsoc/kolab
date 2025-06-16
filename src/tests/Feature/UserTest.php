@@ -563,6 +563,7 @@ class UserTest extends TestCase
         $user->setSetting('password_policy', null);
         $user->setSetting('max_password_age', null);
         $user->setSetting('limit_geo', null);
+        $user->setSetting('externalsender_policy_domains', null);
 
         // greylist_enabled
         $this->assertNull($user->getConfig()['greylist_enabled']);
@@ -644,6 +645,18 @@ class UserTest extends TestCase
         $this->assertSame([], $result);
         $this->assertSame('min:10,max:255', $user->getConfig()['password_policy']);
         $this->assertSame('min:10,max:255', $user->getSetting('password_policy'));
+
+        // externalsender_policy_domains
+        $result = $user->setConfig(['externalsender_policy_domains' => []]);
+        $this->assertSame([], $user->getConfig()['externalsender_policy_domains']);
+
+        $result = $user->setConfig(['externalsender_policy_domains' => ['aa=a']]);
+        $err = "Specified configuration is invalid. Expected a list domain names.";
+        $this->assertSame(['externalsender_policy_domains' => $err], $result);
+        $this->assertSame([], $user->getConfig()['externalsender_policy_domains']);
+
+        $result = $user->setConfig(['externalsender_policy_domains' => ['domain.tld', 'Test.com']]);
+        $this->assertSame(['domain.tld', 'test.com'], $user->getConfig()['externalsender_policy_domains']);
 
         // limit_geo
         $this->assertSame([], $user->getConfig()['limit_geo']);

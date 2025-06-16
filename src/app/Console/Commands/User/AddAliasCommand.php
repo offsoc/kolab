@@ -43,7 +43,7 @@ class AddAliasCommand extends Command
             return 1;
         }
 
-        $controller = $user->wallet()->owner;
+        $controller = $user->walletOwner();
 
         // Validate the alias
         $error = UsersController::validateAlias($alias, $controller);

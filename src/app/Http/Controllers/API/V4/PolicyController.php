@@ -88,7 +88,7 @@ class PolicyController extends Controller
         $policy_config['greylist_policy'] = $config['greylist_policy'];
 
         if (config('app.with_mailfilter')) {
-            foreach (['itip_policy', 'externalsender_policy'] as $name) {
+            foreach (['itip_policy', 'externalsender_policy', 'externalsender_policy_domains'] as $name) {
                 $mail_delivery_policy[] = $name;
                 $policy_config[$name] = $config[$name];
             }

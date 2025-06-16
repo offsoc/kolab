@@ -40,9 +40,9 @@ class RestoreCommand extends Command
             return 1;
         }
 
-        $wallet = $domain->wallet();
+        $owner = $domain->walletOwner();
 
-        if ($wallet && !$wallet->owner) {
+        if (!$owner || $owner->trashed()) {
             $this->error("The domain owner is deleted.");
             return 1;
         }

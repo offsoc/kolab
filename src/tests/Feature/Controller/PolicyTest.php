@@ -214,9 +214,11 @@ class PolicyTest extends TestCase
     {
         $this->useRegularUrl();
 
+        $keys = ['greylist_policy', 'itip_policy', 'externalsender_policy', 'externalsender_policy_domains'];
+
         $jack = $this->getTestUser('jack@kolab.org');
         $john = $this->getTestUser('john@kolab.org');
-        $john->settings()->whereIn('key', ['itip_policy', 'externalsender_policy', 'greylist_policy'])->delete();
+        $john->settings()->whereIn('key', $keys)->delete();
 
         // Unauth access not allowed
         $response = $this->get('/api/v4/policies');
@@ -244,10 +246,11 @@ class PolicyTest extends TestCase
 
         $response->assertStatus(200);
 
-        $this->assertSame(['greylist_policy', 'itip_policy', 'externalsender_policy'], $json['mailDelivery']);
+        $this->assertSame($keys, $json['mailDelivery']);
         $this->assertFalse($json['config']['itip_policy']);
         $this->assertTrue($json['config']['greylist_policy']);
         $this->assertTrue($json['config']['externalsender_policy']);
+        $this->assertSame([], $json['config']['externalsender_policy_domains']);
     }
 
     /**
